@@ -1,0 +1,198 @@
+# Ignore configuration files that may contain sensitive information.
+local.settings.php
+settings.local.php
+development.services.yml
+local.drush.yml
+local.site.yml
+local.services.yml
+secrets.settings.php
+medicare-search-development-prod.json
+tests/behat/local.yml
+box/local.config.yml
+*.local
+.env
+.ssh
+.node_repl_history
+
+# Ignore paths that contain user-generated content.
+web/sites/*/files
+/files-private
+web/sites/*/private
+
+# Ignore custom theme build artifacts
+web/themes/custom/*/node_modules
+
+# Ignore build artifacts
+deployment_identifier
+/deploy
+bin/*
+tmp
+reports
+logs/*
+
+# OS X
+.DS_Store
+.AppleDouble
+.LSOverride
+.bash_history
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# VSCode
+.vscode
+
+# Eclipse
+*.pydevproject
+.project
+.metadata
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+# CDT-specific
+.cproject
+
+# PDT-specific
+.buildpathk
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# User-specific stuff:
+.idea/
+
+#XHProf
+xhprof_*
+
+# Composer vendor
+/vendor
+web/core
+web/modules/contrib
+web/themes/contrib
+#web/libraries/blazy
+#web/libraries/chosen
+#web/libraries/cropper
+#web/libraries/dropzone
+#web/libraries/jquery
+#web/libraries/slick-carousel
+#web/libraries/spectrum
+
+# Backstop
+tests/backstop/node_modules
+tests/backstop/backstop_data/bitmaps_reference
+tests/backstop/backstop_data/bitmaps_test
+tests/backstop/backstop_data/html_report
+tests/backstop/backstop_data/links.json
+
+# Cypress
+tests/cypress/node_modules
+tests/cypress/results
+tests/cypress/runner-results
+tests/cypress/cypress/logs
+tests/cypress/cypress/parallel-weights.json
+
+# Pa11y-ci
+tests/pa11yci/pa11y-errors.json
+tests/pa11yci/pa11y-errors-mobile.json
+
+# Lighthouse
+tests/lighthouse/node_modules
+
+# PHPUnit
+tests/coverage
+tests/simpletest
+web/sites/simpletest
+
+# Sass
+.sass-cache
+*.css.map
+
+# Netbeans IDE
+nbproject
+nbproject/*
+
+# DrupalVM
+.vagrant/
+
+# DevDesktop
+*.dd
+
+# DDev
+web/sites/default/settings.ddev.php
+
+# Exports
+*.gz
+*.sql
+*.zip
+
+# PHPStorm
+atlassian-ide-plugin.xml
+
+# NPM
+npm-debug.log
+.yarnrc
+.node-gyp
+.npm
+.yarn
+yarn-error.log
+node_modules/
+
+# Drush, terminus and composer caches
+drush/sites/.checksums
+.cache
+.config
+.drush
+.terminus
+
+# PHPDoc
+.phpdoc
+phpdocs
+
+# Deprecation detector rules
+.rules
+/web/modules/custom/medicare_editor_enhancements/node_modules/
+/web/modules/custom/medicare_editor_enhancements/yarn.lock
+/web/modules/custom/medicare_helpdrawer_plugin/node_modules/
+/web/modules/custom/medicare_iconlist_plugin/node_modules/
+/web/modules/custom/medicare_tooltiplink_plugin/node_modules/
+/web/modules/custom/medicare_enhanced_table_plugin/node_modules/
+/web/modules/custom/edit_redirect/
+
+# Capacitor Rules
+ios/
+android/
