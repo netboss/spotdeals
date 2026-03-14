@@ -18,6 +18,8 @@ box/local.config.yml
 web/sites/*/files
 /files-private
 web/sites/*/private
+/web/sites/*/files
+/web/sites/*/settings.php
 
 # Ignore custom theme build artifacts
 web/themes/custom/*/node_modules
