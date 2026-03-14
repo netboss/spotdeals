@@ -100,7 +100,10 @@ tramp
 xhprof_*
 
 # Composer vendor
+vendor
+vendor/*
 /vendor
+/vendor/*
 web/core
 web/modules/contrib
 web/themes/contrib
