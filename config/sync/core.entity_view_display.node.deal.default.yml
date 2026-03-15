@@ -1,0 +1,55 @@
+uuid: 776f1e06-149e-4e00-ae7b-4ddc494c69e7
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.deal.body
+    - field.field.node.deal.field_day_of_week
+    - field.field.node.deal.field_deal_category
+    - field.field.node.deal.field_venue_type
+    - node.type.deal
+  module:
+    - text
+    - user
+id: node.deal.default
+targetEntityType: node
+bundle: deal
+mode: default
+content:
+  body:
+    type: text_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  field_day_of_week:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 103
+    region: content
+  field_deal_category:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 102
+    region: content
+  field_venue_type:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 101
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden: {  }

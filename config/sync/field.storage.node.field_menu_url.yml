@@ -1,0 +1,19 @@
+uuid: bc998a84-060b-4f0e-960d-5ccf261091de
+langcode: en
+status: true
+dependencies:
+  module:
+    - link
+    - node
+id: node.field_menu_url
+field_name: field_menu_url
+entity_type: node
+type: link
+settings: {  }
+module: link
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

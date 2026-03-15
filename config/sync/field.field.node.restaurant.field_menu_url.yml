@@ -1,0 +1,23 @@
+uuid: 6d06330e-9c33-46d5-986e-48817bff8bce
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_menu_url
+    - node.type.restaurant
+  module:
+    - link
+id: node.restaurant.field_menu_url
+field_name: field_menu_url
+entity_type: node
+bundle: restaurant
+label: 'Menu URL'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  title: 1
+  link_type: 16
+field_type: link

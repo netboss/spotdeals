@@ -1,0 +1,60 @@
+uuid: 08530846-973c-4fa5-8a09-f5a549d02b9f
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.restaurant.body
+    - field.field.node.restaurant.field_active
+    - field.field.node.restaurant.field_address
+    - field.field.node.restaurant.field_city
+    - field.field.node.restaurant.field_claimed_listing
+    - field.field.node.restaurant.field_cuisine
+    - field.field.node.restaurant.field_image
+    - field.field.node.restaurant.field_menu_url
+    - field.field.node.restaurant.field_phone
+    - field.field.node.restaurant.field_website
+    - image.style.medium
+    - node.type.restaurant
+  module:
+    - image
+    - text
+    - user
+id: node.restaurant.teaser
+targetEntityType: node
+bundle: restaurant
+mode: teaser
+content:
+  body:
+    type: text_summary_or_trimmed
+    label: hidden
+    settings:
+      trim_length: 600
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  field_image:
+    type: image
+    label: hidden
+    settings:
+      image_link: content
+      image_style: medium
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: -1
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  field_active: true
+  field_address: true
+  field_city: true
+  field_claimed_listing: true
+  field_cuisine: true
+  field_menu_url: true
+  field_phone: true
+  field_website: true

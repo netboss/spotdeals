@@ -1,0 +1,26 @@
+uuid: 9b2ce8eb-f0a8-4180-bda9-1c292263af8a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.body
+    - filter.format.full_html
+    - node.type.deal
+  module:
+    - text
+id: node.deal.body
+field_name: body
+entity_type: node
+bundle: deal
+label: Description
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  display_summary: true
+  required_summary: false
+  allowed_formats:
+    - full_html
+field_type: text_with_summary

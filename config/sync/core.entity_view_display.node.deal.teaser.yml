@@ -1,0 +1,36 @@
+uuid: 0caf0ab5-76b6-42f9-b6d6-6e1f349fbde8
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.deal.body
+    - field.field.node.deal.field_day_of_week
+    - field.field.node.deal.field_deal_category
+    - field.field.node.deal.field_venue_type
+    - node.type.deal
+  module:
+    - text
+    - user
+id: node.deal.teaser
+targetEntityType: node
+bundle: deal
+mode: teaser
+content:
+  body:
+    type: text_summary_or_trimmed
+    label: hidden
+    settings:
+      trim_length: 600
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  field_day_of_week: true
+  field_deal_category: true
+  field_venue_type: true

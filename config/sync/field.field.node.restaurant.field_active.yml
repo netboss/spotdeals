@@ -1,0 +1,21 @@
+uuid: 0e827235-f596-4271-9aae-babfa4debc86
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_active
+    - node.type.restaurant
+id: node.restaurant.field_active
+field_name: field_active
+entity_type: node
+bundle: restaurant
+label: Active
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean
