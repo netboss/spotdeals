@@ -1,0 +1,21 @@
+uuid: 18758d71-f972-4b40-8271-c3240ffd7858
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_active
+    - node.type.deal
+id: node.deal.field_active
+field_name: field_active
+entity_type: node
+bundle: deal
+label: Active
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean
