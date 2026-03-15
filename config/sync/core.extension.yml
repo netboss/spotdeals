@@ -45,7 +45,6 @@ module:
   scheduler: 0
   search: 0
   shortcut: 0
-  simple_time_field: 0
   system: 0
   tagify: 0
   taxonomy: 0

@@ -1,0 +1,21 @@
+uuid: 8a7e5b77-70b0-44dd-9680-3095a2cd5f82
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_recurring
+    - node.type.deal
+id: node.deal.field_recurring
+field_name: field_recurring
+entity_type: node
+bundle: deal
+label: Recurring
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean

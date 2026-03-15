@@ -1,0 +1,19 @@
+uuid: fe2b2353-b2c7-4b60-bc8b-bf23004bf5bf
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_price_offer_text
+    - node.type.deal
+id: node.deal.field_price_offer_text
+field_name: field_price_offer_text
+entity_type: node
+bundle: deal
+label: 'Price / Offer Text'
+description: 'Example of Price / Offer Text: <strong>$2 tacos</strong>, or <strong>50% off sushi rolls</strong>, or <strong>$10 lunch combo</strong>, etc.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

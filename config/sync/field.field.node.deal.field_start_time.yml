@@ -1,0 +1,19 @@
+uuid: 21023bf7-453b-45a8-a9dc-04d5a6040295
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_start_time
+    - node.type.deal
+id: node.deal.field_start_time
+field_name: field_start_time
+entity_type: node
+bundle: deal
+label: 'Deal Time'
+description: 'Examples of Deal Time format: <strong>11am – 2pm</strong>, or <strong>4pm – 6pm</strong>, or <strong>All day</strong>, or <strong>After 8pm</strong>, or <strong>11am – 2pm weekdays</strong>, or <strong>Late night</strong>, or <strong>Happy hour (4–7pm)</strong>'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

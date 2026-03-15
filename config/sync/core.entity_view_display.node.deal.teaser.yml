@@ -5,11 +5,19 @@ dependencies:
   config:
     - core.entity_view_mode.node.teaser
     - field.field.node.deal.body
+    - field.field.node.deal.field_active
     - field.field.node.deal.field_day_of_week
     - field.field.node.deal.field_deal_category
+    - field.field.node.deal.field_image
+    - field.field.node.deal.field_price_offer_text
+    - field.field.node.deal.field_recurring
+    - field.field.node.deal.field_source_url
+    - field.field.node.deal.field_start_time
     - field.field.node.deal.field_venue_type
+    - image.style.medium
     - node.type.deal
   module:
+    - image
     - text
     - user
 id: node.deal.teaser
@@ -25,12 +33,28 @@ content:
     third_party_settings: {  }
     weight: 0
     region: content
+  field_image:
+    type: image
+    label: hidden
+    settings:
+      image_link: content
+      image_style: medium
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: -1
+    region: content
   links:
     settings: {  }
     third_party_settings: {  }
     weight: 100
     region: content
 hidden:
+  field_active: true
   field_day_of_week: true
   field_deal_category: true
+  field_price_offer_text: true
+  field_recurring: true
+  field_source_url: true
+  field_start_time: true
   field_venue_type: true
