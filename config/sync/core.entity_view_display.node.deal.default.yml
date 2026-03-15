@@ -5,6 +5,7 @@ dependencies:
   config:
     - field.field.node.deal.body
     - field.field.node.deal.field_active
+    - field.field.node.deal.field_city
     - field.field.node.deal.field_day_of_week
     - field.field.node.deal.field_deal_category
     - field.field.node.deal.field_image
@@ -12,6 +13,7 @@ dependencies:
     - field.field.node.deal.field_recurring
     - field.field.node.deal.field_source_url
     - field.field.node.deal.field_start_time
+    - field.field.node.deal.field_venue
     - field.field.node.deal.field_venue_type
     - image.style.wide
     - node.type.deal
@@ -41,6 +43,14 @@ content:
       format_custom_true: ''
     third_party_settings: {  }
     weight: 107
+    region: content
+  field_city:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 102
     region: content
   field_day_of_week:
     type: entity_reference_label
@@ -106,6 +116,14 @@ content:
       link_to_entity: false
     third_party_settings: {  }
     weight: 104
+    region: content
+  field_venue:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 109
     region: content
   field_venue_type:
     type: entity_reference_label
