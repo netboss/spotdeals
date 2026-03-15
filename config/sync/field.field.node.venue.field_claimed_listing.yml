@@ -1,0 +1,21 @@
+uuid: 0e0a65ac-f033-4b0d-9fe6-af7d93cc0d28
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_claimed_listing
+    - node.type.venue
+id: node.venue.field_claimed_listing
+field_name: field_claimed_listing
+entity_type: node
+bundle: venue
+label: 'Claimed Listing'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean

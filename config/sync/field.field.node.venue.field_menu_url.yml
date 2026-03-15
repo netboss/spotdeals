@@ -1,0 +1,23 @@
+uuid: 3792bd35-868a-4582-9d02-a696feb20577
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_menu_url
+    - node.type.venue
+  module:
+    - link
+id: node.venue.field_menu_url
+field_name: field_menu_url
+entity_type: node
+bundle: venue
+label: 'Menu URL'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  title: 1
+  link_type: 16
+field_type: link
