@@ -1,0 +1,18 @@
+uuid: 9e745b60-bab2-44e1-9bfd-0612653040f6
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.deal
+id: node.deal.title
+field_name: title
+entity_type: node
+bundle: deal
+label: 'Deal Title'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string
