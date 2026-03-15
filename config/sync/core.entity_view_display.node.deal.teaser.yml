@@ -6,6 +6,7 @@ dependencies:
     - core.entity_view_mode.node.teaser
     - field.field.node.deal.body
     - field.field.node.deal.field_active
+    - field.field.node.deal.field_city
     - field.field.node.deal.field_day_of_week
     - field.field.node.deal.field_deal_category
     - field.field.node.deal.field_image
@@ -13,6 +14,7 @@ dependencies:
     - field.field.node.deal.field_recurring
     - field.field.node.deal.field_source_url
     - field.field.node.deal.field_start_time
+    - field.field.node.deal.field_venue
     - field.field.node.deal.field_venue_type
     - image.style.medium
     - node.type.deal
@@ -51,10 +53,12 @@ content:
     region: content
 hidden:
   field_active: true
+  field_city: true
   field_day_of_week: true
   field_deal_category: true
   field_price_offer_text: true
   field_recurring: true
   field_source_url: true
   field_start_time: true
+  field_venue: true
   field_venue_type: true
