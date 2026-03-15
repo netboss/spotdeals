@@ -1,0 +1,19 @@
+uuid: b216d37d-430a-4170-8518-1402a836eb2f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_phone
+    - node.type.venue
+id: node.venue.field_phone
+field_name: field_phone
+entity_type: node
+bundle: venue
+label: Phone
+description: 'Please add phone in this format: (000)-123-4567'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

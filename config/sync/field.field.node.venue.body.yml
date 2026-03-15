@@ -1,0 +1,26 @@
+uuid: 9aea822b-7143-4580-9a2e-031e00986bb8
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.body
+    - filter.format.full_html
+    - node.type.venue
+  module:
+    - text
+id: node.venue.body
+field_name: body
+entity_type: node
+bundle: venue
+label: Description
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  display_summary: true
+  required_summary: false
+  allowed_formats:
+    - full_html
+field_type: text_with_summary
