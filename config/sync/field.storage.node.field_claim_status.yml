@@ -1,0 +1,33 @@
+uuid: 61881e59-2ef6-4f54-b6be-6094e6f86810
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_claim_status
+field_name: field_claim_status
+entity_type: node
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: unclaimed
+      label: Unclaimed
+    -
+      value: pending
+      label: Pending
+    -
+      value: claimed
+      label: Claimed
+    -
+      value: rejected
+      label: Rejected
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -6,6 +6,9 @@ dependencies:
     - field.field.node.venue.body
     - field.field.node.venue.field_active
     - field.field.node.venue.field_address
+    - field.field.node.venue.field_claim_contact_email
+    - field.field.node.venue.field_claim_status
+    - field.field.node.venue.field_claimed_by
     - field.field.node.venue.field_claimed_listing
     - field.field.node.venue.field_cuisine
     - field.field.node.venue.field_image
@@ -19,6 +22,7 @@ dependencies:
     - address
     - image
     - link
+    - options
     - text
     - user
 id: node.venue.default
@@ -49,6 +53,28 @@ content:
     settings: {  }
     third_party_settings: {  }
     weight: 101
+    region: content
+  field_claim_contact_email:
+    type: basic_string
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 111
+    region: content
+  field_claim_status:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 109
+    region: content
+  field_claimed_by:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 110
     region: content
   field_claimed_listing:
     type: boolean

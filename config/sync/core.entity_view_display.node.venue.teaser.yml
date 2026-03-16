@@ -7,6 +7,9 @@ dependencies:
     - field.field.node.venue.body
     - field.field.node.venue.field_active
     - field.field.node.venue.field_address
+    - field.field.node.venue.field_claim_contact_email
+    - field.field.node.venue.field_claim_status
+    - field.field.node.venue.field_claimed_by
     - field.field.node.venue.field_claimed_listing
     - field.field.node.venue.field_cuisine
     - field.field.node.venue.field_image
@@ -52,6 +55,9 @@ content:
 hidden:
   field_active: true
   field_address: true
+  field_claim_contact_email: true
+  field_claim_status: true
+  field_claimed_by: true
   field_claimed_listing: true
   field_cuisine: true
   field_menu_url: true

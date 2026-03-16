@@ -1,0 +1,14 @@
+uuid: 44b2a5f8-ccfe-4d11-b4fc-ff171234efc8
+langcode: en
+status: true
+dependencies:
+  config:
+    - user.role.venue_owner
+  module:
+    - user
+id: user_add_role_action.venue_owner
+label: 'Add the Venue Owner role to the selected user(s)'
+type: user
+plugin: user_add_role_action
+configuration:
+  rid: venue_owner
