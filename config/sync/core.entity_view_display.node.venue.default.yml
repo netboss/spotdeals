@@ -6,12 +6,12 @@ dependencies:
     - field.field.node.venue.body
     - field.field.node.venue.field_active
     - field.field.node.venue.field_address
-    - field.field.node.venue.field_city
     - field.field.node.venue.field_claimed_listing
     - field.field.node.venue.field_cuisine
     - field.field.node.venue.field_image
     - field.field.node.venue.field_menu_url
     - field.field.node.venue.field_phone
+    - field.field.node.venue.field_venue_type
     - field.field.node.venue.field_website
     - image.style.wide
     - node.type.venue
@@ -49,14 +49,6 @@ content:
     settings: {  }
     third_party_settings: {  }
     weight: 101
-    region: content
-  field_city:
-    type: entity_reference_label
-    label: above
-    settings:
-      link: true
-    third_party_settings: {  }
-    weight: 102
     region: content
   field_claimed_listing:
     type: boolean
@@ -106,6 +98,14 @@ content:
       link_to_entity: false
     third_party_settings: {  }
     weight: 103
+    region: content
+  field_venue_type:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 101
     region: content
   field_website:
     type: link

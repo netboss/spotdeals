@@ -7,12 +7,12 @@ dependencies:
     - field.field.node.venue.body
     - field.field.node.venue.field_active
     - field.field.node.venue.field_address
-    - field.field.node.venue.field_city
     - field.field.node.venue.field_claimed_listing
     - field.field.node.venue.field_cuisine
     - field.field.node.venue.field_image
     - field.field.node.venue.field_menu_url
     - field.field.node.venue.field_phone
+    - field.field.node.venue.field_venue_type
     - field.field.node.venue.field_website
     - image.style.medium
     - node.type.venue
@@ -52,9 +52,9 @@ content:
 hidden:
   field_active: true
   field_address: true
-  field_city: true
   field_claimed_listing: true
   field_cuisine: true
   field_menu_url: true
   field_phone: true
+  field_venue_type: true
   field_website: true
