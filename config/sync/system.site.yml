@@ -4,11 +4,11 @@ langcode: en
 uuid: 420a2bcc-5a7c-4f59-992d-85ce4a2d0d2b
 name: SpotDeals
 mail: igl67@yahoo.com
-slogan: ''
+slogan: 'Local, time-based deals discovery starting with food and drink'
 page:
   403: ''
   404: ''
-  front: /node
+  front: /deals
 admin_compact_mode: false
 weight_select_max: 100
 default_langcode: en
