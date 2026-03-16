@@ -1,18 +1,18 @@
-uuid: 810c95f8-909d-4ffb-94d3-a3176b2f5e0c
+uuid: 4514ec41-2118-4c92-a5c7-8e86e50c5f07
 langcode: en
 status: true
 dependencies:
   config:
-    - field.storage.node.field_cuisine
-    - node.type.restaurant
-    - taxonomy.vocabulary.cuisine
-id: node.restaurant.field_cuisine
-field_name: field_cuisine
+    - field.storage.node.field_venue_type
+    - node.type.venue
+    - taxonomy.vocabulary.venue_type
+id: node.venue.field_venue_type
+field_name: field_venue_type
 entity_type: node
-bundle: restaurant
-label: Cuisine
+bundle: venue
+label: 'Venue Type'
 description: ''
-required: false
+required: true
 translatable: false
 default_value: {  }
 default_value_callback: ''
@@ -20,7 +20,7 @@ settings:
   handler: 'default:taxonomy_term'
   handler_settings:
     target_bundles:
-      cuisine: cuisine
+      venue_type: venue_type
     sort:
       field: name
       direction: asc

@@ -5,7 +5,7 @@ dependencies:
   config:
     - field.storage.node.field_venue
     - node.type.deal
-    - node.type.restaurant
+    - node.type.venue
 id: node.deal.field_venue
 field_name: field_venue
 entity_type: node
@@ -20,7 +20,7 @@ settings:
   handler: 'default:node'
   handler_settings:
     target_bundles:
-      restaurant: restaurant
+      venue: venue
     sort:
       field: _none
       direction: ASC

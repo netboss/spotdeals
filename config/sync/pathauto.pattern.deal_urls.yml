@@ -1,0 +1,22 @@
+uuid: 358bb322-e83d-4e2f-8595-ed58171bdb7d
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: deal_urls
+label: 'Deal URLs'
+type: 'canonical_entities:node'
+pattern: '/deals/[node:field_address:locality]/[node:field_deal_category:entity]'
+selection_criteria:
+  e918dc8d-27e5-42a3-bad8-bba988f5243f:
+    id: 'entity_bundle:node'
+    negate: false
+    uuid: e918dc8d-27e5-42a3-bad8-bba988f5243f
+    context_mapping:
+      node: node
+    bundles:
+      deal: deal
+selection_logic: and
+weight: -5
+relationships: {  }
