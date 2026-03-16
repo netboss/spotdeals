@@ -776,7 +776,7 @@ display:
           group_type: group
           admin_label: ''
           plugin_id: combine
-          operator: word
+          operator: contains
           value: ''
           group: 1
           exposed: true
