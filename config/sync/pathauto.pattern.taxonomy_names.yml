@@ -1,0 +1,26 @@
+uuid: 4a3410bf-5914-4e51-8680-61ca12ed4f10
+langcode: en
+status: true
+dependencies:
+  module:
+    - taxonomy
+id: taxonomy_names
+label: 'Taxonomy Names'
+type: 'canonical_entities:taxonomy_term'
+pattern: '/[term:name]'
+selection_criteria:
+  24f483f0-4613-4033-becb-47f058561c8d:
+    id: 'entity_bundle:taxonomy_term'
+    negate: false
+    uuid: 24f483f0-4613-4033-becb-47f058561c8d
+    context_mapping:
+      taxonomy_term: taxonomy_term
+    bundles:
+      cuisine: cuisine
+      day_of_week: day_of_week
+      deal_category: deal_category
+      neighborhood: neighborhood
+      venue_type: venue_type
+selection_logic: and
+weight: -5
+relationships: {  }
