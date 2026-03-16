@@ -1,0 +1,19 @@
+uuid: 163dc317-0afd-4bba-a415-cb6e72338927
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_claim_contact_email
+    - node.type.venue
+id: node.venue.field_claim_contact_email
+field_name: field_claim_contact_email
+entity_type: node
+bundle: venue
+label: 'Claim Contact Email'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: email

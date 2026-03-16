@@ -6,6 +6,9 @@ dependencies:
     - field.field.node.venue.body
     - field.field.node.venue.field_active
     - field.field.node.venue.field_address
+    - field.field.node.venue.field_claim_contact_email
+    - field.field.node.venue.field_claim_status
+    - field.field.node.venue.field_claimed_by
     - field.field.node.venue.field_claimed_listing
     - field.field.node.venue.field_cuisine
     - field.field.node.venue.field_image
@@ -45,6 +48,36 @@ content:
     region: content
     settings:
       wrapper_type: fieldset
+    third_party_settings: {  }
+  field_claim_contact_email:
+    type: email_default
+    weight: 28
+    region: content
+    settings:
+      placeholder: ''
+      size: 60
+    third_party_settings: {  }
+  field_claim_status:
+    type: tagify_select_widget
+    weight: 26
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 0
+      placeholder: ''
+      show_entity_id: 0
+      parent_selection: 1
+    third_party_settings: {  }
+  field_claimed_by:
+    type: tagify_select_widget
+    weight: 27
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      placeholder: ''
+      show_entity_id: 0
+      parent_selection: 1
     third_party_settings: {  }
   field_claimed_listing:
     type: boolean_checkbox

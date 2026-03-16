@@ -1,0 +1,22 @@
+uuid: 2db9db94-29ef-4d2a-a29e-19de4cc42d00
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.deal
+    - node.type.venue
+  module:
+    - node
+    - webform
+id: venue_owner
+label: 'Venue Owner'
+weight: 4
+is_admin: false
+permissions:
+  - 'create deal content'
+  - 'create venue content'
+  - 'delete own deal content'
+  - 'delete own venue content'
+  - 'edit own deal content'
+  - 'edit own venue content'
+  - 'view own webform submission'

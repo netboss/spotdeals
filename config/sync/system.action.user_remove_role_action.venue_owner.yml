@@ -1,0 +1,14 @@
+uuid: 713fde6f-abeb-4921-a5b0-f2a897ff3403
+langcode: en
+status: true
+dependencies:
+  config:
+    - user.role.venue_owner
+  module:
+    - user
+id: user_remove_role_action.venue_owner
+label: 'Remove the Venue Owner role from the selected user(s)'
+type: user
+plugin: user_remove_role_action
+configuration:
+  rid: venue_owner
