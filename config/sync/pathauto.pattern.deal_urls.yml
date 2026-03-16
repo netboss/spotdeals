@@ -7,12 +7,12 @@ dependencies:
 id: deal_urls
 label: 'Deal URLs'
 type: 'canonical_entities:node'
-pattern: '/deals/[node:field_address:locality]/[node:field_deal_category:entity]'
+pattern: '/deals/[node:field_deal_category:entity]/[node:title]'
 selection_criteria:
-  e918dc8d-27e5-42a3-bad8-bba988f5243f:
+  bc990201-b638-4955-b946-d582b6580e9e:
     id: 'entity_bundle:node'
     negate: false
-    uuid: e918dc8d-27e5-42a3-bad8-bba988f5243f
+    uuid: bc990201-b638-4955-b946-d582b6580e9e
     context_mapping:
       node: node
     bundles:
