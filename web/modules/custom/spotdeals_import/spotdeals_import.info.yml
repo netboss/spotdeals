@@ -1,0 +1,9 @@
+name: SpotDeals Import
+type: module
+description: CSV import for SpotDeals
+core_version_requirement: ^10 || ^11
+package: Custom
+dependencies:
+  - migrate_plus
+  - migrate_tools
+  - migrate_source_csv

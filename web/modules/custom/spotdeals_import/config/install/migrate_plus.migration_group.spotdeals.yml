@@ -1,0 +1,5 @@
+id: spotdeals
+label: SpotDeals
+description: SpotDeals CSV imports
+source_type: CSV
+shared_configuration: {  }
