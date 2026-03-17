@@ -1868,7 +1868,7 @@ display:
           entity_field: nid
           plugin_id: field
           label: ''
-          exclude: true
+          exclude: false
           alter:
             alter_text: true
             text: 'Claim this listing'
