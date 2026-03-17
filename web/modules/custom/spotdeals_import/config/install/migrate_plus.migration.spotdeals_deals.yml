@@ -1,0 +1,55 @@
+id: spotdeals_deals
+label: SpotDeals Deals Import
+migration_group: spotdeals
+
+source:
+  plugin: csv
+  path: modules/custom/spotdeals_import/data/deals.csv
+  header_row_count: 1
+  ids:
+    - title
+    - field_venue
+    - field_day_of_week
+    - field_start_time
+
+process:
+  title: title
+
+  field_price: field_price_offer_text
+  field_deal_time: field_start_time
+  field_active: field_active
+  field_recurring: field_recurring
+
+  field_day_of_week:
+    - plugin: skip_on_empty
+      method: process
+      source: field_day_of_week
+    - plugin: entity_generate
+      entity_type: taxonomy_term
+      value_key: name
+      bundle_key: vid
+      bundle: day_of_week
+
+  field_deal_category:
+    - plugin: skip_on_empty
+      method: process
+      source: field_deal_category
+    - plugin: entity_generate
+      entity_type: taxonomy_term
+      value_key: name
+      bundle_key: vid
+      bundle: deal_category
+
+  field_venue/target_id:
+    - plugin: skip_on_empty
+      method: process
+      source: field_venue
+    - plugin: entity_lookup
+      entity_type: node
+      value_key: title
+      bundle_key: type
+      bundle: venue
+
+destination:
+  plugin: entity:node
+  default_bundle: deal
