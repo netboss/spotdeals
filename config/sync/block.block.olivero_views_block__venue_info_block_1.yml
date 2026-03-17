@@ -1,0 +1,30 @@
+uuid: 956b0522-add9-4664-8613-ae86358dc205
+langcode: en
+status: true
+dependencies:
+  config:
+    - views.view.venue_info
+  module:
+    - system
+    - views
+  theme:
+    - olivero
+id: olivero_views_block__venue_info_block_1
+theme: olivero
+region: sidebar
+weight: -8
+provider: null
+plugin: 'views_block:venue_info-block_1'
+settings:
+  id: 'views_block:venue_info-block_1'
+  label: ''
+  label_display: visible
+  provider: views
+  context_mapping: {  }
+  views_label: ''
+  items_per_page: null
+visibility:
+  request_path:
+    id: request_path
+    negate: false
+    pages: '/venue/*/*'

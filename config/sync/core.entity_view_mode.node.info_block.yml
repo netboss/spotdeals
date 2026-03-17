@@ -1,0 +1,11 @@
+uuid: e2d13437-e9db-46a6-afda-118fee5a1f30
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.info_block
+label: 'Info block'
+description: null
+targetEntityType: node
+cache: true
