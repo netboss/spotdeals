@@ -1,0 +1,18 @@
+uuid: 887b89d9-6d92-40aa-9c1b-4f6b0a20ecb4
+langcode: en
+status: true
+dependencies: {  }
+id: prod
+label: Prod
+description: ''
+weight: 0
+stackable: false
+no_patching: false
+storage: folder
+folder: ../config/splits/prod
+module: {  }
+theme: {  }
+complete_list:
+  - search_api.server.spotdeals_solr_prod
+  - search_api.index.deals_solr
+partial_list: {  }

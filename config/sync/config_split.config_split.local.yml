@@ -1,0 +1,19 @@
+uuid: e7dfa4cd-79a3-46a5-acfa-1f8f58ae1640
+langcode: en
+status: true
+dependencies: {  }
+id: local
+label: Local
+description: ''
+weight: 0
+stackable: false
+no_patching: false
+storage: folder
+folder: ../config/splits/local
+module: {  }
+theme: {  }
+complete_list:
+  - search_api.server.spotdeals_solr
+  - search_api.server.spotdeals_solr
+  - search_api.index.deals_solr
+partial_list: {  }
