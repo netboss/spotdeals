@@ -9,7 +9,6 @@ dependencies:
     - field.storage.node.field_price_offer_text
     - field.storage.node.field_start_time
     - field.storage.node.field_venue
-    - search_api.server.spotdeals_solr
   module:
     - node
     - search_api_solr
@@ -160,4 +159,4 @@ options:
   delete_on_fail: true
   index_directly: true
   track_changes_in_references: true
-server: spotdeals_solr
+server: null
