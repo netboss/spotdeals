@@ -2921,7 +2921,7 @@ display:
       defaults:
         fields: false
       display_extenders: {  }
-      path: deals
+      path: deals-directory
     cache_metadata:
       max-age: -1
       contexts:

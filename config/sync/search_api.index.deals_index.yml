@@ -1,0 +1,101 @@
+uuid: f3be7bdd-7519-4368-a74e-bc9803a3a762
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.body
+    - field.storage.node.field_day_of_week
+    - field.storage.node.field_deal_category
+    - field.storage.node.field_price_offer_text
+    - field.storage.node.field_start_time
+    - field.storage.node.field_venue
+    - search_api.server.spotdeals_deals_server
+  module:
+    - node
+id: deals_index
+name: 'Deals Index'
+description: ''
+read_only: false
+field_settings:
+  body:
+    label: Description
+    datasource_id: 'entity:node'
+    property_path: body
+    type: text
+    dependencies:
+      config:
+        - field.storage.node.body
+  field_day_of_week:
+    label: 'Day of Week'
+    datasource_id: 'entity:node'
+    property_path: field_day_of_week
+    type: text
+    dependencies:
+      config:
+        - field.storage.node.field_day_of_week
+  field_deal_category:
+    label: 'Deal Category'
+    datasource_id: 'entity:node'
+    property_path: field_deal_category
+    type: text
+    dependencies:
+      config:
+        - field.storage.node.field_deal_category
+  field_price_offer_text:
+    label: 'Price / Offer Text'
+    datasource_id: 'entity:node'
+    property_path: field_price_offer_text
+    type: text
+    dependencies:
+      config:
+        - field.storage.node.field_price_offer_text
+  field_start_time:
+    label: 'Deal Time / Hours'
+    datasource_id: 'entity:node'
+    property_path: field_start_time
+    type: text
+    dependencies:
+      config:
+        - field.storage.node.field_start_time
+  field_venue:
+    label: Venue
+    datasource_id: 'entity:node'
+    property_path: field_venue
+    type: text
+    dependencies:
+      config:
+        - field.storage.node.field_venue
+  title:
+    label: Title
+    datasource_id: 'entity:node'
+    property_path: title
+    type: text
+    dependencies:
+      module:
+        - node
+datasource_settings:
+  'entity:node':
+    bundles:
+      default: false
+      selected:
+        - deal
+    languages:
+      default: false
+      selected:
+        - en
+processor_settings:
+  add_url: {  }
+  aggregated_field: {  }
+  custom_value: {  }
+  entity_type: {  }
+  language_with_fallback: {  }
+  rendered_item: {  }
+tracker_settings:
+  default:
+    indexing_order: fifo
+options:
+  cron_limit: 50
+  delete_on_fail: true
+  index_directly: true
+  track_changes_in_references: true
+server: spotdeals_deals_server

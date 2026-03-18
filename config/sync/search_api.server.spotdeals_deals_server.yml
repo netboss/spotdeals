@@ -1,0 +1,15 @@
+uuid: 9c3fadce-3a42-4653-b549-b263d2e9ef6b
+langcode: en
+status: true
+dependencies:
+  module:
+    - search_api_db
+id: spotdeals_deals_server
+name: 'SpotDeals Deals Server'
+description: ''
+backend: search_api_db
+backend_config:
+  database: 'default:default'
+  min_chars: 1
+  matching: words
+  phrase: bigram
