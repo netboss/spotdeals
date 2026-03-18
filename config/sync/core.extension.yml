@@ -32,6 +32,7 @@ module:
   history: 0
   honeypot: 0
   image: 0
+  language: 0
   link: 0
   media: 0
   media_library: 0
@@ -48,6 +49,9 @@ module:
   responsive_image: 0
   scheduler: 0
   search: 0
+  search_api: 0
+  search_api_db: 0
+  search_api_solr: 0
   shortcut: 0
   system: 0
   tagify: 0

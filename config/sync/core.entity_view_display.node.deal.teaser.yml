@@ -58,3 +58,5 @@ hidden:
   field_source_url: true
   field_start_time: true
   field_venue: true
+  langcode: true
+  search_api_excerpt: true

@@ -77,3 +77,5 @@ hidden:
   field_image: true
   field_menu_url: true
   field_venue_type: true
+  langcode: true
+  search_api_excerpt: true
