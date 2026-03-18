@@ -14,5 +14,4 @@ module: {  }
 theme: {  }
 complete_list:
   - search_api.server.spotdeals_solr_prod
-  - search_api.index.deals_solr
 partial_list: {  }
