@@ -12,6 +12,5 @@ storage: folder
 folder: ../config/splits/prod
 module: {  }
 theme: {  }
-complete_list:
-  - search_api.server.spotdeals_solr
+complete_list: {  }
 partial_list: {  }
