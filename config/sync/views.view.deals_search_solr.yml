@@ -855,6 +855,16 @@ display:
                 operator: '='
                 value:
                   value: daily
+              9:
+                title: Weekdays
+                operator: '='
+                value:
+                  value: weekdays
+              10:
+                title: Weekends
+                operator: '='
+                value:
+                  value: weekends
         name_1:
           id: name_1
           table: search_api_index_deals_solr

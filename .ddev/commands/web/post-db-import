@@ -1,0 +1,8 @@
+ddev drush en migrate migrate_plus migrate_tools -y
+ddev drush cr
+
+ddev drush migrate:rollback spotdeals_deals
+ddev drush migrate:import spotdeals_deals -vvv
+
+ddev drush search-api:clear deals_solr
+ddev drush search-api:index deals_solr
