@@ -27,7 +27,7 @@ display:
     display_plugin: default
     position: 0
     display_options:
-      title: 'Deals Search (Solr)'
+      title: 'Deals Finder'
       fields:
         title_1:
           id: title_1
