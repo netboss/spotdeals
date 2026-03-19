@@ -6,7 +6,6 @@ _core:
   default_config_hash: Ec7835jzt99MSJHvPd1Uo4gBcpxGPa0WFnTb_lWBadE
 id: spotdeals_venues
 class: null
-idMap: {  }
 field_plugin_method: null
 cck_plugin_method: null
 migration_tags: null
@@ -76,5 +75,6 @@ process:
 destination:
   plugin: 'entity:node'
   default_bundle: venue
+idMap: {  }
 migration_dependencies: null
 include: null
