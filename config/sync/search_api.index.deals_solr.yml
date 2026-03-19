@@ -4,11 +4,13 @@ status: true
 dependencies:
   config:
     - field.storage.node.body
+    - field.storage.node.field_address
     - field.storage.node.field_day_of_week
     - field.storage.node.field_deal_category
     - field.storage.node.field_price_offer_text
     - field.storage.node.field_start_time
     - field.storage.node.field_venue
+    - search_api.server.spotdeals_solr
   module:
     - node
     - search_api_solr
@@ -65,6 +67,17 @@ name: 'Deals (Solr)'
 description: ''
 read_only: false
 field_settings:
+  administrative_area:
+    label: 'Venue » Content » Address » The top-level administrative subdivision of the country'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_address:administrative_area'
+    type: text
+    dependencies:
+      config:
+        - field.storage.node.field_address
+        - field.storage.node.field_venue
+      module:
+        - node
   body:
     label: Body
     datasource_id: 'entity:node'
@@ -105,6 +118,17 @@ field_settings:
     dependencies:
       config:
         - field.storage.node.field_venue
+  locality:
+    label: 'Venue » Content » Address » The locality (i.e. city)'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_address:locality'
+    type: text
+    dependencies:
+      config:
+        - field.storage.node.field_address
+        - field.storage.node.field_venue
+      module:
+        - node
   name:
     label: 'Day of Week » Taxonomy term » Name'
     datasource_id: 'entity:node'
@@ -125,6 +149,17 @@ field_settings:
         - field.storage.node.field_deal_category
       module:
         - taxonomy
+  postal_code:
+    label: 'Venue » Content » Address » The postal code'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_address:postal_code'
+    type: text
+    dependencies:
+      config:
+        - field.storage.node.field_address
+        - field.storage.node.field_venue
+      module:
+        - node
   title:
     label: Title
     datasource_id: 'entity:node'

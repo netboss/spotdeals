@@ -6,7 +6,6 @@ _core:
   default_config_hash: pGVjBnNqHZ9c-XTlZ1F03wlePsZ6L-rZuIu3VRY1HjE
 id: spotdeals_deals
 class: null
-idMap: {  }
 field_plugin_method: null
 cck_plugin_method: null
 migration_tags: null
@@ -66,5 +65,6 @@ process:
 destination:
   plugin: 'entity:node'
   default_bundle: deal
+idMap: {  }
 migration_dependencies: null
 include: null
