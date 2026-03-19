@@ -1,0 +1,80 @@
+uuid: c192fa38-7327-4882-8e35-a2e6dc2341a0
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: Ec7835jzt99MSJHvPd1Uo4gBcpxGPa0WFnTb_lWBadE
+id: spotdeals_venues
+class: null
+idMap: {  }
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags: null
+migration_group: spotdeals
+label: 'SpotDeals Venues Import'
+source:
+  plugin: csv
+  path: modules/custom/spotdeals_import/data/venues.csv
+  header_row_count: 1
+  ids:
+    - title
+process:
+  title: title
+  field_phone: field_phone
+  field_short_description/value:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_short_description
+  field_short_description/format:
+    plugin: default_value
+    default_value: basic_html
+  field_website/uri:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_website_uri
+  field_website/title:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_website_title
+  field_claimed_listing: field_claimed_listing
+  field_address/country_code: field_address_country_code
+  field_address/address_line1: field_address_address_line1
+  field_address/locality: field_address_locality
+  field_address/administrative_area: field_address_administrative_area
+  field_address/postal_code: field_address_postal_code
+  field_venue_type:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_venue_type
+    -
+      plugin: explode
+      delimiter: '|'
+    -
+      plugin: entity_generate
+      entity_type: taxonomy_term
+      value_key: name
+      bundle_key: vid
+      bundle: venue_type
+  field_cuisine:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_cuisine
+    -
+      plugin: explode
+      delimiter: '|'
+    -
+      plugin: entity_generate
+      entity_type: taxonomy_term
+      value_key: name
+      bundle_key: vid
+      bundle: cuisine
+destination:
+  plugin: 'entity:node'
+  default_bundle: venue
+migration_dependencies: null
+include: null

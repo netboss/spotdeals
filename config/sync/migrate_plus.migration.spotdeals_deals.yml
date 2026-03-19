@@ -1,7 +1,17 @@
+uuid: 92ea00ee-4df3-4444-81ae-010199366704
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: pGVjBnNqHZ9c-XTlZ1F03wlePsZ6L-rZuIu3VRY1HjE
 id: spotdeals_deals
-label: SpotDeals Deals Import
+class: null
+idMap: {  }
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags: null
 migration_group: spotdeals
-
+label: 'SpotDeals Deals Import'
 source:
   plugin: csv
   path: modules/custom/spotdeals_import/data/deals.csv
@@ -11,47 +21,50 @@ source:
     - field_venue
     - field_day_of_week
     - field_start_time
-
 process:
   title: title
-
   field_price_offer_text: field_price_offer_text
   field_start_time: field_start_time
   field_active: field_active
   field_recurring: field_recurring
-
   field_day_of_week:
-    - plugin: skip_on_empty
+    -
+      plugin: skip_on_empty
       method: process
       source: field_day_of_week
-    - plugin: explode
+    -
+      plugin: explode
       delimiter: '|'
-    - plugin: entity_generate
+    -
+      plugin: entity_generate
       entity_type: taxonomy_term
       value_key: name
       bundle_key: vid
       bundle: day_of_week
-
   field_deal_category:
-    - plugin: skip_on_empty
+    -
+      plugin: skip_on_empty
       method: process
       source: field_deal_category
-    - plugin: entity_generate
+    -
+      plugin: entity_generate
       entity_type: taxonomy_term
       value_key: name
       bundle_key: vid
       bundle: deal_category
-
   field_venue/target_id:
-    - plugin: skip_on_empty
+    -
+      plugin: skip_on_empty
       method: process
       source: field_venue
-    - plugin: entity_lookup
+    -
+      plugin: entity_lookup
       entity_type: node
       value_key: title
       bundle_key: type
       bundle: venue
-
 destination:
-  plugin: entity:node
+  plugin: 'entity:node'
   default_bundle: deal
+migration_dependencies: null
+include: null
