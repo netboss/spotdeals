@@ -13,5 +13,5 @@ folder: ../config/splits/prod
 module: {  }
 theme: {  }
 complete_list:
-  - search_api.server.spotdeals_solr_prod
+  - search_api.server.spotdeals_solr
 partial_list: {  }
