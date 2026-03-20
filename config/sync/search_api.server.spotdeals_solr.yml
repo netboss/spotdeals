@@ -44,7 +44,7 @@ backend_config:
     host: 143.198.13.202
     port: 8983
     path: /
-    core: dev
+    core: local
     timeout: 5
     index_timeout: 5
     optimize_timeout: 10

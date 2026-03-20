@@ -1,0 +1,177 @@
+<?php
+
+declare(strict_types=1);
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\views\ViewExecutable;
+
+/**
+ * Implements hook_form_views_exposed_form_alter().
+ */
+function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void {
+  if (!isset($form['search_deals']) && !isset($form['search_api_fulltext'])) {
+    return;
+  }
+
+  $request = \Drupal::request();
+
+  // Keep the visible search box showing exactly what the user typed.
+  // Use HTML attribute 'value' only for presentation.
+  // Do NOT use #value because it can interfere with form processing.
+  if (isset($form['search_deals'])) {
+    $raw = $request->query->get('search_deals');
+    if (is_string($raw)) {
+      $form['search_deals']['#default_value'] = $raw;
+      $form['search_deals']['#attributes']['value'] = $raw;
+    }
+  }
+
+  if (isset($form['search_api_fulltext'])) {
+    $raw = $request->query->get('search_api_fulltext');
+    if (is_string($raw)) {
+      $form['search_api_fulltext']['#default_value'] = $raw;
+      $form['search_api_fulltext']['#attributes']['value'] = $raw;
+    }
+  }
+
+  if (isset($form['postal_code_exact'])) {
+    $form['postal_code_exact']['#type'] = 'hidden';
+    $form['postal_code_exact']['#title_display'] = 'invisible';
+  }
+
+  if (isset($form['locality_exact'])) {
+    $form['locality_exact']['#type'] = 'hidden';
+    $form['locality_exact']['#title_display'] = 'invisible';
+  }
+}
+
+/**
+ * Implements hook_views_pre_view().
+ *
+ * Rewrites one-box input into:
+ * - keyword-only fulltext
+ * - exact ZIP/city exposed filters
+ */
+function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, string $display_id, array &$args): void {
+  $input = $view->getExposedInput();
+  $request = \Drupal::request();
+
+  // Only act on views that actually expose our search field.
+  $search_param = NULL;
+  if (array_key_exists('search_deals', $input) || $request->query->has('search_deals')) {
+    $search_param = 'search_deals';
+  }
+  elseif (array_key_exists('search_api_fulltext', $input) || $request->query->has('search_api_fulltext')) {
+    $search_param = 'search_api_fulltext';
+  }
+
+  if ($search_param === NULL) {
+    return;
+  }
+
+  $raw = trim((string) ($input[$search_param] ?? $request->query->get($search_param, '')));
+  if ($raw === '') {
+    return;
+  }
+
+  $parsed = _spotdeals_search_smart_location_parse($raw);
+
+  // If nothing location-like was found, do nothing.
+  if (empty($parsed['zip']) && empty($parsed['city'])) {
+    \Drupal::logger('spotdeals_search_smart_location')->notice(
+      'SMART LOCATION no location found: view="@view" display="@display" raw="@raw"',
+      [
+        '@view' => $view->id(),
+        '@display' => $display_id,
+        '@raw' => $raw,
+      ]
+    );
+    return;
+  }
+
+  // Rewrite the actual search query to only non-location keywords.
+  // This is required so ZIP/city tokens do not remain in fulltext.
+  $input[$search_param] = $parsed['keywords'];
+
+  // Keep Search API internal fulltext aligned too, if present.
+  if (array_key_exists('search_api_fulltext', $input)) {
+    $input['search_api_fulltext'] = $parsed['keywords'];
+  }
+
+  // Apply parsed location filters.
+  if (!empty($parsed['zip'])) {
+    $input['postal_code_exact'] = $parsed['zip'];
+  }
+
+  if (!empty($parsed['city'])) {
+    $input['locality_exact'] = $parsed['city'];
+  }
+
+  $view->setExposedInput($input);
+
+  \Drupal::logger('spotdeals_search_smart_location')->notice(
+    'SMART LOCATION applied: view="@view" display="@display" raw="@raw" keywords="@keywords" zip="@zip" city="@city" search_param="@search_param"',
+    [
+      '@view' => $view->id(),
+      '@display' => $display_id,
+      '@raw' => $raw,
+      '@keywords' => $parsed['keywords'] ?? '',
+      '@zip' => $input['postal_code_exact'] ?? '',
+      '@city' => $input['locality_exact'] ?? '',
+      '@search_param' => $search_param,
+    ]
+  );
+}
+
+/**
+ * Parse one-box input into keywords + zip + city.
+ */
+function _spotdeals_search_smart_location_parse(string $input): array {
+  $working = trim($input);
+  $normalized = _spotdeals_search_smart_location_normalize($working);
+
+  $zip = NULL;
+  $city = NULL;
+
+  // Match 5-digit ZIP.
+  if (preg_match('/\b(\d{5})\b/', $working, $matches)) {
+    $zip = $matches[1];
+    $working = preg_replace('/\b' . preg_quote($zip, '/') . '\b/i', ' ', $working, 1) ?? $working;
+    $normalized = _spotdeals_search_smart_location_normalize($working);
+  }
+
+  $known_cities = [
+    'new smyrna beach' => 'New Smyrna Beach',
+    'daytona beach' => 'Daytona Beach',
+    'port orange' => 'Port Orange',
+    'ormond beach' => 'Ormond Beach',
+    'edgewater' => 'Edgewater',
+  ];
+
+  foreach ($known_cities as $needle => $label) {
+    if (preg_match('/\b' . preg_quote($needle, '/') . '\b/i', $normalized)) {
+      $city = $label;
+      $working = preg_replace('/\b' . preg_quote($needle, '/') . '\b/i', ' ', $working, 1) ?? $working;
+      $normalized = _spotdeals_search_smart_location_normalize($working);
+      break;
+    }
+  }
+
+  $keywords = trim(preg_replace('/\s+/', ' ', $working) ?? '');
+
+  return [
+    'keywords' => $keywords,
+    'zip' => $zip,
+    'city' => $city,
+  ];
+}
+
+/**
+ * Normalize a value for matching.
+ */
+function _spotdeals_search_smart_location_normalize(string $value): string {
+  $value = mb_strtolower($value);
+  $value = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $value) ?? $value;
+  $value = preg_replace('/\s+/', ' ', $value) ?? $value;
+  return trim($value);
+}

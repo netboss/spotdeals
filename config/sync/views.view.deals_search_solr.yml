@@ -856,12 +856,12 @@ display:
                 value:
                   value: daily
               9:
-                title: Weekdays
+                title: 'From Monday to Friday'
                 operator: '='
                 value:
-                  value: weekdays
+                  value: 'monday friday'
               10:
-                title: Weekends
+                title: 'Weekends Only'
                 operator: '='
                 value:
                   value: weekends
@@ -934,6 +934,94 @@ display:
                 operator: '='
                 value:
                   value: breakfast-special
+        postal_code_exact:
+          id: postal_code_exact
+          table: search_api_index_deals_solr
+          field: postal_code_exact
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: search_api_string
+          operator: '='
+          value:
+            min: ''
+            max: ''
+            value: ''
+          group: 1
+          exposed: true
+          expose:
+            operator_id: postal_code_exact_op
+            label: 'Venue » Content » Address » The postal code'
+            description: ''
+            use_operator: false
+            operator: postal_code_exact_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: postal_code_exact
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+            min_placeholder: ''
+            max_placeholder: ''
+            placeholder: ''
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+        locality_exact:
+          id: locality_exact
+          table: search_api_index_deals_solr
+          field: locality_exact
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: search_api_string
+          operator: '='
+          value:
+            min: ''
+            max: ''
+            value: ''
+          group: 1
+          exposed: true
+          expose:
+            operator_id: locality_exact_op
+            label: 'Venue » Content » Address » The locality (i.e. city)'
+            description: ''
+            use_operator: false
+            operator: locality_exact_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: locality_exact
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+            min_placeholder: ''
+            max_placeholder: ''
+            placeholder: ''
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
       style:
         type: default
       row:

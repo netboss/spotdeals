@@ -5,6 +5,7 @@ dependencies:
   config:
     - field.storage.node.body
     - field.storage.node.field_address
+    - field.storage.node.field_cuisine
     - field.storage.node.field_day_of_week
     - field.storage.node.field_deal_category
     - field.storage.node.field_price_offer_text
@@ -68,11 +69,22 @@ name: 'Deals (Solr)'
 description: ''
 read_only: false
 field_settings:
+  address_line1:
+    label: 'Venue » Content » Address » The first line of the address block'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_address:address_line1'
+    type: string
+    dependencies:
+      config:
+        - field.storage.node.field_address
+        - field.storage.node.field_venue
+      module:
+        - node
   administrative_area:
     label: 'Venue » Content » Address » The top-level administrative subdivision of the country'
     datasource_id: 'entity:node'
     property_path: 'field_venue:entity:field_address:administrative_area'
-    type: text
+    type: string
     dependencies:
       config:
         - field.storage.node.field_address
@@ -100,6 +112,7 @@ field_settings:
     datasource_id: 'entity:node'
     property_path: field_price_offer_text
     type: text
+    boost: 2.0
     dependencies:
       config:
         - field.storage.node.field_price_offer_text
@@ -107,7 +120,7 @@ field_settings:
     label: 'Deal Time / Hours'
     datasource_id: 'entity:node'
     property_path: field_start_time
-    type: text
+    type: string
     dependencies:
       config:
         - field.storage.node.field_start_time
@@ -115,7 +128,7 @@ field_settings:
     label: Venue
     datasource_id: 'entity:node'
     property_path: field_venue
-    type: text
+    type: string
     dependencies:
       config:
         - field.storage.node.field_venue
@@ -123,7 +136,7 @@ field_settings:
     label: 'Venue » Content » Venue Type'
     datasource_id: 'entity:node'
     property_path: 'field_venue:entity:field_venue_type'
-    type: text
+    type: string
     dependencies:
       config:
         - field.storage.node.field_venue
@@ -134,7 +147,19 @@ field_settings:
     label: 'Venue » Content » Address » The locality (i.e. city)'
     datasource_id: 'entity:node'
     property_path: 'field_venue:entity:field_address:locality'
-    type: text
+    type: string
+    boost: 5.0
+    dependencies:
+      config:
+        - field.storage.node.field_address
+        - field.storage.node.field_venue
+      module:
+        - node
+  locality_exact:
+    label: 'Venue » Content » Address » The locality (i.e. city)'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_address:locality'
+    type: string
     dependencies:
       config:
         - field.storage.node.field_address
@@ -145,7 +170,7 @@ field_settings:
     label: 'Day of Week » Taxonomy term » Name'
     datasource_id: 'entity:node'
     property_path: 'field_day_of_week:entity:name'
-    type: text
+    type: string
     dependencies:
       config:
         - field.storage.node.field_day_of_week
@@ -156,16 +181,42 @@ field_settings:
     datasource_id: 'entity:node'
     property_path: 'field_deal_category:entity:name'
     type: text
+    boost: 2.0
     dependencies:
       config:
         - field.storage.node.field_deal_category
       module:
         - taxonomy
+  name_2:
+    label: 'Venue » Content » Cuisine » Taxonomy term » Name'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_cuisine:entity:name'
+    type: text
+    boost: 3.0
+    dependencies:
+      config:
+        - field.storage.node.field_cuisine
+        - field.storage.node.field_venue
+      module:
+        - node
+        - taxonomy
   postal_code:
     label: 'Venue » Content » Address » The postal code'
     datasource_id: 'entity:node'
     property_path: 'field_venue:entity:field_address:postal_code'
-    type: text
+    type: string
+    boost: 8.0
+    dependencies:
+      config:
+        - field.storage.node.field_address
+        - field.storage.node.field_venue
+      module:
+        - node
+  postal_code_exact:
+    label: 'Venue » Content » Address » The postal code'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_address:postal_code'
+    type: string
     dependencies:
       config:
         - field.storage.node.field_address
@@ -177,6 +228,7 @@ field_settings:
     datasource_id: 'entity:node'
     property_path: title
     type: text
+    boost: 5.0
     dependencies:
       module:
         - node
@@ -185,6 +237,7 @@ field_settings:
     datasource_id: 'entity:node'
     property_path: 'field_venue:entity:title'
     type: text
+    boost: 5.0
     dependencies:
       config:
         - field.storage.node.field_venue
@@ -205,9 +258,22 @@ processor_settings:
   auto_aggregated_fulltext_field: {  }
   custom_value: {  }
   entity_type: {  }
+  highlight:
+    weights:
+      postprocess_query: 0
+    prefix: '<strong>'
+    suffix: '</strong>'
+    excerpt: true
+    excerpt_always: false
+    excerpt_length: 256
+    exclude_fields: {  }
+    highlight: always
+    highlight_partial: false
   language_with_fallback: {  }
   rendered_item: {  }
-  solr_date_range: {  }
+  solr_date_range:
+    weights:
+      preprocess_index: 0
 tracker_settings:
   default:
     indexing_order: fifo
