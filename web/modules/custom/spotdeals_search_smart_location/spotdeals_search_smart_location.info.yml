@@ -1,0 +1,7 @@
+name: SpotDeals Search Smart Location
+type: module
+description: Makes the deals search box treat ZIPs and city names as exact location filters.
+core_version_requirement: ^10 || ^11
+package: Custom
+dependencies:
+  - search_api:search_api
