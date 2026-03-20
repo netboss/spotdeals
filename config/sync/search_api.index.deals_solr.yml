@@ -10,6 +10,7 @@ dependencies:
     - field.storage.node.field_price_offer_text
     - field.storage.node.field_start_time
     - field.storage.node.field_venue
+    - field.storage.node.field_venue_type
     - search_api.server.spotdeals_solr
   module:
     - node
@@ -118,6 +119,17 @@ field_settings:
     dependencies:
       config:
         - field.storage.node.field_venue
+  field_venue_type:
+    label: 'Venue » Content » Venue Type'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_venue_type'
+    type: text
+    dependencies:
+      config:
+        - field.storage.node.field_venue
+        - field.storage.node.field_venue_type
+      module:
+        - node
   locality:
     label: 'Venue » Content » Address » The locality (i.e. city)'
     datasource_id: 'entity:node'
@@ -166,6 +178,16 @@ field_settings:
     property_path: title
     type: text
     dependencies:
+      module:
+        - node
+  title_1:
+    label: 'Venue » Content » Title'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:title'
+    type: text
+    dependencies:
+      config:
+        - field.storage.node.field_venue
       module:
         - node
 datasource_settings:
