@@ -1,5 +1,5 @@
-#services:
-#  spotdeals_search_smart_location.query_subscriber:
-#    class: Drupal\spotdeals_search_smart_location\EventSubscriber\SmartLocationQuerySubscriber
-#    tags:
-#      - { name: event_subscriber }
+services:
+  spotdeals_search_smart_location.search_api_solr_subscriber:
+    class: Drupal\spotdeals_search_smart_location\EventSubscriber\SearchApiSolrSubscriber
+    tags:
+      - { name: event_subscriber }
