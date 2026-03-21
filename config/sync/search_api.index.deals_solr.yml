@@ -224,6 +224,10 @@ field_settings:
         - field.storage.node.field_venue
       module:
         - node
+  spotdeals_next_occurrence:
+    label: 'Next occurrence datetime'
+    property_path: spotdeals_next_occurrence
+    type: date
   title:
     label: Title
     datasource_id: 'entity:node'
