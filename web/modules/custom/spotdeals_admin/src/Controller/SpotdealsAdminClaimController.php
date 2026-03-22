@@ -38,18 +38,87 @@ class SpotdealsAdminClaimController extends ControllerBase {
       return $this->redirectToClaim($claim);
     }
 
+    // Plan gating safeguard on approval.
+    if (!spotdeals_admin_user_can_claim_more_venues($claimant_user)) {
+      // Allow approval if this user already owns this same venue.
+      $already_owner = FALSE;
+      if ($venue->hasField('field_primary_owner_user') && !$venue->get('field_primary_owner_user')->isEmpty()) {
+        $already_owner = ((int) $venue->get('field_primary_owner_user')->target_id === (int) $claimant_user->id());
+      }
+
+      if (!$already_owner) {
+        $this->messenger()->addError($this->t('This user is on the Free plan, which includes 1 business listing. Upgrade them to Pro before approving another venue claim.'));
+        return $this->redirectToClaim($claim);
+      }
+    }
+
     if (!$venue->hasField('field_primary_owner_user')) {
       $this->messenger()->addError($this->t('The linked venue does not have the field_primary_owner_user field.'));
       return $this->redirectToClaim($claim);
     }
 
+    // First, approve the claim itself.
     if (!spotdeals_admin_claim_set_status($claim, 'approved')) {
-      $this->messenger()->addError($this->t('Could not set the claim status to Approved. Check allowed values for field_claim_status.'));
+      $this->messenger()->addError($this->t('Could not set the claim status to Approved.'));
       return $this->redirectToClaim($claim);
     }
 
-    $venue->set('field_primary_owner_user', ['target_id' => $claimant_user->id()]);
+    // Canonical venue owner.
+    $venue->set('field_primary_owner_user', $claimant_user->id());
+
+    // Apply all venue-side claim metadata.
+    $this->applyVenueClaimMetadata($venue, $claim, $claimant_user);
+
+    // Debug logging before save.
+    \Drupal::logger('spotdeals_admin')->notice(
+      'Before venue save for venue @vid: owner=@owner claimed_by=@claimed_by claimed_listing=@claimed_listing status=@status email=@email',
+      [
+        '@vid' => $venue->id(),
+        '@owner' => $venue->hasField('field_primary_owner_user') && !$venue->get('field_primary_owner_user')->isEmpty()
+          ? $venue->get('field_primary_owner_user')->target_id
+          : '[empty]',
+        '@claimed_by' => $venue->hasField('field_claimed_by') && !$venue->get('field_claimed_by')->isEmpty()
+          ? $venue->get('field_claimed_by')->target_id
+          : '[empty]',
+        '@claimed_listing' => $venue->hasField('field_claimed_listing') && !$venue->get('field_claimed_listing')->isEmpty()
+          ? $venue->get('field_claimed_listing')->value
+          : '[empty]',
+        '@status' => $venue->hasField('field_claim_status') && !$venue->get('field_claim_status')->isEmpty()
+          ? $venue->get('field_claim_status')->value
+          : '[empty]',
+        '@email' => $venue->hasField('field_claim_contact_email') && !$venue->get('field_claim_contact_email')->isEmpty()
+          ? $venue->get('field_claim_contact_email')->value
+          : '[empty]',
+      ]
+    );
+
     $venue->save();
+
+    // Reload venue from storage and log persisted values.
+    $reloaded_venue = Node::load($venue->id());
+    if ($reloaded_venue instanceof NodeInterface) {
+      \Drupal::logger('spotdeals_admin')->notice(
+        'After venue save for venue @vid: owner=@owner claimed_by=@claimed_by claimed_listing=@claimed_listing status=@status email=@email',
+        [
+          '@vid' => $reloaded_venue->id(),
+          '@owner' => $reloaded_venue->hasField('field_primary_owner_user') && !$reloaded_venue->get('field_primary_owner_user')->isEmpty()
+            ? $reloaded_venue->get('field_primary_owner_user')->target_id
+            : '[empty]',
+          '@claimed_by' => $reloaded_venue->hasField('field_claimed_by') && !$reloaded_venue->get('field_claimed_by')->isEmpty()
+            ? $reloaded_venue->get('field_claimed_by')->target_id
+            : '[empty]',
+          '@claimed_listing' => $reloaded_venue->hasField('field_claimed_listing') && !$reloaded_venue->get('field_claimed_listing')->isEmpty()
+            ? $reloaded_venue->get('field_claimed_listing')->value
+            : '[empty]',
+          '@status' => $reloaded_venue->hasField('field_claim_status') && !$reloaded_venue->get('field_claim_status')->isEmpty()
+            ? $reloaded_venue->get('field_claim_status')->value
+            : '[empty]',
+          '@email' => $reloaded_venue->hasField('field_claim_contact_email') && !$reloaded_venue->get('field_claim_contact_email')->isEmpty()
+            ? $reloaded_venue->get('field_claim_contact_email')->value
+            : '[empty]',
+        ]
+      );
+    }
 
     $this->applyReviewMetadata($claim);
     $claim->save();
@@ -57,6 +126,7 @@ class SpotdealsAdminClaimController extends ControllerBase {
     $this->messenger()->addStatus($this->t('Claim approved and venue assigned to %user.', [
       '%user' => $claimant_user->getDisplayName(),
     ]));
+
     return $this->redirectToClaim($claim);
   }
 
@@ -72,7 +142,7 @@ class SpotdealsAdminClaimController extends ControllerBase {
     }
 
     if (!spotdeals_admin_claim_set_status($claim, 'rejected')) {
-      $this->messenger()->addError($this->t('Could not set the claim status to Rejected. Check allowed values for field_claim_status.'));
+      $this->messenger()->addError($this->t('Could not set the claim status to Rejected.'));
       return $this->redirectToClaim($claim);
     }
 
@@ -81,6 +151,31 @@ class SpotdealsAdminClaimController extends ControllerBase {
 
     $this->messenger()->addStatus($this->t('Claim rejected.'));
     return $this->redirectToClaim($claim);
+  }
+
+  /**
+   * Applies venue ownership/claim metadata on approval.
+   */
+  protected function applyVenueClaimMetadata(NodeInterface $venue, NodeInterface $claim, UserInterface $claimant_user) {
+    if ($venue->hasField('field_claimed_by')) {
+      $venue->set('field_claimed_by', $claimant_user->id());
+    }
+
+    if ($venue->hasField('field_claim_status')) {
+      $venue->set('field_claim_status', 'approved');
+    }
+
+    if ($venue->hasField('field_claimed_listing')) {
+      $venue->set('field_claimed_listing', TRUE);
+    }
+
+    if (
+      $venue->hasField('field_claim_contact_email') &&
+      $claim->hasField('field_contact_email') &&
+      !$claim->get('field_contact_email')->isEmpty()
+    ) {
+      $venue->set('field_claim_contact_email', $claim->get('field_contact_email')->value);
+    }
   }
 
   /**
@@ -104,7 +199,7 @@ class SpotdealsAdminClaimController extends ControllerBase {
    *
    * Priority:
    * - field_claimant_user
-   * - claim author
+   * - claim author (legacy fallback for older claims)
    */
   protected function getClaimantUser(NodeInterface $claim) {
     if ($claim->hasField('field_claimant_user') && !$claim->get('field_claimant_user')->isEmpty()) {

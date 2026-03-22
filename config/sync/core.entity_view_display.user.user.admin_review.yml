@@ -43,6 +43,7 @@ dependencies:
     - field.field.user.user.field_media_document
     - field.field.user.user.field_phone
     - field.field.user.user.field_phone_veirifed
+    - field.field.user.user.field_plan_tier
     - field.field.user.user.field_primary_owner_user
     - field.field.user.user.field_profile_photo
     - field.field.user.user.field_reviewed_at
@@ -228,6 +229,7 @@ hidden:
   field_linkedin_url: true
   field_media_document: true
   field_phone: true
+  field_plan_tier: true
   field_primary_owner_user: true
   field_profile_photo: true
   field_submitted_at: true

@@ -1,0 +1,23 @@
+uuid: e23e56bf-d7bd-4921-bbbb-fc1c736986d7
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_plan_tier
+  module:
+    - options
+    - user
+id: user.user.field_plan_tier
+field_name: field_plan_tier
+entity_type: user
+bundle: user
+label: 'Plan tier'
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: free
+default_value_callback: ''
+settings: {  }
+field_type: list_string

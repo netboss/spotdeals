@@ -1,0 +1,27 @@
+uuid: f3ec5378-2c6e-43d2-bdc7-fa1cd02a3ba8
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - user
+id: user.field_plan_tier
+field_name: field_plan_tier
+entity_type: user
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: free
+      label: Free
+    -
+      value: pro
+      label: Pro
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

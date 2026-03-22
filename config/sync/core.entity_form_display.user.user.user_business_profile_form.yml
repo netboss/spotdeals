@@ -43,6 +43,7 @@ dependencies:
     - field.field.user.user.field_media_document
     - field.field.user.user.field_phone
     - field.field.user.user.field_phone_veirifed
+    - field.field.user.user.field_plan_tier
     - field.field.user.user.field_primary_owner_user
     - field.field.user.user.field_profile_photo
     - field.field.user.user.field_reviewed_at
@@ -484,4 +485,5 @@ content:
       preview_image_style: thumbnail
     third_party_settings: {  }
 hidden:
+  field_plan_tier: true
   langcode: true
