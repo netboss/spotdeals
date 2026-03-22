@@ -5,6 +5,7 @@ dependencies:
   config:
     - core.entity_form_mode.node.claim_admin_review
     - field.field.node.claim.field_claim_status
+    - field.field.node.claim.field_claimant_user
     - field.field.node.claim.field_contact_email
     - field.field.node.claim.field_contact_phone
     - field.field.node.claim.field_decision_reason
@@ -150,6 +151,7 @@ content:
     settings: {  }
     third_party_settings: {  }
 hidden:
+  field_claimant_user: true
   field_documents_submitted: true
   field_venue: true
   promote: true
