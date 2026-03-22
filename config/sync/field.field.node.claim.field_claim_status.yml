@@ -1,0 +1,23 @@
+uuid: 1aeb0c75-3ab0-4865-8b57-810f5d4abee3
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_claim_status
+    - node.type.claim
+  module:
+    - options
+id: node.claim.field_claim_status
+field_name: field_claim_status
+entity_type: node
+bundle: claim
+label: 'Claim status'
+description: ''
+required: true
+translatable: false
+default_value:
+  -
+    value: pending
+default_value_callback: ''
+settings: {  }
+field_type: list_string

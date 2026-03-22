@@ -1,0 +1,18 @@
+uuid: b0b14178-2600-4ffa-81ed-5e6721cd9c5b
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.field_authorized_representative
+field_name: field_authorized_representative
+entity_type: user
+type: boolean
+settings: {  }
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,11 @@
+uuid: 67185c91-639c-4f42-9d62-5c39ab1d9e30
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.admin_review
+label: 'Admin review'
+description: null
+targetEntityType: user
+cache: true

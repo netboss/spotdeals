@@ -1,0 +1,11 @@
+uuid: 6642e253-bed1-42ed-9505-f32b57bfa938
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.admin_review_form
+label: 'Claim — Admin Review'
+description: 'Internal form used by administrators to review, verify, and approve or reject claims.'
+targetEntityType: user
+cache: true

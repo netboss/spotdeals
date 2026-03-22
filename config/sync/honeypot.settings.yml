@@ -15,6 +15,7 @@ form_settings:
   user_register_form: false
   user_pass: false
   node_basic_page_form: false
+  node_claim_form: false
   node_deal_form: false
   node_venue_form: false
   comment_comment_form: false

@@ -1,0 +1,21 @@
+uuid: f9f193d3-2047-46d4-b7cd-1fdf5798c75b
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_claim_status
+  module:
+    - options
+    - user
+id: user.user.field_claim_status
+field_name: field_claim_status
+entity_type: user
+bundle: user
+label: 'Claim Status'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

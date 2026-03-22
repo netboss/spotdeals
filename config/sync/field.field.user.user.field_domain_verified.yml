@@ -1,0 +1,22 @@
+uuid: 286a38e8-151b-4bb8-a448-b7f73e8c01ae
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_domain_verified
+  module:
+    - user
+id: user.user.field_domain_verified
+field_name: field_domain_verified
+entity_type: user
+bundle: user
+label: 'Domain Verified'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean

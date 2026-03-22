@@ -1,0 +1,21 @@
+uuid: c5407fb9-a189-49fa-b6ac-e76140794e6f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_business_phone
+  module:
+    - telephone
+    - user
+id: user.user.field_business_phone
+field_name: field_business_phone
+entity_type: user
+bundle: user
+label: 'Business Phone'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: telephone

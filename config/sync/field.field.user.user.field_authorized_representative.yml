@@ -1,0 +1,22 @@
+uuid: 94191bad-607d-4bd7-92ba-ef6bfe6cc23f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_authorized_representative
+  module:
+    - user
+id: user.user.field_authorized_representative
+field_name: field_authorized_representative
+entity_type: user
+bundle: user
+label: 'Authorized Representative'
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

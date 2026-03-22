@@ -1,0 +1,20 @@
+uuid: 42cb0b15-eba4-4e42-8f85-ebbc4d34990b
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_last_claimant_response_at
+  module:
+    - user
+id: user.user.field_last_claimant_response_at
+field_name: field_last_claimant_response_at
+entity_type: user
+bundle: user
+label: 'Last Claimant Response At'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp

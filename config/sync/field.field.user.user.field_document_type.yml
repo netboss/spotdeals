@@ -1,0 +1,21 @@
+uuid: 60b0ef21-b27a-4f85-8420-39e3c286b7c7
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_document_type
+  module:
+    - options
+    - user
+id: user.user.field_document_type
+field_name: field_document_type
+entity_type: user
+bundle: user
+label: 'Document Type'
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

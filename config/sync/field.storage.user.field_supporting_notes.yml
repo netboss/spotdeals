@@ -1,0 +1,19 @@
+uuid: 86ed2faa-0ac8-429d-ba69-1fe85ba92876
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.field_supporting_notes
+field_name: field_supporting_notes
+entity_type: user
+type: string_long
+settings:
+  case_sensitive: false
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

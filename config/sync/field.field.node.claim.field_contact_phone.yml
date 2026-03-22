@@ -1,0 +1,21 @@
+uuid: ac548118-0886-440d-9c2f-cb13f1f18102
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_contact_phone
+    - node.type.claim
+  module:
+    - telephone
+id: node.claim.field_contact_phone
+field_name: field_contact_phone
+entity_type: node
+bundle: claim
+label: 'Contact phone'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: telephone

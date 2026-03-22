@@ -1,0 +1,7 @@
+uuid: 012d5ec3-f74e-4a20-a0eb-c51dd804c935
+langcode: en
+status: false
+dependencies: {  }
+formId: node_deal_form
+captchaType: default
+label: node_deal_form

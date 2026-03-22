@@ -1,0 +1,42 @@
+uuid: 144d2289-3c73-4dfd-8c8d-afe81e0f189b
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - user
+id: user.field_risk_flags
+field_name: field_risk_flags
+entity_type: user
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: email_domain_mismatch
+      label: 'Email Domain Mismatch'
+    -
+      value: phone_mismatch
+      label: 'Phone Mismatch'
+    -
+      value: duplicate_claim
+      label: 'Duplicate Claim'
+    -
+      value: already_claimed
+      label: 'Already Claimed'
+    -
+      value: suspicious_activity
+      label: 'Suspicious Activity'
+    -
+      value: missing_business_proof
+      label: 'Missing Business Proof'
+    -
+      value: manual_attention_required
+      label: 'Manual Attention Required'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,19 @@
+uuid: df8737dd-1b62-4586-a71c-9aad1ca62ad9
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_internal_notes
+field_name: field_internal_notes
+entity_type: node
+type: string_long
+settings:
+  case_sensitive: false
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,18 @@
+uuid: 8ab2cd58-ae53-4edc-9f0a-7f4574e76466
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.field_is_business_user
+field_name: field_is_business_user
+entity_type: user
+type: boolean
+settings: {  }
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

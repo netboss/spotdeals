@@ -14,6 +14,7 @@ dependencies:
     - field.field.node.venue.field_image
     - field.field.node.venue.field_menu_url
     - field.field.node.venue.field_phone
+    - field.field.node.venue.field_primary_owner_user
     - field.field.node.venue.field_venue_type
     - field.field.node.venue.field_website
     - image.style.thumbnail
@@ -129,6 +130,16 @@ content:
     weight: 10
     region: content
     settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_primary_owner_user:
+    type: entity_reference_autocomplete
+    weight: 26
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
       size: 60
       placeholder: ''
     third_party_settings: {  }

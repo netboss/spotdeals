@@ -1,0 +1,20 @@
+uuid: 2a575160-c5b5-4d1a-8636-e04655e0a8d4
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_external_message
+  module:
+    - user
+id: user.user.field_external_message
+field_name: field_external_message
+entity_type: user
+bundle: user
+label: 'External Message'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string_long

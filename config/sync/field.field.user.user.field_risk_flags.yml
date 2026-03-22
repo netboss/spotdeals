@@ -1,0 +1,21 @@
+uuid: aaf60813-9671-4504-85e4-fddc8c42fea1
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_risk_flags
+  module:
+    - options
+    - user
+id: user.user.field_risk_flags
+field_name: field_risk_flags
+entity_type: user
+bundle: user
+label: 'Risk Flags'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

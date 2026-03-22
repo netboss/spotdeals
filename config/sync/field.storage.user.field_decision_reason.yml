@@ -1,0 +1,45 @@
+uuid: 8ab8703b-56bd-4cff-becd-f52eb76d879d
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - user
+id: user.field_decision_reason
+field_name: field_decision_reason
+entity_type: user
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: verified_business_email
+      label: 'Verified Business Email'
+    -
+      value: verified_business_phone
+      label: 'Verified Business Phone'
+    -
+      value: verified_documents
+      label: 'Verified Documents'
+    -
+      value: insufficient_evidence
+      label: 'Insufficient Evidence'
+    -
+      value: conflicting_claim
+      label: 'Conflicting Claim'
+    -
+      value: fraud_risk
+      label: 'Fraud Risk'
+    -
+      value: duplicate_request
+      label: 'Duplicate Request'
+    -
+      value: manual_override
+      label: 'Manual Override'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

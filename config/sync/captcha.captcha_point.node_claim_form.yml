@@ -1,0 +1,7 @@
+uuid: 447bb2b0-8cd4-4022-9ce6-8fa72dafbbe5
+langcode: en
+status: false
+dependencies: {  }
+formId: node_claim_form
+captchaType: default
+label: node_claim_form

@@ -14,6 +14,7 @@ dependencies:
     - field.field.node.venue.field_image
     - field.field.node.venue.field_menu_url
     - field.field.node.venue.field_phone
+    - field.field.node.venue.field_primary_owner_user
     - field.field.node.venue.field_venue_type
     - field.field.node.venue.field_website
     - node.type.venue
@@ -52,6 +53,14 @@ content:
         attribute: eager
     third_party_settings: {  }
     weight: 2
+    region: content
+  field_primary_owner_user:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 5
     region: content
   field_venue_type:
     type: entity_reference_label

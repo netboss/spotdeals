@@ -1,0 +1,29 @@
+uuid: ffb8655f-adef-4ff5-8c33-b2b3a917f707
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_primary_owner_user
+    - node.type.venue
+id: node.venue.field_primary_owner_user
+field_name: field_primary_owner_user
+entity_type: node
+bundle: venue
+label: 'Primary owner user'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:user'
+  handler_settings:
+    target_bundles: null
+    sort:
+      field: _none
+      direction: ASC
+    auto_create: false
+    filter:
+      type: _none
+    include_anonymous: true
+field_type: entity_reference

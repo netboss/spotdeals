@@ -1,0 +1,21 @@
+uuid: 6a526d75-f6b6-4cf5-87b7-f5f65936d578
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_claimed_at
+  module:
+    - datetime
+    - user
+id: user.user.field_claimed_at
+field_name: field_claimed_at
+entity_type: user
+bundle: user
+label: 'Claimed At'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

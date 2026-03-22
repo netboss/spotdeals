@@ -1,0 +1,11 @@
+uuid: c807d61d-7d66-47bd-bb1f-68ee996bbf49
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.claim_admin_review
+label: 'Claim — Admin Review'
+description: null
+targetEntityType: node
+cache: true

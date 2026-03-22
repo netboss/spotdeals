@@ -5,11 +5,13 @@ dependencies:
   config:
     - filter.format.basic_html
     - filter.format.webform_default
+    - node.type.claim
   module:
     - comment
     - file
     - filter
     - media
+    - node
     - search
     - shortcut
     - system
@@ -23,6 +25,7 @@ permissions:
   - 'access comments'
   - 'access content'
   - 'access shortcuts'
+  - 'create claim content'
   - 'delete own files'
   - 'post comments'
   - 'search content'
@@ -30,3 +33,4 @@ permissions:
   - 'use text format basic_html'
   - 'use text format webform_default'
   - 'view media'
+  - 'view the administration theme'

@@ -1,0 +1,21 @@
+uuid: 21ebc711-1b36-4b6d-810c-082791698413
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_reviewed_at
+    - node.type.claim
+  module:
+    - datetime
+id: node.claim.field_reviewed_at
+field_name: field_reviewed_at
+entity_type: node
+bundle: claim
+label: 'Reviewed at'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

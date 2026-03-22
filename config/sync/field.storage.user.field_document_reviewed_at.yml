@@ -1,0 +1,20 @@
+uuid: 6a62e0da-a3b5-4f47-a38c-1e4fd7c5178e
+langcode: en
+status: true
+dependencies:
+  module:
+    - datetime
+    - user
+id: user.field_document_reviewed_at
+field_name: field_document_reviewed_at
+entity_type: user
+type: datetime
+settings:
+  datetime_type: datetime
+module: datetime
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,119 @@
+uuid: a4bb3a46-42cc-4d72-b031-8535f96cd946
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.claim.field_claim_status
+    - field.field.node.claim.field_contact_email
+    - field.field.node.claim.field_contact_phone
+    - field.field.node.claim.field_decision_reason
+    - field.field.node.claim.field_documents_submitted
+    - field.field.node.claim.field_first_name
+    - field.field.node.claim.field_internal_notes
+    - field.field.node.claim.field_last_name
+    - field.field.node.claim.field_reviewed_at
+    - field.field.node.claim.field_reviewed_by
+    - field.field.node.claim.field_venue
+    - node.type.claim
+  module:
+    - datetime
+    - file
+    - options
+    - user
+id: node.claim.default
+targetEntityType: node
+bundle: claim
+mode: default
+content:
+  field_claim_status:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 107
+    region: content
+  field_contact_email:
+    type: basic_string
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 103
+    region: content
+  field_contact_phone:
+    type: basic_string
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 104
+    region: content
+  field_decision_reason:
+    type: basic_string
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 108
+    region: content
+  field_documents_submitted:
+    type: file_default
+    label: above
+    settings:
+      use_description_as_link_text: true
+    third_party_settings: {  }
+    weight: 111
+    region: content
+  field_first_name:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 101
+    region: content
+  field_internal_notes:
+    type: basic_string
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 105
+    region: content
+  field_last_name:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 102
+    region: content
+  field_reviewed_at:
+    type: datetime_default
+    label: above
+    settings:
+      timezone_override: ''
+      format_type: medium
+    third_party_settings: {  }
+    weight: 110
+    region: content
+  field_reviewed_by:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 109
+    region: content
+  field_venue:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 109
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  langcode: true
+  search_api_excerpt: true

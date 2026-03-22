@@ -1,0 +1,22 @@
+uuid: 71fb544c-9095-48ea-80ab-e702870e24bf
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_auto_decision_eligible
+  module:
+    - user
+id: user.user.field_auto_decision_eligible
+field_name: field_auto_decision_eligible
+entity_type: user
+bundle: user
+label: 'Auto Decision Eligible'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean

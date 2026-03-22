@@ -1,0 +1,22 @@
+uuid: 55e6113b-4b67-4b49-8e44-a6d23d959ddc
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.claim
+id: node.claim.status
+field_name: status
+entity_type: node
+bundle: claim
+label: Published
+description: ''
+required: false
+translatable: true
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

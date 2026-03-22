@@ -1,0 +1,19 @@
+uuid: 30f702a9-1f37-43e7-8e0d-2a078f0d421d
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_internal_notes
+    - node.type.claim
+id: node.claim.field_internal_notes
+field_name: field_internal_notes
+entity_type: node
+bundle: claim
+label: 'Internal notes'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string_long

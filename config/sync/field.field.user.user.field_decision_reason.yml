@@ -1,0 +1,21 @@
+uuid: 48c81ff6-07a7-4212-95ec-5b6dd9844653
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_decision_reason
+  module:
+    - options
+    - user
+id: user.user.field_decision_reason
+field_name: field_decision_reason
+entity_type: user
+bundle: user
+label: 'Decision Reason'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

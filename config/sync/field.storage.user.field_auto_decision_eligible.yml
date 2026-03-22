@@ -1,0 +1,18 @@
+uuid: 90aeb158-30b5-4014-81c7-020e4af4cd5d
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.field_auto_decision_eligible
+field_name: field_auto_decision_eligible
+entity_type: user
+type: boolean
+settings: {  }
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,19 @@
+uuid: 49e0d6ab-e458-4860-932d-1f01cf5ccaa8
+langcode: en
+status: true
+dependencies:
+  module:
+    - link
+    - user
+id: user.field_business_website_submitted
+field_name: field_business_website_submitted
+entity_type: user
+type: link
+settings: {  }
+module: link
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false
