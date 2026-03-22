@@ -43,6 +43,20 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
   // Always validate claim submissions against already-claimed venues.
   $form['#validate'][] = 'spotdeals_admin_claim_form_validate';
 
+  // Auto-fill claimant user on claim creation for authenticated users.
+  // This improves UX, but persistence is enforced again in hook_entity_presave().
+  if ($entity->isNew() && $current_user->isAuthenticated() && $entity->hasField('field_claimant_user')) {
+    $entity->set('field_claimant_user', ['target_id' => $current_user->id()]);
+
+    if (isset($form['field_claimant_user']['widget'][0]['target_id'])) {
+      $form['field_claimant_user']['widget'][0]['target_id']['#default_value'] = \Drupal\user\Entity\User::load($current_user->id());
+      $form['field_claimant_user']['widget'][0]['target_id']['#access'] = FALSE;
+    }
+    elseif (isset($form['field_claimant_user'])) {
+      $form['field_claimant_user']['#access'] = FALSE;
+    }
+  }
+
   // Auto-fill field_venue from ?venue=N on claim creation.
   // Only hide the field when a valid venue node was actually found.
   if ($entity->isNew()) {
@@ -160,6 +174,9 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
   if (isset($form['field_documents_submitted'])) {
     $form['field_documents_submitted']['#weight'] = 60;
   }
+  if (isset($form['field_claimant_user'])) {
+    $form['field_claimant_user']['#weight'] = 70;
+  }
   if (isset($form['field_claim_status'])) {
     $form['field_claim_status']['#weight'] = 200;
   }
@@ -183,6 +200,7 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
       'field_decision_reason',
       'field_reviewed_by',
       'field_reviewed_at',
+      'field_claimant_user',
     ];
 
     foreach ($review_fields as $field_name) {
@@ -203,6 +221,30 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
         $form[$element_name]['#access'] = FALSE;
       }
     }
+  }
+}
+
+/**
+ * Implements hook_entity_presave().
+ *
+ * Ensures new claims always store an explicit claimant user.
+ */
+function spotdeals_admin_entity_presave(EntityInterface $entity) {
+  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'claim') {
+    return;
+  }
+
+  if (!$entity->isNew()) {
+    return;
+  }
+
+  if (!$entity->hasField('field_claimant_user') || !$entity->get('field_claimant_user')->isEmpty()) {
+    return;
+  }
+
+  $owner = $entity->getOwner();
+  if ($owner instanceof UserInterface && !$owner->isAnonymous()) {
+    $entity->set('field_claimant_user', ['target_id' => $owner->id()]);
   }
 }
 

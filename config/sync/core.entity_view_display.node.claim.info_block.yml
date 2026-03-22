@@ -5,6 +5,7 @@ dependencies:
   config:
     - core.entity_view_mode.node.info_block
     - field.field.node.claim.field_claim_status
+    - field.field.node.claim.field_claimant_user
     - field.field.node.claim.field_contact_email
     - field.field.node.claim.field_contact_phone
     - field.field.node.claim.field_decision_reason
@@ -38,6 +39,7 @@ content:
     region: content
 hidden:
   field_claim_status: true
+  field_claimant_user: true
   field_contact_email: true
   field_contact_phone: true
   field_decision_reason: true

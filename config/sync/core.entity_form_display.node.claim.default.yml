@@ -4,6 +4,7 @@ status: true
 dependencies:
   config:
     - field.field.node.claim.field_claim_status
+    - field.field.node.claim.field_claimant_user
     - field.field.node.claim.field_contact_email
     - field.field.node.claim.field_contact_phone
     - field.field.node.claim.field_decision_reason
@@ -42,6 +43,16 @@ content:
       placeholder: ''
       show_entity_id: 0
       parent_selection: 1
+    third_party_settings: {  }
+  field_claimant_user:
+    type: entity_reference_autocomplete
+    weight: 131
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
     third_party_settings: {  }
   field_contact_email:
     type: email_default

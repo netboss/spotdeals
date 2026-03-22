@@ -4,6 +4,7 @@ status: true
 dependencies:
   config:
     - field.field.node.claim.field_claim_status
+    - field.field.node.claim.field_claimant_user
     - field.field.node.claim.field_contact_email
     - field.field.node.claim.field_contact_phone
     - field.field.node.claim.field_decision_reason
@@ -31,6 +32,14 @@ content:
     settings: {  }
     third_party_settings: {  }
     weight: 107
+    region: content
+  field_claimant_user:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 112
     region: content
   field_contact_email:
     type: basic_string
