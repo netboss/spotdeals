@@ -15,6 +15,7 @@ dependencies:
     - field.field.node.venue.field_image
     - field.field.node.venue.field_menu_url
     - field.field.node.venue.field_phone
+    - field.field.node.venue.field_primary_owner_user
     - field.field.node.venue.field_venue_type
     - field.field.node.venue.field_website
     - image.style.medium
@@ -62,6 +63,7 @@ hidden:
   field_cuisine: true
   field_menu_url: true
   field_phone: true
+  field_primary_owner_user: true
   field_venue_type: true
   field_website: true
   langcode: true

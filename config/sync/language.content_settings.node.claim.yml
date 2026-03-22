@@ -1,0 +1,11 @@
+uuid: 5558ec0d-ca4c-4e6c-a4af-238963a369ea
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.claim
+id: node.claim
+target_entity_type_id: node
+target_bundle: claim
+default_langcode: site_default
+language_alterable: false

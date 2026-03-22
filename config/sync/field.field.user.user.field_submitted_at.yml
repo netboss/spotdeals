@@ -1,0 +1,20 @@
+uuid: 3c02cb77-3f54-40e7-9e07-cbeff4dd592b
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_submitted_at
+  module:
+    - user
+id: user.user.field_submitted_at
+field_name: field_submitted_at
+entity_type: user
+bundle: user
+label: 'Submitted At'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp

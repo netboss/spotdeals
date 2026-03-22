@@ -1,0 +1,173 @@
+uuid: 8ec96824-9737-41de-abfa-36a8cb5b1802
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.claim.field_claim_status
+    - field.field.node.claim.field_contact_email
+    - field.field.node.claim.field_contact_phone
+    - field.field.node.claim.field_decision_reason
+    - field.field.node.claim.field_documents_submitted
+    - field.field.node.claim.field_first_name
+    - field.field.node.claim.field_internal_notes
+    - field.field.node.claim.field_last_name
+    - field.field.node.claim.field_reviewed_at
+    - field.field.node.claim.field_reviewed_by
+    - field.field.node.claim.field_venue
+    - node.type.claim
+  module:
+    - datetime
+    - file
+    - path
+    - tagify
+    - telephone
+id: node.claim.default
+targetEntityType: node
+bundle: claim
+mode: default
+content:
+  created:
+    type: datetime_timestamp
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_claim_status:
+    type: tagify_select_widget
+    weight: 16
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 0
+      placeholder: ''
+      show_entity_id: 0
+      parent_selection: 1
+    third_party_settings: {  }
+  field_contact_email:
+    type: email_default
+    weight: 123
+    region: content
+    settings:
+      placeholder: ''
+      size: 60
+    third_party_settings: {  }
+  field_contact_phone:
+    type: telephone_default
+    weight: 124
+    region: content
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+  field_decision_reason:
+    type: string_textarea
+    weight: 127
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_documents_submitted:
+    type: file_generic
+    weight: 130
+    region: content
+    settings:
+      progress_indicator: throbber
+    third_party_settings: {  }
+  field_first_name:
+    type: string_textfield
+    weight: 121
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_internal_notes:
+    type: string_textarea
+    weight: 125
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_last_name:
+    type: string_textfield
+    weight: 122
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_reviewed_at:
+    type: datetime_default
+    weight: 129
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_reviewed_by:
+    type: entity_reference_autocomplete
+    weight: 128
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_venue:
+    type: entity_reference_autocomplete
+    weight: 13
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  langcode:
+    type: language_select
+    weight: 2
+    region: content
+    settings:
+      include_locked: true
+    third_party_settings: {  }
+  path:
+    type: path
+    weight: 30
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  status:
+    type: boolean_checkbox
+    weight: 120
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  title:
+    type: string_textfield
+    weight: -5
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 5
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  url_redirects:
+    weight: 50
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  promote: true
+  publish_on: true
+  sticky: true
+  unpublish_on: true

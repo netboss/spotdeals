@@ -1,0 +1,243 @@
+uuid: ae1d792e-4dab-4e9f-b6c7-f9c143bec3ab
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.user.admin_review
+    - field.field.user.user.field_authorized_representative
+    - field.field.user.user.field_auto_decision_eligible
+    - field.field.user.user.field_business_email
+    - field.field.user.user.field_business_email_submitted
+    - field.field.user.user.field_business_phone
+    - field.field.user.user.field_business_phone_submitted
+    - field.field.user.user.field_business_website_submitted
+    - field.field.user.user.field_claim_last_reviewed_at
+    - field.field.user.user.field_claim_role
+    - field.field.user.user.field_claim_role_other
+    - field.field.user.user.field_claim_status
+    - field.field.user.user.field_claimant_user
+    - field.field.user.user.field_claimed_at
+    - field.field.user.user.field_contact_email
+    - field.field.user.user.field_contact_name
+    - field.field.user.user.field_contact_phone
+    - field.field.user.user.field_decision_reason
+    - field.field.user.user.field_document_notes
+    - field.field.user.user.field_document_review_status
+    - field.field.user.user.field_document_reviewed_at
+    - field.field.user.user.field_document_reviewed_by
+    - field.field.user.user.field_document_type
+    - field.field.user.user.field_documents_submitted
+    - field.field.user.user.field_documents_verified
+    - field.field.user.user.field_domain_name
+    - field.field.user.user.field_domain_verified
+    - field.field.user.user.field_email_verified
+    - field.field.user.user.field_external_message
+    - field.field.user.user.field_first_name
+    - field.field.user.user.field_identity_verification_stat
+    - field.field.user.user.field_internal_notes
+    - field.field.user.user.field_is_business_user
+    - field.field.user.user.field_job_title
+    - field.field.user.user.field_last_claimant_response_at
+    - field.field.user.user.field_last_name
+    - field.field.user.user.field_linkedin_url
+    - field.field.user.user.field_media_document
+    - field.field.user.user.field_phone
+    - field.field.user.user.field_phone_veirifed
+    - field.field.user.user.field_primary_owner_user
+    - field.field.user.user.field_profile_photo
+    - field.field.user.user.field_reviewed_at
+    - field.field.user.user.field_reviewed_by
+    - field.field.user.user.field_risk_flags
+    - field.field.user.user.field_submitted_at
+    - field.field.user.user.field_supporting_documents
+    - field.field.user.user.field_supporting_images
+    - field.field.user.user.field_supporting_notes
+    - field.field.user.user.field_trust_score
+    - field.field.user.user.field_venue
+    - field.field.user.user.field_website
+    - field.field.user.user.field_work_email
+    - field.field.user.user.user_picture
+  module:
+    - options
+    - user
+_core:
+  default_config_hash: mZLyuWM9CQx2ZJVqFGSbzgFnHzudVbHBYmdU256A5Wk
+id: user.user.admin_review
+targetEntityType: user
+bundle: user
+mode: admin_review
+content:
+  field_auto_decision_eligible:
+    type: boolean
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    weight: 13
+    region: content
+  field_claim_status:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  field_decision_reason:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  field_documents_submitted:
+    type: boolean
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    weight: 9
+    region: content
+  field_documents_verified:
+    type: boolean
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    weight: 10
+    region: content
+  field_domain_verified:
+    type: boolean
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    weight: 8
+    region: content
+  field_email_verified:
+    type: boolean
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    weight: 6
+    region: content
+  field_external_message:
+    type: basic_string
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  field_internal_notes:
+    type: basic_string
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 3
+    region: content
+  field_phone_veirifed:
+    type: boolean
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    weight: 7
+    region: content
+  field_reviewed_at:
+    type: timestamp
+    label: above
+    settings:
+      date_format: medium
+      custom_date_format: ''
+      timezone: ''
+      tooltip:
+        date_format: long
+        custom_date_format: ''
+      time_diff:
+        enabled: false
+        future_format: '@interval hence'
+        past_format: '@interval ago'
+        granularity: 2
+        refresh: 60
+    third_party_settings: {  }
+    weight: 5
+    region: content
+  field_reviewed_by:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 4
+    region: content
+  field_risk_flags:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 12
+    region: content
+  field_trust_score:
+    type: number_integer
+    label: above
+    settings:
+      thousand_separator: ''
+      prefix_suffix: true
+    third_party_settings: {  }
+    weight: 11
+    region: content
+hidden:
+  field_authorized_representative: true
+  field_business_email: true
+  field_business_email_submitted: true
+  field_business_phone: true
+  field_business_phone_submitted: true
+  field_business_website_submitted: true
+  field_claim_last_reviewed_at: true
+  field_claim_role: true
+  field_claim_role_other: true
+  field_claimant_user: true
+  field_claimed_at: true
+  field_contact_email: true
+  field_contact_name: true
+  field_contact_phone: true
+  field_document_notes: true
+  field_document_review_status: true
+  field_document_reviewed_at: true
+  field_document_reviewed_by: true
+  field_document_type: true
+  field_domain_name: true
+  field_first_name: true
+  field_identity_verification_stat: true
+  field_is_business_user: true
+  field_job_title: true
+  field_last_claimant_response_at: true
+  field_last_name: true
+  field_linkedin_url: true
+  field_media_document: true
+  field_phone: true
+  field_primary_owner_user: true
+  field_profile_photo: true
+  field_submitted_at: true
+  field_supporting_documents: true
+  field_supporting_images: true
+  field_supporting_notes: true
+  field_venue: true
+  field_website: true
+  field_work_email: true
+  langcode: true
+  member_for: true
+  search_api_excerpt: true
+  user_picture: true

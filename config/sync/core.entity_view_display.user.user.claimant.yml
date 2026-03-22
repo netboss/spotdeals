@@ -1,0 +1,219 @@
+uuid: f7ba8ab6-42b7-437c-8bac-22e03c03f5c6
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.user.claimant
+    - field.field.user.user.field_authorized_representative
+    - field.field.user.user.field_auto_decision_eligible
+    - field.field.user.user.field_business_email
+    - field.field.user.user.field_business_email_submitted
+    - field.field.user.user.field_business_phone
+    - field.field.user.user.field_business_phone_submitted
+    - field.field.user.user.field_business_website_submitted
+    - field.field.user.user.field_claim_last_reviewed_at
+    - field.field.user.user.field_claim_role
+    - field.field.user.user.field_claim_role_other
+    - field.field.user.user.field_claim_status
+    - field.field.user.user.field_claimant_user
+    - field.field.user.user.field_claimed_at
+    - field.field.user.user.field_contact_email
+    - field.field.user.user.field_contact_name
+    - field.field.user.user.field_contact_phone
+    - field.field.user.user.field_decision_reason
+    - field.field.user.user.field_document_notes
+    - field.field.user.user.field_document_review_status
+    - field.field.user.user.field_document_reviewed_at
+    - field.field.user.user.field_document_reviewed_by
+    - field.field.user.user.field_document_type
+    - field.field.user.user.field_documents_submitted
+    - field.field.user.user.field_documents_verified
+    - field.field.user.user.field_domain_name
+    - field.field.user.user.field_domain_verified
+    - field.field.user.user.field_email_verified
+    - field.field.user.user.field_external_message
+    - field.field.user.user.field_first_name
+    - field.field.user.user.field_identity_verification_stat
+    - field.field.user.user.field_internal_notes
+    - field.field.user.user.field_is_business_user
+    - field.field.user.user.field_job_title
+    - field.field.user.user.field_last_claimant_response_at
+    - field.field.user.user.field_last_name
+    - field.field.user.user.field_linkedin_url
+    - field.field.user.user.field_media_document
+    - field.field.user.user.field_phone
+    - field.field.user.user.field_phone_veirifed
+    - field.field.user.user.field_primary_owner_user
+    - field.field.user.user.field_profile_photo
+    - field.field.user.user.field_reviewed_at
+    - field.field.user.user.field_reviewed_by
+    - field.field.user.user.field_risk_flags
+    - field.field.user.user.field_submitted_at
+    - field.field.user.user.field_supporting_documents
+    - field.field.user.user.field_supporting_images
+    - field.field.user.user.field_supporting_notes
+    - field.field.user.user.field_trust_score
+    - field.field.user.user.field_venue
+    - field.field.user.user.field_website
+    - field.field.user.user.field_work_email
+    - field.field.user.user.user_picture
+  module:
+    - file
+    - image
+    - link
+    - options
+    - telephone
+    - user
+_core:
+  default_config_hash: mZLyuWM9CQx2ZJVqFGSbzgFnHzudVbHBYmdU256A5Wk
+id: user.user.claimant
+targetEntityType: user
+bundle: user
+mode: claimant
+content:
+  field_authorized_representative:
+    type: boolean
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  field_business_email_submitted:
+    type: basic_string
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 6
+    region: content
+  field_business_phone_submitted:
+    type: telephone_link
+    label: above
+    settings:
+      title: ''
+    third_party_settings: {  }
+    weight: 7
+    region: content
+  field_business_website_submitted:
+    type: link
+    label: above
+    settings:
+      trim_length: 80
+      url_only: false
+      url_plain: false
+      rel: ''
+      target: ''
+    third_party_settings: {  }
+    weight: 8
+    region: content
+  field_claim_role:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  field_claim_role_other:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  field_contact_email:
+    type: basic_string
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 4
+    region: content
+  field_contact_name:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 3
+    region: content
+  field_contact_phone:
+    type: telephone_link
+    label: above
+    settings:
+      title: ''
+    third_party_settings: {  }
+    weight: 5
+    region: content
+  field_supporting_documents:
+    type: file_default
+    label: above
+    settings:
+      use_description_as_link_text: true
+    third_party_settings: {  }
+    weight: 9
+    region: content
+  field_supporting_images:
+    type: image
+    label: above
+    settings:
+      image_link: ''
+      image_style: ''
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 10
+    region: content
+  field_supporting_notes:
+    type: basic_string
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 11
+    region: content
+hidden:
+  field_auto_decision_eligible: true
+  field_business_email: true
+  field_business_phone: true
+  field_claim_last_reviewed_at: true
+  field_claim_status: true
+  field_claimant_user: true
+  field_claimed_at: true
+  field_decision_reason: true
+  field_document_notes: true
+  field_document_review_status: true
+  field_document_reviewed_at: true
+  field_document_reviewed_by: true
+  field_document_type: true
+  field_documents_submitted: true
+  field_documents_verified: true
+  field_domain_name: true
+  field_domain_verified: true
+  field_email_verified: true
+  field_external_message: true
+  field_first_name: true
+  field_identity_verification_stat: true
+  field_internal_notes: true
+  field_is_business_user: true
+  field_job_title: true
+  field_last_claimant_response_at: true
+  field_last_name: true
+  field_linkedin_url: true
+  field_media_document: true
+  field_phone: true
+  field_phone_veirifed: true
+  field_primary_owner_user: true
+  field_profile_photo: true
+  field_reviewed_at: true
+  field_reviewed_by: true
+  field_risk_flags: true
+  field_submitted_at: true
+  field_trust_score: true
+  field_venue: true
+  field_website: true
+  field_work_email: true
+  langcode: true
+  member_for: true
+  search_api_excerpt: true
+  user_picture: true

@@ -1,0 +1,21 @@
+uuid: e1b6c45c-e37f-48b0-b7c2-b41f96cfd4d8
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_claim_last_reviewed_at
+  module:
+    - datetime
+    - user
+id: user.user.field_claim_last_reviewed_at
+field_name: field_claim_last_reviewed_at
+entity_type: user
+bundle: user
+label: 'Claim Last Reviewed At'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

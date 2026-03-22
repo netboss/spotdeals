@@ -1,0 +1,51 @@
+uuid: 18433f3f-b05e-4149-a0a3-8f40977615ab
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.info_block
+    - field.field.node.claim.field_claim_status
+    - field.field.node.claim.field_contact_email
+    - field.field.node.claim.field_contact_phone
+    - field.field.node.claim.field_decision_reason
+    - field.field.node.claim.field_documents_submitted
+    - field.field.node.claim.field_first_name
+    - field.field.node.claim.field_internal_notes
+    - field.field.node.claim.field_last_name
+    - field.field.node.claim.field_reviewed_at
+    - field.field.node.claim.field_reviewed_by
+    - field.field.node.claim.field_venue
+    - node.type.claim
+  module:
+    - user
+id: node.claim.info_block
+targetEntityType: node
+bundle: claim
+mode: info_block
+content:
+  field_venue:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 109
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  field_claim_status: true
+  field_contact_email: true
+  field_contact_phone: true
+  field_decision_reason: true
+  field_documents_submitted: true
+  field_first_name: true
+  field_internal_notes: true
+  field_last_name: true
+  field_reviewed_at: true
+  field_reviewed_by: true
+  langcode: true
+  search_api_excerpt: true

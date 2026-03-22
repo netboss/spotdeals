@@ -1,0 +1,20 @@
+uuid: c069b9e4-1258-4001-b6e1-0e02567d3ed5
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_document_notes
+  module:
+    - user
+id: user.user.field_document_notes
+field_name: field_document_notes
+entity_type: user
+bundle: user
+label: 'Document Notes'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string_long

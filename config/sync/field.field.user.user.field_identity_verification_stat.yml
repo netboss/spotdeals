@@ -1,0 +1,23 @@
+uuid: c2f052a8-4bc6-46ad-8cef-d8f99a953efe
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_identity_verification_stat
+  module:
+    - options
+    - user
+id: user.user.field_identity_verification_stat
+field_name: field_identity_verification_stat
+entity_type: user
+bundle: user
+label: 'Identity Verification Status'
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: unverified
+default_value_callback: ''
+settings: {  }
+field_type: list_string

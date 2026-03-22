@@ -1,0 +1,22 @@
+uuid: 32e185ab-2a67-4eca-8806-fa4f6997db63
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_documents_submitted
+  module:
+    - user
+id: user.user.field_documents_submitted
+field_name: field_documents_submitted
+entity_type: user
+bundle: user
+label: 'Documents Submitted'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean

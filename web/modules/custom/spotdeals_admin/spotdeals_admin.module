@@ -1,0 +1,548 @@
+<?php
+
+use Drupal\Core\Cache\RefinableCacheableDependencyInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
+use Drupal\node\Entity\Node;
+use Drupal\node\NodeInterface;
+use Drupal\user\UserInterface;
+
+/**
+ * Implements hook_form_alter().
+ */
+function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $form_object = $form_state->getFormObject();
+
+  if (!$form_object || !method_exists($form_object, 'getEntity')) {
+    return;
+  }
+
+  $entity = $form_object->getEntity();
+
+  if (!$entity instanceof NodeInterface) {
+    return;
+  }
+
+  if ($entity->bundle() !== 'claim') {
+    return;
+  }
+
+  $current_user = \Drupal::currentUser();
+
+  \Drupal::logger('spotdeals_admin')->notice(
+    'Claim form alter running. form_id: %form_id | user: %user | roles: %roles',
+    [
+      '%form_id' => $form_id,
+      '%user' => $current_user->getAccountName(),
+      '%roles' => implode(', ', $current_user->getRoles()),
+    ]
+  );
+
+  // Always validate claim submissions against already-claimed venues.
+  $form['#validate'][] = 'spotdeals_admin_claim_form_validate';
+
+  // Auto-fill field_venue from ?venue=N on claim creation.
+  // Only hide the field when a valid venue node was actually found.
+  if ($entity->isNew()) {
+    $request = \Drupal::request();
+    $venue_id = (int) $request->query->get('venue');
+
+    if ($venue_id > 0) {
+      $venue = Node::load($venue_id);
+
+      if ($venue instanceof NodeInterface && $venue->bundle() === 'venue') {
+        // If the venue is already claimed, block new claim creation from UI.
+        if (spotdeals_admin_venue_is_claimed($venue)) {
+          $venue_url = $venue->toUrl()->toString();
+
+          $form['spotdeals_admin_claim_blocked_message'] = [
+            '#type' => 'container',
+            '#weight' => -1000,
+            '#attributes' => [
+              'class' => ['messages', 'messages--warning'],
+              'style' => 'margin-bottom: 1rem;',
+            ],
+            'content' => [
+              '#markup' => t('This listing has already been claimed and cannot be claimed again. <a href=":url">Return to the venue page</a>.', [
+                ':url' => $venue_url,
+              ]),
+            ],
+          ];
+
+          if (isset($form['actions']['submit'])) {
+            $form['actions']['submit']['#access'] = FALSE;
+          }
+
+          // Keep field_venue filled so validation logic still knows the venue.
+          $entity->set('field_venue', ['target_id' => $venue->id()]);
+
+          // Pre-fill title if empty.
+          if ($entity->getTitle() === '') {
+            $entity->setTitle($venue->label());
+          }
+
+          if (isset($form['title']['widget'][0]['value'])) {
+            $form['title']['widget'][0]['value']['#default_value'] = $venue->label();
+          }
+          elseif (isset($form['title'][0]['value'])) {
+            $form['title'][0]['value']['#default_value'] = $venue->label();
+          }
+          elseif (isset($form['title'])) {
+            $form['title']['#default_value'] = $venue->label();
+          }
+
+          if (isset($form['field_venue']['widget'][0]['target_id'])) {
+            $form['field_venue']['widget'][0]['target_id']['#default_value'] = $venue;
+            $form['field_venue']['widget'][0]['target_id']['#access'] = FALSE;
+          }
+          elseif (isset($form['field_venue'])) {
+            $form['field_venue']['#access'] = FALSE;
+          }
+        }
+        else {
+          // Set the entity reference value so submit/save keeps it reliably.
+          $entity->set('field_venue', ['target_id' => $venue_id]);
+
+          // Pre-fill the title with the venue title if it's empty.
+          if ($entity->getTitle() === '') {
+            $entity->setTitle($venue->label());
+          }
+
+          if (isset($form['title']['widget'][0]['value'])) {
+            $form['title']['widget'][0]['value']['#default_value'] = $venue->label();
+          }
+          elseif (isset($form['title'][0]['value'])) {
+            $form['title'][0]['value']['#default_value'] = $venue->label();
+          }
+          elseif (isset($form['title'])) {
+            $form['title']['#default_value'] = $venue->label();
+          }
+
+          // Standard entity autocomplete widget path.
+          if (isset($form['field_venue']['widget'][0]['target_id'])) {
+            $form['field_venue']['widget'][0]['target_id']['#default_value'] = $venue;
+            $form['field_venue']['widget'][0]['target_id']['#access'] = FALSE;
+          }
+          // Fallback: if the field exists but the widget structure differs,
+          // hide the whole field only after a valid venue was confirmed.
+          elseif (isset($form['field_venue'])) {
+            $form['field_venue']['#access'] = FALSE;
+          }
+        }
+      }
+    }
+  }
+
+  // Stable field order.
+  if (isset($form['title'])) {
+    $form['title']['#weight'] = 0;
+  }
+  if (isset($form['field_venue'])) {
+    $form['field_venue']['#weight'] = 5;
+  }
+  if (isset($form['field_first_name'])) {
+    $form['field_first_name']['#weight'] = 10;
+  }
+  if (isset($form['field_last_name'])) {
+    $form['field_last_name']['#weight'] = 20;
+  }
+  if (isset($form['field_contact_email'])) {
+    $form['field_contact_email']['#weight'] = 30;
+  }
+  if (isset($form['field_contact_phone'])) {
+    $form['field_contact_phone']['#weight'] = 40;
+  }
+  if (isset($form['field_internal_notes'])) {
+    $form['field_internal_notes']['#weight'] = 50;
+  }
+  if (isset($form['field_documents_submitted'])) {
+    $form['field_documents_submitted']['#weight'] = 60;
+  }
+  if (isset($form['field_claim_status'])) {
+    $form['field_claim_status']['#weight'] = 200;
+  }
+  if (isset($form['field_decision_reason'])) {
+    $form['field_decision_reason']['#weight'] = 210;
+  }
+  if (isset($form['field_reviewed_by'])) {
+    $form['field_reviewed_by']['#weight'] = 220;
+  }
+  if (isset($form['field_reviewed_at'])) {
+    $form['field_reviewed_at']['#weight'] = 230;
+  }
+  if (isset($form['actions'])) {
+    $form['actions']['#weight'] = 1000;
+  }
+
+  // Hide admin/review fields for non-admin users.
+  if (!$current_user->hasRole('administrator')) {
+    $review_fields = [
+      'field_claim_status',
+      'field_decision_reason',
+      'field_reviewed_by',
+      'field_reviewed_at',
+    ];
+
+    foreach ($review_fields as $field_name) {
+      if (isset($form[$field_name])) {
+        $form[$field_name]['#access'] = FALSE;
+      }
+    }
+
+    $admin_elements = [
+      'revision_information',
+      'path',
+      'author',
+      'status',
+    ];
+
+    foreach ($admin_elements as $element_name) {
+      if (isset($form[$element_name])) {
+        $form[$element_name]['#access'] = FALSE;
+      }
+    }
+  }
+}
+
+/**
+ * Claim form validation: block duplicate claims for already claimed venues.
+ */
+function spotdeals_admin_claim_form_validate(array &$form, FormStateInterface $form_state) {
+  $form_object = $form_state->getFormObject();
+
+  if (!$form_object || !method_exists($form_object, 'getEntity')) {
+    return;
+  }
+
+  $entity = $form_object->getEntity();
+
+  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'claim') {
+    return;
+  }
+
+  // Only block new claims. Existing claims can still be edited/administered.
+  if (!$entity->isNew()) {
+    return;
+  }
+
+  $venue = spotdeals_admin_claim_get_linked_venue($entity);
+
+  if (!$venue instanceof NodeInterface) {
+    return;
+  }
+
+  if (spotdeals_admin_venue_is_claimed($venue)) {
+    $form_state->setErrorByName('field_venue', t('This listing has already been claimed.'));
+  }
+}
+
+/**
+ * Implements hook_entity_predelete().
+ *
+ * If an approved claim is deleted, unclaim the linked venue only when the
+ * venue owner still matches the claimant user from that claim.
+ */
+function spotdeals_admin_entity_predelete(EntityInterface $entity) {
+  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'claim') {
+    return;
+  }
+
+  // Only approved claims should unclaim a venue on delete.
+  if (!spotdeals_admin_claim_status_matches($entity, ['approved'])) {
+    return;
+  }
+
+  $venue = spotdeals_admin_claim_get_linked_venue($entity);
+  if (!$venue instanceof NodeInterface) {
+    return;
+  }
+
+  if (!$venue->hasField('field_primary_owner_user') || $venue->get('field_primary_owner_user')->isEmpty()) {
+    return;
+  }
+
+  $claimant_user = spotdeals_admin_claim_get_claimant_user($entity);
+  if (!$claimant_user instanceof UserInterface) {
+    return;
+  }
+
+  $current_owner_id = (int) $venue->get('field_primary_owner_user')->target_id;
+  $claimant_user_id = (int) $claimant_user->id();
+
+  // Only clear the owner if this claim actually owns the venue right now.
+  if ($current_owner_id !== $claimant_user_id) {
+    return;
+  }
+
+  $venue->set('field_primary_owner_user', NULL);
+  $venue->save();
+
+  \Drupal::logger('spotdeals_admin')->warning(
+    'Venue %venue_id was unclaimed because approved claim %claim_id was deleted.',
+    [
+      '%venue_id' => $venue->id(),
+      '%claim_id' => $entity->id(),
+    ]
+  );
+}
+
+/**
+ * Implements hook_node_view_alter().
+ */
+function spotdeals_admin_node_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
+  if (!$entity instanceof NodeInterface) {
+    return;
+  }
+
+  $current_user = \Drupal::currentUser();
+
+  // Venue page behavior.
+  if ($entity->bundle() === 'venue') {
+    // Keep the owner field internal. Do not show it on the venue page.
+    if (isset($build['field_primary_owner_user'])) {
+      unset($build['field_primary_owner_user']);
+    }
+
+    // If already claimed, do not show the claim link.
+    if (spotdeals_admin_venue_is_claimed($entity)) {
+      return;
+    }
+
+    $destination = '/create/claim?venue=' . $entity->id();
+
+    if ($current_user->isAnonymous()) {
+      $url = Url::fromUri('internal:/user/login', [
+        'query' => [
+          'destination' => $destination,
+        ],
+      ]);
+    }
+    else {
+      $url = Url::fromUri('internal:' . $destination);
+    }
+
+    $build['claim_this_listing_link'] = [
+      '#type' => 'link',
+      '#title' => t('Claim this listing'),
+      '#url' => $url,
+      '#attributes' => [
+        'class' => ['claim-this-listing-link'],
+      ],
+      '#weight' => 100,
+    ];
+
+    return;
+  }
+
+  // Add admin review action buttons on Claim nodes.
+  if ($entity->bundle() === 'claim' && $current_user->hasRole('administrator')) {
+    if (!spotdeals_admin_claim_status_matches($entity, ['pending'])) {
+      return;
+    }
+
+    $build['spotdeals_admin_claim_actions'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['spotdeals-admin-claim-actions'],
+      ],
+      '#weight' => -100,
+    ];
+
+    $build['spotdeals_admin_claim_actions']['approve'] = [
+      '#type' => 'link',
+      '#title' => t('Approve claim'),
+      '#url' => Url::fromRoute('spotdeals_admin.claim_approve', ['node' => $entity->id()]),
+      '#attributes' => [
+        'class' => ['button', 'button--primary'],
+      ],
+    ];
+
+    $build['spotdeals_admin_claim_actions']['reject'] = [
+      '#type' => 'link',
+      '#title' => t('Reject claim'),
+      '#url' => Url::fromRoute('spotdeals_admin.claim_reject', ['node' => $entity->id()]),
+      '#attributes' => [
+        'class' => ['button'],
+        'style' => 'margin-left: 0.75rem;',
+      ],
+    ];
+  }
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function spotdeals_admin_menu_local_tasks_alter(array &$data, $route_name, RefinableCacheableDependencyInterface &$cacheability) {
+  $request = \Drupal::request();
+  $destination = $request->query->get('destination');
+
+  // Nothing to preserve.
+  if (empty($destination)) {
+    return;
+  }
+
+  // Only affect the user account tabs.
+  $target_routes = [
+    'user.login',
+    'user.register',
+    'user.pass',
+  ];
+
+  if (!in_array($route_name, $target_routes, TRUE)) {
+    return;
+  }
+
+  foreach ($data as &$level) {
+    if (!is_array($level)) {
+      continue;
+    }
+
+    foreach ($level as &$tasks) {
+      if (!is_array($tasks)) {
+        continue;
+      }
+
+      foreach ($tasks as &$task) {
+        if (!is_array($task)) {
+          continue;
+        }
+
+        if (isset($task['#link']['url']) && $task['#link']['url'] instanceof Url) {
+          $url = $task['#link']['url'];
+          $options = $url->getOptions();
+          $options['query']['destination'] = $destination;
+          $url->setOptions($options);
+        }
+      }
+    }
+  }
+
+  $cacheability->addCacheContexts(['url.query_args:destination']);
+}
+
+/**
+ * Returns the venue linked from a claim node, if available.
+ */
+function spotdeals_admin_claim_get_linked_venue(NodeInterface $claim) {
+  if (!$claim->hasField('field_venue') || $claim->get('field_venue')->isEmpty()) {
+    return NULL;
+  }
+
+  $venue = $claim->get('field_venue')->entity;
+
+  if (!$venue instanceof NodeInterface || $venue->bundle() !== 'venue') {
+    return NULL;
+  }
+
+  return $venue;
+}
+
+/**
+ * Returns the claimant user from a claim.
+ *
+ * Priority:
+ * - field_claimant_user
+ * - claim author
+ */
+function spotdeals_admin_claim_get_claimant_user(NodeInterface $claim) {
+  if ($claim->hasField('field_claimant_user') && !$claim->get('field_claimant_user')->isEmpty()) {
+    $user = $claim->get('field_claimant_user')->entity;
+    if ($user instanceof UserInterface) {
+      return $user;
+    }
+  }
+
+  $owner = $claim->getOwner();
+  if ($owner instanceof UserInterface) {
+    return $owner;
+  }
+
+  return NULL;
+}
+
+/**
+ * Returns TRUE if the venue already has a primary owner assigned.
+ */
+function spotdeals_admin_venue_is_claimed(NodeInterface $venue) {
+  if (!$venue->hasField('field_primary_owner_user')) {
+    return FALSE;
+  }
+
+  return !$venue->get('field_primary_owner_user')->isEmpty();
+}
+
+/**
+ * Returns TRUE if the claim status matches one of the provided candidates.
+ */
+function spotdeals_admin_claim_status_matches(NodeInterface $claim, array $candidates) {
+  if (!$claim->hasField('field_claim_status') || $claim->get('field_claim_status')->isEmpty()) {
+    return FALSE;
+  }
+
+  $raw_value = (string) $claim->get('field_claim_status')->value;
+  $resolved = spotdeals_admin_claim_resolve_status_key($claim, $candidates);
+
+  if ($resolved !== NULL && $raw_value === $resolved) {
+    return TRUE;
+  }
+
+  $normalized_raw = mb_strtolower(trim($raw_value));
+  foreach ($candidates as $candidate) {
+    if ($normalized_raw === mb_strtolower(trim($candidate))) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Sets the claim status using a flexible candidate match.
+ */
+function spotdeals_admin_claim_set_status(NodeInterface $claim, $desired_status) {
+  if (!$claim->hasField('field_claim_status')) {
+    return FALSE;
+  }
+
+  $resolved = spotdeals_admin_claim_resolve_status_key($claim, [$desired_status]);
+
+  if ($resolved === NULL) {
+    return FALSE;
+  }
+
+  $claim->set('field_claim_status', $resolved);
+  return TRUE;
+}
+
+/**
+ * Resolves a status candidate to the actual stored key.
+ */
+function spotdeals_admin_claim_resolve_status_key(NodeInterface $claim, array $candidates) {
+  $field_definition = $claim->getFieldDefinition('field_claim_status');
+  $settings = $field_definition->getSettings();
+  $allowed_values = $settings['allowed_values'] ?? [];
+
+  if (!is_array($allowed_values) || !$allowed_values) {
+    return NULL;
+  }
+
+  $normalized_candidates = [];
+  foreach ($candidates as $candidate) {
+    $normalized_candidates[] = mb_strtolower(trim($candidate));
+  }
+
+  foreach ($allowed_values as $key => $label) {
+    $normalized_key = mb_strtolower(trim((string) $key));
+    $normalized_label = mb_strtolower(trim((string) $label));
+
+    foreach ($normalized_candidates as $candidate) {
+      if ($candidate === $normalized_key || $candidate === $normalized_label) {
+        return (string) $key;
+      }
+    }
+  }
+
+  return NULL;
+}

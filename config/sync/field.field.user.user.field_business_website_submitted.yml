@@ -1,0 +1,23 @@
+uuid: 35751c65-47ae-41d7-8475-946247e8faef
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_business_website_submitted
+  module:
+    - link
+    - user
+id: user.user.field_business_website_submitted
+field_name: field_business_website_submitted
+entity_type: user
+bundle: user
+label: 'Business Website Submitted'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  title: 1
+  link_type: 16
+field_type: link

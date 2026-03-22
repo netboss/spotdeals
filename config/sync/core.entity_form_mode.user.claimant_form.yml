@@ -1,0 +1,11 @@
+uuid: aee17b2b-bf5f-41ef-bcf9-9dafab5569e0
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.claimant_form
+label: 'Claim — User Submission'
+description: 'Form used by users to submit a claim for a business listing. Contains only essential fields to minimize friction.'
+targetEntityType: user
+cache: true

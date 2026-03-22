@@ -1,0 +1,21 @@
+uuid: ca0b5772-a183-4f37-81c7-713e7fc79dab
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_document_reviewed_at
+  module:
+    - datetime
+    - user
+id: user.user.field_document_reviewed_at
+field_name: field_document_reviewed_at
+entity_type: user
+bundle: user
+label: 'Document Reviewed At'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

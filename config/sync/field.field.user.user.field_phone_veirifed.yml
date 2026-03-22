@@ -1,0 +1,22 @@
+uuid: 7e41c208-1402-43b5-9107-9823c8abd0e2
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_phone_veirifed
+  module:
+    - user
+id: user.user.field_phone_veirifed
+field_name: field_phone_veirifed
+entity_type: user
+bundle: user
+label: 'Phone Veirifed'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean

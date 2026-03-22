@@ -1,0 +1,5 @@
+name: SpotDeals Admin
+type: module
+description: Admin-side form and workflow customizations for SpotDeals.
+core_version_requirement: ^10 || ^11
+package: Custom

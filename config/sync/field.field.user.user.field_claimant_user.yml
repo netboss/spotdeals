@@ -1,0 +1,30 @@
+uuid: 2a281315-30d1-48d2-b658-5e6a0aca8f44
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_claimant_user
+  module:
+    - user
+id: user.user.field_claimant_user
+field_name: field_claimant_user
+entity_type: user
+bundle: user
+label: 'Claimant User'
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:user'
+  handler_settings:
+    target_bundles: null
+    sort:
+      field: _none
+      direction: ASC
+    auto_create: false
+    filter:
+      type: _none
+    include_anonymous: true
+field_type: entity_reference

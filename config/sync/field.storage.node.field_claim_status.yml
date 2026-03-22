@@ -23,6 +23,9 @@ settings:
     -
       value: rejected
       label: Rejected
+    -
+      value: approved
+      label: Approved
   allowed_values_function: ''
 module: options
 locked: false

@@ -1,0 +1,20 @@
+uuid: 65afd7cb-303a-4f01-a549-e144bee5c1c4
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_business_email_submitted
+  module:
+    - user
+id: user.user.field_business_email_submitted
+field_name: field_business_email_submitted
+entity_type: user
+bundle: user
+label: 'Business Email Submitted'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: email

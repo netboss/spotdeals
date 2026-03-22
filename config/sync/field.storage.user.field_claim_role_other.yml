@@ -1,0 +1,21 @@
+uuid: 6db5ad12-b61e-4e6f-bc02-f838fcf62de8
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.field_claim_role_other
+field_name: field_claim_role_other
+entity_type: user
+type: string
+settings:
+  max_length: 255
+  case_sensitive: false
+  is_ascii: false
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

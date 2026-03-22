@@ -1,0 +1,27 @@
+uuid: c738d05e-3336-4c83-8852-1075ccca3865
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_supporting_documents
+  module:
+    - file
+    - user
+id: user.user.field_supporting_documents
+field_name: field_supporting_documents
+entity_type: user
+bundle: user
+label: 'Supporting Documents'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:file'
+  handler_settings: {  }
+  file_directory: 'supporting-documents-[date:custom:Y]-[date:custom:m]'
+  file_extensions: 'txt pdf doc docx'
+  max_filesize: ''
+  description_field: true
+field_type: file

@@ -1,0 +1,20 @@
+uuid: 9cb98b37-018b-4ab6-8d93-e0f906ef4a6f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_reviewed_at
+  module:
+    - user
+id: user.user.field_reviewed_at
+field_name: field_reviewed_at
+entity_type: user
+bundle: user
+label: 'Reviewed At'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp

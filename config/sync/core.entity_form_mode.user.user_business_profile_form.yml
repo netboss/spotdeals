@@ -1,0 +1,11 @@
+uuid: d290d69e-b8e8-4b90-9072-a50208d68695
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.user_business_profile_form
+label: 'User business profile form'
+description: null
+targetEntityType: user
+cache: true

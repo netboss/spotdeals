@@ -1,0 +1,20 @@
+uuid: 123c33ae-8b54-4409-8eea-eb6eed19ef44
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_claim_role_other
+  module:
+    - user
+id: user.user.field_claim_role_other
+field_name: field_claim_role_other
+entity_type: user
+bundle: user
+label: 'Claim Role Other'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

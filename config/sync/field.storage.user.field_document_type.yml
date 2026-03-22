@@ -1,0 +1,54 @@
+uuid: 29ee6c57-4b21-4f11-8aaa-1ac44b1424a7
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - user
+id: user.field_document_type
+field_name: field_document_type
+entity_type: user
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: business_license
+      label: 'Business License'
+    -
+      value: utility_bill
+      label: 'Utility Bill'
+    -
+      value: lease_agreement
+      label: 'Lease Agreement'
+    -
+      value: tax_document
+      label: 'Tax Document'
+    -
+      value: certificate_of_incorporation
+      label: 'Certificate of Incorporation'
+    -
+      value: reseller_permit
+      label: 'Reseller Permit'
+    -
+      value: health_department_permit
+      label: 'Health Department Permit'
+    -
+      value: authorization_letter
+      label: 'Authorization Letter'
+    -
+      value: identity_document
+      label: 'Identity Document'
+    -
+      value: bank_statement
+      label: 'Bank Statement'
+    -
+      value: other
+      label: Other
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

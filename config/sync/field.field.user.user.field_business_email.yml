@@ -1,0 +1,20 @@
+uuid: 32c41469-8741-47c8-9d4c-5bb7267c3426
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_business_email
+  module:
+    - user
+id: user.user.field_business_email
+field_name: field_business_email
+entity_type: user
+bundle: user
+label: 'Business Email'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: email

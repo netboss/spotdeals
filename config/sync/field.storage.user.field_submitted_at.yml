@@ -1,0 +1,18 @@
+uuid: dc24ba49-7f53-4c94-a758-a0c0ec3d3127
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: user.field_submitted_at
+field_name: field_submitted_at
+entity_type: user
+type: timestamp
+settings: {  }
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

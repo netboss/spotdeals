@@ -1,0 +1,15 @@
+spotdeals_admin.claim_approve:
+  path: '/admin/claim/{node}/approve'
+  defaults:
+    _controller: '\Drupal\spotdeals_admin\Controller\SpotdealsAdminClaimController::approve'
+  requirements:
+    _permission: 'administer nodes'
+    node: '\d+'
+
+spotdeals_admin.claim_reject:
+  path: '/admin/claim/{node}/reject'
+  defaults:
+    _controller: '\Drupal\spotdeals_admin\Controller\SpotdealsAdminClaimController::reject'
+  requirements:
+    _permission: 'administer nodes'
+    node: '\d+'

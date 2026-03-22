@@ -1,0 +1,20 @@
+uuid: 78c57cde-3e78-44ca-8a89-6334699fb090
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - user
+id: user.field_venue
+field_name: field_venue
+entity_type: user
+type: entity_reference
+settings:
+  target_type: node
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

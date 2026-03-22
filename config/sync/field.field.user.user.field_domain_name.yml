@@ -1,0 +1,20 @@
+uuid: d707d22e-f012-4a0a-b22f-25d725b82d46
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_domain_name
+  module:
+    - user
+id: user.user.field_domain_name
+field_name: field_domain_name
+entity_type: user
+bundle: user
+label: 'Domain Name'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

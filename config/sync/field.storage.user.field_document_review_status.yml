@@ -1,0 +1,30 @@
+uuid: 6f7f23e4-2df4-47ec-99eb-3dd37fb79ffe
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - user
+id: user.field_document_review_status
+field_name: field_document_review_status
+entity_type: user
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: reviewed
+      label: Reviewed
+    -
+      value: pending
+      label: Pending
+    -
+      value: rejected
+      label: rejected
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

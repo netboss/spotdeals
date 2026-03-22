@@ -1,0 +1,18 @@
+uuid: cad8af73-cc3b-4e80-9e84-b635f9512746
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.claim
+id: node.claim.title
+field_name: title
+entity_type: node
+bundle: claim
+label: 'Business name being claimed'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

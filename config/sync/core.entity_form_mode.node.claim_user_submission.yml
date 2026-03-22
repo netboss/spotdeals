@@ -1,0 +1,11 @@
+uuid: a7f25c63-1421-4b08-aafa-1ecde69d8111
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.claim_user_submission
+label: 'Claim — User Submission'
+description: null
+targetEntityType: node
+cache: true
