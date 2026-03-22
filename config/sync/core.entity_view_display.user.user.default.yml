@@ -42,6 +42,7 @@ dependencies:
     - field.field.user.user.field_media_document
     - field.field.user.user.field_phone
     - field.field.user.user.field_phone_veirifed
+    - field.field.user.user.field_plan_tier
     - field.field.user.user.field_primary_owner_user
     - field.field.user.user.field_profile_photo
     - field.field.user.user.field_reviewed_at
@@ -409,6 +410,13 @@ content:
       format_custom_true: ''
     third_party_settings: {  }
     weight: 52
+    region: content
+  field_plan_tier:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 59
     region: content
   field_primary_owner_user:
     type: entity_reference_label

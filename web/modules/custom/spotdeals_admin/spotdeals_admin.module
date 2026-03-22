@@ -3,10 +3,12 @@
 use Drupal\Core\Cache\RefinableCacheableDependencyInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
+use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
 
 /**
@@ -49,11 +51,35 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
     $entity->set('field_claimant_user', ['target_id' => $current_user->id()]);
 
     if (isset($form['field_claimant_user']['widget'][0]['target_id'])) {
-      $form['field_claimant_user']['widget'][0]['target_id']['#default_value'] = \Drupal\user\Entity\User::load($current_user->id());
+      $form['field_claimant_user']['widget'][0]['target_id']['#default_value'] = User::load($current_user->id());
       $form['field_claimant_user']['widget'][0]['target_id']['#access'] = FALSE;
     }
     elseif (isset($form['field_claimant_user'])) {
       $form['field_claimant_user']['#access'] = FALSE;
+    }
+  }
+
+  // Plan gating for authenticated users:
+  // Free users can own 1 venue, Pro users can own unlimited venues.
+  if ($entity->isNew() && $current_user->isAuthenticated()) {
+    $account = User::load($current_user->id());
+
+    if ($account instanceof UserInterface && !spotdeals_admin_user_can_claim_more_venues($account)) {
+      $form['spotdeals_admin_plan_gate_message'] = [
+        '#type' => 'container',
+        '#weight' => -1100,
+        '#attributes' => [
+          'class' => ['messages', 'messages--warning'],
+          'style' => 'margin-bottom: 1rem;',
+        ],
+        'content' => [
+          '#markup' => t('You are currently on the Free plan, which includes 1 business listing. Upgrade to Pro to manage unlimited listings and multiple locations.'),
+        ],
+      ];
+
+      if (isset($form['actions']['submit'])) {
+        $form['actions']['submit']['#access'] = FALSE;
+      }
     }
   }
 
@@ -249,7 +275,7 @@ function spotdeals_admin_entity_presave(EntityInterface $entity) {
 }
 
 /**
- * Claim form validation: block duplicate claims for already claimed venues.
+ * Claim form validation: block duplicate claims and free-plan overages.
  */
 function spotdeals_admin_claim_form_validate(array &$form, FormStateInterface $form_state) {
   $form_object = $form_state->getFormObject();
@@ -271,12 +297,13 @@ function spotdeals_admin_claim_form_validate(array &$form, FormStateInterface $f
 
   $venue = spotdeals_admin_claim_get_linked_venue($entity);
 
-  if (!$venue instanceof NodeInterface) {
-    return;
+  if ($venue instanceof NodeInterface && spotdeals_admin_venue_is_claimed($venue)) {
+    $form_state->setErrorByName('field_venue', t('This listing has already been claimed.'));
   }
 
-  if (spotdeals_admin_venue_is_claimed($venue)) {
-    $form_state->setErrorByName('field_venue', t('This listing has already been claimed.'));
+  $claimant_user = spotdeals_admin_claim_get_claimant_user($entity);
+  if ($claimant_user instanceof UserInterface && !spotdeals_admin_user_can_claim_more_venues($claimant_user)) {
+    $form_state->setErrorByName('field_claimant_user', t('Your Free plan includes 1 business listing. Upgrade to Pro to manage unlimited listings.'));
   }
 }
 
@@ -313,12 +340,31 @@ function spotdeals_admin_entity_predelete(EntityInterface $entity) {
   $current_owner_id = (int) $venue->get('field_primary_owner_user')->target_id;
   $claimant_user_id = (int) $claimant_user->id();
 
-  // Only clear the owner if this claim actually owns the venue right now.
+  // Only clear the venue claim state if this claim actually owns it right now.
   if ($current_owner_id !== $claimant_user_id) {
     return;
   }
 
-  $venue->set('field_primary_owner_user', NULL);
+  if ($venue->hasField('field_primary_owner_user')) {
+    $venue->set('field_primary_owner_user', NULL);
+  }
+
+  if ($venue->hasField('field_claimed_by')) {
+    $venue->set('field_claimed_by', NULL);
+  }
+
+  if ($venue->hasField('field_claimed_listing')) {
+    $venue->set('field_claimed_listing', 0);
+  }
+
+  if ($venue->hasField('field_claim_status')) {
+    $venue->set('field_claim_status', 'unclaimed');
+  }
+
+  if ($venue->hasField('field_claim_contact_email')) {
+    $venue->set('field_claim_contact_email', NULL);
+  }
+
   $venue->save();
 
   \Drupal::logger('spotdeals_admin')->warning(
@@ -502,6 +548,46 @@ function spotdeals_admin_claim_get_claimant_user(NodeInterface $claim) {
   }
 
   return NULL;
+}
+
+/**
+ * Returns the user's plan tier.
+ *
+ * Defaults to 'free' if the field is missing or empty.
+ */
+function spotdeals_admin_user_get_plan_tier(UserInterface $user) {
+  if (!$user->hasField('field_plan_tier') || $user->get('field_plan_tier')->isEmpty()) {
+    return 'free';
+  }
+
+  $value = (string) $user->get('field_plan_tier')->value;
+  return $value ?: 'free';
+}
+
+/**
+ * Returns how many venues are currently owned by the user.
+ */
+function spotdeals_admin_user_owned_venue_count(UserInterface $user) {
+  $query = \Drupal::entityQuery('node')
+    ->accessCheck(FALSE)
+    ->condition('type', 'venue')
+    ->condition('field_primary_owner_user', $user->id());
+
+  $ids = $query->execute();
+  return is_array($ids) ? count($ids) : 0;
+}
+
+/**
+ * Returns TRUE if the user can claim more venues under their plan.
+ */
+function spotdeals_admin_user_can_claim_more_venues(UserInterface $user) {
+  $plan_tier = spotdeals_admin_user_get_plan_tier($user);
+
+  if ($plan_tier === 'pro') {
+    return TRUE;
+  }
+
+  return spotdeals_admin_user_owned_venue_count($user) < 1;
 }
 
 /**

@@ -42,6 +42,7 @@ dependencies:
     - field.field.user.user.field_media_document
     - field.field.user.user.field_phone
     - field.field.user.user.field_phone_veirifed
+    - field.field.user.user.field_plan_tier
     - field.field.user.user.field_primary_owner_user
     - field.field.user.user.field_profile_photo
     - field.field.user.user.field_reviewed_at
@@ -60,6 +61,7 @@ dependencies:
   module:
     - image
     - path
+    - tagify
     - user
 _core:
   default_config_hash: Yj33guGRXeB-uq182k6bwtAUtKGpO17nkYxn8FnjhBM
@@ -88,6 +90,17 @@ content:
     settings:
       size: 60
       placeholder: ''
+    third_party_settings: {  }
+  field_plan_tier:
+    type: tagify_select_widget
+    weight: 7
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 0
+      placeholder: ''
+      show_entity_id: 0
+      parent_selection: 1
     third_party_settings: {  }
   language:
     weight: 4
