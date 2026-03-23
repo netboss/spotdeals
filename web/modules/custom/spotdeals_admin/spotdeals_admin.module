@@ -3,7 +3,6 @@
 use Drupal\Core\Cache\RefinableCacheableDependencyInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\node\Entity\Node;
@@ -42,7 +41,8 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
     ]
   );
 
-  // Always validate claim submissions against already-claimed venues.
+  // Always validate claim submissions against already-claimed venues and
+  // pending-claim guardrails.
   $form['#validate'][] = 'spotdeals_admin_claim_form_validate';
 
   // Auto-fill claimant user on claim creation for authenticated users.
@@ -56,30 +56,6 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
     }
     elseif (isset($form['field_claimant_user'])) {
       $form['field_claimant_user']['#access'] = FALSE;
-    }
-  }
-
-  // Plan gating for authenticated users:
-  // Free users can own 1 venue, Pro users can own unlimited venues.
-  if ($entity->isNew() && $current_user->isAuthenticated()) {
-    $account = User::load($current_user->id());
-
-    if ($account instanceof UserInterface && !spotdeals_admin_user_can_claim_more_venues($account)) {
-      $form['spotdeals_admin_plan_gate_message'] = [
-        '#type' => 'container',
-        '#weight' => -1100,
-        '#attributes' => [
-          'class' => ['messages', 'messages--warning'],
-          'style' => 'margin-bottom: 1rem;',
-        ],
-        'content' => [
-          '#markup' => t('You are currently on the Free plan, which includes 1 business listing. Upgrade to Pro to manage unlimited listings and multiple locations.'),
-        ],
-      ];
-
-      if (isset($form['actions']['submit'])) {
-        $form['actions']['submit']['#access'] = FALSE;
-      }
     }
   }
 
@@ -170,6 +146,32 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
           elseif (isset($form['field_venue'])) {
             $form['field_venue']['#access'] = FALSE;
           }
+        }
+      }
+    }
+  }
+
+  // Consolidated authenticated-user creation guardrails.
+  if ($entity->isNew() && $current_user->isAuthenticated()) {
+    $account = User::load($current_user->id());
+
+    if ($account instanceof UserInterface) {
+      $block_message = spotdeals_admin_claim_get_creation_block_message($entity, $account);
+
+      if ($block_message !== NULL) {
+        $form['spotdeals_admin_block_message'] = [
+          '#type' => 'container',
+          '#weight' => -1200,
+          '#attributes' => [
+            'class' => ['messages', 'messages--error'],
+          ],
+          'content' => [
+            '#markup' => $block_message,
+          ],
+        ];
+
+        if (isset($form['actions']['submit'])) {
+          $form['actions']['submit']['#access'] = FALSE;
         }
       }
     }
@@ -275,7 +277,42 @@ function spotdeals_admin_entity_presave(EntityInterface $entity) {
 }
 
 /**
- * Claim form validation: block duplicate claims and free-plan overages.
+ * Implements hook_entity_insert().
+ *
+ * Ensures competing pending claims get rejected if a claim is inserted already
+ * in approved status.
+ */
+function spotdeals_admin_entity_insert(EntityInterface $entity) {
+  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'claim') {
+    return;
+  }
+
+  if (!spotdeals_admin_claim_status_matches($entity, ['approved'])) {
+    return;
+  }
+
+  spotdeals_admin_reject_competing_pending_claims($entity);
+}
+
+/**
+ * Implements hook_entity_update().
+ *
+ * Ensures competing pending claims get rejected whenever a claim is approved.
+ */
+function spotdeals_admin_entity_update(EntityInterface $entity) {
+  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'claim') {
+    return;
+  }
+
+  if (!spotdeals_admin_claim_status_matches($entity, ['approved'])) {
+    return;
+  }
+
+  spotdeals_admin_reject_competing_pending_claims($entity);
+}
+
+/**
+ * Claim form validation: block duplicate claims and plan overages.
  */
 function spotdeals_admin_claim_form_validate(array &$form, FormStateInterface $form_state) {
   $form_object = $form_state->getFormObject();
@@ -295,16 +332,24 @@ function spotdeals_admin_claim_form_validate(array &$form, FormStateInterface $f
     return;
   }
 
+  $claimant_user = spotdeals_admin_claim_get_claimant_user($entity);
+  if (!$claimant_user instanceof UserInterface) {
+    return;
+  }
+
+  $block_message = spotdeals_admin_claim_get_creation_block_message($entity, $claimant_user);
+  if ($block_message === NULL) {
+    return;
+  }
+
   $venue = spotdeals_admin_claim_get_linked_venue($entity);
 
-  if ($venue instanceof NodeInterface && spotdeals_admin_venue_is_claimed($venue)) {
-    $form_state->setErrorByName('field_venue', t('This listing has already been claimed.'));
+  if ($venue instanceof NodeInterface) {
+    $form_state->setErrorByName('field_venue', $block_message);
+    return;
   }
 
-  $claimant_user = spotdeals_admin_claim_get_claimant_user($entity);
-  if ($claimant_user instanceof UserInterface && !spotdeals_admin_user_can_claim_more_venues($claimant_user)) {
-    $form_state->setErrorByName('field_claimant_user', t('Your Free plan includes 1 business listing. Upgrade to Pro to manage unlimited listings.'));
-  }
+  $form_state->setErrorByName('field_claimant_user', $block_message);
 }
 
 /**
@@ -388,14 +433,44 @@ function spotdeals_admin_node_view_alter(array &$build, EntityInterface $entity,
 
   // Venue page behavior.
   if ($entity->bundle() === 'venue') {
+    $build['#cache']['contexts'][] = 'user';
+
     // Keep the owner field internal. Do not show it on the venue page.
     if (isset($build['field_primary_owner_user'])) {
       unset($build['field_primary_owner_user']);
     }
 
-    // If already claimed, do not show the claim link.
+    // Already claimed by someone: do not show the claim CTA.
     if (spotdeals_admin_venue_is_claimed($entity)) {
       return;
+    }
+
+    // Authenticated user with a pending claim for this same venue:
+    // show unavailable state instead of claim button.
+    if ($current_user->isAuthenticated()) {
+      $account = User::load($current_user->id());
+
+      if ($account instanceof UserInterface && spotdeals_admin_user_has_pending_claim_for_venue($account, $entity)) {
+        $build['claim_this_listing_unavailable'] = [
+          '#type' => 'container',
+          '#attributes' => [
+            'class' => [
+              'spotdeals-claim-unavailable-message',
+              'messages',
+              'messages--warning',
+            ],
+          ],
+          '#weight' => 100,
+          '#cache' => [
+            'contexts' => ['user'],
+          ],
+          'content' => [
+            '#markup' => t('You already have a pending claim for this listing.'),
+          ],
+        ];
+
+        return;
+      }
     }
 
     $destination = '/create/claim?venue=' . $entity->id();
@@ -419,6 +494,9 @@ function spotdeals_admin_node_view_alter(array &$build, EntityInterface $entity,
         'class' => ['claim-this-listing-link'],
       ],
       '#weight' => 100,
+      '#cache' => [
+        'contexts' => ['user'],
+      ],
     ];
 
     return;
@@ -551,6 +629,43 @@ function spotdeals_admin_claim_get_claimant_user(NodeInterface $claim) {
 }
 
 /**
+ * Returns a blocking message for new claim creation, or NULL if allowed.
+ */
+function spotdeals_admin_claim_get_creation_block_message(NodeInterface $claim, UserInterface $account = NULL) {
+  if (!$claim->isNew()) {
+    return NULL;
+  }
+
+  if (!$account instanceof UserInterface) {
+    return NULL;
+  }
+
+  $venue = spotdeals_admin_claim_get_linked_venue($claim);
+
+  if ($venue instanceof NodeInterface && spotdeals_admin_venue_is_claimed($venue)) {
+    return t('This listing has already been claimed and cannot be claimed again.');
+  }
+
+  if ($venue instanceof NodeInterface && spotdeals_admin_user_has_pending_claim_for_venue($account, $venue)) {
+    return t('You already have a pending claim for this venue.');
+  }
+
+  if (!spotdeals_admin_user_can_submit_more_pending_claims($account)) {
+    $limit = spotdeals_admin_user_pending_claim_limit($account);
+
+    return t('You have reached your limit of @count pending claim(s). Please wait until one is reviewed before submitting another.', [
+      '@count' => $limit,
+    ]);
+  }
+
+  if (!spotdeals_admin_user_can_claim_more_venues($account)) {
+    return t('You are currently on the Free plan, which includes 1 business listing. Upgrade to Pro to manage unlimited listings and multiple locations.');
+  }
+
+  return NULL;
+}
+
+/**
  * Returns the user's plan tier.
  *
  * Defaults to 'free' if the field is missing or empty.
@@ -588,6 +703,74 @@ function spotdeals_admin_user_can_claim_more_venues(UserInterface $user) {
   }
 
   return spotdeals_admin_user_owned_venue_count($user) < 1;
+}
+
+/**
+ * Returns the maximum pending claims allowed for the user.
+ *
+ * Free: 1
+ * Pro: 5
+ */
+function spotdeals_admin_user_pending_claim_limit(UserInterface $user) {
+  $plan_tier = spotdeals_admin_user_get_plan_tier($user);
+
+  if ($plan_tier === 'pro') {
+    return 5;
+  }
+
+  return 1;
+}
+
+/**
+ * Returns the count of pending claims currently owned by the user.
+ */
+function spotdeals_admin_user_pending_claim_count(UserInterface $user) {
+  $query = \Drupal::entityQuery('node')
+    ->accessCheck(FALSE)
+    ->condition('type', 'claim')
+    ->condition('field_claimant_user', $user->id());
+
+  $pending_status = spotdeals_admin_claim_resolve_status_key_from_bundle('claim', 'field_claim_status', ['pending']);
+  if ($pending_status !== NULL) {
+    $query->condition('field_claim_status', $pending_status);
+  }
+  else {
+    $query->condition('field_claim_status', 'pending');
+  }
+
+  $ids = $query->execute();
+  return is_array($ids) ? count($ids) : 0;
+}
+
+/**
+ * Returns TRUE if the user already has a pending claim for the given venue.
+ */
+function spotdeals_admin_user_has_pending_claim_for_venue(UserInterface $user, NodeInterface $venue) {
+  $query = \Drupal::entityQuery('node')
+    ->accessCheck(FALSE)
+    ->condition('type', 'claim')
+    ->condition('field_claimant_user', $user->id())
+    ->condition('field_venue', $venue->id());
+
+  $pending_status = spotdeals_admin_claim_resolve_status_key_from_bundle('claim', 'field_claim_status', ['pending']);
+  if ($pending_status !== NULL) {
+    $query->condition('field_claim_status', $pending_status);
+  }
+  else {
+    $query->condition('field_claim_status', 'pending');
+  }
+
+  $query->range(0, 1);
+
+  $ids = $query->execute();
+  return !empty($ids);
+}
+
+/**
+ * Returns TRUE if the user can submit more pending claims.
+ */
+function spotdeals_admin_user_can_submit_more_pending_claims(UserInterface $user) {
+  return spotdeals_admin_user_pending_claim_count($user) < spotdeals_admin_user_pending_claim_limit($user);
 }
 
 /**
@@ -673,4 +856,160 @@ function spotdeals_admin_claim_resolve_status_key(NodeInterface $claim, array $c
   }
 
   return NULL;
+}
+
+/**
+ * Resolves a status candidate using field config, without needing an entity.
+ */
+function spotdeals_admin_claim_resolve_status_key_from_bundle($bundle, $field_name, array $candidates) {
+  $field_definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', $bundle);
+
+  if (empty($field_definitions[$field_name])) {
+    return NULL;
+  }
+
+  $settings = $field_definitions[$field_name]->getSettings();
+  $allowed_values = $settings['allowed_values'] ?? [];
+
+  if (!is_array($allowed_values) || !$allowed_values) {
+    return NULL;
+  }
+
+  $normalized_candidates = [];
+  foreach ($candidates as $candidate) {
+    $normalized_candidates[] = mb_strtolower(trim($candidate));
+  }
+
+  foreach ($allowed_values as $key => $label) {
+    $normalized_key = mb_strtolower(trim((string) $key));
+    $normalized_label = mb_strtolower(trim((string) $label));
+
+    foreach ($normalized_candidates as $candidate) {
+      if ($candidate === $normalized_key || $candidate === $normalized_label) {
+        return (string) $key;
+      }
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Rejects other pending claims for the same venue after one claim is approved.
+ */
+function spotdeals_admin_reject_competing_pending_claims(NodeInterface $approved_claim) {
+  static $running = FALSE;
+
+  if ($running) {
+    return;
+  }
+
+  if ($approved_claim->bundle() !== 'claim') {
+    return;
+  }
+
+  $venue = spotdeals_admin_claim_get_linked_venue($approved_claim);
+  if (!$venue instanceof NodeInterface) {
+    return;
+  }
+
+  $pending_status = spotdeals_admin_claim_resolve_status_key($approved_claim, ['pending']);
+  if ($pending_status === NULL) {
+    $pending_status = 'pending';
+  }
+
+  $query = \Drupal::entityQuery('node')
+    ->accessCheck(FALSE)
+    ->condition('type', 'claim')
+    ->condition('field_venue', $venue->id())
+    ->condition('nid', $approved_claim->id(), '<>')
+    ->condition('field_claim_status', $pending_status);
+
+  $claim_ids = $query->execute();
+  if (empty($claim_ids)) {
+    return;
+  }
+
+  $claims = Node::loadMultiple($claim_ids);
+  $current_user = \Drupal::currentUser();
+  $timestamp = \Drupal::time()->getRequestTime();
+
+  $running = TRUE;
+
+  try {
+    foreach ($claims as $claim) {
+      if (!$claim instanceof NodeInterface || $claim->bundle() !== 'claim') {
+        continue;
+      }
+
+      if (!spotdeals_admin_claim_set_status($claim, 'rejected')) {
+        continue;
+      }
+
+      if ($claim->hasField('field_reviewed_by')) {
+        $claim->set('field_reviewed_by', ['target_id' => $current_user->id()]);
+      }
+
+      if ($claim->hasField('field_reviewed_at')) {
+        $claim->set('field_reviewed_at', $timestamp);
+      }
+
+      if ($claim->hasField('field_decision_reason') && $claim->get('field_decision_reason')->isEmpty()) {
+        $claim->set('field_decision_reason', 'Another claim for this venue was approved.');
+      }
+
+      $claim->save();
+
+      \Drupal::logger('spotdeals_admin')->notice(
+        'Competing claim %claim_id was auto-rejected because claim %approved_claim_id was approved for venue %venue_id.',
+        [
+          '%claim_id' => $claim->id(),
+          '%approved_claim_id' => $approved_claim->id(),
+          '%venue_id' => $venue->id(),
+        ]
+      );
+    }
+  }
+  finally {
+    $running = FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for user forms.
+ */
+function spotdeals_admin_form_user_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $current_user = \Drupal::currentUser();
+
+  if ($current_user->hasRole('administrator')) {
+    return;
+  }
+
+  if (isset($form['field_plan_tier'])) {
+    $form['field_plan_tier']['#access'] = FALSE;
+  }
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function spotdeals_admin_user_entity_presave(EntityInterface $entity) {
+  if (!$entity instanceof UserInterface) {
+    return;
+  }
+
+  $current_user = \Drupal::currentUser();
+
+  if ($current_user->hasRole('administrator')) {
+    return;
+  }
+
+  if ($entity->hasField('field_plan_tier')) {
+    // Reload original user to restore original value.
+    $original = User::load($entity->id());
+
+    if ($original && $original->hasField('field_plan_tier')) {
+      $entity->set('field_plan_tier', $original->get('field_plan_tier')->value);
+    }
+  }
 }
