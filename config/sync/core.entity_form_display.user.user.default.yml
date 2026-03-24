@@ -42,12 +42,16 @@ dependencies:
     - field.field.user.user.field_media_document
     - field.field.user.user.field_phone
     - field.field.user.user.field_phone_veirifed
+    - field.field.user.user.field_plan_renew_at
+    - field.field.user.user.field_plan_status
     - field.field.user.user.field_plan_tier
     - field.field.user.user.field_primary_owner_user
     - field.field.user.user.field_profile_photo
     - field.field.user.user.field_reviewed_at
     - field.field.user.user.field_reviewed_by
     - field.field.user.user.field_risk_flags
+    - field.field.user.user.field_stripe_customer_id
+    - field.field.user.user.field_stripe_subscription_id
     - field.field.user.user.field_submitted_at
     - field.field.user.user.field_supporting_documents
     - field.field.user.user.field_supporting_images
@@ -59,6 +63,7 @@ dependencies:
     - field.field.user.user.user_picture
     - image.style.thumbnail
   module:
+    - datetime
     - image
     - path
     - tagify
@@ -91,6 +96,18 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
+  field_plan_renew_at:
+    type: datetime_default
+    weight: 11
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_plan_status:
+    type: options_select
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
   field_plan_tier:
     type: tagify_select_widget
     weight: 7
@@ -101,6 +118,22 @@ content:
       placeholder: ''
       show_entity_id: 0
       parent_selection: 1
+    third_party_settings: {  }
+  field_stripe_customer_id:
+    type: string_textfield
+    weight: 8
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_stripe_subscription_id:
+    type: string_textfield
+    weight: 9
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
     third_party_settings: {  }
   language:
     weight: 4

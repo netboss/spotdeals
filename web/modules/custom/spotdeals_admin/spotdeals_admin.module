@@ -159,6 +159,17 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
       $block_message = spotdeals_admin_claim_get_creation_block_message($entity, $account);
 
       if ($block_message !== NULL) {
+        $upgrade_message = t('You are currently on the Free plan, which includes 1 business listing. Upgrade to Pro to manage unlimited listings and multiple locations.');
+        $markup = $block_message;
+
+        if ((string) $block_message === (string) $upgrade_message && \Drupal::moduleHandler()->moduleExists('spotdeals_billing')) {
+          $upgrade_url = Url::fromRoute('spotdeals_billing.upgrade')->toString();
+
+          $markup = t('You are currently on the Free plan, which includes 1 business listing. <a href=":url">Upgrade to Pro</a> to manage unlimited listings and multiple locations.', [
+            ':url' => $upgrade_url,
+          ]);
+        }
+
         $form['spotdeals_admin_block_message'] = [
           '#type' => 'container',
           '#weight' => -1200,
@@ -166,7 +177,7 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
             'class' => ['messages', 'messages--error'],
           ],
           'content' => [
-            '#markup' => $block_message,
+            '#markup' => $markup,
           ],
         ];
 

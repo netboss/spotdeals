@@ -43,12 +43,16 @@ dependencies:
     - field.field.user.user.field_media_document
     - field.field.user.user.field_phone
     - field.field.user.user.field_phone_veirifed
+    - field.field.user.user.field_plan_renew_at
+    - field.field.user.user.field_plan_status
     - field.field.user.user.field_plan_tier
     - field.field.user.user.field_primary_owner_user
     - field.field.user.user.field_profile_photo
     - field.field.user.user.field_reviewed_at
     - field.field.user.user.field_reviewed_by
     - field.field.user.user.field_risk_flags
+    - field.field.user.user.field_stripe_customer_id
+    - field.field.user.user.field_stripe_subscription_id
     - field.field.user.user.field_submitted_at
     - field.field.user.user.field_supporting_documents
     - field.field.user.user.field_supporting_images
@@ -120,12 +124,16 @@ hidden:
   field_media_document: true
   field_phone: true
   field_phone_veirifed: true
+  field_plan_renew_at: true
+  field_plan_status: true
   field_plan_tier: true
   field_primary_owner_user: true
   field_profile_photo: true
   field_reviewed_at: true
   field_reviewed_by: true
   field_risk_flags: true
+  field_stripe_customer_id: true
+  field_stripe_subscription_id: true
   field_submitted_at: true
   field_supporting_documents: true
   field_supporting_images: true
