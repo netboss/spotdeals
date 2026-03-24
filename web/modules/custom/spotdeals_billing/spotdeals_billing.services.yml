@@ -1,0 +1,6 @@
+services:
+  spotdeals_billing.stripe_billing:
+    class: Drupal\spotdeals_billing\Service\StripeBillingService
+    arguments:
+      - '@entity_type.manager'
+      - '@logger.factory'

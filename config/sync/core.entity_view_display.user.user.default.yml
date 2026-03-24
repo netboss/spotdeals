@@ -42,12 +42,16 @@ dependencies:
     - field.field.user.user.field_media_document
     - field.field.user.user.field_phone
     - field.field.user.user.field_phone_veirifed
+    - field.field.user.user.field_plan_renew_at
+    - field.field.user.user.field_plan_status
     - field.field.user.user.field_plan_tier
     - field.field.user.user.field_primary_owner_user
     - field.field.user.user.field_profile_photo
     - field.field.user.user.field_reviewed_at
     - field.field.user.user.field_reviewed_by
     - field.field.user.user.field_risk_flags
+    - field.field.user.user.field_stripe_customer_id
+    - field.field.user.user.field_stripe_subscription_id
     - field.field.user.user.field_submitted_at
     - field.field.user.user.field_supporting_documents
     - field.field.user.user.field_supporting_images
@@ -411,6 +415,22 @@ content:
     third_party_settings: {  }
     weight: 52
     region: content
+  field_plan_renew_at:
+    type: datetime_default
+    label: above
+    settings:
+      timezone_override: ''
+      format_type: medium
+    third_party_settings: {  }
+    weight: 63
+    region: content
+  field_plan_status:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 62
+    region: content
   field_plan_tier:
     type: list_default
     label: above
@@ -467,6 +487,22 @@ content:
     settings: {  }
     third_party_settings: {  }
     weight: 57
+    region: content
+  field_stripe_customer_id:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 60
+    region: content
+  field_stripe_subscription_id:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 61
     region: content
   field_submitted_at:
     type: timestamp

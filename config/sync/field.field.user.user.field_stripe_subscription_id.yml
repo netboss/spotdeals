@@ -1,0 +1,20 @@
+uuid: 3a0b18df-ea6c-4dc9-9bf3-e23341ac0247
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_stripe_subscription_id
+  module:
+    - user
+id: user.user.field_stripe_subscription_id
+field_name: field_stripe_subscription_id
+entity_type: user
+bundle: user
+label: 'Stripe subscription id'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

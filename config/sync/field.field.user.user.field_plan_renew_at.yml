@@ -1,0 +1,21 @@
+uuid: efd6af69-848a-420b-8b5e-7a8331cf90f8
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_plan_renew_at
+  module:
+    - datetime
+    - user
+id: user.user.field_plan_renew_at
+field_name: field_plan_renew_at
+entity_type: user
+bundle: user
+label: 'Plan renew at'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

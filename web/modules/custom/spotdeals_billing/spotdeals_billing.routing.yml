@@ -1,0 +1,46 @@
+spotdeals_billing.upgrade:
+  path: '/account/upgrade'
+  defaults:
+    _controller: '\Drupal\spotdeals_billing\Controller\BillingController::upgradePage'
+    _title: 'Upgrade to Pro'
+  requirements:
+    _user_is_logged_in: 'TRUE'
+
+spotdeals_billing.checkout:
+  path: '/account/upgrade/checkout/{plan}'
+  defaults:
+    _controller: '\Drupal\spotdeals_billing\Controller\BillingController::startCheckout'
+  requirements:
+    _user_is_logged_in: 'TRUE'
+    plan: 'monthly|yearly'
+
+spotdeals_billing.success:
+  path: '/account/upgrade/success'
+  defaults:
+    _controller: '\Drupal\spotdeals_billing\Controller\BillingController::successPage'
+    _title: 'Subscription received'
+  requirements:
+    _user_is_logged_in: 'TRUE'
+
+spotdeals_billing.cancel:
+  path: '/account/upgrade/cancel'
+  defaults:
+    _controller: '\Drupal\spotdeals_billing\Controller\BillingController::cancelPage'
+    _title: 'Checkout canceled'
+  requirements:
+    _user_is_logged_in: 'TRUE'
+
+spotdeals_billing.portal:
+  path: '/account/billing'
+  defaults:
+    _controller: '\Drupal\spotdeals_billing\Controller\BillingController::billingPortal'
+  requirements:
+    _user_is_logged_in: 'TRUE'
+
+spotdeals_billing.webhook:
+  path: '/stripe/webhook'
+  defaults:
+    _controller: '\Drupal\spotdeals_billing\Controller\StripeWebhookController::handle'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'
