@@ -15,23 +15,38 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
 
   $request = \Drupal::request();
 
-  // Keep the visible search box showing exactly what the user typed.
-  // Use HTML attribute 'value' only for presentation.
-  // Do NOT use #value because it can interfere with form processing.
-  if (isset($form['search_deals'])) {
+  // Preserve the original user-entered search string for display only.
+  // Prefer the persistent query param first so pagination keeps it.
+  $raw = $request->query->get('search_raw');
+
+  if (!is_string($raw) || trim($raw) === '') {
+    $raw = $request->attributes->get('spotdeals_search_smart_location.raw_query');
+  }
+
+  if (!is_string($raw) || trim($raw) === '') {
     $raw = $request->query->get('search_deals');
-    if (is_string($raw)) {
+  }
+
+  if (!is_string($raw) || trim($raw) === '') {
+    $raw = $request->query->get('search_api_fulltext');
+  }
+
+  if (is_string($raw) && trim($raw) !== '') {
+    if (isset($form['search_deals'])) {
       $form['search_deals']['#default_value'] = $raw;
       $form['search_deals']['#attributes']['value'] = $raw;
     }
-  }
 
-  if (isset($form['search_api_fulltext'])) {
-    $raw = $request->query->get('search_api_fulltext');
-    if (is_string($raw)) {
+    if (isset($form['search_api_fulltext'])) {
       $form['search_api_fulltext']['#default_value'] = $raw;
       $form['search_api_fulltext']['#attributes']['value'] = $raw;
     }
+
+    // Carry the original raw query through pager links and subsequent requests.
+    $form['search_raw'] = [
+      '#type' => 'hidden',
+      '#value' => $raw,
+    ];
   }
 
   if (isset($form['postal_code_exact'])) {
@@ -51,6 +66,10 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
  * Rewrites one-box input into:
  * - keyword-only fulltext
  * - exact ZIP/city exposed filters
+ *
+ * This is intentionally strict:
+ * if a city is present, we filter to that exact city.
+ * Accuracy and consistency come first.
  */
 function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, string $display_id, array &$args): void {
   $input = $view->getExposedInput();
@@ -69,10 +88,19 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     return;
   }
 
-  $raw = trim((string) ($input[$search_param] ?? $request->query->get($search_param, '')));
+  // Prefer the persistent raw query param so pager links keep the original text.
+  $raw = $request->query->get('search_raw');
+  if (!is_string($raw) || trim($raw) === '') {
+    $raw = (string) ($input[$search_param] ?? $request->query->get($search_param, ''));
+  }
+  $raw = trim($raw);
+
   if ($raw === '') {
     return;
   }
+
+  // Save the raw user-entered query for display only.
+  $request->attributes->set('spotdeals_search_smart_location.raw_query', $raw);
 
   $parsed = _spotdeals_search_smart_location_parse($raw);
 
@@ -89,16 +117,27 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     return;
   }
 
-  // Rewrite the actual search query to only non-location keywords.
-  // This is required so ZIP/city tokens do not remain in fulltext.
+  // Remove previous exact location filters from the exposed input first.
+  unset($input['postal_code_exact'], $input['locality_exact']);
+
+  // Persist the original raw search text across pagination and exposed form
+  // submits without letting it affect the actual Search API fulltext query.
+  $input['search_raw'] = $raw;
+
+  // IMPORTANT:
+  // Rewrite the active search inputs to keyword-only text so the View/Search API
+  // uses the cleaned query internally.
   $input[$search_param] = $parsed['keywords'];
 
-  // Keep Search API internal fulltext aligned too, if present.
+  if (array_key_exists('search_deals', $input)) {
+    $input['search_deals'] = $parsed['keywords'];
+  }
+
   if (array_key_exists('search_api_fulltext', $input)) {
     $input['search_api_fulltext'] = $parsed['keywords'];
   }
 
-  // Apply parsed location filters.
+  // Apply exact location filters.
   if (!empty($parsed['zip'])) {
     $input['postal_code_exact'] = $parsed['zip'];
   }
@@ -140,15 +179,9 @@ function _spotdeals_search_smart_location_parse(string $input): array {
     $normalized = _spotdeals_search_smart_location_normalize($working);
   }
 
-  $known_cities = [
-    'new smyrna beach' => 'New Smyrna Beach',
-    'daytona beach' => 'Daytona Beach',
-    'port orange' => 'Port Orange',
-    'ormond beach' => 'Ormond Beach',
-    'edgewater' => 'Edgewater',
-  ];
-
-  foreach ($known_cities as $needle => $label) {
+  // Match supported cities using exact labels expected by locality_exact.
+  // Keep longer names before shorter overlapping names.
+  foreach (_spotdeals_search_smart_location_known_cities() as $needle => $label) {
     if (preg_match('/\b' . preg_quote($needle, '/') . '\b/i', $normalized)) {
       $city = $label;
       $working = preg_replace('/\b' . preg_quote($needle, '/') . '\b/i', ' ', $working, 1) ?? $working;
@@ -163,6 +196,34 @@ function _spotdeals_search_smart_location_parse(string $input): array {
     'keywords' => $keywords,
     'zip' => $zip,
     'city' => $city,
+  ];
+}
+
+/**
+ * Returns supported city aliases mapped to the exact exposed filter label.
+ *
+ * IMPORTANT:
+ * Values must match actual locality_exact filter values.
+ */
+function _spotdeals_search_smart_location_known_cities(): array {
+  return [
+    'daytona beach shores' => 'Daytona Beach Shores',
+    'new smyrna beach' => 'New Smyrna Beach',
+    'daytona beach' => 'Daytona Beach',
+    'port orange' => 'Port Orange',
+    'ormond beach' => 'Ormond Beach',
+    'south daytona' => 'South Daytona',
+    'ponce inlet' => 'Ponce Inlet',
+    'holly hill' => 'Holly Hill',
+    'orange city' => 'Orange City',
+    'new smyrna' => 'New Smyrna Beach',
+    'de land' => 'DeLand',
+    'deland' => 'DeLand',
+    'deltona' => 'Deltona',
+    'kissimmee' => 'Kissimmee',
+    'orlando' => 'Orlando',
+    'edgewater' => 'Edgewater',
+    'nsb' => 'New Smyrna Beach',
   ];
 }
 
