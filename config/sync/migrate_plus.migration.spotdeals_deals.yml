@@ -2,8 +2,6 @@ uuid: 92ea00ee-4df3-4444-81ae-010199366704
 langcode: en
 status: true
 dependencies: {  }
-_core:
-  default_config_hash: pGVjBnNqHZ9c-XTlZ1F03wlePsZ6L-rZuIu3VRY1HjE
 id: spotdeals_deals
 class: null
 field_plugin_method: null

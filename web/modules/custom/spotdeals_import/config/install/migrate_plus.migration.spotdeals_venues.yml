@@ -40,6 +40,16 @@ process:
   field_address/administrative_area: field_address_administrative_area
   field_address/postal_code: field_address_postal_code
 
+  field_latitude:
+    - plugin: skip_on_empty
+      method: process
+      source: field_latitude
+
+  field_longitude:
+    - plugin: skip_on_empty
+      method: process
+      source: field_longitude
+
   field_venue_type:
     - plugin: skip_on_empty
       method: process
