@@ -222,21 +222,518 @@ Margarita Monday,32oz casa margaritas for $10,Monday,All day,Daily Special,Barri
 Taco + Tequila Tuesday,$1 off tacos · $5 casa margaritas · $5 off casa pitchers,Tuesday,All day,Daily Special,Barrio Ybor City,1,1
 Happy Hour,"$5 tacos & apps · $5 bottles, drafts, wine, liquors, and select margaritas",Daily,4pm–7pm,Happy Hour,Rocco's Tacos Tampa,1,1
 Taco Tuesday,All-you-can-eat tacos $27.99 · $7 house margaritas · $5 cervezas,Tuesday,Open–Close,Daily Special,Rocco's Tacos Tampa,1,1
-"Bottomless Brunch","$34.25 per person","Saturday|Sunday","11am–3pm","Brunch Special","Mia's Italian Kitchen",1,1
-"Sunday Paella Brunch","All-you-can-eat paella $25 · unlimited sangria and mimosas $18 with entrée or paella purchase","Sunday","11am–3pm","Brunch Special","Tapa Toro",1,1
-"Weekend Brunch","Brunch menu served weekends","Saturday|Sunday","11am–2:30pm","Brunch Special","Kavas Tacos + Tequila",1,1
-"Taco Tuesday Board","$36 taco board · half-off select premium tequilas · half-off house pitchers","Tuesday","Regular hours","Daily Special","Kavas Tacos + Tequila",1,1
-"Taco & Tequila Tuesday","2 tacos and 1 house margarita for $10 · food and drink specials start at $5","Tuesday","3pm–Close","Daily Special","Solita Tacos & Margaritas Orlando",1,1
-"Weekend Brunch","Weekend brunch menu","Saturday|Sunday","10am–3pm","Brunch Special","Solita Tacos & Margaritas Orlando",1,1
-"Weekend Brunch Offer","Weekend brunch offer includes a complimentary Hash House Lemonade","Saturday|Sunday","Morning","Brunch Special","Hash House A Go Go Orlando",1,1
-"Weekend Greek Brunch","Greek brunch favorites like pancakes, omelettes, and breakfast wraps from $18","Weekends","Morning","Brunch Special","Taverna Opa Orlando",1,1
-"Weekend Brunch","Weekend brunch served Saturday and Sunday","Saturday|Sunday","10am–2pm","Brunch Special","House of Blues Restaurant & Bar Orlando",1,1
-"Taco Tuesday","$2.50 tacos · $4 cervezas · $7 frozen or classic margaritas","Tuesday","4pm–9:30pm","Daily Special","Urban Cantina",1,1
-"Taco + Tequila Tuesday","$1 off tacos · $5 casa margaritas · $5 off casa pitchers","Tuesday","Regular hours","Daily Special","Barrio Ybor City",1,1
-"Bottomless Brunch","$17 bottomless mimosas, Bloody Marys, or rosé with entrée purchase","Saturday|Sunday","11am–4pm","Brunch Special","Rocco's Tacos Tampa",1,1
-"All-You-Can-Eat Taco Tuesday","$27.99 all-you-can-eat tacos","Tuesday","Open–Close","Daily Special","Rocco's Tacos Tampa",1,1
-"Taco Tuesday","2 tacos for $5","Tuesday","All day","Daily Special","Taco Bus Tampa / Adamo",1,1
-"Weekday Taco Happy Hour","Buy one get one tacos · $7 margaritas · $5 mocktails · $4 drafts · $4 wines","Weekdays","2pm–6pm","Happy Hour","Nueva Cantina Tampa",1,1
-"Weekend Brunch","Brunch specialties available Saturday and Sunday","Saturday|Sunday","10am–2:30pm","Brunch Special","Ponte Modern American",1,1
-"Sicilian Lunch Menu","Dedicated lunch menu available daily","Daily","11am–4pm","Lunch Special","Casa Santo Stefano",1,1
-
+Bottomless Brunch,$34.25 per person,Saturday|Sunday,11am–3pm,Brunch Special,Mia's Italian Kitchen,1,1
+Sunday Paella Brunch,All-you-can-eat paella $25 · unlimited sangria and mimosas $18 with entrée or paella purchase,Sunday,11am–3pm,Brunch Special,Tapa Toro,1,1
+Weekend Brunch,Brunch menu served weekends,Saturday|Sunday,11am–2:30pm,Brunch Special,Kavas Tacos + Tequila,1,1
+Taco Tuesday Board,$36 taco board · half-off select premium tequilas · half-off house pitchers,Tuesday,Regular hours,Daily Special,Kavas Tacos + Tequila,1,1
+Taco & Tequila Tuesday,2 tacos and 1 house margarita for $10 · food and drink specials start at $5,Tuesday,3pm–Close,Daily Special,Solita Tacos & Margaritas Orlando,1,1
+Weekend Brunch,Weekend brunch menu,Saturday|Sunday,10am–3pm,Brunch Special,Solita Tacos & Margaritas Orlando,1,1
+Weekend Brunch Offer,Weekend brunch offer includes a complimentary Hash House Lemonade,Saturday|Sunday,Morning,Brunch Special,Hash House A Go Go Orlando,1,1
+Weekend Greek Brunch,"Greek brunch favorites like pancakes, omelettes, and breakfast wraps from $18",Weekends,Morning,Brunch Special,Taverna Opa Orlando,1,1
+Weekend Brunch,Weekend brunch served Saturday and Sunday,Saturday|Sunday,10am–2pm,Brunch Special,House of Blues Restaurant & Bar Orlando,1,1
+Taco Tuesday,$2.50 tacos · $4 cervezas · $7 frozen or classic margaritas,Tuesday,4pm–9:30pm,Daily Special,Urban Cantina,1,1
+Taco + Tequila Tuesday,$1 off tacos · $5 casa margaritas · $5 off casa pitchers,Tuesday,Regular hours,Daily Special,Barrio Ybor City,1,1
+Bottomless Brunch,"$17 bottomless mimosas, Bloody Marys, or rosé with entrée purchase",Saturday|Sunday,11am–4pm,Brunch Special,Rocco's Tacos Tampa,1,1
+All-You-Can-Eat Taco Tuesday,$27.99 all-you-can-eat tacos,Tuesday,Open–Close,Daily Special,Rocco's Tacos Tampa,1,1
+Taco Tuesday,2 tacos for $5,Tuesday,All day,Daily Special,Taco Bus Tampa / Adamo,1,1
+Weekday Taco Happy Hour,Buy one get one tacos · $7 margaritas · $5 mocktails · $4 drafts · $4 wines,Weekdays,2pm–6pm,Happy Hour,Nueva Cantina Tampa,1,1
+Weekend Brunch,Brunch specialties available Saturday and Sunday,Saturday|Sunday,10am–2:30pm,Brunch Special,Ponte Modern American,1,1
+Sicilian Lunch Menu,Dedicated lunch menu available daily,Daily,11am–4pm,Lunch Special,Casa Santo Stefano,1,1
+Taco Tuesday,$2 tacos,Tuesday,All day,Daily Special,Gringos Locos Orlando,1,1
+Lunch Taco Combo,$9.99 taco combo,Daily,11am–3pm,Lunch Special,Black Rooster Taqueria Orlando,1,1
+Pizza Lunch Special,$10 personal pizza + drink,Weekdays,11am–3pm,Lunch Special,Pizza Bruno Orlando,1,1
+Slice Deal,$5 giant slice + soda,Daily,Lunch,Combo,Lazy Moon Pizza Orlando,1,1
+Ramen Lunch,$12 ramen bowls,Weekdays,11am–3pm,Lunch Special,Domu Orlando,1,1
+Sushi Lunch Combo,$15 sushi combo,Weekdays,11am–3pm,Lunch Special,Kabooki Sushi Orlando,1,1
+Happy Sushi Hour,$8 rolls,Daily,5pm–7pm,Happy Hour,Sushi Pop Winter Park,1,1
+Brunch Special,$14 brunch plates,Weekends,Morning,Brunch Special,Briarpatch Restaurant,1,1
+Southern Brunch Combo,$16 brunch combo,Weekends,Morning,Brunch Special,Se7en Bites Orlando,1,1
+Chicken & Waffles Brunch,$15 special,Weekends,Morning,Brunch Special,The Coop Orlando,1,1
+Tapas Lunch,$12 tapas plates,Daily,Lunch,Lunch Special,Columbia Restaurant Ybor City,1,1
+Lunch Special,$11 lunch plates,Weekdays,11am–3pm,Lunch Special,Ulele Tampa,1,1
+Food Hall Lunch Deals,$10 meals,Weekdays,Lunch,Lunch Special,Armature Works Tampa,1,1
+NY Pizza Slice Combo,$6 slice + drink,Daily,Lunch,Combo,Eddie and Sam's NY Pizza Tampa,1,1
+Sushi Lunch,$13 sushi plates,Weekdays,11am–3pm,Lunch Special,Noble Rice Tampa,1,1
+Brunch Menu,$18 brunch plates,Weekends,Morning,Brunch Special,Oxford Exchange Tampa,1,1
+Comfort Lunch,$12 lunch specials,Daily,Lunch,Lunch Special,Datz Tampa,1,1
+Build Your Taco Combo,$10 tacos + drink,Daily,Lunch,Combo,Taco Dirty Tampa,1,1
+Taco Deal,$3 tacos,Daily,Happy Hour,Daily Special,Bartaco Tampa,1,1
+Ramen Special,$13 ramen bowls,Daily,Lunch,Lunch Special,Ichicoro Ramen Tampa,1,1
+Coffee & Breakfast,$6 combo,Daily,Morning,Breakfast Special,Buddy Brew Coffee Tampa,1,1
+Brunch Combo,$13 brunch plates,Daily,Morning,Brunch Special,First Watch Tampa,1,1
+Taco Tuesday,$2 tacos,Tuesday,All day,Daily Special,Torchy's Tacos Orlando,1,1
+Lunch Bowl,$11 bowls,Weekdays,11am–3pm,Lunch Special,Fresh Kitchen Tampa,1,1
+Healthy Combo,$12 bowl + drink,Daily,Lunch,Combo,Bolay Orlando,1,1
+Pizza Combo,$9 pizza + drink,Daily,Lunch,Combo,Blaze Pizza Orlando,1,1
+Pizza Deal,$10 pizza,Daily,Lunch,Combo,MOD Pizza Tampa,1,1
+Lunch Special,$10 meals,Weekdays,11am–3pm,Lunch Special,CAVA Orlando,1,1
+Lunch Special,$10 meals,Weekdays,11am–3pm,Lunch Special,CAVA Tampa,1,1
+Salad Combo,$11 salad + drink,Daily,Lunch,Combo,Sweetgreen Tampa,1,1
+Salad Combo,$11 salad + drink,Daily,Lunch,Combo,Sweetgreen Orlando,1,1
+Chicken Combo,$10 tenders + fries,Daily,Lunch,Combo,PDQ Orlando,1,1
+Chicken Combo,$10 tenders + fries,Daily,Lunch,Combo,Huey Magoo's Orlando,1,1
+Chicken Combo,$11 sandwich + fries,Daily,Lunch,Combo,Chicken Guy Orlando,1,1
+Burger Combo,$12 burger + fries,Daily,Lunch,Combo,Five Guys Orlando,1,1
+Burger Combo,$12 burger + fries,Daily,Lunch,Combo,Five Guys Tampa,1,1
+Burger Combo,$13 burger + fries,Daily,Lunch,Combo,Shake Shack Orlando,1,1
+Burger Combo,$13 burger + fries,Daily,Lunch,Combo,Shake Shack Tampa,1,1
+Asian Lunch,$11 noodles,Weekdays,11am–3pm,Lunch Special,Hawkers Asian Street Food Orlando,1,1
+Fusion Taco Deal,$3 tacos,Daily,Lunch,Daily Special,Tako Cheena Orlando,1,1
+Poke Lunch,$12 bowls,Daily,Lunch,Lunch Special,Poke Hana Orlando,1,1
+Brunch Combo,$15 brunch plates,Weekends,Morning,Brunch Special,RusTeak Thornton Park,1,1
+Street Food Lunch,$11 plates,Daily,Lunch,Lunch Special,Mamak Asian Street Food Tampa,1,1
+Pizza Slice,$5 slice + drink,Daily,Lunch,Combo,Dough Nation Pizza Tampa,1,1
+Breakfast Combo,$9 breakfast plate,Daily,Morning,Breakfast Special,Daily Eats Tampa,1,1
+Healthy Wrap,$10 wrap + drink,Daily,Lunch,Combo,SoFresh Tampa,1,1
+Healthy Bowl,$11 bowl,Daily,Lunch,Lunch Special,Greenlane Tampa,1,1
+Healthy Bowl,$11 bowl,Daily,Lunch,Lunch Special,Cali Tampa,1,1
+Arepa Combo,$10 arepa + drink,Daily,Lunch,Combo,Q'Kenan Restaurant Orlando,1,1
+Lunch Special,$12 Latin plates,Weekdays,11am–3pm,Lunch Special,Sofrito Latin Cafe Orlando,1,1
+Mofongo Special,$14 mofongo plate,Daily,Dinner,Daily Special,Pal Campo Restaurant Orlando,1,1
+Mofongo Special,$14 mofongo plate,Daily,Dinner,Daily Special,Pal Campo Restaurant Tampa,1,1
+Ceviche Lunch,$13 ceviche plate,Daily,Lunch,Lunch Special,Pio Pio Latin Cuisine Orlando,1,1
+Parrilla Special,$18 grill platter,Daily,Dinner,Daily Special,Bocas Grill Orlando,1,1
+Colombian Combo,$15 bandeja paisa,Daily,Lunch,Daily Special,Super Rico Colombian Bistro Orlando,1,1
+Ceviche Special,$12 ceviche,Daily,Lunch,Daily Special,Aji Ceviche Bar Orlando,1,1
+Peruvian Tasting,$20 tasting menu,Weekends,Dinner,Special,Papa Llama Orlando,1,1
+Arepa Deal,$3 arepas,Daily,All day,Daily Special,Arepas El Cacao Orlando,1,1
+Bakery Combo,$8 pastry + coffee,Daily,Morning,Breakfast Special,Antojitos Colombianos Orlando,1,1
+Chicken Combo,$11 chicken + sides,Daily,Lunch,Combo,La Granja Orlando,1,1
+Chicken Combo,$10 chicken + rice,Daily,Lunch,Combo,Pollo Tropical Orlando,1,1
+Cuban Lunch,$11 sandwich + drink,Daily,Lunch,Combo,La Teresita Tampa,1,1
+Spanish Lunch,$14 lunch special,Weekdays,Lunch,Lunch Special,Columbia Restaurant Tampa,1,1
+Bakery Combo,$7 Cuban sandwich + coffee,Daily,Morning,Breakfast Special,La Segunda Bakery Tampa,1,1
+Arepa Combo,$10 arepa + drink,Daily,Lunch,Combo,ArePitas Tampa,1,1
+Lechon Plate,$13 roasted pork plate,Daily,Lunch,Daily Special,La Lechonera Tampa,1,1
+Ceviche Special,$12 ceviche plate,Daily,Lunch,Daily Special,El Puerto Restaurant Tampa,1,1
+Colombian Lunch,$13 lunch special,Daily,Lunch,Lunch Special,La Antioquena Tampa,1,1
+Coffee + Pastry,$6 combo,Daily,Morning,Breakfast Special,Foxtail Coffee Co Orlando,1,1
+Breakfast Combo,$9 breakfast + coffee,Daily,Morning,Breakfast Special,Achilles Art Cafe Orlando,1,1
+Brunch Special,$12 brunch plates,Weekends,Morning,Brunch Special,Se7en Bites Orlando,1,1
+Breakfast Deal,$8 pancakes combo,Daily,Morning,Breakfast Special,Keke's Breakfast Cafe Orlando,1,1
+Healthy Breakfast,$11 breakfast plate,Daily,Morning,Breakfast Special,First Watch Orlando,1,1
+Brunch Special,$13 brunch menu,Weekends,Morning,Brunch Special,Another Broken Egg Cafe Orlando,1,1
+Pizza Slice Deal,$4 slice,Daily,Lunch,Daily Special,Lazy Moon Pizza Orlando,1,1
+Lunch Pizza Combo,$10 pizza + drink,Daily,Lunch,Combo,Pizza Bruno Orlando,1,1
+Ramen Lunch,$12 ramen bowl,Daily,Lunch,Lunch Special,Domu Orlando,1,1
+Sushi Lunch,$14 sushi combo,Daily,Lunch,Lunch Special,Sushi Pop Orlando,1,1
+Cuban Sandwich Combo,$10 sandwich + drink,Daily,Lunch,Combo,Black Bean Deli Orlando,1,1
+BBQ Plate,$13 brisket plate,Daily,Lunch,Daily Special,4 Rivers Smokehouse Orlando,1,1
+Asian Combo,$11 noodles + drink,Daily,Lunch,Combo,Hawkers Asian Street Food Orlando,1,1
+Breakfast All Day,$9 breakfast plate,Daily,All day,Daily Special,Metro Diner Orlando,1,1
+Coffee Special,$5 coffee drink,Daily,Morning,Daily Special,Buddy Brew Coffee Tampa,1,1
+Coffee + Pastry,$6 combo,Daily,Morning,Breakfast Special,Blind Tiger Cafe Tampa,1,1
+Brunch Special,$14 brunch menu,Weekends,Morning,Brunch Special,Datz Tampa,1,1
+Breakfast Combo,$10 breakfast + drink,Daily,Morning,Breakfast Special,Daily Eats Tampa,1,1
+Lunch Special,$12 lunch plate,Weekdays,Lunch,Lunch Special,On Swann Tampa,1,1
+Pizza Combo,$10 pizza + drink,Daily,Lunch,Combo,Eddie & Sam's NY Pizza Tampa,1,1
+Ramen Special,$13 ramen bowl,Daily,Lunch,Daily Special,Ichicoro Ramen Tampa,1,1
+Sushi Combo,$15 sushi lunch,Daily,Lunch,Lunch Special,Noble Rice Tampa,1,1
+Healthy Bowl,$11 bowl combo,Daily,Lunch,Combo,Fresh Kitchen Tampa,1,1
+Dessert Combo,$8 dessert + drink,Daily,All day,Daily Special,Bake'n Babes Tampa,1,1
+Breakfast Combo,$10 biscuit + coffee,Daily,Morning,Breakfast Special,Maple Street Biscuit Company Jacksonville,1,1
+Breakfast Plate,$9 breakfast combo,Daily,Morning,Breakfast Special,Metro Diner Jacksonville,1,1
+Brunch Special,$12 brunch plates,Weekends,Morning,Brunch Special,Biscottis Jacksonville,1,1
+Coffee + Pastry,$6 combo,Daily,Morning,Breakfast Special,Bold Bean Coffee Jacksonville,1,1
+Asian Lunch,$11 noodles combo,Daily,Lunch,Combo,Hawkers Asian Street Food Jacksonville,1,1
+Ramen Special,$12 ramen bowl,Daily,Lunch,Daily Special,Domu Jacksonville,1,1
+Sushi Combo,$14 sushi lunch,Daily,Lunch,Lunch Special,Sushi Bear Jacksonville,1,1
+Pizza Combo,$10 pizza + drink,Daily,Lunch,Combo,Mellow Mushroom Jacksonville,1,1
+Slice Deal,$4 slice,Daily,Lunch,Daily Special,Pie95 Pizza Jacksonville,1,1
+Arepa Combo,$10 arepa + drink,Daily,Lunch,Combo,Arepa Please Miami,1,1
+Sandwich Combo,$12 sandwich + drink,Daily,Lunch,Combo,La Sandwicherie Miami,1,1
+Cuban Lunch,$11 sandwich + drink,Daily,Lunch,Combo,Versailles Restaurant Miami,1,1
+Cuban Sandwich,$10 pressed sandwich,Daily,Lunch,Daily Special,Sanguich De Miami,1,1
+Healthy Bowl,$12 bowl + drink,Daily,Lunch,Combo,Pura Vida Miami,1,1
+Donut + Coffee,$6 combo,Daily,Morning,Breakfast Special,The Salty Donut Miami,1,1
+Grilled Cheese Combo,$11 sandwich + drink,Daily,Lunch,Combo,Ms Cheezious Miami,1,1
+Taco Combo,$10 tacos + drink,Daily,Lunch,Combo,TacoCraft Fort Lauderdale,1,1
+Seafood Lunch,$15 seafood plate,Daily,Lunch,Daily Special,Coconuts Fort Lauderdale,1,1
+Pizza Lunch,$12 pizza combo,Daily,Lunch,Combo,Louie Bossi Fort Lauderdale,1,1
+Taco Special,$9 taco deal,Daily,Lunch,Daily Special,El Camino Fort Lauderdale,1,1
+Brunch Special,$14 brunch menu,Weekends,Morning,Brunch Special,Batch New Southern Kitchen Fort Lauderdale,1,1
+Breakfast Combo,$9 breakfast plate,Daily,Morning,Breakfast Special,Howley's Restaurant West Palm Beach,1,1
+Pizza Combo,$11 pizza + drink,Daily,Lunch,Combo,Grato West Palm Beach,1,1
+Brunch Special,$13 brunch menu,Weekends,Morning,Brunch Special,Rhythm Cafe West Palm Beach,1,1
+Pastry Combo,$7 pastry + coffee,Daily,Morning,Breakfast Special,Ganache Bakery West Palm Beach,1,1
+Lunch Sandwich,$10 sandwich combo,Daily,Lunch,Combo,Aioli West Palm Beach,1,1
+Cuban Lunch,$11 lunch combo,Daily,Lunch,Combo,La Carreta Miami,1,1
+Breakfast Special,$8 breakfast plate,Daily,Morning,Breakfast Special,La Carreta Miami,1,1
+Dinner Plate,$14 dinner combo,Daily,Dinner,Daily Special,La Carreta Miami,1,1
+Juice Combo,$7 juice + sandwich,Daily,Morning,Combo,El Palacio de los Jugos Miami,1,1
+Lunch Plate,$10 meal combo,Daily,Lunch,Combo,El Palacio de los Jugos Miami,1,1
+Dinner Combo,$13 plate,Daily,Dinner,Daily Special,El Palacio de los Jugos Miami,1,1
+Pastry + Coffee,$6 combo,Daily,Morning,Breakfast Special,La Industria Bakery Miami,1,1
+Dessert Deal,$5 pastries,Daily,All day,Daily Special,La Industria Bakery Miami,1,1
+Breakfast Sandwich,$7 combo,Daily,Morning,Breakfast Special,Enriqueta's Sandwich Shop Miami,1,1
+Lunch Combo,$10 sandwich + drink,Daily,Lunch,Combo,Enriqueta's Sandwich Shop Miami,1,1
+Burger Combo,$12 burger + fries,Daily,Lunch,Combo,Pincho Miami,1,1
+Kebab Combo,$11 combo meal,Daily,Lunch,Combo,Pincho Miami,1,1
+Dinner Combo,$14 combo,Daily,Dinner,Daily Special,Pincho Miami,1,1
+Sushi Lunch,$15 sushi combo,Daily,Lunch,Lunch Special,Sushi Garage Miami,1,1
+Roll Special,$12 rolls,Daily,All day,Daily Special,Sushi Garage Miami,1,1
+Taco Combo,$10 tacos + drink,Daily,Lunch,Combo,Coyo Taco Miami,1,1
+Taco Tuesday,$8 tacos,Tuesday,All day,Daily Special,Coyo Taco Miami,1,1
+Burrito Combo,$11 combo,Daily,Lunch,Combo,Lime Fresh Mexican Grill Miami,1,1
+Taco Combo,$10 combo,Daily,Lunch,Combo,Lime Fresh Mexican Grill Miami,1,1
+Chicken Combo,$11 sandwich + fries,Daily,Lunch,Combo,Chicken Fire Orlando,1,1
+Spicy Combo,$12 meal,Daily,Dinner,Daily Special,Chicken Fire Orlando,1,1
+Brunch Special,$12 brunch plates,Weekends,Morning,Brunch Special,Toasted Orlando,1,1
+Breakfast Combo,$9 breakfast + coffee,Daily,Morning,Breakfast Special,Toasted Orlando,1,1
+Lunch Special,$15 steak lunch,Weekdays,Lunch,Lunch Special,Kres Chophouse Orlando,1,1
+Brunch Special,$14 brunch menu,Weekends,Morning,Brunch Special,Cafe Tu Tu Tango Orlando,1,1
+Food Hall Combo,$12 meal combo,Daily,Lunch,Combo,Armature Works Tampa,1,1
+Lunch Special,$13 meal,Daily,Lunch,Lunch Special,Armature Works Tampa,1,1
+Seafood Plate,$16 seafood combo,Daily,Dinner,Daily Special,Ulele Tampa,1,1
+Lunch Special,$13 lunch plate,Daily,Lunch,Lunch Special,Ulele Tampa,1,1
+Brunch Special,$15 brunch menu,Weekends,Morning,Brunch Special,Oxford Exchange Tampa,1,1
+Lunch Special,$14 lunch plate,Daily,Lunch,Lunch Special,Boca Jacksonville,1,1
+Seafood Combo,$15 seafood plate,Daily,Lunch,Combo,Safe Harbor Seafood Jacksonville,1,1
+Dinner Combo,$18 seafood dinner,Daily,Dinner,Daily Special,Safe Harbor Seafood Jacksonville,1,1
+Coffee Combo,$5 coffee + pastry,Daily,Morning,Combo,Pasion del Cielo Miami,1,1
+Breakfast Combo,$6 breakfast plate,Daily,Morning,Breakfast Special,Pasion del Cielo Miami,1,1
+Lunch Combo,$9 sandwich + coffee,Daily,Lunch,Combo,Pasion del Cielo Miami,1,1
+Afternoon Deal,$4 espresso drinks,Daily,Afternoon,Daily Special,Pasion del Cielo Miami,1,1
+Arepa Combo,$9 arepa + drink,Daily,Lunch,Combo,Arepa Bar Orlando,1,1
+Lunch Special,$10 combo,Daily,Lunch,Lunch Special,Arepa Bar Orlando,1,1
+Dinner Combo,$12 meal,Daily,Dinner,Daily Special,Arepa Bar Orlando,1,1
+Family Combo,$20 bundle,Daily,Dinner,Combo,Arepa Bar Orlando,1,1
+Colombian Lunch,$11 lunch combo,Daily,Lunch,Combo,Super Rico Colombian Bistro Tampa,1,1
+Empanada Deal,$6 empanadas,Daily,All day,Daily Special,Super Rico Colombian Bistro Tampa,1,1
+Dinner Combo,$13 meal,Daily,Dinner,Daily Special,Super Rico Colombian Bistro Tampa,1,1
+Family Combo,$22 combo,Daily,Dinner,Combo,Super Rico Colombian Bistro Tampa,1,1
+Chicken Combo,$10 chicken plate,Daily,Lunch,Combo,La Granja Fort Lauderdale,1,1
+Lunch Special,$9 meal,Daily,Lunch,Lunch Special,La Granja Fort Lauderdale,1,1
+Dinner Combo,$12 plate,Daily,Dinner,Daily Special,La Granja Fort Lauderdale,1,1
+Family Meal,$20 family combo,Daily,Dinner,Combo,La Granja Fort Lauderdale,1,1
+Colombian Combo,$10 meal,Daily,Lunch,Combo,La Fonda Paisa Jacksonville,1,1
+Lunch Special,$11 plate,Daily,Lunch,Lunch Special,La Fonda Paisa Jacksonville,1,1
+Dinner Combo,$13 plate,Daily,Dinner,Daily Special,La Fonda Paisa Jacksonville,1,1
+Family Combo,$24 meal,Daily,Dinner,Combo,La Fonda Paisa Jacksonville,1,1
+Pizza Lunch,$10 pizza slice combo,Daily,Lunch,Combo,Panna West Palm Beach,1,1
+Dinner Pizza,$14 pizza deal,Daily,Dinner,Daily Special,Panna West Palm Beach,1,1
+Pasta Combo,$13 pasta meal,Daily,Dinner,Combo,Panna West Palm Beach,1,1
+Lunch Special,$11 combo,Daily,Lunch,Lunch Special,Panna West Palm Beach,1,1
+Taco Combo,$9 tacos + drink,Daily,Lunch,Combo,Antojitos Mexicanos Orlando,1,1
+Lunch Special,$10 meal,Daily,Lunch,Lunch Special,Antojitos Mexicanos Orlando,1,1
+Dinner Combo,$12 plate,Daily,Dinner,Daily Special,Antojitos Mexicanos Orlando,1,1
+Family Combo,$20 tacos bundle,Daily,Dinner,Combo,Antojitos Mexicanos Orlando,1,1
+Bakery Combo,$6 sandwich + coffee,Daily,Morning,Combo,El Coqui Bakery Kissimmee,1,1
+Breakfast Special,$5 breakfast plate,Daily,Morning,Breakfast Special,El Coqui Bakery Kissimmee,1,1
+Lunch Combo,$9 sandwich meal,Daily,Lunch,Combo,El Coqui Bakery Kissimmee,1,1
+Pastry Deal,$3 pastries,Daily,All day,Daily Special,El Coqui Bakery Kissimmee,1,1
+Taco Combo,$8 tacos + drink,Daily,Lunch,Combo,Taco Rico Tampa,1,1
+Lunch Special,$9 combo,Daily,Lunch,Lunch Special,Taco Rico Tampa,1,1
+Dinner Combo,$11 meal,Daily,Dinner,Daily Special,Taco Rico Tampa,1,1
+Family Taco Deal,$18 bundle,Daily,Dinner,Combo,Taco Rico Tampa,1,1
+Sushi Lunch,$12 combo,Daily,Lunch,Lunch Special,Sushi Sake Miami,1,1
+Roll Deal,$10 rolls,Daily,All day,Daily Special,Sushi Sake Miami,1,1
+Dinner Combo,$15 sushi combo,Daily,Dinner,Combo,Sushi Sake Miami,1,1
+Lunch Combo,$13 meal,Daily,Lunch,Combo,Sushi Sake Miami,1,1
+Pizza Lunch,$11 combo,Daily,Lunch,Lunch Special,Pizza Bruno Orlando,1,1
+Dinner Pizza,$15 pizza deal,Daily,Dinner,Daily Special,Pizza Bruno Orlando,1,1
+Family Pizza,$22 bundle,Daily,Dinner,Combo,Pizza Bruno Orlando,1,1
+Lunch Combo,$12 meal,Daily,Lunch,Combo,Pizza Bruno Orlando,1,1
+Cuban Breakfast,$6 combo,Daily,Morning,Breakfast Special,Zaza Cuban Comfort Food Orlando,1,1
+Lunch Combo,$9 sandwich meal,Daily,Lunch,Combo,Zaza Cuban Comfort Food Orlando,1,1
+Dinner Combo,$12 meal,Daily,Dinner,Daily Special,Zaza Cuban Comfort Food Orlando,1,1
+Family Combo,$20 bundle,Daily,Dinner,Combo,Zaza Cuban Comfort Food Orlando,1,1
+Healthy Bowl,$10 bowl,Daily,Lunch,Lunch Special,Bolay West Palm Beach,1,1
+Dinner Bowl,$12 meal,Daily,Dinner,Daily Special,Bolay West Palm Beach,1,1
+Lunch Combo,$11 combo,Daily,Lunch,Combo,Bolay West Palm Beach,1,1
+Family Combo,$22 bundle,Daily,Dinner,Combo,Bolay West Palm Beach,1,1
+Latin Combo,$10 meal,Daily,Lunch,Combo,El Arepazo Latin Grill Orlando,1,1
+Lunch Special,$11 combo,Daily,Lunch,Lunch Special,El Arepazo Latin Grill Orlando,1,1
+Dinner Combo,$13 meal,Daily,Dinner,Daily Special,El Arepazo Latin Grill Orlando,1,1
+Family Combo,$24 bundle,Daily,Dinner,Combo,El Arepazo Latin Grill Orlando,1,1
+Burrito Combo,$9 burrito + drink,Daily,Lunch,Combo,La Bamba Mexican Tampa,1,1
+Lunch Special,$10 combo,Daily,Lunch,Lunch Special,La Bamba Mexican Tampa,1,1
+Dinner Combo,$12 meal,Daily,Dinner,Daily Special,La Bamba Mexican Tampa,1,1
+Family Combo,$20 bundle,Daily,Dinner,Combo,La Bamba Mexican Tampa,1,1
+Chicken Combo,$10 meal,Daily,Lunch,Combo,Pollo Tropical Miami,1,1
+Lunch Special,$9 combo,Daily,Lunch,Lunch Special,Pollo Tropical Miami,1,1
+Dinner Combo,$12 meal,Daily,Dinner,Daily Special,Pollo Tropical Miami,1,1
+Family Combo,$20 bundle,Daily,Dinner,Combo,Pollo Tropical Miami,1,1
+Breakfast Combo,$8 breakfast + coffee,Daily,Morning,Breakfast Special,La Boulangerie Boul'Mich Miami,1,1
+Coffee & Pastry,$6 combo,Daily,Morning,Combo,La Boulangerie Boul'Mich Miami,1,1
+Lunch Sandwich,$10 sandwich combo,Daily,Lunch,Lunch Special,La Boulangerie Boul'Mich Miami,1,1
+Pastry Deal,$4 pastries,Daily,All day,Daily Special,La Boulangerie Boul'Mich Miami,1,1
+Cafe Combo,$9 combo,Daily,Afternoon,Combo,La Boulangerie Boul'Mich Miami,1,1
+Dessert Pairing,$7 dessert + coffee,Daily,Afternoon,Daily Special,La Boulangerie Boul'Mich Miami,1,1
+Breakfast Plate,$9 plate,Daily,Morning,Breakfast Special,La Boulangerie Boul'Mich Miami,1,1
+Bakery Bundle,$12 assorted pastries,Daily,All day,Combo,La Boulangerie Boul'Mich Miami,1,1
+Coffee & Pastry,$6 combo,Daily,Morning,Combo,Madruga Bakery Miami,1,1
+Breakfast Special,$8 breakfast plate,Daily,Morning,Breakfast Special,Madruga Bakery Miami,1,1
+Lunch Special,$10 sandwich combo,Daily,Lunch,Lunch Special,Madruga Bakery Miami,1,1
+Pastry Box,$12 pastry bundle,Daily,All day,Combo,Madruga Bakery Miami,1,1
+Bakery Deal,$4 pastries,Daily,Afternoon,Daily Special,Madruga Bakery Miami,1,1
+Cafe Special,$7 coffee + toast,Daily,Morning,Combo,Madruga Bakery Miami,1,1
+Dessert Deal,$5 sweets,Daily,All day,Daily Special,Madruga Bakery Miami,1,1
+Brunch Plate,$11 brunch item,Weekends,Morning,Brunch Special,Madruga Bakery Miami,1,1
+Lunch Combo,$11 burger or seafood + drink,Daily,Lunch,Combo,Flanigan's Seafood Bar & Grill Miami,1,1
+Wing Deal,$10 wings special,Daily,All day,Daily Special,Flanigan's Seafood Bar & Grill Miami,1,1
+Seafood Plate,$14 seafood plate,Daily,Dinner,Dinner Special,Flanigan's Seafood Bar & Grill Miami,1,1
+Burger Combo,$12 combo,Daily,Lunch,Combo,Flanigan's Seafood Bar & Grill Miami,1,1
+Dinner Combo,$15 meal,Daily,Dinner,Combo,Flanigan's Seafood Bar & Grill Miami,1,1
+Family Combo,$24 shareable bundle,Daily,Dinner,Combo,Flanigan's Seafood Bar & Grill Miami,1,1
+Lunch Special,$10 lunch plate,Weekdays,Lunch,Lunch Special,Flanigan's Seafood Bar & Grill Miami,1,1
+Sandwich Deal,$11 sandwich combo,Daily,Lunch,Combo,Flanigan's Seafood Bar & Grill Miami,1,1
+Cuban Breakfast,$7 breakfast combo,Daily,Morning,Breakfast Special,Sergio's Cuban Cafe Miami,1,1
+Coffee & Toast,$5 combo,Daily,Morning,Combo,Sergio's Cuban Cafe Miami,1,1
+Lunch Special,$10 lunch plate,Daily,Lunch,Lunch Special,Sergio's Cuban Cafe Miami,1,1
+Cuban Sandwich Combo,$9 combo,Daily,Lunch,Combo,Sergio's Cuban Cafe Miami,1,1
+Dinner Plate,$12 classic plate,Daily,Dinner,Dinner Special,Sergio's Cuban Cafe Miami,1,1
+Pastry Deal,$4 pastry + coffee,Daily,Morning,Daily Special,Sergio's Cuban Cafe Miami,1,1
+Family Meal,$20 bundle,Daily,Dinner,Combo,Sergio's Cuban Cafe Miami,1,1
+Croqueta Combo,$8 snack combo,Daily,Afternoon,Combo,Sergio's Cuban Cafe Miami,1,1
+Pizza Lunch,$11 pizza combo,Daily,Lunch,Lunch Special,Mister O1 Extraordinary Pizza Miami,1,1
+Dinner Pizza,$15 pizza special,Daily,Dinner,Dinner Special,Mister O1 Extraordinary Pizza Miami,1,1
+Slice Deal,$5 slice + drink,Daily,Lunch,Combo,Mister O1 Extraordinary Pizza Miami,1,1
+Family Pizza,$22 pizza bundle,Daily,Dinner,Combo,Mister O1 Extraordinary Pizza Miami,1,1
+Lunch Combo,$12 combo,Daily,Lunch,Combo,Mister O1 Extraordinary Pizza Miami,1,1
+Dinner Combo,$16 meal,Daily,Dinner,Combo,Mister O1 Extraordinary Pizza Miami,1,1
+Pizza & Salad,$14 combo,Daily,Lunch,Combo,Mister O1 Extraordinary Pizza Miami,1,1
+Weekday Pizza,$13 pie special,Weekdays,Dinner,Daily Special,Mister O1 Extraordinary Pizza Miami,1,1
+Taco Combo,$10 tacos + drink,Daily,Lunch,Combo,Tacology Miami,1,1
+Brunch Special,$14 brunch menu,Weekends,Morning,Brunch Special,Tacology Miami,1,1
+Bowl Special,$11 bowl combo,Daily,Lunch,Lunch Special,Tacology Miami,1,1
+Dinner Tacos,$12 taco plate,Daily,Dinner,Dinner Special,Tacology Miami,1,1
+Family Tacos,$20 taco bundle,Daily,Dinner,Combo,Tacology Miami,1,1
+Lunch Special,$10 lunch plate,Weekdays,Lunch,Lunch Special,Tacology Miami,1,1
+Quesadilla Deal,$9 deal,Daily,Lunch,Daily Special,Tacology Miami,1,1
+Street Taco Deal,$8 deal,Tuesday,All day,Daily Special,Tacology Miami,1,1
+Coffee & Pastry,$7 combo,Daily,Morning,Combo,Bachour Miami,1,1
+Breakfast Plate,$10 plate,Daily,Morning,Breakfast Special,Bachour Miami,1,1
+Lunch Sandwich,$12 sandwich combo,Daily,Lunch,Lunch Special,Bachour Miami,1,1
+Dessert Deal,$6 pastry special,Daily,Afternoon,Daily Special,Bachour Miami,1,1
+Brunch Special,$13 brunch plate,Weekends,Morning,Brunch Special,Bachour Miami,1,1
+Cafe Combo,$8 coffee + dessert,Daily,Afternoon,Combo,Bachour Miami,1,1
+Bakery Box,$14 pastry bundle,Daily,All day,Combo,Bachour Miami,1,1
+Lunch Combo,$11 combo,Daily,Lunch,Combo,Bachour Miami,1,1
+Taco Combo,$9 tacos + drink,Daily,Lunch,Combo,The Taco Stand Miami,1,1
+Burrito Combo,$10 burrito + drink,Daily,Lunch,Combo,The Taco Stand Miami,1,1
+Bowl Special,$11 bowl,Daily,Lunch,Lunch Special,The Taco Stand Miami,1,1
+Dinner Combo,$12 taco plate,Daily,Dinner,Dinner Special,The Taco Stand Miami,1,1
+Family Tacos,$18 taco bundle,Daily,Dinner,Combo,The Taco Stand Miami,1,1
+Lunch Special,$9 lunch plate,Weekdays,Lunch,Lunch Special,The Taco Stand Miami,1,1
+Quesadilla Deal,$8 special,Daily,All day,Daily Special,The Taco Stand Miami,1,1
+Taco Tuesday,$8 taco deal,Tuesday,All day,Daily Special,The Taco Stand Miami,1,1
+Sandwich Combo,$11 sandwich + fries,Daily,Lunch,Combo,Primanti Bros. Fort Lauderdale,1,1
+Pizza Combo,$12 pizza + drink,Daily,Lunch,Combo,Primanti Bros. Fort Lauderdale,1,1
+Wing Deal,$10 wings,Daily,All day,Daily Special,Primanti Bros. Fort Lauderdale,1,1
+Lunch Special,$11 lunch plate,Weekdays,Lunch,Lunch Special,Primanti Bros. Fort Lauderdale,1,1
+Dinner Combo,$14 dinner special,Daily,Dinner,Dinner Special,Primanti Bros. Fort Lauderdale,1,1
+Family Combo,$22 shareable combo,Daily,Dinner,Combo,Primanti Bros. Fort Lauderdale,1,1
+Sandwich Deal,$10 loaded sandwich,Daily,Lunch,Daily Special,Primanti Bros. Fort Lauderdale,1,1
+Pizza Slice,$5 slice + drink,Daily,Lunch,Combo,Primanti Bros. Fort Lauderdale,1,1
+Pizza Lunch,$11 lunch combo,Daily,Lunch,Lunch Special,Pummarola Fort Lauderdale,1,1
+Dinner Pizza,$15 pizza special,Daily,Dinner,Dinner Special,Pummarola Fort Lauderdale,1,1
+Pasta Combo,$13 pasta combo,Daily,Dinner,Combo,Pummarola Fort Lauderdale,1,1
+Family Pizza,$22 pizza bundle,Daily,Dinner,Combo,Pummarola Fort Lauderdale,1,1
+Lunch Combo,$12 combo,Daily,Lunch,Combo,Pummarola Fort Lauderdale,1,1
+Dinner Combo,$16 meal,Daily,Dinner,Combo,Pummarola Fort Lauderdale,1,1
+Pizza & Salad,$14 combo,Daily,Lunch,Combo,Pummarola Fort Lauderdale,1,1
+Slice Deal,$5 slice special,Daily,All day,Daily Special,Pummarola Fort Lauderdale,1,1
+Sushi Lunch,$13 sushi combo,Daily,Lunch,Lunch Special,Sushi Song Fort Lauderdale,1,1
+Roll Deal,$10 rolls,Daily,All day,Daily Special,Sushi Song Fort Lauderdale,1,1
+Dinner Combo,$15 sushi combo,Daily,Dinner,Dinner Special,Sushi Song Fort Lauderdale,1,1
+Lunch Combo,$12 combo,Daily,Lunch,Combo,Sushi Song Fort Lauderdale,1,1
+Sashimi Special,$14 special,Daily,Dinner,Daily Special,Sushi Song Fort Lauderdale,1,1
+Bento Box,$13 box,Weekdays,Lunch,Lunch Special,Sushi Song Fort Lauderdale,1,1
+Roll Pairing,$12 pair,Daily,Afternoon,Combo,Sushi Song Fort Lauderdale,1,1
+Late Sushi,$11 special,Daily,Evening,Daily Special,Sushi Song Fort Lauderdale,1,1
+Brunch Special,$14 brunch menu,Weekends,Morning,Brunch Special,Foxy Brown Fort Lauderdale,1,1
+Breakfast Combo,$10 breakfast plate,Daily,Morning,Breakfast Special,Foxy Brown Fort Lauderdale,1,1
+Lunch Special,$12 lunch plate,Daily,Lunch,Lunch Special,Foxy Brown Fort Lauderdale,1,1
+Dinner Combo,$14 comfort food plate,Daily,Dinner,Dinner Special,Foxy Brown Fort Lauderdale,1,1
+Chicken & Waffles,$13 special,Weekends,Morning,Brunch Special,Foxy Brown Fort Lauderdale,1,1
+Sandwich Combo,$11 combo,Daily,Lunch,Combo,Foxy Brown Fort Lauderdale,1,1
+Family Combo,$22 shareable deal,Daily,Dinner,Combo,Foxy Brown Fort Lauderdale,1,1
+Dessert Deal,$6 dessert,Daily,All day,Daily Special,Foxy Brown Fort Lauderdale,1,1
+Seafood Lunch,$15 lunch plate,Daily,Lunch,Lunch Special,Coconuts Fort Lauderdale,1,1
+Dinner Seafood,$18 seafood plate,Daily,Dinner,Dinner Special,Coconuts Fort Lauderdale,1,1
+Fish Sandwich,$13 combo,Daily,Lunch,Combo,Coconuts Fort Lauderdale,1,1
+Shrimp Deal,$14 shrimp basket,Daily,Lunch,Daily Special,Coconuts Fort Lauderdale,1,1
+Lunch Combo,$14 combo,Daily,Lunch,Combo,Coconuts Fort Lauderdale,1,1
+Dinner Combo,$19 combo,Daily,Dinner,Combo,Coconuts Fort Lauderdale,1,1
+Seafood Basket,$16 basket,Daily,All day,Daily Special,Coconuts Fort Lauderdale,1,1
+Family Seafood,$26 shareable deal,Daily,Dinner,Combo,Coconuts Fort Lauderdale,1,1
+Pizza Lunch,$12 lunch combo,Daily,Lunch,Lunch Special,Louie Bossi Fort Lauderdale,1,1
+Brunch Special,$15 brunch menu,Weekends,Morning,Brunch Special,Louie Bossi Fort Lauderdale,1,1
+Pasta Combo,$14 pasta combo,Daily,Dinner,Dinner Special,Louie Bossi Fort Lauderdale,1,1
+Dinner Pizza,$16 pizza special,Daily,Dinner,Dinner Special,Louie Bossi Fort Lauderdale,1,1
+Lunch Combo,$13 combo,Daily,Lunch,Combo,Louie Bossi Fort Lauderdale,1,1
+Dessert Pairing,$8 dessert deal,Daily,Afternoon,Daily Special,Louie Bossi Fort Lauderdale,1,1
+Family Pasta,$24 family bundle,Daily,Dinner,Combo,Louie Bossi Fort Lauderdale,1,1
+Pizza & Salad,$15 combo,Daily,Lunch,Combo,Louie Bossi Fort Lauderdale,1,1
+Taco Combo,$10 tacos + drink,Daily,Lunch,Combo,El Camino Fort Lauderdale,1,1
+Lunch Special,$11 lunch plate,Weekdays,Lunch,Lunch Special,El Camino Fort Lauderdale,1,1
+Dinner Combo,$13 taco plate,Daily,Dinner,Dinner Special,El Camino Fort Lauderdale,1,1
+Bowl Special,$12 bowl,Daily,Lunch,Daily Special,El Camino Fort Lauderdale,1,1
+Family Tacos,$20 taco bundle,Daily,Dinner,Combo,El Camino Fort Lauderdale,1,1
+Quesadilla Deal,$9 special,Daily,All day,Daily Special,El Camino Fort Lauderdale,1,1
+Street Taco Deal,$8 deal,Tuesday,All day,Daily Special,El Camino Fort Lauderdale,1,1
+Lunch Combo,$10 combo,Daily,Lunch,Combo,El Camino Fort Lauderdale,1,1
+Breakfast Combo,$10 breakfast plate,Daily,Morning,Breakfast Special,Batch New Southern Kitchen Fort Lauderdale,1,1
+Lunch Special,$12 lunch plate,Daily,Lunch,Lunch Special,Batch New Southern Kitchen Fort Lauderdale,1,1
+Dinner Combo,$14 comfort plate,Daily,Dinner,Dinner Special,Batch New Southern Kitchen Fort Lauderdale,1,1
+Chicken Combo,$13 chicken plate,Daily,Lunch,Combo,Batch New Southern Kitchen Fort Lauderdale,1,1
+Family Combo,$22 bundle,Daily,Dinner,Combo,Batch New Southern Kitchen Fort Lauderdale,1,1
+Sandwich Combo,$11 combo,Daily,Lunch,Combo,Batch New Southern Kitchen Fort Lauderdale,1,1
+Dessert Deal,$6 special,Daily,All day,Daily Special,Batch New Southern Kitchen Fort Lauderdale,1,1
+Lunch Special,$11 lunch combo,Daily,Lunch,Lunch Special,Howley's Restaurant West Palm Beach,1,1
+Dinner Plate,$13 comfort dinner,Daily,Dinner,Dinner Special,Howley's Restaurant West Palm Beach,1,1
+Burger Combo,$12 combo,Daily,Lunch,Combo,Howley's Restaurant West Palm Beach,1,1
+Breakfast All Day,$9 plate,Daily,All day,Daily Special,Howley's Restaurant West Palm Beach,1,1
+Family Combo,$20 diner bundle,Daily,Dinner,Combo,Howley's Restaurant West Palm Beach,1,1
+Milkshake Deal,$6 combo,Daily,Afternoon,Daily Special,Howley's Restaurant West Palm Beach,1,1
+Sandwich Deal,$10 special,Daily,Lunch,Combo,Howley's Restaurant West Palm Beach,1,1
+Pizza Lunch,$11 lunch combo,Daily,Lunch,Lunch Special,Grato West Palm Beach,1,1
+Dinner Pizza,$15 pizza special,Daily,Dinner,Dinner Special,Grato West Palm Beach,1,1
+Pasta Combo,$14 pasta combo,Daily,Dinner,Combo,Grato West Palm Beach,1,1
+Family Pizza,$22 pizza bundle,Daily,Dinner,Combo,Grato West Palm Beach,1,1
+Lunch Combo,$12 combo,Daily,Lunch,Combo,Grato West Palm Beach,1,1
+Dinner Combo,$16 meal,Daily,Dinner,Combo,Grato West Palm Beach,1,1
+Pizza & Salad,$14 combo,Daily,Lunch,Combo,Grato West Palm Beach,1,1
+Brunch Pizza,$13 brunch item,Weekends,Morning,Brunch Special,Grato West Palm Beach,1,1
+Breakfast Combo,$9 breakfast plate,Daily,Morning,Breakfast Special,Rhythm Cafe West Palm Beach,1,1
+Lunch Special,$11 lunch plate,Daily,Lunch,Lunch Special,Rhythm Cafe West Palm Beach,1,1
+Dinner Combo,$13 comfort plate,Daily,Dinner,Dinner Special,Rhythm Cafe West Palm Beach,1,1
+Sandwich Combo,$10 combo,Daily,Lunch,Combo,Rhythm Cafe West Palm Beach,1,1
+Family Combo,$20 bundle,Daily,Dinner,Combo,Rhythm Cafe West Palm Beach,1,1
+Dessert Deal,$6 sweet special,Daily,All day,Daily Special,Rhythm Cafe West Palm Beach,1,1
+Cafe Combo,$8 coffee + dessert,Daily,Afternoon,Combo,Rhythm Cafe West Palm Beach,1,1
+Coffee & Pastry,$6 combo,Daily,Morning,Combo,Ganache Bakery West Palm Beach,1,1
+Breakfast Special,$8 breakfast plate,Daily,Morning,Breakfast Special,Ganache Bakery West Palm Beach,1,1
+Lunch Sandwich,$10 combo,Daily,Lunch,Lunch Special,Ganache Bakery West Palm Beach,1,1
+Pastry Deal,$4 pastries,Daily,All day,Daily Special,Ganache Bakery West Palm Beach,1,1
+Dessert Pairing,$7 combo,Daily,Afternoon,Combo,Ganache Bakery West Palm Beach,1,1
+Bakery Box,$12 pastry bundle,Daily,All day,Combo,Ganache Bakery West Palm Beach,1,1
+Cafe Combo,$8 coffee + tart,Daily,Afternoon,Combo,Ganache Bakery West Palm Beach,1,1
+Brunch Pastry,$9 special,Weekends,Morning,Brunch Special,Ganache Bakery West Palm Beach,1,1
+Lunch Sandwich,$10 sandwich combo,Daily,Lunch,Lunch Special,Aioli West Palm Beach,1,1
+Breakfast Sandwich,$8 combo,Daily,Morning,Breakfast Special,Aioli West Palm Beach,1,1
+Lunch Combo,$11 combo,Daily,Lunch,Combo,Aioli West Palm Beach,1,1
+Dinner Sandwich,$12 large sandwich,Daily,Dinner,Dinner Special,Aioli West Palm Beach,1,1
+Soup & Sandwich,$11 combo,Daily,Lunch,Combo,Aioli West Palm Beach,1,1
+Family Sandwiches,$20 bundle,Daily,Dinner,Combo,Aioli West Palm Beach,1,1
+Dessert Deal,$5 side sweet,Daily,All day,Daily Special,Aioli West Palm Beach,1,1
+Cafe Combo,$8 lunch pairing,Daily,Afternoon,Combo,Aioli West Palm Beach,1,1
+Taco Combo,$10 tacos + drink,Daily,Lunch,Combo,El Camino West Palm Beach,1,1
+Lunch Special,$11 lunch plate,Weekdays,Lunch,Lunch Special,El Camino West Palm Beach,1,1
+Dinner Combo,$13 taco plate,Daily,Dinner,Dinner Special,El Camino West Palm Beach,1,1
+Bowl Special,$12 bowl,Daily,Lunch,Daily Special,El Camino West Palm Beach,1,1
+Family Tacos,$20 taco bundle,Daily,Dinner,Combo,El Camino West Palm Beach,1,1
+Quesadilla Deal,$9 deal,Daily,All day,Daily Special,El Camino West Palm Beach,1,1
+Street Taco Deal,$8 Tuesday deal,Tuesday,All day,Daily Special,El Camino West Palm Beach,1,1
+Lunch Combo,$10 combo,Daily,Lunch,Combo,El Camino West Palm Beach,1,1
+Brunch Special,$14 brunch menu,Weekends,Morning,Brunch Special,City Cellar West Palm Beach,1,1
+Lunch Special,$12 lunch plate,Daily,Lunch,Lunch Special,City Cellar West Palm Beach,1,1
+Dinner Combo,$14 dinner plate,Daily,Dinner,Dinner Special,City Cellar West Palm Beach,1,1
+Burger Combo,$12 combo,Daily,Lunch,Combo,City Cellar West Palm Beach,1,1
+Flatbread Deal,$11 special,Daily,Lunch,Daily Special,City Cellar West Palm Beach,1,1
+Family Combo,$22 shareable bundle,Daily,Dinner,Combo,City Cellar West Palm Beach,1,1
+Dessert Deal,$6 sweet special,Daily,All day,Daily Special,City Cellar West Palm Beach,1,1
+Lunch Pairing,$13 combo,Daily,Lunch,Combo,City Cellar West Palm Beach,1,1
+Dinner Bowl,$12 bowl,Daily,Dinner,Dinner Special,Bolay West Palm Beach,1,1
+Family Bundle,$22 bowl bundle,Daily,Dinner,Combo,Bolay West Palm Beach,1,1
+Healthy Plate,$11 plate,Daily,Lunch,Daily Special,Bolay West Palm Beach,1,1
+Power Bowl,$12 special,Daily,Lunch,Combo,Bolay West Palm Beach,1,1
+Dinner Combo,$13 combo,Daily,Dinner,Combo,Bolay West Palm Beach,1,1
+Lunch Deal,$10 weekday special,Weekdays,Lunch,Lunch Special,Bolay West Palm Beach,1,1
+Breakfast Combo,$9 biscuit + coffee,Daily,Morning,Breakfast Special,Maple Street Biscuit Company St. Augustine,1,1
+Brunch Special,$11 brunch plate,Weekends,Morning,Brunch Special,Maple Street Biscuit Company St. Augustine,1,1
+Lunch Combo,$10 sandwich combo,Daily,Lunch,Lunch Special,Maple Street Biscuit Company St. Augustine,1,1
+Biscuit Deal,$8 biscuit special,Daily,Morning,Daily Special,Maple Street Biscuit Company St. Augustine,1,1
+Chicken Biscuit,$10 combo,Daily,Lunch,Combo,Maple Street Biscuit Company St. Augustine,1,1
+Family Biscuit,$18 bundle,Daily,Lunch,Combo,Maple Street Biscuit Company St. Augustine,1,1
+Coffee Combo,$6 coffee + biscuit,Daily,Morning,Combo,Maple Street Biscuit Company St. Augustine,1,1
+Breakfast Plate,$9 plate,Daily,Morning,Breakfast Special,Maple Street Biscuit Company St. Augustine,1,1
+Slice Deal,$5 slice + drink,Daily,Lunch,Combo,Pizza Time of St. Augustine,1,1
+Pizza Lunch,$11 lunch combo,Daily,Lunch,Lunch Special,Pizza Time of St. Augustine,1,1
+Dinner Pizza,$15 pizza special,Daily,Dinner,Dinner Special,Pizza Time of St. Augustine,1,1
+Family Pizza,$22 pizza bundle,Daily,Dinner,Combo,Pizza Time of St. Augustine,1,1
+Lunch Combo,$12 combo,Daily,Lunch,Combo,Pizza Time of St. Augustine,1,1
+Dinner Combo,$16 meal,Daily,Dinner,Combo,Pizza Time of St. Augustine,1,1
+Pizza & Salad,$14 combo,Daily,Lunch,Combo,Pizza Time of St. Augustine,1,1
+Slice Pairing,$8 slice combo,Daily,Afternoon,Daily Special,Pizza Time of St. Augustine,1,1
+Lunch Special,$12 lunch plate,Daily,Lunch,Lunch Special,The Floridian St. Augustine,1,1
+Dinner Combo,$14 dinner plate,Daily,Dinner,Dinner Special,The Floridian St. Augustine,1,1
+Brunch Special,$13 brunch menu,Weekends,Morning,Brunch Special,The Floridian St. Augustine,1,1
+Sandwich Combo,$11 combo,Daily,Lunch,Combo,The Floridian St. Augustine,1,1
+Vegetarian Plate,$12 special,Daily,Lunch,Daily Special,The Floridian St. Augustine,1,1
+Family Combo,$22 bundle,Daily,Dinner,Combo,The Floridian St. Augustine,1,1
+Dessert Deal,$6 special,Daily,All day,Daily Special,The Floridian St. Augustine,1,1
+Lunch Pairing,$13 combo,Daily,Lunch,Combo,The Floridian St. Augustine,1,1
+Taco Combo,$9 tacos + drink,Daily,Lunch,Combo,Burrito Works Taco Shop St. Augustine,1,1
+Burrito Combo,$10 burrito + drink,Daily,Lunch,Combo,Burrito Works Taco Shop St. Augustine,1,1
+Lunch Special,$10 lunch plate,Daily,Lunch,Lunch Special,Burrito Works Taco Shop St. Augustine,1,1
+Dinner Combo,$12 taco plate,Daily,Dinner,Dinner Special,Burrito Works Taco Shop St. Augustine,1,1
+Family Tacos,$18 taco bundle,Daily,Dinner,Combo,Burrito Works Taco Shop St. Augustine,1,1
+Quesadilla Deal,$8 deal,Daily,All day,Daily Special,Burrito Works Taco Shop St. Augustine,1,1
+Street Taco Deal,$8 Tuesday deal,Tuesday,All day,Daily Special,Burrito Works Taco Shop St. Augustine,1,1
+Lunch Combo,$9 combo,Daily,Lunch,Combo,Burrito Works Taco Shop St. Augustine,1,1
+Brunch Special,$12 brunch menu,Weekends,Morning,Brunch Special,Biscottis Jacksonville,1,1
+Breakfast Combo,$9 breakfast plate,Daily,Morning,Breakfast Special,Biscottis Jacksonville,1,1
+Lunch Sandwich,$11 combo,Daily,Lunch,Lunch Special,Biscottis Jacksonville,1,1
+Dessert Deal,$6 sweet special,Daily,All day,Daily Special,Biscottis Jacksonville,1,1
+Cafe Combo,$8 coffee + pastry,Daily,Afternoon,Combo,Biscottis Jacksonville,1,1
+Lunch Combo,$12 combo,Daily,Lunch,Combo,Biscottis Jacksonville,1,1
+Brunch Pairing,$13 special,Weekends,Morning,Brunch Special,Biscottis Jacksonville,1,1
+Bakery Box,$12 dessert bundle,Daily,All day,Combo,Biscottis Jacksonville,1,1
+BBQ Plate,$13 lunch plate,Daily,Lunch,Lunch Special,The Bearded Pig Jacksonville,1,1
+Sandwich Combo,$11 sandwich + drink,Daily,Lunch,Combo,The Bearded Pig Jacksonville,1,1
+Dinner Combo,$15 bbq plate,Daily,Dinner,Dinner Special,The Bearded Pig Jacksonville,1,1
+Family BBQ,$24 bundle,Daily,Dinner,Combo,The Bearded Pig Jacksonville,1,1
+Rib Deal,$14 ribs special,Daily,Dinner,Daily Special,The Bearded Pig Jacksonville,1,1
+Lunch Combo,$12 combo,Daily,Lunch,Combo,The Bearded Pig Jacksonville,1,1
+BBQ Sandwich,$10 special,Daily,Lunch,Daily Special,The Bearded Pig Jacksonville,1,1
+Tray Combo,$16 combo,Daily,Dinner,Combo,The Bearded Pig Jacksonville,1,1
+Pizza Lunch,$11 lunch combo,Daily,Lunch,Lunch Special,Carmine Pie House Jacksonville,1,1
+Dinner Pizza,$15 pizza special,Daily,Dinner,Dinner Special,Carmine Pie House Jacksonville,1,1
+Slice Deal,$5 slice + drink,Daily,Lunch,Combo,Carmine Pie House Jacksonville,1,1
+Family Pizza,$22 pizza bundle,Daily,Dinner,Combo,Carmine Pie House Jacksonville,1,1
+Lunch Combo,$12 combo,Daily,Lunch,Combo,Carmine Pie House Jacksonville,1,1
+Dinner Combo,$16 meal,Daily,Dinner,Combo,Carmine Pie House Jacksonville,1,1
+Pizza & Salad,$14 combo,Daily,Lunch,Combo,Carmine Pie House Jacksonville,1,1
+Slice Pairing,$8 slice combo,Daily,Afternoon,Daily Special,Carmine Pie House Jacksonville,1,1
+Lunch Sandwich,$10 combo,Daily,Lunch,Lunch Special,European Street Cafe Jacksonville,1,1
+Soup & Sandwich,$11 combo,Daily,Lunch,Combo,European Street Cafe Jacksonville,1,1
+Breakfast Combo,$8 breakfast plate,Daily,Morning,Breakfast Special,European Street Cafe Jacksonville,1,1
+Dinner Combo,$12 sandwich plate,Daily,Dinner,Dinner Special,European Street Cafe Jacksonville,1,1
+Cafe Combo,$7 coffee + pastry,Daily,Afternoon,Combo,European Street Cafe Jacksonville,1,1
+Lunch Special,$10 lunch plate,Weekdays,Lunch,Lunch Special,European Street Cafe Jacksonville,1,1
+Family Combo,$18 sandwich bundle,Daily,Dinner,Combo,European Street Cafe Jacksonville,1,1
+Bakery Deal,$5 pastry special,Daily,All day,Daily Special,European Street Cafe Jacksonville,1,1
+Thai Lunch,$11 lunch plate,Daily,Lunch,Lunch Special,Tuptim Thai Jacksonville,1,1
+Curry Special,$12 curry plate,Daily,Lunch,Daily Special,Tuptim Thai Jacksonville,1,1
+Noodle Combo,$11 noodle combo,Daily,Lunch,Combo,Tuptim Thai Jacksonville,1,1
+Dinner Combo,$13 dinner plate,Daily,Dinner,Dinner Special,Tuptim Thai Jacksonville,1,1
+Family Thai,$22 shareable bundle,Daily,Dinner,Combo,Tuptim Thai Jacksonville,1,1
+Rice Plate,$10 special,Daily,Lunch,Daily Special,Tuptim Thai Jacksonville,1,1
+Lunch Combo,$11 combo,Daily,Lunch,Combo,Tuptim Thai Jacksonville,1,1
+Thai Pairing,$12 dinner combo,Daily,Dinner,Combo,Tuptim Thai Jacksonville,1,1
+Cuban Sandwich,$10 combo,Daily,Lunch,Lunch Special,Black Bean Deli Jacksonville,1,1
+Breakfast Combo,$8 breakfast plate,Daily,Morning,Breakfast Special,Black Bean Deli Jacksonville,1,1
+Lunch Plate,$11 lunch combo,Daily,Lunch,Combo,Black Bean Deli Jacksonville,1,1
+Dinner Combo,$12 Cuban plate,Daily,Dinner,Dinner Special,Black Bean Deli Jacksonville,1,1
+Coffee & Toast,$5 combo,Daily,Morning,Combo,Black Bean Deli Jacksonville,1,1
+Pastry Deal,$4 pastry + coffee,Daily,Morning,Daily Special,Black Bean Deli Jacksonville,1,1
+Family Meal,$20 bundle,Daily,Dinner,Combo,Black Bean Deli Jacksonville,1,1
+Lunch Special,$10 weekday plate,Weekdays,Lunch,Lunch Special,Black Bean Deli Jacksonville,1,1
+Po'boy Combo,$11 sandwich + drink,Daily,Lunch,Combo,Tibby's New Orleans Kitchen Jacksonville,1,1
+Gumbo Lunch,$12 lunch bowl,Daily,Lunch,Lunch Special,Tibby's New Orleans Kitchen Jacksonville,1,1
+Dinner Combo,$14 Cajun plate,Daily,Dinner,Dinner Special,Tibby's New Orleans Kitchen Jacksonville,1,1
+Family Cajun,$22 shareable bundle,Daily,Dinner,Combo,Tibby's New Orleans Kitchen Jacksonville,1,1
+Rice Plate,$11 special,Daily,Lunch,Daily Special,Tibby's New Orleans Kitchen Jacksonville,1,1
+Po'boy Deal,$10 special,Daily,Lunch,Daily Special,Tibby's New Orleans Kitchen Jacksonville,1,1
+Lunch Combo,$12 combo,Daily,Lunch,Combo,Tibby's New Orleans Kitchen Jacksonville,1,1
+Dinner Pairing,$13 combo,Daily,Dinner,Combo,Tibby's New Orleans Kitchen Jacksonville,1,1
+Brunch Special,$13 brunch menu,Weekends,Morning,Brunch Special,Another Broken Egg Cafe Jacksonville,1,1
+Breakfast Combo,$9 breakfast plate,Daily,Morning,Breakfast Special,Another Broken Egg Cafe Jacksonville,1,1
+Lunch Special,$11 lunch plate,Daily,Lunch,Lunch Special,Another Broken Egg Cafe Jacksonville,1,1
+Brunch Pairing,$12 special,Weekends,Morning,Brunch Special,Another Broken Egg Cafe Jacksonville,1,1
+Sandwich Combo,$10 combo,Daily,Lunch,Combo,Another Broken Egg Cafe Jacksonville,1,1
+Coffee Combo,$7 coffee + pastry,Daily,Morning,Combo,Another Broken Egg Cafe Jacksonville,1,1
+Lunch Combo,$11 combo,Daily,Lunch,Combo,Another Broken Egg Cafe Jacksonville,1,1
+Breakfast Pairing,$9 weekday special,Weekdays,Morning,Breakfast Special,Another Broken Egg Cafe Jacksonville,1,1
