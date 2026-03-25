@@ -8,6 +8,8 @@ dependencies:
     - field.storage.node.field_cuisine
     - field.storage.node.field_day_of_week
     - field.storage.node.field_deal_category
+    - field.storage.node.field_latitude
+    - field.storage.node.field_longitude
     - field.storage.node.field_price_offer_text
     - field.storage.node.field_start_time
     - field.storage.node.field_venue
@@ -108,6 +110,28 @@ field_settings:
     dependencies:
       config:
         - field.storage.node.body
+  field_latitude:
+    label: 'Venue » Content » Latitude'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_latitude'
+    type: decimal
+    dependencies:
+      config:
+        - field.storage.node.field_latitude
+        - field.storage.node.field_venue
+      module:
+        - node
+  field_longitude:
+    label: 'Venue » Content » Longitude'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_longitude'
+    type: decimal
+    dependencies:
+      config:
+        - field.storage.node.field_longitude
+        - field.storage.node.field_venue
+      module:
+        - node
   field_price_offer_text:
     label: 'Price / Offer Text'
     datasource_id: 'entity:node'

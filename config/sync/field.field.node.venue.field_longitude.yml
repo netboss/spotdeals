@@ -1,0 +1,23 @@
+uuid: ddf47d99-7766-4c9b-ab81-2f083d5b3d8a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_longitude
+    - node.type.venue
+id: node.venue.field_longitude
+field_name: field_longitude
+entity_type: node
+bundle: venue
+label: Longitude
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: decimal

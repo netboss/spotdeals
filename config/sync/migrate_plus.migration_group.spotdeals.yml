@@ -2,8 +2,6 @@ uuid: 3caaeba7-d05d-4789-ab48-f8097c272b31
 langcode: en
 status: true
 dependencies: {  }
-_core:
-  default_config_hash: LsCFumBotVuFCyTl-fqms21KVQsshjfp8LSU7k9qA4g
 id: spotdeals
 label: SpotDeals
 description: 'SpotDeals CSV imports'

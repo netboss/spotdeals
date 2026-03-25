@@ -12,6 +12,8 @@ dependencies:
     - field.field.node.venue.field_claimed_listing
     - field.field.node.venue.field_cuisine
     - field.field.node.venue.field_image
+    - field.field.node.venue.field_latitude
+    - field.field.node.venue.field_longitude
     - field.field.node.venue.field_menu_url
     - field.field.node.venue.field_phone
     - field.field.node.venue.field_primary_owner_user
@@ -53,6 +55,28 @@ content:
         attribute: eager
     third_party_settings: {  }
     weight: 2
+    region: content
+  field_latitude:
+    type: number_decimal
+    label: above
+    settings:
+      thousand_separator: ''
+      decimal_separator: .
+      scale: 2
+      prefix_suffix: true
+    third_party_settings: {  }
+    weight: 6
+    region: content
+  field_longitude:
+    type: number_decimal
+    label: above
+    settings:
+      thousand_separator: ''
+      decimal_separator: .
+      scale: 2
+      prefix_suffix: true
+    third_party_settings: {  }
+    weight: 7
     region: content
   field_primary_owner_user:
     type: entity_reference_label

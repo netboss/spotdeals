@@ -201,3 +201,6 @@ phpdocs
 # Capacitor Rules
 ios/
 android/
+
+# Geocoding script
+add_geo.py
