@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\views\ViewExecutable;
 
@@ -124,7 +125,6 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   // submits without letting it affect the actual Search API fulltext query.
   $input['search_raw'] = $raw;
 
-  // IMPORTANT:
   // Rewrite the active search inputs to keyword-only text so the View/Search API
   // uses the cleaned query internally.
   $input[$search_param] = $parsed['keywords'];
@@ -179,12 +179,21 @@ function _spotdeals_search_smart_location_parse(string $input): array {
     $normalized = _spotdeals_search_smart_location_normalize($working);
   }
 
-  // Match supported cities using exact labels expected by locality_exact.
-  // Keep longer names before shorter overlapping names.
-  foreach (_spotdeals_search_smart_location_known_cities() as $needle => $label) {
-    if (preg_match('/\b' . preg_quote($needle, '/') . '\b/i', $normalized)) {
-      $city = $label;
-      $working = preg_replace('/\b' . preg_quote($needle, '/') . '\b/i', ' ', $working, 1) ?? $working;
+  // Dynamically match against known venue localities.
+  $known_cities = _spotdeals_search_smart_location_known_cities();
+  $compact_query = _spotdeals_search_smart_location_compact($normalized);
+
+  foreach ($known_cities as $canonical_city => $compact_city) {
+    if ($compact_city === '') {
+      continue;
+    }
+
+    if (str_contains($compact_query, $compact_city)) {
+      $city = $canonical_city;
+
+      // Remove the matched canonical city from the human-readable query.
+      $pattern = '/\b' . preg_quote($canonical_city, '/') . '\b/i';
+      $working = preg_replace($pattern, ' ', $working, 1) ?? $working;
       $normalized = _spotdeals_search_smart_location_normalize($working);
       break;
     }
@@ -200,31 +209,74 @@ function _spotdeals_search_smart_location_parse(string $input): array {
 }
 
 /**
- * Returns supported city aliases mapped to the exact exposed filter label.
+ * Returns dynamically discovered venue cities mapped to compact match keys.
  *
- * IMPORTANT:
- * Values must match actual locality_exact filter values.
+ * Array format:
+ * - key   = canonical locality label as stored in Drupal (for exact filter)
+ * - value = compact normalized form used for matching
+ *
+ * Example:
+ *   'New Smyrna Beach' => 'newsmyrnabeach'
+ *   'DeLand' => 'deland'
  */
 function _spotdeals_search_smart_location_known_cities(): array {
-  return [
-    'daytona beach shores' => 'Daytona Beach Shores',
-    'new smyrna beach' => 'New Smyrna Beach',
-    'daytona beach' => 'Daytona Beach',
-    'port orange' => 'Port Orange',
-    'ormond beach' => 'Ormond Beach',
-    'south daytona' => 'South Daytona',
-    'ponce inlet' => 'Ponce Inlet',
-    'holly hill' => 'Holly Hill',
-    'orange city' => 'Orange City',
-    'new smyrna' => 'New Smyrna Beach',
-    'de land' => 'DeLand',
-    'deland' => 'DeLand',
-    'deltona' => 'Deltona',
-    'kissimmee' => 'Kissimmee',
-    'orlando' => 'Orlando',
-    'edgewater' => 'Edgewater',
-    'nsb' => 'New Smyrna Beach',
-  ];
+  $cid = 'spotdeals_search_smart_location:known_cities';
+
+  $cache = \Drupal::cache()->get($cid);
+  if ($cache && is_array($cache->data)) {
+    return $cache->data;
+  }
+
+  $connection = \Drupal::database();
+
+  $query = $connection->select('node__field_address', 'fa');
+  $query->join('node_field_data', 'nfd', 'nfd.nid = fa.entity_id');
+  $query->addField('fa', 'field_address_locality', 'locality');
+  $query->condition('nfd.type', 'venue');
+  $query->condition('nfd.status', 1);
+  $query->isNotNull('fa.field_address_locality');
+  $query->distinct();
+
+  $results = $query->execute()->fetchCol();
+
+  $cities = [];
+
+  foreach ($results as $locality) {
+    if (!is_string($locality)) {
+      continue;
+    }
+
+    $canonical = trim($locality);
+    if ($canonical === '') {
+      continue;
+    }
+
+    $cities[$canonical] = _spotdeals_search_smart_location_compact($canonical);
+  }
+
+  // Longest city names first to avoid partial matches like
+  // "Daytona Beach" before "Daytona Beach Shores".
+  uksort($cities, static function (string $a, string $b): int {
+    return mb_strlen($b) <=> mb_strlen($a);
+  });
+
+  \Drupal::cache()->set($cid, $cities, CacheBackendInterface::CACHE_PERMANENT, ['node_list']);
+
+  return $cities;
+}
+
+/**
+ * Returns a compact matching form of a string.
+ *
+ * Example:
+ *   "New Smyrna Beach" => "newsmyrnabeach"
+ *   "DeLand" => "deland"
+ *   "de land" => "deland"
+ */
+function _spotdeals_search_smart_location_compact(string $value): string {
+  $value = _spotdeals_search_smart_location_normalize($value);
+  $value = str_replace(' ', '', $value);
+  return trim($value);
 }
 
 /**
