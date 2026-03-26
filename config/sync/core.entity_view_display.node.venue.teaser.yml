@@ -11,6 +11,7 @@ dependencies:
     - field.field.node.venue.field_claim_status
     - field.field.node.venue.field_claimed_by
     - field.field.node.venue.field_claimed_listing
+    - field.field.node.venue.field_coordinates
     - field.field.node.venue.field_cuisine
     - field.field.node.venue.field_image
     - field.field.node.venue.field_latitude
@@ -62,6 +63,7 @@ hidden:
   field_claim_status: true
   field_claimed_by: true
   field_claimed_listing: true
+  field_coordinates: true
   field_cuisine: true
   field_latitude: true
   field_longitude: true
