@@ -52,6 +52,11 @@ process:
       plugin: skip_on_empty
       method: process
       source: field_longitude
+  field_coordinates:
+    plugin: geofield_latlon
+    source:
+      - field_latitude
+      - field_longitude
   field_venue_type:
     -
       plugin: skip_on_empty

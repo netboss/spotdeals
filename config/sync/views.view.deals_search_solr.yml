@@ -13,6 +13,7 @@ dependencies:
     - address
     - node
     - search_api
+    - search_api_location_views
     - text
 id: deals_search_solr
 label: 'Deals Search (Solr)'
@@ -798,7 +799,20 @@ display:
             value: "We couldn't find any results matching your search. To improve your search results, you can try another keyword."
             format: basic_html
           tokenize: false
-      sorts: {  }
+      sorts:
+        field_coordinates_distance:
+          id: field_coordinates_distance
+          table: search_api_index_deals_solr
+          field: field_coordinates_distance
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: search_api_location_distance
+          order: ASC
+          expose:
+            label: ''
+            field_identifier: ''
+          exposed: false
       arguments: {  }
       filters:
         search_api_fulltext:
@@ -1098,6 +1112,60 @@ display:
             default_group: All
             default_group_multiple: {  }
             group_items: {  }
+        field_coordinates:
+          id: field_coordinates
+          table: search_api_index_deals_solr
+          field: field_coordinates
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: search_api_location
+          operator: '<'
+          value:
+            value: '29.0283,-80.9270'
+            distance:
+              from: '16.09'
+              to: '-'
+          group: 1
+          exposed: false
+          expose:
+            operator_id: ''
+            label: ''
+            description: ''
+            use_operator: false
+            operator: ''
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: ''
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+          plugin: raw
+          plugin-geocode_map:
+            radius_border_color: ''
+            radius_border_weight: ''
+            radius_background_color: ''
+            radius_background_transparency: ''
+            marker_image: ''
+          plugin-raw:
+            radius_type: select
+            radius_options: "- -\r\n8.05 5 miles\r\n16.09 10 miles\r\n40.23 25 miles\r\n80.47 50 miles\r\n160.93 100 miles"
+            radius_units: km
+          require: 0
       style:
         type: default
       row:

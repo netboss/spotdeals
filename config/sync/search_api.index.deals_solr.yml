@@ -5,6 +5,7 @@ dependencies:
   config:
     - field.storage.node.body
     - field.storage.node.field_address
+    - field.storage.node.field_coordinates
     - field.storage.node.field_cuisine
     - field.storage.node.field_day_of_week
     - field.storage.node.field_deal_category
@@ -17,6 +18,7 @@ dependencies:
     - search_api.server.spotdeals_solr
   module:
     - node
+    - search_api_location
     - search_api_solr
     - spotdeals_search_smart_location
     - taxonomy
@@ -110,6 +112,17 @@ field_settings:
     dependencies:
       config:
         - field.storage.node.body
+  field_coordinates:
+    label: 'Venue » Content » Coordinates'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_coordinates'
+    type: location
+    dependencies:
+      config:
+        - field.storage.node.field_coordinates
+        - field.storage.node.field_venue
+      module:
+        - node
   field_latitude:
     label: 'Venue » Content » Latitude'
     datasource_id: 'entity:node'

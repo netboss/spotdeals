@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f861b52352a4c3761be5e948490cafe5",
+    "content-hash": "58b8a5c8531413024ae62d2bf3583140",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -3206,6 +3206,79 @@
             "homepage": "https://www.drupal.org/project/search_api",
             "support": {
                 "source": "https://git.drupalcode.org/project/search_api"
+            }
+        },
+        {
+            "name": "drupal/search_api_location",
+            "version": "1.0.0-alpha4",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/search_api_location.git",
+                "reference": "8.x-1.0-alpha4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/search_api_location-8.x-1.0-alpha4.zip",
+                "reference": "8.x-1.0-alpha4",
+                "shasum": "782313b945328e0c7bab3e51f748cddbb82649a2"
+            },
+            "require": {
+                "drupal/core": "^8.8 || ^9 || ^10 || ^11",
+                "drupal/search_api": "^1.28",
+                "itamair/geophp": "^1.2"
+            },
+            "require-dev": {
+                "drupal/facets": "3.x",
+                "drupal/geocoder": "^4.4",
+                "drupal/search_api": "*"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "8.x-1.0-alpha4",
+                    "datestamp": "1726238587",
+                    "security-coverage": {
+                        "status": "not-covered",
+                        "message": "Alpha releases are not covered by Drupal security advisories."
+                    }
+                }
+            },
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0+"
+            ],
+            "authors": [
+                {
+                    "name": "Mattias Michaux",
+                    "homepage": "https://www.drupal.org/u/mollux"
+                },
+                {
+                    "name": "drunken monkey",
+                    "homepage": "https://www.drupal.org/user/205582"
+                },
+                {
+                    "name": "jeroent",
+                    "homepage": "https://www.drupal.org/user/2228934"
+                },
+                {
+                    "name": "mollux",
+                    "homepage": "https://www.drupal.org/user/785804"
+                },
+                {
+                    "name": "nick_vh",
+                    "homepage": "https://www.drupal.org/user/122682"
+                },
+                {
+                    "name": "ygerasimov",
+                    "homepage": "https://www.drupal.org/user/257311"
+                }
+            ],
+            "description": "Provides location based search for the Search API module.",
+            "homepage": "https://www.drupal.org/project/search_api_location",
+            "support": {
+                "source": "http://git.drupal.org/project/search_api_location.git",
+                "issues": "https://www.drupal.org/project/issues/search_api_location",
+                "irc": "irc://irc.freenode.org/drupal-search-api"
             }
         },
         {
@@ -9020,6 +9093,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "drupal/search_api_location": 15,
         "drupal/webform": 10
     },
     "prefer-stable": true,

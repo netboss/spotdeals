@@ -10,6 +10,7 @@ dependencies:
     - field.field.node.venue.field_claim_status
     - field.field.node.venue.field_claimed_by
     - field.field.node.venue.field_claimed_listing
+    - field.field.node.venue.field_coordinates
     - field.field.node.venue.field_cuisine
     - field.field.node.venue.field_image
     - field.field.node.venue.field_latitude
@@ -23,6 +24,7 @@ dependencies:
     - node.type.venue
   module:
     - address
+    - geofield
     - image
     - link
     - path
@@ -99,6 +101,13 @@ content:
     region: content
     settings:
       display_label: true
+    third_party_settings: {  }
+  field_coordinates:
+    type: geofield_latlon
+    weight: 29
+    region: content
+    settings:
+      html5_geolocation: false
     third_party_settings: {  }
   field_cuisine:
     type: tagify_select_widget
