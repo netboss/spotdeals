@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\node\NodeInterface;
 use Drupal\views\ViewExecutable;
 
 /**
@@ -14,10 +15,56 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
     return;
   }
 
+  $form['#attached']['library'][] = 'spotdeals_search_smart_location/near_me';
+
+  $form['origin_lat'] = [
+    '#type' => 'hidden',
+    '#value' => '',
+  ];
+
+  $form['origin_lon'] = [
+    '#type' => 'hidden',
+    '#value' => '',
+  ];
+
+  $form['search_origin_mode'] = [
+    '#type' => 'hidden',
+    '#value' => '',
+  ];
+
+  $form['search_clean'] = [
+    '#type' => 'hidden',
+    '#value' => '',
+  ];
+
   $request = \Drupal::request();
 
-  // Preserve the original user-entered search string for display only.
-  // Prefer the persistent query param first so pagination keeps it.
+  $is_reset_request = FALSE;
+  foreach (['reset', 'op'] as $key) {
+    $value = $request->query->get($key);
+    if (is_string($value) && stripos($value, 'reset') !== FALSE) {
+      $is_reset_request = TRUE;
+      break;
+    }
+  }
+
+  if ($is_reset_request) {
+    if (isset($form['search_deals'])) {
+      $form['search_deals']['#default_value'] = '';
+      $form['search_deals']['#attributes']['value'] = '';
+    }
+
+    if (isset($form['search_api_fulltext'])) {
+      $form['search_api_fulltext']['#default_value'] = '';
+      $form['search_api_fulltext']['#attributes']['value'] = '';
+    }
+
+    $form['origin_lat']['#value'] = '';
+    $form['origin_lon']['#value'] = '';
+    $form['search_origin_mode']['#value'] = '';
+    $form['search_clean']['#value'] = '';
+  }
+
   $raw = $request->query->get('search_raw');
 
   if (!is_string($raw) || trim($raw) === '') {
@@ -32,7 +79,7 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
     $raw = $request->query->get('search_api_fulltext');
   }
 
-  if (is_string($raw) && trim($raw) !== '') {
+  if (!$is_reset_request && is_string($raw) && trim($raw) !== '') {
     if (isset($form['search_deals'])) {
       $form['search_deals']['#default_value'] = $raw;
       $form['search_deals']['#attributes']['value'] = $raw;
@@ -43,10 +90,15 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
       $form['search_api_fulltext']['#attributes']['value'] = $raw;
     }
 
-    // Carry the original raw query through pager links and subsequent requests.
     $form['search_raw'] = [
       '#type' => 'hidden',
       '#value' => $raw,
+    ];
+  }
+  else {
+    $form['search_raw'] = [
+      '#type' => 'hidden',
+      '#value' => '',
     ];
   }
 
@@ -63,20 +115,15 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
 
 /**
  * Implements hook_views_pre_view().
- *
- * Rewrites one-box input into:
- * - keyword-only fulltext
- * - exact ZIP/city exposed filters
- *
- * This is intentionally strict:
- * if a city is present, we filter to that exact city.
- * Accuracy and consistency come first.
  */
 function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, string $display_id, array &$args): void {
+  if ($view->id() !== 'deals_search_solr' || $display_id !== 'page_1') {
+    return;
+  }
+
   $input = $view->getExposedInput();
   $request = \Drupal::request();
 
-  // Only act on views that actually expose our search field.
   $search_param = NULL;
   if (array_key_exists('search_deals', $input) || $request->query->has('search_deals')) {
     $search_param = 'search_deals';
@@ -89,7 +136,6 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     return;
   }
 
-  // Prefer the persistent raw query param so pager links keep the original text.
   $raw = $request->query->get('search_raw');
   if (!is_string($raw) || trim($raw) === '') {
     $raw = (string) ($input[$search_param] ?? $request->query->get($search_param, ''));
@@ -100,12 +146,63 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     return;
   }
 
-  // Save the raw user-entered query for display only.
   $request->attributes->set('spotdeals_search_smart_location.raw_query', $raw);
 
-  $parsed = _spotdeals_search_smart_location_parse($raw);
+  unset($input['postal_code_exact'], $input['locality_exact']);
 
-  // If nothing location-like was found, do nothing.
+  $parsed = _spotdeals_search_smart_location_parse($raw);
+  $clean = trim((string) $request->query->get('search_clean', ''));
+
+  $origin_mode = (string) $request->query->get('search_origin_mode', '');
+  $origin_lat = $request->query->get('origin_lat');
+  $origin_lon = $request->query->get('origin_lon');
+
+  $is_browser_near_me = $origin_mode === 'browser'
+    && is_numeric($origin_lat)
+    && is_numeric($origin_lon)
+    && preg_match('/\bnear\s+me\b/i', $raw);
+
+  if ($is_browser_near_me) {
+    $nearest_city = _spotdeals_search_smart_location_nearest_city_from_coords(
+      (float) $origin_lat,
+      (float) $origin_lon
+    );
+
+    $keywords = $clean !== '' ? $clean : trim((string) ($parsed['keywords'] ?? ''));
+
+    $input['search_raw'] = $raw;
+    $input[$search_param] = $keywords;
+
+    if (array_key_exists('search_deals', $input)) {
+      $input['search_deals'] = $keywords;
+    }
+
+    if (array_key_exists('search_api_fulltext', $input)) {
+      $input['search_api_fulltext'] = $keywords;
+    }
+
+    if (is_string($nearest_city) && $nearest_city !== '') {
+      $input['locality_exact'] = $nearest_city;
+      $request->attributes->set('spotdeals_search_smart_location.city', $nearest_city);
+
+      \Drupal::logger('spotdeals_search_smart_location')->notice(
+        'SMART LOCATION browser near me applied: view="@view" display="@display" raw="@raw" keywords="@keywords" nearest_city="@city" origin_lat="@lat" origin_lon="@lon"',
+        [
+          '@view' => $view->id(),
+          '@display' => $display_id,
+          '@raw' => $raw,
+          '@keywords' => $keywords,
+          '@city' => $nearest_city,
+          '@lat' => (string) $origin_lat,
+          '@lon' => (string) $origin_lon,
+        ]
+      );
+    }
+
+    $view->setExposedInput($input);
+    return;
+  }
+
   if (empty($parsed['zip']) && empty($parsed['city'])) {
     \Drupal::logger('spotdeals_search_smart_location')->notice(
       'SMART LOCATION no location found: view="@view" display="@display" raw="@raw"',
@@ -118,15 +215,7 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     return;
   }
 
-  // Remove previous exact location filters from the exposed input first.
-  unset($input['postal_code_exact'], $input['locality_exact']);
-
-  // Persist the original raw search text across pagination and exposed form
-  // submits without letting it affect the actual Search API fulltext query.
   $input['search_raw'] = $raw;
-
-  // Rewrite the active search inputs to keyword-only text so the View/Search API
-  // uses the cleaned query internally.
   $input[$search_param] = $parsed['keywords'];
 
   if (array_key_exists('search_deals', $input)) {
@@ -137,26 +226,37 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     $input['search_api_fulltext'] = $parsed['keywords'];
   }
 
-  // Apply exact location filters.
   if (!empty($parsed['zip'])) {
     $input['postal_code_exact'] = $parsed['zip'];
   }
 
   if (!empty($parsed['city'])) {
-    $input['locality_exact'] = $parsed['city'];
+    $exact_city = _spotdeals_search_smart_location_city_to_exact_locality($parsed['city']);
+    if ($exact_city !== NULL) {
+      $input['locality_exact'] = $exact_city;
+      $request->attributes->set('spotdeals_search_smart_location.city', $exact_city);
+    }
+  }
+
+  $origin = _spotdeals_search_smart_location_resolve_origin_from_venues($parsed);
+  if ($origin) {
+    $request->attributes->set('spotdeals_search_smart_location.origin', $origin);
   }
 
   $view->setExposedInput($input);
 
   \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION applied: view="@view" display="@display" raw="@raw" keywords="@keywords" zip="@zip" city="@city" search_param="@search_param"',
+    'SMART LOCATION applied: view="@view" display="@display" raw="@raw" keywords="@keywords" zip="@zip" city="@city" exact_city="@exact_city" origin_lat="@origin_lat" origin_lon="@origin_lon" search_param="@search_param"',
     [
       '@view' => $view->id(),
       '@display' => $display_id,
       '@raw' => $raw,
       '@keywords' => $parsed['keywords'] ?? '',
       '@zip' => $input['postal_code_exact'] ?? '',
-      '@city' => $input['locality_exact'] ?? '',
+      '@city' => $parsed['city'] ?? '',
+      '@exact_city' => $input['locality_exact'] ?? '',
+      '@origin_lat' => $origin['lat'] ?? '',
+      '@origin_lon' => $origin['lon'] ?? '',
       '@search_param' => $search_param,
     ]
   );
@@ -167,35 +267,33 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
  */
 function _spotdeals_search_smart_location_parse(string $input): array {
   $working = trim($input);
-  $normalized = _spotdeals_search_smart_location_normalize($working);
 
   $zip = NULL;
   $city = NULL;
 
-  // Match 5-digit ZIP.
   if (preg_match('/\b(\d{5})\b/', $working, $matches)) {
     $zip = $matches[1];
     $working = preg_replace('/\b' . preg_quote($zip, '/') . '\b/i', ' ', $working, 1) ?? $working;
-    $normalized = _spotdeals_search_smart_location_normalize($working);
   }
 
-  // Dynamically match against known venue localities.
   $known_cities = _spotdeals_search_smart_location_known_cities();
-  $compact_query = _spotdeals_search_smart_location_compact($normalized);
+  $normalized_query = _spotdeals_search_smart_location_normalize($working);
 
-  foreach ($known_cities as $canonical_city => $compact_city) {
-    if ($compact_city === '') {
-      continue;
-    }
+  uksort($known_cities, static fn(string $a, string $b): int => mb_strlen($b) <=> mb_strlen($a));
 
-    if (str_contains($compact_query, $compact_city)) {
-      $city = $canonical_city;
+  foreach ($known_cities as $canonical_city => $aliases) {
+    foreach ($aliases as $alias) {
+      $normalized_alias = _spotdeals_search_smart_location_normalize($alias);
+      if ($normalized_alias === '') {
+        continue;
+      }
 
-      // Remove the matched canonical city from the human-readable query.
-      $pattern = '/\b' . preg_quote($canonical_city, '/') . '\b/i';
-      $working = preg_replace($pattern, ' ', $working, 1) ?? $working;
-      $normalized = _spotdeals_search_smart_location_normalize($working);
-      break;
+      $pattern = '/(^|\s)' . preg_quote($normalized_alias, '/') . '($|\s)/iu';
+      if (preg_match($pattern, ' ' . $normalized_query . ' ')) {
+        $city = $canonical_city;
+        $working = preg_replace('/\b' . preg_quote($alias, '/') . '\b/iu', ' ', $working) ?? $working;
+        break 2;
+      }
     }
   }
 
@@ -209,82 +307,318 @@ function _spotdeals_search_smart_location_parse(string $input): array {
 }
 
 /**
- * Returns dynamically discovered venue cities mapped to compact match keys.
- *
- * Array format:
- * - key   = canonical locality label as stored in Drupal (for exact filter)
- * - value = compact normalized form used for matching
- *
- * Example:
- *   'New Smyrna Beach' => 'newsmyrnabeach'
- *   'DeLand' => 'deland'
+ * Returns searchable city aliases derived from Venue node data.
  */
 function _spotdeals_search_smart_location_known_cities(): array {
-  $cid = 'spotdeals_search_smart_location:known_cities';
+  $cid = 'spotdeals_search_smart_location:known_cities_from_venues';
 
   $cache = \Drupal::cache()->get($cid);
   if ($cache && is_array($cache->data)) {
     return $cache->data;
   }
 
-  $connection = \Drupal::database();
-
-  $query = $connection->select('node__field_address', 'fa');
-  $query->join('node_field_data', 'nfd', 'nfd.nid = fa.entity_id');
-  $query->addField('fa', 'field_address_locality', 'locality');
-  $query->condition('nfd.type', 'venue');
-  $query->condition('nfd.status', 1);
-  $query->isNotNull('fa.field_address_locality');
-  $query->distinct();
-
-  $results = $query->execute()->fetchCol();
-
   $cities = [];
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
 
-  foreach ($results as $locality) {
-    if (!is_string($locality)) {
-      continue;
+  $nids = \Drupal::entityQuery('node')
+    ->accessCheck(FALSE)
+    ->condition('type', 'venue')
+    ->condition('status', 1)
+    ->exists('field_address.locality')
+    ->execute();
+
+  if (!empty($nids)) {
+    $venues = $storage->loadMultiple($nids);
+
+    foreach ($venues as $venue) {
+      if (!$venue instanceof NodeInterface) {
+        continue;
+      }
+
+      if (!$venue->hasField('field_address') || $venue->get('field_address')->isEmpty()) {
+        continue;
+      }
+
+      $address = $venue->get('field_address')->first();
+      $locality = trim((string) ($address->getLocality() ?? ''));
+      if ($locality === '') {
+        continue;
+      }
+
+      $cities[$locality] = $cities[$locality] ?? [$locality];
+
+      $acronym = _spotdeals_search_smart_location_acronym($locality);
+      if ($acronym !== NULL) {
+        $cities[$locality][] = $acronym;
+      }
+
+      $cities[$locality] = array_values(array_unique(array_filter($cities[$locality])));
     }
-
-    $canonical = trim($locality);
-    if ($canonical === '') {
-      continue;
-    }
-
-    $cities[$canonical] = _spotdeals_search_smart_location_compact($canonical);
   }
 
-  // Longest city names first to avoid partial matches like
-  // "Daytona Beach" before "Daytona Beach Shores".
-  uksort($cities, static function (string $a, string $b): int {
-    return mb_strlen($b) <=> mb_strlen($a);
-  });
-
-  \Drupal::cache()->set($cid, $cities, CacheBackendInterface::CACHE_PERMANENT, ['node_list']);
+  ksort($cities, SORT_NATURAL | SORT_FLAG_CASE);
+  \Drupal::cache()->set($cid, $cities, CacheBackendInterface::CACHE_PERMANENT);
 
   return $cities;
 }
 
 /**
- * Returns a compact matching form of a string.
- *
- * Example:
- *   "New Smyrna Beach" => "newsmyrnabeach"
- *   "DeLand" => "deland"
- *   "de land" => "deland"
+ * Builds a simple acronym for multi-word city labels, e.g. NSB.
  */
-function _spotdeals_search_smart_location_compact(string $value): string {
-  $value = _spotdeals_search_smart_location_normalize($value);
-  $value = str_replace(' ', '', $value);
-  return trim($value);
+function _spotdeals_search_smart_location_acronym(string $label): ?string {
+  $parts = preg_split('/\s+/', trim($label)) ?: [];
+  if (count($parts) < 2) {
+    return NULL;
+  }
+
+  $letters = '';
+  foreach ($parts as $part) {
+    $part = trim($part);
+    if ($part === '') {
+      continue;
+    }
+    $letters .= mb_strtoupper(mb_substr($part, 0, 1));
+  }
+
+  return $letters !== '' ? $letters : NULL;
 }
 
 /**
- * Normalize a value for matching.
+ * Maps parsed city to exact locality if it exists in venue data.
+ */
+function _spotdeals_search_smart_location_city_to_exact_locality(string $city): ?string {
+  $cities = _spotdeals_search_smart_location_known_cities();
+  return array_key_exists($city, $cities) ? $city : NULL;
+}
+
+/**
+ * Resolves parsed city/ZIP to approximate coordinates from Venue nodes.
+ */
+function _spotdeals_search_smart_location_resolve_origin_from_venues(array $parsed): ?array {
+  $lookup = _spotdeals_search_smart_location_build_venue_origin_lookup();
+
+  if (!empty($parsed['zip']) && isset($lookup['zips'][$parsed['zip']])) {
+    return $lookup['zips'][$parsed['zip']];
+  }
+
+  if (!empty($parsed['city']) && isset($lookup['cities'][$parsed['city']])) {
+    return $lookup['cities'][$parsed['city']];
+  }
+
+  return NULL;
+}
+
+/**
+ * Builds city/ZIP coordinate lookup from Venue nodes.
+ */
+function _spotdeals_search_smart_location_build_venue_origin_lookup(): array {
+  $cid = 'spotdeals_search_smart_location:venue_origin_lookup';
+
+  $cache = \Drupal::cache()->get($cid);
+  if ($cache && is_array($cache->data)) {
+    return $cache->data;
+  }
+
+  $lookup = [
+    'cities' => [],
+    'zips' => [],
+  ];
+
+  $city_sums = [];
+  $zip_sums = [];
+
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+
+  $nids = \Drupal::entityQuery('node')
+    ->accessCheck(FALSE)
+    ->condition('type', 'venue')
+    ->condition('status', 1)
+    ->exists('field_address.locality')
+    ->exists('field_coordinates')
+    ->execute();
+
+  if (empty($nids)) {
+    \Drupal::cache()->set($cid, $lookup, CacheBackendInterface::CACHE_PERMANENT);
+    return $lookup;
+  }
+
+  $venues = $storage->loadMultiple($nids);
+
+  foreach ($venues as $venue) {
+    if (!$venue instanceof NodeInterface) {
+      continue;
+    }
+
+    $coords = _spotdeals_search_smart_location_node_coords($venue);
+    if ($coords === NULL) {
+      continue;
+    }
+
+    [$lat, $lon] = $coords;
+
+    if (!$venue->hasField('field_address') || $venue->get('field_address')->isEmpty()) {
+      continue;
+    }
+
+    $address = $venue->get('field_address')->first();
+    $city = trim((string) ($address->getLocality() ?? ''));
+    $zip = trim((string) ($address->getPostalCode() ?? ''));
+
+    if ($city !== '') {
+      if (!isset($city_sums[$city])) {
+        $city_sums[$city] = [
+          'lat_sum' => 0.0,
+          'lon_sum' => 0.0,
+          'count' => 0,
+        ];
+      }
+
+      $city_sums[$city]['lat_sum'] += $lat;
+      $city_sums[$city]['lon_sum'] += $lon;
+      $city_sums[$city]['count']++;
+    }
+
+    if ($zip !== '') {
+      if (!isset($zip_sums[$zip])) {
+        $zip_sums[$zip] = [
+          'lat_sum' => 0.0,
+          'lon_sum' => 0.0,
+          'count' => 0,
+        ];
+      }
+
+      $zip_sums[$zip]['lat_sum'] += $lat;
+      $zip_sums[$zip]['lon_sum'] += $lon;
+      $zip_sums[$zip]['count']++;
+    }
+  }
+
+  foreach ($city_sums as $city => $data) {
+    if ($data['count'] > 0) {
+      $lookup['cities'][$city] = [
+        'lat' => round($data['lat_sum'] / $data['count'], 6),
+        'lon' => round($data['lon_sum'] / $data['count'], 6),
+      ];
+    }
+  }
+
+  foreach ($zip_sums as $zip => $data) {
+    if ($data['count'] > 0) {
+      $lookup['zips'][$zip] = [
+        'lat' => round($data['lat_sum'] / $data['count'], 6),
+        'lon' => round($data['lon_sum'] / $data['count'], 6),
+      ];
+    }
+  }
+
+  \Drupal::cache()->set($cid, $lookup, CacheBackendInterface::CACHE_PERMANENT);
+  return $lookup;
+}
+
+/**
+ * Returns the nearest known city centroid for browser coords.
+ */
+function _spotdeals_search_smart_location_nearest_city_from_coords(float $origin_lat, float $origin_lon): ?string {
+  $lookup = _spotdeals_search_smart_location_build_venue_origin_lookup();
+
+  if (empty($lookup['cities']) || !is_array($lookup['cities'])) {
+    return NULL;
+  }
+
+  $nearest_city = NULL;
+  $nearest_distance = NULL;
+
+  foreach ($lookup['cities'] as $city => $coords) {
+    if (
+      !is_array($coords) ||
+      !isset($coords['lat'], $coords['lon']) ||
+      !is_numeric($coords['lat']) ||
+      !is_numeric($coords['lon'])
+    ) {
+      continue;
+    }
+
+    $distance = _spotdeals_search_smart_location_haversine_km(
+      $origin_lat,
+      $origin_lon,
+      (float) $coords['lat'],
+      (float) $coords['lon']
+    );
+
+    if ($nearest_distance === NULL || $distance < $nearest_distance) {
+      $nearest_distance = $distance;
+      $nearest_city = $city;
+    }
+  }
+
+  return $nearest_city;
+}
+
+/**
+ * Extracts [lat, lon] from a Venue node.
+ *
+ * Prefers field_coordinates POINT(lon lat), falls back to field_latitude /
+ * field_longitude if present.
+ *
+ * @return array<int, float>|null
+ *   Returns [lat, lon] or NULL.
+ */
+function _spotdeals_search_smart_location_node_coords(NodeInterface $node): ?array {
+  if ($node->hasField('field_coordinates') && !$node->get('field_coordinates')->isEmpty()) {
+    $raw = trim((string) $node->get('field_coordinates')->value);
+
+    if (preg_match('/POINT\s*\(\s*(-?[0-9.]+)\s+(-?[0-9.]+)\s*\)/i', $raw, $matches)) {
+      $lon = (float) $matches[1];
+      $lat = (float) $matches[2];
+      return [$lat, $lon];
+    }
+  }
+
+  if (
+    $node->hasField('field_latitude') &&
+    !$node->get('field_latitude')->isEmpty() &&
+    $node->hasField('field_longitude') &&
+    !$node->get('field_longitude')->isEmpty()
+  ) {
+    $lat = $node->get('field_latitude')->value;
+    $lon = $node->get('field_longitude')->value;
+
+    if (is_numeric($lat) && is_numeric($lon)) {
+      return [(float) $lat, (float) $lon];
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Normalizes a search string for loose matching.
  */
 function _spotdeals_search_smart_location_normalize(string $value): string {
   $value = mb_strtolower($value);
   $value = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $value) ?? $value;
   $value = preg_replace('/\s+/', ' ', $value) ?? $value;
   return trim($value);
+}
+
+/**
+ * Returns great-circle distance in kilometers.
+ */
+function _spotdeals_search_smart_location_haversine_km(float $lat1, float $lon1, float $lat2, float $lon2): float {
+  $earth_radius_km = 6371.0;
+
+  $lat1_rad = deg2rad($lat1);
+  $lon1_rad = deg2rad($lon1);
+  $lat2_rad = deg2rad($lat2);
+  $lon2_rad = deg2rad($lon2);
+
+  $dlat = $lat2_rad - $lat1_rad;
+  $dlon = $lon2_rad - $lon1_rad;
+
+  $a = sin($dlat / 2) ** 2
+    + cos($lat1_rad) * cos($lat2_rad) * sin($dlon / 2) ** 2;
+
+  $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+  return $earth_radius_km * $c;
 }

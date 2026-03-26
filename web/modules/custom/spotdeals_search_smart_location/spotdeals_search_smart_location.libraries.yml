@@ -1,0 +1,6 @@
+near_me:
+  js:
+    js/near-me.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
