@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\spotdeals_search_smart_location;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node\NodeInterface;
 
 /**
@@ -17,9 +18,17 @@ final class NearMeRanker {
   private const DEFAULT_RADIUS_KM = 25.0;
 
   /**
+   * Constructs a NearMeRanker service.
+   */
+  public function __construct(
+    private readonly EntityTypeManagerInterface $entityTypeManager,
+    private readonly NearMeResultExtractor $resultExtractor,
+  ) {}
+
+  /**
    * Returns ordered deal node IDs for a near-me search.
    *
-   * Distance is primary. Keyword quality is secondary.
+   * Distance is primary. Keywords only decide eligibility.
    *
    * @return array<int, int>
    *   Ordered deal node IDs.
@@ -28,10 +37,10 @@ final class NearMeRanker {
     $keywords = $this->normalize($keywords);
     $tokens = $this->tokens($keywords);
 
-    $venue_storage = \Drupal::entityTypeManager()->getStorage('node');
-    $deal_storage = \Drupal::entityTypeManager()->getStorage('node');
+    $venue_storage = $this->entityTypeManager->getStorage('node');
+    $deal_storage = $this->entityTypeManager->getStorage('node');
 
-    $venue_nids = \Drupal::entityQuery('node')
+    $venue_nids = $this->entityTypeManager->getStorage('node')->getQuery()
       ->accessCheck(FALSE)
       ->condition('type', 'venue')
       ->condition('status', 1)
@@ -49,7 +58,7 @@ final class NearMeRanker {
         continue;
       }
 
-      $coords = $this->nodeCoords($venue);
+      $coords = $this->resultExtractor->extractVenueCoords($venue);
       if ($coords === NULL) {
         continue;
       }
@@ -73,7 +82,7 @@ final class NearMeRanker {
       return [];
     }
 
-    $deal_nids = \Drupal::entityQuery('node')
+    $deal_nids = $this->entityTypeManager->getStorage('node')->getQuery()
       ->accessCheck(FALSE)
       ->condition('type', 'deal')
       ->condition('status', 1)
@@ -84,6 +93,7 @@ final class NearMeRanker {
       return [];
     }
 
+    $deal_positions = array_flip(array_values($deal_nids));
     $deals = $deal_storage->loadMultiple($deal_nids);
 
     $ranked = [];
@@ -114,10 +124,11 @@ final class NearMeRanker {
         continue;
       }
 
+      $deal_nid = (int) $deal->id();
       $ranked[] = [
-        'nid' => (int) $deal->id(),
+        'nid' => $deal_nid,
         'distance' => (float) $candidate_venues[$venue_nid]['distance'],
-        'score' => $score,
+        'position' => $deal_positions[$deal_nid] ?? PHP_INT_MAX,
       ];
     }
 
@@ -127,9 +138,9 @@ final class NearMeRanker {
         return $distance_compare;
       }
 
-      $score_compare = $b['score'] <=> $a['score'];
-      if ($score_compare !== 0) {
-        return $score_compare;
+      $position_compare = $a['position'] <=> $b['position'];
+      if ($position_compare !== 0) {
+        return $position_compare;
       }
 
       return $a['nid'] <=> $b['nid'];
@@ -231,40 +242,6 @@ final class NearMeRanker {
     $parts = array_values(array_filter(array_map('trim', $parts)));
 
     return array_values(array_unique($parts));
-  }
-
-  /**
-   * Extracts [lat, lon] from a Venue node.
-   *
-   * @return array<int, float>|null
-   *   Coordinates or NULL.
-   */
-  private function nodeCoords(NodeInterface $node): ?array {
-    if ($node->hasField('field_coordinates') && !$node->get('field_coordinates')->isEmpty()) {
-      $raw = trim((string) $node->get('field_coordinates')->value);
-
-      if (preg_match('/POINT\s*\(\s*(-?[0-9.]+)\s+(-?[0-9.]+)\s*\)/i', $raw, $matches)) {
-        $lon = (float) $matches[1];
-        $lat = (float) $matches[2];
-        return [$lat, $lon];
-      }
-    }
-
-    if (
-      $node->hasField('field_latitude') &&
-      !$node->get('field_latitude')->isEmpty() &&
-      $node->hasField('field_longitude') &&
-      !$node->get('field_longitude')->isEmpty()
-    ) {
-      $lat = $node->get('field_latitude')->value;
-      $lon = $node->get('field_longitude')->value;
-
-      if (is_numeric($lat) && is_numeric($lon)) {
-        return [(float) $lat, (float) $lon];
-      }
-    }
-
-    return NULL;
   }
 
   /**

@@ -1038,7 +1038,7 @@ display:
             max: ''
             value: ''
           group: 1
-          exposed: true
+          exposed: false
           expose:
             operator_id: postal_code_exact_op
             label: 'Venue » Content » Address » The postal code'
@@ -1082,7 +1082,7 @@ display:
             max: ''
             value: ''
           group: 1
-          exposed: true
+          exposed: false
           expose:
             operator_id: locality_exact_op
             label: 'Venue » Content » Address » The locality (i.e. city)'
@@ -1135,7 +1135,7 @@ display:
           plugin_id: search_api
           required: false
           skip_access: false
-      use_ajax: true
+      use_ajax: false
       header:
         result:
           id: result

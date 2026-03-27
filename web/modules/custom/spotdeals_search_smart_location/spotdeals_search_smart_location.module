@@ -279,17 +279,6 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
 }
 
 /**
- * Implements hook_views_post_execute().
- */
-function spotdeals_search_smart_location_views_post_execute(ViewExecutable $view): void {
-  if ($view->id() !== 'deals_search_solr' || $view->current_display !== 'page_1') {
-    return;
-  }
-
-  _spotdeals_search_smart_location_apply_ranked_order($view, 'post_execute');
-}
-
-/**
  * Implements hook_views_pre_render().
  */
 function spotdeals_search_smart_location_views_pre_render(ViewExecutable $view): void {
@@ -297,55 +286,193 @@ function spotdeals_search_smart_location_views_pre_render(ViewExecutable $view):
     return;
   }
 
-  _spotdeals_search_smart_location_apply_ranked_order($view, 'pre_render');
+  _spotdeals_search_smart_location_apply_ranked_order($view);
 }
 
 /**
  * Applies ranked deal ordering to the current View result set.
  */
-function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $view, string $phase): void {
+function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $view): void {
   $request = \Drupal::request();
   $is_browser_near_me = (bool) $request->attributes->get('spotdeals_search_smart_location.browser_near_me', FALSE);
+  $origin = $request->attributes->get('spotdeals_search_smart_location.origin');
   $ranked_nids = $request->attributes->get('spotdeals_search_smart_location.ranked_deal_nids');
+  $nearest_city = (string) $request->attributes->get('spotdeals_search_smart_location.city', '');
 
-  if (
-    !$is_browser_near_me ||
-    !is_array($ranked_nids) ||
-    empty($ranked_nids) ||
-    empty($view->result)
-  ) {
+  if (!$is_browser_near_me || empty($view->result)) {
     return;
   }
 
-  $before_count = count($view->result);
-  $order_map = array_flip(array_values($ranked_nids));
-  $filtered = [];
+  if (
+    !is_array($origin) ||
+    !isset($origin['lat'], $origin['lon']) ||
+    !is_numeric($origin['lat']) ||
+    !is_numeric($origin['lon'])
+  ) {
+    \Drupal::logger('spotdeals_search_smart_location')->notice(
+      'SMART LOCATION pre_render near-me city-priority sort skipped: missing origin.'
+    );
+    return;
+  }
 
-  foreach ($view->result as $row) {
-    $nid = _spotdeals_search_smart_location_result_nid($row);
-    if ($nid !== NULL && isset($order_map[$nid])) {
-      $row->_spotdeals_rank_index = $order_map[$nid];
-      $filtered[] = $row;
+  $origin_lat = (float) $origin['lat'];
+  $origin_lon = (float) $origin['lon'];
+  $radius_km = 25.0;
+  $before_count = count($view->result);
+  $order_map = is_array($ranked_nids) ? array_flip(array_values($ranked_nids)) : [];
+  $filtered = [];
+  $missing_coords = 0;
+  $outside_radius = 0;
+  $not_ranked = 0;
+
+  foreach ($view->result as $index => $row) {
+    $deal = _spotdeals_search_smart_location_result_entity($row);
+    if (!$deal instanceof NodeInterface) {
+      continue;
+    }
+
+    $venue = NULL;
+    if ($deal->hasField('field_venue') && !$deal->get('field_venue')->isEmpty()) {
+      $venue = $deal->get('field_venue')->entity;
+    }
+
+    if (!$venue instanceof NodeInterface) {
+      $missing_coords++;
+      continue;
+    }
+
+    $coords = _spotdeals_search_smart_location_node_coords($venue);
+    if ($coords === NULL) {
+      $missing_coords++;
+      continue;
+    }
+
+    [$lat, $lon] = $coords;
+    $distance_km = _spotdeals_search_smart_location_haversine_km($origin_lat, $origin_lon, $lat, $lon);
+    if ($distance_km > $radius_km) {
+      $outside_radius++;
+      continue;
+    }
+
+    $nid = (int) $deal->id();
+    if (!empty($order_map) && !isset($order_map[$nid])) {
+      $not_ranked++;
+    }
+
+    $locality = _spotdeals_search_smart_location_node_locality($venue);
+    $is_nearest_city = $nearest_city !== ''
+      && _spotdeals_search_smart_location_normalize_city($locality) === _spotdeals_search_smart_location_normalize_city($nearest_city);
+
+    $city_centroid_distance = $locality !== ''
+      ? _spotdeals_search_smart_location_city_centroid_distance_km($locality, $origin_lat, $origin_lon)
+      : PHP_FLOAT_MAX;
+
+    $row->_spotdeals_city_bucket = $is_nearest_city ? 0 : 1;
+    $row->_spotdeals_city_distance_km = $city_centroid_distance;
+    $row->_spotdeals_distance_km = $distance_km;
+    $row->_spotdeals_rank_index = $order_map[$nid] ?? PHP_INT_MAX;
+    $row->_spotdeals_original_index = $index;
+    $filtered[] = $row;
+  }
+
+  if (empty($filtered)) {
+    $view->result = [];
+
+    if (isset($view->style_plugin->rendered_fields) && is_array($view->style_plugin->rendered_fields)) {
+      $view->style_plugin->rendered_fields = [];
+    }
+
+    \Drupal::logger('spotdeals_search_smart_location')->notice(
+      'SMART LOCATION pre_render near-me city-priority sort removed all rows: before="@before" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius"',
+      [
+        '@before' => (string) $before_count,
+        '@missing' => (string) $missing_coords,
+        '@outside' => (string) $outside_radius,
+        '@not_ranked' => (string) $not_ranked,
+        '@radius' => (string) $radius_km,
+      ]
+    );
+    return;
+  }
+
+  usort($filtered, static function ($a, $b): int {
+    $a_city_bucket = $a->_spotdeals_city_bucket ?? 1;
+    $b_city_bucket = $b->_spotdeals_city_bucket ?? 1;
+    if ($a_city_bucket !== $b_city_bucket) {
+      return $a_city_bucket <=> $b_city_bucket;
+    }
+
+    $a_city_distance = $a->_spotdeals_city_distance_km ?? PHP_FLOAT_MAX;
+    $b_city_distance = $b->_spotdeals_city_distance_km ?? PHP_FLOAT_MAX;
+    if ($a_city_distance !== $b_city_distance) {
+      return $a_city_distance <=> $b_city_distance;
+    }
+
+    $a_distance = $a->_spotdeals_distance_km ?? PHP_FLOAT_MAX;
+    $b_distance = $b->_spotdeals_distance_km ?? PHP_FLOAT_MAX;
+    if ($a_distance !== $b_distance) {
+      return $a_distance <=> $b_distance;
+    }
+
+    $a_rank = $a->_spotdeals_rank_index ?? PHP_INT_MAX;
+    $b_rank = $b->_spotdeals_rank_index ?? PHP_INT_MAX;
+    if ($a_rank !== $b_rank) {
+      return $a_rank <=> $b_rank;
+    }
+
+    $a_original = $a->_spotdeals_original_index ?? PHP_INT_MAX;
+    $b_original = $b->_spotdeals_original_index ?? PHP_INT_MAX;
+    return $a_original <=> $b_original;
+  });
+
+  $view->result = array_values($filtered);
+
+  if (isset($view->style_plugin->rendered_fields) && is_array($view->style_plugin->rendered_fields) && !empty($view->style_plugin->rendered_fields)) {
+    $reordered_rendered_fields = [];
+    foreach ($view->result as $new_index => $row) {
+      $old_index = $row->_spotdeals_original_index ?? NULL;
+      if ($old_index !== NULL && array_key_exists($old_index, $view->style_plugin->rendered_fields)) {
+        $reordered_rendered_fields[$new_index] = $view->style_plugin->rendered_fields[$old_index];
+      }
+    }
+    if (!empty($reordered_rendered_fields)) {
+      $view->style_plugin->rendered_fields = array_values($reordered_rendered_fields);
     }
   }
 
-  if (!empty($filtered)) {
-    usort($filtered, static function ($a, $b): int {
-      $a_index = $a->_spotdeals_rank_index ?? PHP_INT_MAX;
-      $b_index = $b->_spotdeals_rank_index ?? PHP_INT_MAX;
-      return $a_index <=> $b_index;
-    });
+  $debug_rows = [];
+  foreach (array_slice($view->result, 0, 10) as $position => $row) {
+    $deal = _spotdeals_search_smart_location_result_entity($row);
+    if (!$deal instanceof NodeInterface) {
+      continue;
+    }
 
-    $view->result = array_values($filtered);
+    $venue = NULL;
+    if ($deal->hasField('field_venue') && !$deal->get('field_venue')->isEmpty()) {
+      $venue = $deal->get('field_venue')->entity;
+    }
+
+    $debug_rows[] = [
+      'position' => $position + 1,
+      'deal' => $deal->label(),
+      'venue' => $venue instanceof NodeInterface ? $venue->label() : '',
+      'city' => $venue instanceof NodeInterface ? _spotdeals_search_smart_location_node_locality($venue) : '',
+      'distance_km' => isset($row->_spotdeals_distance_km) ? round((float) $row->_spotdeals_distance_km, 3) : NULL,
+    ];
   }
 
   \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION @phase applied ranked near-me order safely: ranked_count="@ranked" before="@before" after="@after"',
+    'SMART LOCATION pre_render applied hard near-me radius filter and city-priority distance sort: before="@before" after="@after" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius" ranked_count="@ranked" nearest_city="@nearest_city" rows="@rows"',
     [
-      '@phase' => $phase,
-      '@ranked' => (string) count($ranked_nids),
       '@before' => (string) $before_count,
       '@after' => (string) count($view->result),
+      '@missing' => (string) $missing_coords,
+      '@outside' => (string) $outside_radius,
+      '@not_ranked' => (string) $not_ranked,
+      '@radius' => (string) $radius_km,
+      '@ranked' => is_array($ranked_nids) ? (string) count($ranked_nids) : '0',
+      '@nearest_city' => $nearest_city,
+      '@rows' => json_encode($debug_rows, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
     ]
   );
 }
@@ -354,38 +481,40 @@ function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $vie
  * Parse one-box input into keywords + zip + city.
  */
 function _spotdeals_search_smart_location_parse(string $input): array {
-  $working = trim($input);
+  $normalized = strtolower(trim($input));
+  $normalized = preg_replace('/\s+/', ' ', $normalized ?? '') ?? '';
+  $normalized = preg_replace('/[,\.;]+/', ' ', $normalized) ?? '';
+  $normalized = trim($normalized);
 
   $zip = NULL;
-  $city = NULL;
-
-  if (preg_match('/\b(\d{5})\b/', $working, $matches)) {
+  if (preg_match('/\b(\d{5})(?:-\d{4})?\b/', $normalized, $matches)) {
     $zip = $matches[1];
-    $working = preg_replace('/\b' . preg_quote($zip, '/') . '\b/i', ' ', $working, 1) ?? $working;
+    $normalized = trim(str_replace($matches[0], ' ', $normalized));
   }
 
-  $known_cities = _spotdeals_search_smart_location_known_cities();
-  $normalized_query = _spotdeals_search_smart_location_normalize($working);
+  $city = NULL;
+  $matched_city_phrase = NULL;
+  $cities = _spotdeals_search_smart_location_known_cities();
+  uasort($cities, static fn(string $a, string $b): int => strlen($b) <=> strlen($a));
 
-  uksort($known_cities, static fn(string $a, string $b): int => mb_strlen($b) <=> mb_strlen($a));
-
-  foreach ($known_cities as $canonical_city => $aliases) {
-    foreach ($aliases as $alias) {
-      $normalized_alias = _spotdeals_search_smart_location_normalize($alias);
-      if ($normalized_alias === '') {
-        continue;
-      }
-
-      $pattern = '/(^|\s)' . preg_quote($normalized_alias, '/') . '($|\s)/iu';
-      if (preg_match($pattern, ' ' . $normalized_query . ' ')) {
-        $city = $canonical_city;
-        $working = preg_replace('/\b' . preg_quote($alias, '/') . '\b/iu', ' ', $working) ?? $working;
-        break 2;
-      }
+  foreach ($cities as $slug => $label) {
+    $phrase = strtolower($label);
+    if (preg_match('/(^|\s)' . preg_quote($phrase, '/') . '(\s|$)/', $normalized)) {
+      $city = $slug;
+      $matched_city_phrase = $phrase;
+      $normalized = trim(preg_replace('/(^|\s)' . preg_quote($phrase, '/') . '(\s|$)/', ' ', $normalized) ?? $normalized);
+      break;
     }
   }
 
-  $keywords = trim(preg_replace('/\s+/', ' ', $working) ?? '');
+  $keywords = trim($normalized);
+
+  if ($matched_city_phrase !== NULL) {
+    $keywords = trim(str_replace($matched_city_phrase, '', $keywords));
+  }
+
+  $keywords = preg_replace('/\s+/', ' ', $keywords ?? '') ?? '';
+  $keywords = trim($keywords);
 
   return [
     'keywords' => $keywords,
@@ -395,180 +524,157 @@ function _spotdeals_search_smart_location_parse(string $input): array {
 }
 
 /**
- * Expands a few keyword families for food searches.
+ * Return exact locality from known city slug.
  */
-function _spotdeals_search_smart_location_expand_keywords(string $keywords): string {
-  $keywords = trim($keywords);
-  if ($keywords === '') {
-    return $keywords;
-  }
-
-  $normalized = _spotdeals_search_smart_location_normalize($keywords);
-  $variants = [$keywords];
-
-  $maps = [
-    'arepita' => ['arepa', 'arepas', 'venezuelan'],
-    'arepita beach' => ['arepita', 'arepa', 'arepas', 'venezuelan'],
-    'arepa' => ['arepas', 'arepita', 'venezuelan'],
-    'arepas' => ['arepa', 'arepita', 'venezuelan'],
-    'taco' => ['tacos', 'mexican'],
-    'tacos' => ['taco', 'mexican'],
-    'mexican' => ['taco', 'tacos'],
-    'venezuelan' => ['arepa', 'arepas', 'arepita'],
-  ];
-
-  foreach ($maps as $needle => $adds) {
-    if ($normalized === $needle) {
-      foreach ($adds as $add) {
-        $variants[] = $add;
-      }
-    }
-  }
-
-  $variants = array_values(array_unique(array_filter(array_map('trim', $variants))));
-  return implode(' ', $variants);
+function _spotdeals_search_smart_location_city_to_exact_locality(string $city_slug): ?string {
+  $cities = _spotdeals_search_smart_location_known_cities();
+  return $cities[$city_slug] ?? NULL;
 }
 
 /**
- * Returns searchable city aliases derived from Venue node data.
+ * Known city names.
+ *
+ * @return array<string, string>
+ *   Map of normalized slug => exact locality label.
  */
 function _spotdeals_search_smart_location_known_cities(): array {
-  $cid = 'spotdeals_search_smart_location:known_cities_from_venues';
+  static $cities = NULL;
 
-  $cache = \Drupal::cache()->get($cid);
-  if ($cache && is_array($cache->data)) {
-    return $cache->data;
+  if (is_array($cities)) {
+    return $cities;
   }
 
-  $cities = [];
-  $storage = \Drupal::entityTypeManager()->getStorage('node');
-
-  $nids = \Drupal::entityQuery('node')
-    ->accessCheck(FALSE)
-    ->condition('type', 'venue')
-    ->condition('status', 1)
-    ->exists('field_address.locality')
-    ->execute();
-
-  if (!empty($nids)) {
-    $venues = $storage->loadMultiple($nids);
-
-    foreach ($venues as $venue) {
-      if (!$venue instanceof NodeInterface) {
-        continue;
-      }
-
-      if (!$venue->hasField('field_address') || $venue->get('field_address')->isEmpty()) {
-        continue;
-      }
-
-      $address = $venue->get('field_address')->first();
-      $locality = trim((string) ($address->getLocality() ?? ''));
-      if ($locality === '') {
-        continue;
-      }
-
-      $cities[$locality] = $cities[$locality] ?? [$locality];
-
-      $acronym = _spotdeals_search_smart_location_acronym($locality);
-      if ($acronym !== NULL) {
-        $cities[$locality][] = $acronym;
-      }
-
-      $cities[$locality] = array_values(array_unique(array_filter($cities[$locality])));
-    }
+  $cache = \Drupal::cache('data');
+  $cache_id = 'spotdeals_search_smart_location:known_cities';
+  $cached = $cache->get($cache_id);
+  if ($cached && is_array($cached->data)) {
+    $cities = $cached->data;
+    return $cities;
   }
 
-  ksort($cities, SORT_NATURAL | SORT_FLAG_CASE);
-  \Drupal::cache()->set($cid, $cities, CacheBackendInterface::CACHE_PERMANENT);
+  $city_map = [
+    'daytona beach' => 'Daytona Beach',
+    'daytona' => 'Daytona Beach',
+    'new smyrna beach' => 'New Smyrna Beach',
+    'new smyrna' => 'New Smyrna Beach',
+    'nsb' => 'New Smyrna Beach',
+    'port orange' => 'Port Orange',
+    'ormond beach' => 'Ormond Beach',
+    'ormond' => 'Ormond Beach',
+    'deland' => 'DeLand',
+    'de land' => 'DeLand',
+    'debary' => 'DeBary',
+    'orange city' => 'Orange City',
+    'south daytona' => 'South Daytona',
+    'holly hill' => 'Holly Hill',
+    'edgewater' => 'Edgewater',
+    'deltona' => 'Deltona',
+  ];
+
+  $cities = $city_map;
+  $cache->set($cache_id, $cities, CacheBackendInterface::CACHE_PERMANENT);
 
   return $cities;
 }
 
 /**
- * Builds a simple acronym for multi-word city labels, e.g. NSB.
+ * Resolve an origin coordinate from parsed zip/city.
+ *
+ * @param array<string, mixed> $parsed
+ *   Parsed input.
+ *
+ * @return array{lat: float, lon: float}|null
+ *   Origin coordinate or NULL.
  */
-function _spotdeals_search_smart_location_acronym(string $label): ?string {
-  $parts = preg_split('/\s+/', trim($label)) ?: [];
-  if (count($parts) < 2) {
+function _spotdeals_search_smart_location_resolve_origin_from_venues(array $parsed): ?array {
+  $zip = isset($parsed['zip']) && is_string($parsed['zip']) ? $parsed['zip'] : '';
+  $city = isset($parsed['city']) && is_string($parsed['city']) ? $parsed['city'] : '';
+
+  if ($zip === '' && $city === '') {
     return NULL;
   }
 
-  $letters = '';
-  foreach ($parts as $part) {
-    $part = trim($part);
-    if ($part === '') {
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+  $query = \Drupal::entityQuery('node')
+    ->accessCheck(FALSE)
+    ->condition('type', 'venue')
+    ->condition('status', 1)
+    ->range(0, 100);
+
+  if ($zip !== '') {
+    $query->condition('field_address.postal_code', $zip);
+  }
+
+  if ($city !== '') {
+    $exact_city = _spotdeals_search_smart_location_city_to_exact_locality($city);
+    if ($exact_city !== NULL) {
+      $query->condition('field_address.locality', $exact_city);
+    }
+  }
+
+  $nids = $query->execute();
+  if (empty($nids)) {
+    return NULL;
+  }
+
+  $venues = $storage->loadMultiple($nids);
+  $coords = [];
+
+  foreach ($venues as $venue) {
+    if (!$venue instanceof NodeInterface) {
       continue;
     }
-    $letters .= mb_strtoupper(mb_substr($part, 0, 1));
+
+    $point = _spotdeals_search_smart_location_node_coords($venue);
+    if ($point !== NULL) {
+      $coords[] = $point;
+    }
   }
 
-  return $letters !== '' ? $letters : NULL;
-}
-
-/**
- * Maps parsed city to exact locality if it exists in venue data.
- */
-function _spotdeals_search_smart_location_city_to_exact_locality(string $city): ?string {
-  $cities = _spotdeals_search_smart_location_known_cities();
-  return array_key_exists($city, $cities) ? $city : NULL;
-}
-
-/**
- * Resolves parsed city/ZIP to approximate coordinates from Venue nodes.
- */
-function _spotdeals_search_smart_location_resolve_origin_from_venues(array $parsed): ?array {
-  $lookup = _spotdeals_search_smart_location_build_venue_origin_lookup();
-
-  if (!empty($parsed['zip']) && isset($lookup['zips'][$parsed['zip']])) {
-    return $lookup['zips'][$parsed['zip']];
+  if (empty($coords)) {
+    return NULL;
   }
 
-  if (!empty($parsed['city']) && isset($lookup['cities'][$parsed['city']])) {
-    return $lookup['cities'][$parsed['city']];
+  $lat_sum = 0.0;
+  $lon_sum = 0.0;
+  foreach ($coords as [$lat, $lon]) {
+    $lat_sum += $lat;
+    $lon_sum += $lon;
   }
 
-  return NULL;
-}
-
-/**
- * Builds city/ZIP coordinate lookup from Venue nodes.
- */
-function _spotdeals_search_smart_location_build_venue_origin_lookup(): array {
-  $cid = 'spotdeals_search_smart_location:venue_origin_lookup';
-
-  $cache = \Drupal::cache()->get($cid);
-  if ($cache && is_array($cache->data)) {
-    return $cache->data;
-  }
-
-  $lookup = [
-    'cities' => [],
-    'zips' => [],
+  return [
+    'lat' => $lat_sum / count($coords),
+    'lon' => $lon_sum / count($coords),
   ];
+}
 
-  $city_sums = [];
-  $zip_sums = [];
-
+/**
+ * Resolve nearest known city from browser coordinates.
+ */
+function _spotdeals_search_smart_location_nearest_city_from_coords(float $origin_lat, float $origin_lon): ?string {
   $storage = \Drupal::entityTypeManager()->getStorage('node');
-
   $nids = \Drupal::entityQuery('node')
     ->accessCheck(FALSE)
     ->condition('type', 'venue')
     ->condition('status', 1)
-    ->exists('field_address.locality')
-    ->exists('field_coordinates')
+    ->range(0, 250)
     ->execute();
 
   if (empty($nids)) {
-    \Drupal::cache()->set($cid, $lookup, CacheBackendInterface::CACHE_PERMANENT);
-    return $lookup;
+    return NULL;
   }
 
   $venues = $storage->loadMultiple($nids);
+  $closest_city = NULL;
+  $closest_distance = NULL;
 
   foreach ($venues as $venue) {
     if (!$venue instanceof NodeInterface) {
+      continue;
+    }
+
+    $locality = _spotdeals_search_smart_location_node_locality($venue);
+    if ($locality === '') {
       continue;
     }
 
@@ -578,202 +684,122 @@ function _spotdeals_search_smart_location_build_venue_origin_lookup(): array {
     }
 
     [$lat, $lon] = $coords;
+    $distance = _spotdeals_search_smart_location_haversine_km($origin_lat, $origin_lon, $lat, $lon);
 
-    if (!$venue->hasField('field_address') || $venue->get('field_address')->isEmpty()) {
-      continue;
-    }
-
-    $address = $venue->get('field_address')->first();
-    $city = trim((string) ($address->getLocality() ?? ''));
-    $zip = trim((string) ($address->getPostalCode() ?? ''));
-
-    if ($city !== '') {
-      if (!isset($city_sums[$city])) {
-        $city_sums[$city] = [
-          'lat_sum' => 0.0,
-          'lon_sum' => 0.0,
-          'count' => 0,
-        ];
-      }
-
-      $city_sums[$city]['lat_sum'] += $lat;
-      $city_sums[$city]['lon_sum'] += $lon;
-      $city_sums[$city]['count']++;
-    }
-
-    if ($zip !== '') {
-      if (!isset($zip_sums[$zip])) {
-        $zip_sums[$zip] = [
-          'lat_sum' => 0.0,
-          'lon_sum' => 0.0,
-          'count' => 0,
-        ];
-      }
-
-      $zip_sums[$zip]['lat_sum'] += $lat;
-      $zip_sums[$zip]['lon_sum'] += $lon;
-      $zip_sums[$zip]['count']++;
+    if ($closest_distance === NULL || $distance < $closest_distance) {
+      $closest_distance = $distance;
+      $closest_city = $locality;
     }
   }
 
-  foreach ($city_sums as $city => $data) {
-    if ($data['count'] > 0) {
-      $lookup['cities'][$city] = [
-        'lat' => round($data['lat_sum'] / $data['count'], 6),
-        'lon' => round($data['lon_sum'] / $data['count'], 6),
-      ];
-    }
-  }
-
-  foreach ($zip_sums as $zip => $data) {
-    if ($data['count'] > 0) {
-      $lookup['zips'][$zip] = [
-        'lat' => round($data['lat_sum'] / $data['count'], 6),
-        'lon' => round($data['lon_sum'] / $data['count'], 6),
-      ];
-    }
-  }
-
-  \Drupal::cache()->set($cid, $lookup, CacheBackendInterface::CACHE_PERMANENT);
-  return $lookup;
+  return $closest_city;
 }
 
 /**
- * Returns the nearest known city centroid for browser coords.
+ * Expand near-me keywords to improve cuisine matching.
  */
-function _spotdeals_search_smart_location_nearest_city_from_coords(float $origin_lat, float $origin_lon): ?string {
-  $lookup = _spotdeals_search_smart_location_build_venue_origin_lookup();
-
-  if (empty($lookup['cities']) || !is_array($lookup['cities'])) {
-    return NULL;
+function _spotdeals_search_smart_location_expand_keywords(string $keywords): string {
+  $normalized = strtolower(trim($keywords));
+  if ($normalized === '') {
+    return '';
   }
 
-  $nearest_city = NULL;
-  $nearest_distance = NULL;
+  $map = [
+    'taco' => ['taco', 'tacos', 'mexican'],
+    'tacos' => ['tacos', 'taco', 'mexican'],
+    'mexican' => ['mexican', 'taco', 'tacos'],
+    'arepa' => ['arepa', 'arepas', 'arepita', 'venezuelan'],
+    'arepas' => ['arepas', 'arepa', 'arepita', 'venezuelan'],
+    'arepita' => ['arepita', 'arepa', 'arepas', 'venezuelan'],
+    'happy hour' => ['happy hour'],
+    'bbq' => ['bbq', 'barbecue'],
+    'barbecue' => ['barbecue', 'bbq'],
+    'thai' => ['thai'],
+    'pizza' => ['pizza'],
+    'burgers' => ['burgers', 'burger'],
+    'burger' => ['burger', 'burgers'],
+    'sushi' => ['sushi', 'japanese'],
+    'coffee' => ['coffee', 'cafe'],
+    'breakfast' => ['breakfast', 'brunch'],
+    'brunch' => ['brunch', 'breakfast'],
+  ];
 
-  foreach ($lookup['cities'] as $city => $coords) {
-    if (
-      !is_array($coords) ||
-      !isset($coords['lat'], $coords['lon']) ||
-      !is_numeric($coords['lat']) ||
-      !is_numeric($coords['lon'])
-    ) {
-      continue;
-    }
+  $tokens = preg_split('/\s+/', $normalized) ?: [];
+  $expanded = [];
+  $matched = FALSE;
 
-    $distance = _spotdeals_search_smart_location_haversine_km(
-      $origin_lat,
-      $origin_lon,
-      (float) $coords['lat'],
-      (float) $coords['lon']
-    );
-
-    if ($nearest_distance === NULL || $distance < $nearest_distance) {
-      $nearest_distance = $distance;
-      $nearest_city = $city;
+  foreach ($map as $needle => $terms) {
+    if (str_contains($normalized, $needle)) {
+      $expanded = array_merge($expanded, $terms);
+      $matched = TRUE;
     }
   }
 
-  return $nearest_city;
+  if (!$matched) {
+    $expanded = $tokens;
+  }
+
+  $expanded = array_values(array_unique(array_filter(array_map('trim', $expanded))));
+  return implode(' ', $expanded);
 }
 
 /**
- * Resolves the original deal entity from a Views Search API row.
+ * Returns the entity for a Views result row if present.
  */
 function _spotdeals_search_smart_location_result_entity(object $row): ?NodeInterface {
   if (isset($row->_entity) && $row->_entity instanceof NodeInterface) {
     return $row->_entity;
   }
 
-  if (
-    isset($row->_object) &&
-    is_object($row->_object) &&
-    method_exists($row->_object, 'getOriginalObject')
-  ) {
-    $original = $row->_object->getOriginalObject();
-    if (is_object($original) && method_exists($original, 'getValue')) {
-      $value = $original->getValue();
-      if ($value instanceof NodeInterface) {
-        return $value;
-      }
-    }
-  }
-
-  if (
-    isset($row->_object) &&
-    is_object($row->_object) &&
-    method_exists($row->_object, 'getValue')
-  ) {
-    $value = $row->_object->getValue();
-    if ($value instanceof NodeInterface) {
-      return $value;
-    }
-  }
-
-  if (
-    isset($row->_object) &&
-    is_object($row->_object) &&
-    method_exists($row->_object, 'getFields')
-  ) {
-    $fields = $row->_object->getFields();
-
-    foreach (['nid', 'entity_id'] as $candidate) {
-      if (isset($fields[$candidate])) {
-        $values = $fields[$candidate]->getValues();
-        if (!empty($values) && is_numeric((string) $values[0])) {
-          $entity = \Drupal::entityTypeManager()->getStorage('node')->load((int) $values[0]);
-          if ($entity instanceof NodeInterface) {
-            return $entity;
-          }
-        }
-      }
-    }
-
-    if (isset($fields['search_api_id'])) {
-      $values = $fields['search_api_id']->getValues();
-      if (!empty($values) && is_string($values[0])) {
-        if (preg_match('/(?:entity:node\\/|node\\/)(\d+)/', $values[0], $matches)) {
-          $entity = \Drupal::entityTypeManager()->getStorage('node')->load((int) $matches[1]);
-          if ($entity instanceof NodeInterface) {
-            return $entity;
-          }
-        }
-      }
-    }
+  if (isset($row->entity) && $row->entity instanceof NodeInterface) {
+    return $row->entity;
   }
 
   return NULL;
 }
 
 /**
- * Resolves a deal nid from a Views Search API row.
+ * Returns a normalized locality label for a venue node.
  */
-function _spotdeals_search_smart_location_result_nid(object $row): ?int {
-  $entity = _spotdeals_search_smart_location_result_entity($row);
-  if ($entity instanceof NodeInterface) {
-    return (int) $entity->id();
+function _spotdeals_search_smart_location_node_locality(NodeInterface $node): string {
+  if (!$node->hasField('field_address') || $node->get('field_address')->isEmpty()) {
+    return '';
   }
 
-  return NULL;
+  $address = $node->get('field_address')->first();
+  if (!is_object($address) || !isset($address->locality)) {
+    return '';
+  }
+
+  return trim((string) $address->locality);
 }
 
 /**
- * Extracts [lat, lon] from a Venue node.
+ * Returns coordinates from a node or NULL.
  *
- * Prefers field_coordinates POINT(lon lat), falls back to field_latitude /
- * field_longitude if present.
- *
- * @return array<int, float>|null
- *   Returns [lat, lon] or NULL.
+ * @return array{0: float, 1: float}|null
+ *   Lat/lon pair.
  */
 function _spotdeals_search_smart_location_node_coords(NodeInterface $node): ?array {
-  if ($node->hasField('field_coordinates') && !$node->get('field_coordinates')->isEmpty()) {
-    $raw = trim((string) $node->get('field_coordinates')->value);
+  if (!$node->hasField('field_coordinates') || $node->get('field_coordinates')->isEmpty()) {
+    return NULL;
+  }
 
-    if (preg_match('/POINT\s*\(\s*(-?[0-9.]+)\s+(-?[0-9.]+)\s*\)/i', $raw, $matches)) {
-      $lon = (float) $matches[1];
-      $lat = (float) $matches[2];
-      return [$lat, $lon];
+  $value = (string) $node->get('field_coordinates')->value;
+  if ($value === '') {
+    return NULL;
+  }
+
+  if (preg_match('/POINT\s*\(\s*(-?[0-9.]+)\s+(-?[0-9.]+)\s*\)/i', $value, $matches)) {
+    $lon = (float) $matches[1];
+    $lat = (float) $matches[2];
+    return [$lat, $lon];
+  }
+
+  if (str_contains($value, ',')) {
+    [$lat, $lon] = array_map('trim', explode(',', $value, 2));
+    if (is_numeric($lat) && is_numeric($lon)) {
+      return [(float) $lat, (float) $lon];
     }
   }
 
@@ -785,7 +811,6 @@ function _spotdeals_search_smart_location_node_coords(NodeInterface $node): ?arr
   ) {
     $lat = $node->get('field_latitude')->value;
     $lon = $node->get('field_longitude')->value;
-
     if (is_numeric($lat) && is_numeric($lon)) {
       return [(float) $lat, (float) $lon];
     }
@@ -795,17 +820,79 @@ function _spotdeals_search_smart_location_node_coords(NodeInterface $node): ?arr
 }
 
 /**
- * Normalizes a search string for loose matching.
+ * Normalize city labels for comparison.
  */
-function _spotdeals_search_smart_location_normalize(string $value): string {
-  $value = mb_strtolower($value);
-  $value = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $value) ?? $value;
-  $value = preg_replace('/\s+/', ' ', $value) ?? $value;
-  return trim($value);
+function _spotdeals_search_smart_location_normalize_city(string $city): string {
+  $city = strtolower(trim($city));
+  $city = preg_replace('/\s+/', ' ', $city ?? '') ?? '';
+  return $city;
 }
 
 /**
- * Returns great-circle distance in kilometers.
+ * Returns city centroid distance from the user's origin.
+ */
+function _spotdeals_search_smart_location_city_centroid_distance_km(string $city, float $origin_lat, float $origin_lon): float {
+  static $cache = [];
+
+  $key = _spotdeals_search_smart_location_normalize_city($city) . '|' . $origin_lat . '|' . $origin_lon;
+  if (isset($cache[$key])) {
+    return $cache[$key];
+  }
+
+  $exact_city = trim($city);
+  if ($exact_city === '') {
+    $cache[$key] = PHP_FLOAT_MAX;
+    return $cache[$key];
+  }
+
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+  $nids = \Drupal::entityQuery('node')
+    ->accessCheck(FALSE)
+    ->condition('type', 'venue')
+    ->condition('status', 1)
+    ->condition('field_address.locality', $exact_city)
+    ->range(0, 250)
+    ->execute();
+
+  if (empty($nids)) {
+    $cache[$key] = PHP_FLOAT_MAX;
+    return $cache[$key];
+  }
+
+  $venues = $storage->loadMultiple($nids);
+  $coords = [];
+  foreach ($venues as $venue) {
+    if (!$venue instanceof NodeInterface) {
+      continue;
+    }
+
+    $point = _spotdeals_search_smart_location_node_coords($venue);
+    if ($point !== NULL) {
+      $coords[] = $point;
+    }
+  }
+
+  if (empty($coords)) {
+    $cache[$key] = PHP_FLOAT_MAX;
+    return $cache[$key];
+  }
+
+  $lat_sum = 0.0;
+  $lon_sum = 0.0;
+  foreach ($coords as [$lat, $lon]) {
+    $lat_sum += $lat;
+    $lon_sum += $lon;
+  }
+
+  $centroid_lat = $lat_sum / count($coords);
+  $centroid_lon = $lon_sum / count($coords);
+
+  $cache[$key] = _spotdeals_search_smart_location_haversine_km($origin_lat, $origin_lon, $centroid_lat, $centroid_lon);
+  return $cache[$key];
+}
+
+/**
+ * Haversine formula in kilometers.
  */
 function _spotdeals_search_smart_location_haversine_km(float $lat1, float $lon1, float $lat2, float $lon2): float {
   $earth_radius_km = 6371.0;
@@ -815,13 +902,13 @@ function _spotdeals_search_smart_location_haversine_km(float $lat1, float $lon1,
   $lat2_rad = deg2rad($lat2);
   $lon2_rad = deg2rad($lon2);
 
-  $dlat = $lat2_rad - $lat1_rad;
-  $dlon = $lon2_rad - $lon1_rad;
+  $lat_delta = $lat2_rad - $lat1_rad;
+  $lon_delta = $lon2_rad - $lon1_rad;
 
-  $a = sin($dlat / 2) ** 2
-    + cos($lat1_rad) * cos($lat2_rad) * sin($dlon / 2) ** 2;
+  $angle = 2 * asin(sqrt(
+    pow(sin($lat_delta / 2), 2) +
+    cos($lat1_rad) * cos($lat2_rad) * pow(sin($lon_delta / 2), 2)
+  ));
 
-  $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-
-  return $earth_radius_km * $c;
+  return $earth_radius_km * $angle;
 }
