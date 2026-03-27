@@ -190,12 +190,17 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     ]);
     $request->attributes->set('spotdeals_search_smart_location.browser_near_me', TRUE);
 
+    $ranked_nids = \Drupal::service('spotdeals_search_smart_location.near_me_ranker')
+      ->rankDealNids((float) $origin_lat, (float) $origin_lon, $keywords);
+
+    $request->attributes->set('spotdeals_search_smart_location.ranked_deal_nids', $ranked_nids);
+
     if (is_string($nearest_city) && $nearest_city !== '') {
       $request->attributes->set('spotdeals_search_smart_location.city', $nearest_city);
     }
 
     \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION browser near me applied: view="@view" display="@display" raw="@raw" keywords="@keywords" nearest_city="@city" origin_lat="@lat" origin_lon="@lon" city_filter="off"',
+      'SMART LOCATION browser near me applied: view="@view" display="@display" raw="@raw" keywords="@keywords" nearest_city="@city" origin_lat="@lat" origin_lon="@lon" ranked_count="@ranked" city_filter="off"',
       [
         '@view' => $view->id(),
         '@display' => $display_id,
@@ -204,6 +209,7 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
         '@city' => $nearest_city ?? '',
         '@lat' => (string) $origin_lat,
         '@lon' => (string) $origin_lon,
+        '@ranked' => (string) count($ranked_nids),
       ]
     );
 
@@ -274,95 +280,72 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
 
 /**
  * Implements hook_views_post_execute().
- *
- * Enforces stable nearest-first ordering for explicit browser "near me" searches
- * after Search API / Solr return the result set, but before render.
  */
 function spotdeals_search_smart_location_views_post_execute(ViewExecutable $view): void {
   if ($view->id() !== 'deals_search_solr' || $view->current_display !== 'page_1') {
     return;
   }
 
-  $request = \Drupal::request();
-  $is_browser_near_me = (bool) $request->attributes->get('spotdeals_search_smart_location.browser_near_me', FALSE);
-  $origin = $request->attributes->get('spotdeals_search_smart_location.origin');
-
-  if (
-    !$is_browser_near_me ||
-    !is_array($origin) ||
-    !isset($origin['lat'], $origin['lon']) ||
-    !is_numeric($origin['lat']) ||
-    !is_numeric($origin['lon']) ||
-    empty($view->result)
-  ) {
-    return;
-  }
-
-  _spotdeals_search_smart_location_sort_view_results_by_distance(
-    $view,
-    (float) $origin['lat'],
-    (float) $origin['lon'],
-    'post_execute'
-  );
+  _spotdeals_search_smart_location_apply_ranked_order($view, 'post_execute');
 }
 
 /**
  * Implements hook_views_pre_render().
- *
- * Re-applies stable nearest-first ordering as a final safeguard before render.
  */
 function spotdeals_search_smart_location_views_pre_render(ViewExecutable $view): void {
   if ($view->id() !== 'deals_search_solr' || $view->current_display !== 'page_1') {
     return;
   }
 
+  _spotdeals_search_smart_location_apply_ranked_order($view, 'pre_render');
+}
+
+/**
+ * Applies ranked deal ordering to the current View result set.
+ */
+function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $view, string $phase): void {
   $request = \Drupal::request();
   $is_browser_near_me = (bool) $request->attributes->get('spotdeals_search_smart_location.browser_near_me', FALSE);
-  $origin = $request->attributes->get('spotdeals_search_smart_location.origin');
+  $ranked_nids = $request->attributes->get('spotdeals_search_smart_location.ranked_deal_nids');
 
   if (
     !$is_browser_near_me ||
-    !is_array($origin) ||
-    !isset($origin['lat'], $origin['lon']) ||
-    !is_numeric($origin['lat']) ||
-    !is_numeric($origin['lon']) ||
+    !is_array($ranked_nids) ||
+    empty($ranked_nids) ||
     empty($view->result)
   ) {
     return;
   }
 
-  _spotdeals_search_smart_location_sort_view_results_by_distance(
-    $view,
-    (float) $origin['lat'],
-    (float) $origin['lon'],
-    'pre_render'
-  );
-}
+  $before_count = count($view->result);
+  $order_map = array_flip(array_values($ranked_nids));
+  $filtered = [];
 
-/**
- * Sorts View result rows by actual distance.
- */
-function _spotdeals_search_smart_location_sort_view_results_by_distance(ViewExecutable $view, float $origin_lat, float $origin_lon, string $phase): void {
-  foreach ($view->result as $index => $row) {
-    $distance = _spotdeals_search_smart_location_result_distance_km($row, $origin_lat, $origin_lon);
-    $row->_spotdeals_distance_km = $distance ?? 999999.0;
-    $row->_spotdeals_original_index = $index;
+  foreach ($view->result as $row) {
+    $nid = _spotdeals_search_smart_location_result_nid($row);
+    if ($nid !== NULL && isset($order_map[$nid])) {
+      $row->_spotdeals_rank_index = $order_map[$nid];
+      $filtered[] = $row;
+    }
   }
 
-  usort($view->result, static function ($a, $b): int {
-    $distance_compare = ($a->_spotdeals_distance_km <=> $b->_spotdeals_distance_km);
-    if ($distance_compare !== 0) {
-      return $distance_compare;
-    }
+  if (!empty($filtered)) {
+    usort($filtered, static function ($a, $b): int {
+      $a_index = $a->_spotdeals_rank_index ?? PHP_INT_MAX;
+      $b_index = $b->_spotdeals_rank_index ?? PHP_INT_MAX;
+      return $a_index <=> $b_index;
+    });
 
-    return ($a->_spotdeals_original_index <=> $b->_spotdeals_original_index);
-  });
+    $view->result = array_values($filtered);
+  }
 
   \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION @phase sorted @count results by resolved distance for browser near me.',
+    'SMART LOCATION @phase applied ranked near-me order safely: ranked_count="@ranked" before="@before" after="@after"',
     [
       '@phase' => $phase,
-      '@count' => (string) count($view->result),
+      '@ranked' => (string) count($ranked_nids),
+      '@before' => (string) $before_count,
+      '@after' => (string) count($view->result),
     ]
   );
 }
@@ -424,10 +407,13 @@ function _spotdeals_search_smart_location_expand_keywords(string $keywords): str
   $variants = [$keywords];
 
   $maps = [
-    'arepita' => ['arepa', 'arepas'],
-    'arepita beach' => ['arepita', 'arepa', 'arepas'],
-    'arepa' => ['arepas', 'arepita'],
-    'arepas' => ['arepa', 'arepita'],
+    'arepita' => ['arepa', 'arepas', 'venezuelan'],
+    'arepita beach' => ['arepita', 'arepa', 'arepas', 'venezuelan'],
+    'arepa' => ['arepas', 'arepita', 'venezuelan'],
+    'arepas' => ['arepa', 'arepita', 'venezuelan'],
+    'taco' => ['tacos', 'mexican'],
+    'tacos' => ['taco', 'mexican'],
+    'mexican' => ['taco', 'tacos'],
     'venezuelan' => ['arepa', 'arepas', 'arepita'],
   ];
 
@@ -692,82 +678,6 @@ function _spotdeals_search_smart_location_nearest_city_from_coords(float $origin
 }
 
 /**
- * Computes distance from request origin to the venue represented by a View row.
- */
-function _spotdeals_search_smart_location_result_distance_km(object $row, float $origin_lat, float $origin_lon): ?float {
-  $indexed_distance = _spotdeals_search_smart_location_row_distance_field($row);
-  if ($indexed_distance !== NULL) {
-    return $indexed_distance;
-  }
-
-  $entity = _spotdeals_search_smart_location_result_entity($row);
-  if (!$entity instanceof NodeInterface) {
-    return NULL;
-  }
-
-  if (!$entity->hasField('field_venue') || $entity->get('field_venue')->isEmpty()) {
-    return NULL;
-  }
-
-  $venue = $entity->get('field_venue')->entity;
-  if (!$venue instanceof NodeInterface) {
-    return NULL;
-  }
-
-  $coords = _spotdeals_search_smart_location_node_coords($venue);
-  if ($coords === NULL) {
-    return NULL;
-  }
-
-  [$lat, $lon] = $coords;
-
-  return _spotdeals_search_smart_location_haversine_km(
-    $origin_lat,
-    $origin_lon,
-    $lat,
-    $lon
-  );
-}
-
-/**
- * Reads the indexed distance value directly from the Search API row when present.
- */
-function _spotdeals_search_smart_location_row_distance_field(object $row): ?float {
-  if (
-    !isset($row->_object) ||
-    !is_object($row->_object) ||
-    !method_exists($row->_object, 'getFields')
-  ) {
-    return NULL;
-  }
-
-  $fields = $row->_object->getFields();
-  $candidates = [
-    'field_coordinates_distance',
-    'search_api_distance',
-    'distance',
-  ];
-
-  foreach ($candidates as $candidate) {
-    if (!isset($fields[$candidate])) {
-      continue;
-    }
-
-    $values = $fields[$candidate]->getValues();
-    if (empty($values)) {
-      continue;
-    }
-
-    $value = $values[0];
-    if (is_numeric((string) $value)) {
-      return (float) $value;
-    }
-  }
-
-  return NULL;
-}
-
-/**
  * Resolves the original deal entity from a Views Search API row.
  */
 function _spotdeals_search_smart_location_result_entity(object $row): ?NodeInterface {
@@ -830,6 +740,18 @@ function _spotdeals_search_smart_location_result_entity(object $row): ?NodeInter
         }
       }
     }
+  }
+
+  return NULL;
+}
+
+/**
+ * Resolves a deal nid from a Views Search API row.
+ */
+function _spotdeals_search_smart_location_result_nid(object $row): ?int {
+  $entity = _spotdeals_search_smart_location_result_entity($row);
+  if ($entity instanceof NodeInterface) {
+    return (int) $entity->id();
   }
 
   return NULL;
