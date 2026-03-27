@@ -3,3 +3,6 @@ services:
     class: Drupal\spotdeals_search_smart_location\EventSubscriber\SearchApiSolrSubscriber
     tags:
       - { name: event_subscriber }
+
+  spotdeals_search_smart_location.near_me_ranker:
+    class: Drupal\spotdeals_search_smart_location\NearMeRanker
