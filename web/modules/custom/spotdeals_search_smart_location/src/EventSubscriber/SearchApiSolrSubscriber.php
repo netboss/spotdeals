@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\spotdeals_search_smart_location\EventSubscriber;
 
-use Drupal\search_api\Event\QueryPreExecuteEvent;
-use Drupal\search_api\Event\SearchApiEvents;
+use Drupal\search_api_solr\Event\PreQueryEvent;
+use Drupal\search_api_solr\Event\SearchApiSolrEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -14,39 +14,41 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class SearchApiSolrSubscriber implements EventSubscriberInterface {
 
   /**
-   * Default radius in kilometers (~15.5 miles).
-   *
-   * This is wide enough to include Daytona Beach from New Smyrna Beach while
-   * still being tighter than the old 25-mile radius.
+   * Default radius in kilometers.
    */
   private const DEFAULT_RADIUS_KM = 25.0;
 
   /**
-   * Geo field machine name in the Search API index.
+   * Search API field machine name.
    */
-  private const GEO_FIELD = 'field_coordinates';
+  private const SEARCH_API_GEO_FIELD = 'field_coordinates';
+
+  /**
+   * Actual Solr geo field name.
+   */
+  private const SOLR_GEO_FIELD = 'locs_field_coordinates';
+
+  /**
+   * Filter query key used on the Solarium query.
+   */
+  private const GEO_FILTER_KEY = 'spotdeals_near_me_geofilt';
 
   /**
    * {@inheritdoc}
    */
   public static function getSubscribedEvents(): array {
     return [
-      SearchApiEvents::QUERY_PRE_EXECUTE => 'onQueryPreExecute',
+      SearchApiSolrEvents::PRE_QUERY => 'preQuery',
     ];
   }
 
   /**
-   * Applies dynamic geo origin for location-aware searches.
+   * Applies a hard Solr geofilt and distance-first sort for browser near-me searches.
    */
-  public function onQueryPreExecute(QueryPreExecuteEvent $event): void {
-    $query = $event->getQuery();
+  public function preQuery(PreQueryEvent $event): void {
+    $query = $event->getSearchApiQuery();
 
     if ($query->getIndex()->id() !== 'deals_solr') {
-      return;
-    }
-
-    $backend = $query->getIndex()->getServerInstance()->getBackend();
-    if ($backend->getPluginId() !== 'search_api_solr') {
       return;
     }
 
@@ -78,93 +80,69 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
       $source = $is_browser_near_me ? 'request_attribute_browser' : 'parsed_place';
     }
 
-    $solr_options = $query->getOption('search_api_solr_query') ?: [];
-
-    if ($lat !== NULL && $lon !== NULL) {
-      $location_options = (array) $query->getOption('search_api_location', []);
-      $updated = FALSE;
-
-      foreach ($location_options as &$location_option) {
-        if (is_array($location_option) && ($location_option['field'] ?? '') === self::GEO_FIELD) {
-          $location_option['lat'] = $lat;
-          $location_option['lon'] = $lon;
-          $location_option['radius'] = self::DEFAULT_RADIUS_KM;
-          $updated = TRUE;
-        }
-      }
-      unset($location_option);
-
-      if (!$updated) {
-        $location_options[] = [
-          'field' => self::GEO_FIELD,
-          'lat' => $lat,
-          'lon' => $lon,
-          'radius' => self::DEFAULT_RADIUS_KM,
-        ];
-      }
-
-      $query->setOption('search_api_location', $location_options);
-
-      if ($is_browser_near_me) {
-        if (empty($solr_options['fq']) || !is_array($solr_options['fq'])) {
-          $solr_options['fq'] = [];
-        }
-
-        $geo_filter = sprintf(
-          '{!geofilt sfield=%s pt=%F,%F d=%F}',
-          self::GEO_FIELD,
-          $lat,
-          $lon,
-          self::DEFAULT_RADIUS_KM
-        );
-
-        if (!in_array($geo_filter, $solr_options['fq'], TRUE)) {
-          $solr_options['fq'][] = $geo_filter;
-        }
-
-        unset($solr_options['bf']);
-
-        \Drupal::logger('spotdeals_search_smart_location')->notice(
-          'SMART LOCATION subscriber applied hard geo filter: source="@source" lat="@lat" lon="@lon" radius_km="@radius" geo_boost="off" next_occurrence_boost="off"',
-          [
-            '@source' => $source,
-            '@lat' => (string) $lat,
-            '@lon' => (string) $lon,
-            '@radius' => (string) self::DEFAULT_RADIUS_KM,
-          ]
-        );
-      }
-      else {
-        if (empty($solr_options['bf'])) {
-          $solr_options['bf'] = [];
-        }
-
-        $solr_options['bf'][] = 'recip(ms(NOW,spotdeals_next_occurrence),3.16e-11,1,1)';
-
-        \Drupal::logger('spotdeals_search_smart_location')->notice(
-          'SMART LOCATION subscriber applied geo origin: source="@source" lat="@lat" lon="@lon" radius_km="@radius" geo_boost="off" next_occurrence_boost="on"',
-          [
-            '@source' => $source,
-            '@lat' => (string) $lat,
-            '@lon' => (string) $lon,
-            '@radius' => (string) self::DEFAULT_RADIUS_KM,
-          ]
-        );
-      }
-    }
-    else {
-      if (empty($solr_options['bf'])) {
-        $solr_options['bf'] = [];
-      }
-
-      $solr_options['bf'][] = 'recip(ms(NOW,spotdeals_next_occurrence),3.16e-11,1,1)';
-
+    if ($lat === NULL || $lon === NULL) {
       \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION subscriber found no geo origin to apply; next_occurrence_boost="on".'
+        'SMART LOCATION subscriber found no geo origin to apply at PRE_QUERY.'
       );
+      return;
     }
 
-    $query->setOption('search_api_solr_query', $solr_options);
+    if (!$is_browser_near_me) {
+      \Drupal::logger('spotdeals_search_smart_location')->notice(
+        'SMART LOCATION subscriber skipped geofilt at PRE_QUERY: source="@source" near_me="0" lat="@lat" lon="@lon"',
+        [
+          '@source' => $source ?? '',
+          '@lat' => (string) $lat,
+          '@lon' => (string) $lon,
+        ]
+      );
+      return;
+    }
+
+    $solarium_query = $event->getSolariumQuery();
+
+    $pt = sprintf('%F,%F', $lat, $lon);
+    $geo_filter = sprintf(
+      '{!geofilt sfield=%s pt=%s d=%F}',
+      self::SOLR_GEO_FIELD,
+      $pt,
+      self::DEFAULT_RADIUS_KM
+    );
+
+    $solarium_query
+      ->createFilterQuery(self::GEO_FILTER_KEY)
+      ->setQuery($geo_filter);
+
+    // Also provide global spatial params so geodist() sorting uses the same point/field.
+    $solarium_query->addParam('sfield', self::SOLR_GEO_FIELD);
+    $solarium_query->addParam('pt', $pt);
+
+    // Force distance-first ordering at Solr level so the final rendered HTML uses
+    // the same nearest-first order as the query result.
+    if (method_exists($solarium_query, 'clearSorts')) {
+      $solarium_query->clearSorts();
+    }
+    elseif (method_exists($solarium_query, 'setSorts')) {
+      $solarium_query->setSorts([]);
+    }
+
+    $distance_sort = sprintf('geodist(%s,%F,%F)', self::SOLR_GEO_FIELD, $lat, $lon);
+    $solarium_query->addSort($distance_sort, 'asc');
+    $solarium_query->addSort('score', 'desc');
+
+    \Drupal::logger('spotdeals_search_smart_location')->notice(
+      'SMART LOCATION subscriber applied PRE_QUERY geofilt and forced Solr distance sort: source="@source" near_me="1" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq" sort="@sort"',
+      [
+        '@source' => $source ?? '',
+        '@lat' => (string) $lat,
+        '@lon' => (string) $lon,
+        '@radius' => (string) self::DEFAULT_RADIUS_KM,
+        '@search_api_geo_field' => self::SEARCH_API_GEO_FIELD,
+        '@solr_geo_field' => self::SOLR_GEO_FIELD,
+        '@fq' => $geo_filter,
+        '@sort' => $distance_sort . ' asc, score desc',
+      ]
+    );
   }
 
 }

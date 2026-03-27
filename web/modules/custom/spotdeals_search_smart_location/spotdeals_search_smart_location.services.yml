@@ -4,5 +4,11 @@ services:
     tags:
       - { name: event_subscriber }
 
+  spotdeals_search_smart_location.near_me_result_extractor:
+    class: Drupal\spotdeals_search_smart_location\NearMeResultExtractor
+
   spotdeals_search_smart_location.near_me_ranker:
     class: Drupal\spotdeals_search_smart_location\NearMeRanker
+    arguments:
+      - '@entity_type.manager'
+      - '@spotdeals_search_smart_location.near_me_result_extractor'
