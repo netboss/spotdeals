@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Database\Database;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\node\NodeInterface;
 use Drupal\views\ViewExecutable;
@@ -683,10 +684,10 @@ function _spotdeals_search_smart_location_parse(string $input): array {
   $city = NULL;
   $matched_city_phrase = NULL;
   $cities = _spotdeals_search_smart_location_known_cities();
-  uasort($cities, static fn(string $a, string $b): int => strlen($b) <=> strlen($a));
+  uksort($cities, static fn(string $a, string $b): int => strlen($b) <=> strlen($a));
 
   foreach ($cities as $slug => $label) {
-    $phrase = strtolower($label);
+    $phrase = strtolower($slug);
     if (preg_match('/(^|\s)' . preg_quote($phrase, '/') . '(\s|$)/', $normalized)) {
       $city = $slug;
       $matched_city_phrase = $phrase;
@@ -740,29 +741,81 @@ function _spotdeals_search_smart_location_known_cities(): array {
     return $cities;
   }
 
-  $city_map = [
-    'daytona beach' => 'Daytona Beach',
-    'daytona' => 'Daytona Beach',
-    'new smyrna beach' => 'New Smyrna Beach',
-    'new smyrna' => 'New Smyrna Beach',
-    'nsb' => 'New Smyrna Beach',
-    'port orange' => 'Port Orange',
-    'ormond beach' => 'Ormond Beach',
-    'ormond' => 'Ormond Beach',
-    'deland' => 'DeLand',
-    'de land' => 'DeLand',
-    'debary' => 'DeBary',
-    'orange city' => 'Orange City',
-    'south daytona' => 'South Daytona',
-    'holly hill' => 'Holly Hill',
-    'edgewater' => 'Edgewater',
-    'deltona' => 'Deltona',
-  ];
+  $connection = Database::getConnection();
+  $query = $connection->select('node__field_address', 'addr');
+  $query->join('node_field_data', 'venue', 'venue.nid = addr.entity_id');
+  $query->fields('addr', ['field_address_locality']);
+  $query->distinct();
+  $query->condition('addr.field_address_locality', '', '<>');
+  $query->isNotNull('addr.field_address_locality');
+  $query->condition('venue.type', 'venue');
+  $query->condition('venue.status', 1);
 
-  $cities = $city_map;
+  $results = $query->execute()->fetchCol();
+
+  $cities = [];
+  foreach ($results as $city_label) {
+    $exact_label = trim((string) $city_label);
+    if ($exact_label === '') {
+      continue;
+    }
+
+    foreach (_spotdeals_search_smart_location_city_aliases($exact_label) as $alias) {
+      if (!isset($cities[$alias])) {
+        $cities[$alias] = $exact_label;
+      }
+    }
+  }
+
   $cache->set($cache_id, $cities, CacheBackendInterface::CACHE_PERMANENT);
 
   return $cities;
+}
+
+/**
+ * Build normalized aliases for an exact city label.
+ *
+ * @return array<int, string>
+ *   Normalized aliases ordered from most specific to least specific.
+ */
+function _spotdeals_search_smart_location_city_aliases(string $exact_label): array {
+  $aliases = [];
+
+  $normalized_compact = _spotdeals_search_smart_location_normalize_city_alias($exact_label);
+  if ($normalized_compact !== '') {
+    $aliases[] = $normalized_compact;
+  }
+
+  $spaced_label = preg_replace('/(?<=\p{Ll})(?=\p{Lu})/u', ' ', $exact_label) ?? $exact_label;
+  $normalized_spaced = _spotdeals_search_smart_location_normalize_city_alias($spaced_label);
+  if ($normalized_spaced !== '' && !in_array($normalized_spaced, $aliases, TRUE)) {
+    $aliases[] = $normalized_spaced;
+  }
+
+  $words = $normalized_spaced !== '' ? explode(' ', $normalized_spaced) : [];
+  if (count($words) >= 3) {
+    $prefix_alias = implode(' ', array_slice($words, 0, -1));
+    if ($prefix_alias !== '' && !in_array($prefix_alias, $aliases, TRUE)) {
+      $aliases[] = $prefix_alias;
+    }
+
+    $initialism = implode('', array_map(static fn(string $word): string => substr($word, 0, 1), $words));
+    if ($initialism !== '' && !in_array($initialism, $aliases, TRUE)) {
+      $aliases[] = $initialism;
+    }
+  }
+
+  return $aliases;
+}
+
+/**
+ * Normalize a city alias for matching.
+ */
+function _spotdeals_search_smart_location_normalize_city_alias(string $value): string {
+  $value = strtolower(trim($value));
+  $value = preg_replace('/[^a-z0-9\s]+/', ' ', $value) ?? '';
+  $value = preg_replace('/\s+/', ' ', $value) ?? '';
+  return trim($value);
 }
 
 /**
@@ -882,7 +935,7 @@ function _spotdeals_search_smart_location_nearest_city_from_coords(float $origin
 }
 
 /**
- * Expand near-me keywords to improve cuisine matching.
+ * Normalize near-me keywords without hardcoded synonym expansion.
  */
 function _spotdeals_search_smart_location_expand_keywords(string $keywords): string {
   $normalized = strtolower(trim($keywords));
@@ -890,43 +943,12 @@ function _spotdeals_search_smart_location_expand_keywords(string $keywords): str
     return '';
   }
 
-  $map = [
-    'taco' => ['taco', 'tacos', 'mexican'],
-    'tacos' => ['tacos', 'taco', 'mexican'],
-    'mexican' => ['mexican', 'taco', 'tacos'],
-    'arepa' => ['arepa', 'arepas', 'arepita', 'venezuelan'],
-    'arepas' => ['arepas', 'arepa', 'arepita', 'venezuelan'],
-    'arepita' => ['arepita', 'arepa', 'arepas', 'venezuelan'],
-    'happy hour' => ['happy hour'],
-    'bbq' => ['bbq', 'barbecue'],
-    'barbecue' => ['barbecue', 'bbq'],
-    'thai' => ['thai'],
-    'pizza' => ['pizza'],
-    'burgers' => ['burgers', 'burger'],
-    'burger' => ['burger', 'burgers'],
-    'sushi' => ['sushi', 'japanese'],
-    'coffee' => ['coffee', 'cafe'],
-    'breakfast' => ['breakfast', 'brunch'],
-    'brunch' => ['brunch', 'breakfast'],
-  ];
+  $normalized = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $normalized) ?? '';
+  $normalized = preg_replace('/\s+/', ' ', $normalized) ?? '';
+  $tokens = preg_split('/\s+/', trim($normalized)) ?: [];
+  $tokens = array_values(array_unique(array_filter(array_map('trim', $tokens))));
 
-  $tokens = preg_split('/\s+/', $normalized) ?: [];
-  $expanded = [];
-  $matched = FALSE;
-
-  foreach ($map as $needle => $terms) {
-    if (str_contains($normalized, $needle)) {
-      $expanded = array_merge($expanded, $terms);
-      $matched = TRUE;
-    }
-  }
-
-  if (!$matched) {
-    $expanded = $tokens;
-  }
-
-  $expanded = array_values(array_unique(array_filter(array_map('trim', $expanded))));
-  return implode(' ', $expanded);
+  return implode(' ', $tokens);
 }
 
 /**
@@ -1125,3 +1147,4 @@ function _spotdeals_search_smart_location_haversine_km(float $lat1, float $lon1,
 
   return $earth_radius_km * $angle;
 }
+
