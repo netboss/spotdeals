@@ -189,15 +189,13 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
       'lon' => (float) $origin_lon,
     ]);
     $request->attributes->set('spotdeals_search_smart_location.browser_near_me', TRUE);
+    $request->attributes->set('spotdeals_search_smart_location.city', $nearest_city ?? '');
+    $request->attributes->set('spotdeals_search_smart_location.zip', '');
 
     $ranked_nids = \Drupal::service('spotdeals_search_smart_location.near_me_ranker')
       ->rankDealNids((float) $origin_lat, (float) $origin_lon, $keywords);
 
     $request->attributes->set('spotdeals_search_smart_location.ranked_deal_nids', $ranked_nids);
-
-    if (is_string($nearest_city) && $nearest_city !== '') {
-      $request->attributes->set('spotdeals_search_smart_location.city', $nearest_city);
-    }
 
     \Drupal::logger('spotdeals_search_smart_location')->notice(
       'SMART LOCATION browser near me applied: view="@view" display="@display" raw="@raw" keywords="@keywords" nearest_city="@city" origin_lat="@lat" origin_lon="@lon" ranked_count="@ranked" city_filter="off"',
@@ -218,6 +216,8 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   }
 
   $request->attributes->set('spotdeals_search_smart_location.browser_near_me', FALSE);
+  $request->attributes->set('spotdeals_search_smart_location.city', '');
+  $request->attributes->set('spotdeals_search_smart_location.zip', '');
 
   if (empty($parsed['zip']) && empty($parsed['city'])) {
     \Drupal::logger('spotdeals_search_smart_location')->notice(
@@ -242,16 +242,21 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     $input['search_api_fulltext'] = $parsed['keywords'];
   }
 
-  if (!empty($parsed['zip'])) {
-    $input['postal_code_exact'] = $parsed['zip'];
+  $exact_city = '';
+  if (!empty($parsed['city'])) {
+    $resolved = _spotdeals_search_smart_location_city_to_exact_locality($parsed['city']);
+    if ($resolved !== NULL) {
+      $exact_city = $resolved;
+      $request->attributes->set('spotdeals_search_smart_location.city', $exact_city);
+      $input['locality_exact'] = $exact_city;
+      _spotdeals_search_smart_location_force_filter_value($view, 'locality_exact', $exact_city);
+    }
   }
 
-  if (!empty($parsed['city'])) {
-    $exact_city = _spotdeals_search_smart_location_city_to_exact_locality($parsed['city']);
-    if ($exact_city !== NULL) {
-      $input['locality_exact'] = $exact_city;
-      $request->attributes->set('spotdeals_search_smart_location.city', $exact_city);
-    }
+  if (!empty($parsed['zip'])) {
+    $request->attributes->set('spotdeals_search_smart_location.zip', $parsed['zip']);
+    $input['postal_code_exact'] = $parsed['zip'];
+    _spotdeals_search_smart_location_force_filter_value($view, 'postal_code_exact', $parsed['zip']);
   }
 
   $origin = _spotdeals_search_smart_location_resolve_origin_from_venues($parsed);
@@ -268,9 +273,9 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
       '@display' => $display_id,
       '@raw' => $raw,
       '@keywords' => $parsed['keywords'] ?? '',
-      '@zip' => $input['postal_code_exact'] ?? '',
+      '@zip' => $parsed['zip'] ?? '',
       '@city' => $parsed['city'] ?? '',
-      '@exact_city' => $input['locality_exact'] ?? '',
+      '@exact_city' => $exact_city,
       '@origin_lat' => $origin['lat'] ?? '',
       '@origin_lon' => $origin['lon'] ?? '',
       '@search_param' => $search_param,
@@ -290,19 +295,36 @@ function spotdeals_search_smart_location_views_pre_render(ViewExecutable $view):
 }
 
 /**
- * Applies ranked deal ordering to the current View result set.
+ * Applies deterministic location ordering to View results.
  */
 function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $view): void {
   $request = \Drupal::request();
   $is_browser_near_me = (bool) $request->attributes->get('spotdeals_search_smart_location.browser_near_me', FALSE);
   $origin = $request->attributes->get('spotdeals_search_smart_location.origin');
   $ranked_nids = $request->attributes->get('spotdeals_search_smart_location.ranked_deal_nids');
-  $nearest_city = (string) $request->attributes->get('spotdeals_search_smart_location.city', '');
+  $exact_city = (string) $request->attributes->get('spotdeals_search_smart_location.city', '');
 
-  if (!$is_browser_near_me || empty($view->result)) {
+  if (empty($view->result)) {
     return;
   }
 
+  if ($is_browser_near_me) {
+    _spotdeals_search_smart_location_apply_near_me_order($view, $origin, $ranked_nids, $exact_city);
+    return;
+  }
+
+  if ($exact_city !== '') {
+    _spotdeals_search_smart_location_apply_city_distance_sort($view, $origin, $exact_city);
+  }
+}
+
+/**
+ * Applies strict near-me ordering.
+ *
+ * @param array<string,mixed>|null $origin
+ * @param array<int,int>|mixed $ranked_nids
+ */
+function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $view, $origin, $ranked_nids, string $nearest_city): void {
   if (
     !is_array($origin) ||
     !isset($origin['lat'], $origin['lon']) ||
@@ -331,11 +353,7 @@ function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $vie
       continue;
     }
 
-    $venue = NULL;
-    if ($deal->hasField('field_venue') && !$deal->get('field_venue')->isEmpty()) {
-      $venue = $deal->get('field_venue')->entity;
-    }
-
+    $venue = _spotdeals_search_smart_location_deal_venue($deal);
     if (!$venue instanceof NodeInterface) {
       $missing_coords++;
       continue;
@@ -377,10 +395,8 @@ function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $vie
 
   if (empty($filtered)) {
     $view->result = [];
-
-    if (isset($view->style_plugin->rendered_fields) && is_array($view->style_plugin->rendered_fields)) {
-      $view->style_plugin->rendered_fields = [];
-    }
+    _spotdeals_search_smart_location_reorder_rendered_fields($view, []);
+    _spotdeals_search_smart_location_sync_filtered_pager($view);
 
     \Drupal::logger('spotdeals_search_smart_location')->notice(
       'SMART LOCATION pre_render near-me city-priority sort removed all rows: before="@before" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius"',
@@ -426,19 +442,8 @@ function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $vie
   });
 
   $view->result = array_values($filtered);
-
-  if (isset($view->style_plugin->rendered_fields) && is_array($view->style_plugin->rendered_fields) && !empty($view->style_plugin->rendered_fields)) {
-    $reordered_rendered_fields = [];
-    foreach ($view->result as $new_index => $row) {
-      $old_index = $row->_spotdeals_original_index ?? NULL;
-      if ($old_index !== NULL && array_key_exists($old_index, $view->style_plugin->rendered_fields)) {
-        $reordered_rendered_fields[$new_index] = $view->style_plugin->rendered_fields[$old_index];
-      }
-    }
-    if (!empty($reordered_rendered_fields)) {
-      $view->style_plugin->rendered_fields = array_values($reordered_rendered_fields);
-    }
-  }
+  _spotdeals_search_smart_location_reorder_rendered_fields($view, $view->result);
+  _spotdeals_search_smart_location_sync_filtered_pager($view);
 
   $debug_rows = [];
   foreach (array_slice($view->result, 0, 10) as $position => $row) {
@@ -447,11 +452,7 @@ function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $vie
       continue;
     }
 
-    $venue = NULL;
-    if ($deal->hasField('field_venue') && !$deal->get('field_venue')->isEmpty()) {
-      $venue = $deal->get('field_venue')->entity;
-    }
-
+    $venue = _spotdeals_search_smart_location_deal_venue($deal);
     $debug_rows[] = [
       'position' => $position + 1,
       'deal' => $deal->label(),
@@ -478,7 +479,194 @@ function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $vie
 }
 
 /**
+ * Applies exact-city distance ordering without post-filtering rows.
+ *
+ * @param array<string,mixed>|null $origin
+ */
+function _spotdeals_search_smart_location_apply_city_distance_sort(ViewExecutable $view, $origin, string $exact_city): void {
+  if (
+    !is_array($origin) ||
+    !isset($origin['lat'], $origin['lon']) ||
+    !is_numeric($origin['lat']) ||
+    !is_numeric($origin['lon'])
+  ) {
+    return;
+  }
+
+  $origin_lat = (float) $origin['lat'];
+  $origin_lon = (float) $origin['lon'];
+  $before_count = count($view->result);
+
+  foreach ($view->result as $index => $row) {
+    $deal = _spotdeals_search_smart_location_result_entity($row);
+    if (!$deal instanceof NodeInterface) {
+      continue;
+    }
+
+    $venue = _spotdeals_search_smart_location_deal_venue($deal);
+    if (!$venue instanceof NodeInterface) {
+      continue;
+    }
+
+    $coords = _spotdeals_search_smart_location_node_coords($venue);
+    $distance = PHP_FLOAT_MAX;
+    if ($coords !== NULL) {
+      [$lat, $lon] = $coords;
+      $distance = _spotdeals_search_smart_location_haversine_km($origin_lat, $origin_lon, $lat, $lon);
+    }
+
+    $row->_spotdeals_distance_km = $distance;
+    $row->_spotdeals_original_index = $index;
+  }
+
+  usort($view->result, static function ($a, $b): int {
+    $a_distance = $a->_spotdeals_distance_km ?? PHP_FLOAT_MAX;
+    $b_distance = $b->_spotdeals_distance_km ?? PHP_FLOAT_MAX;
+    if ($a_distance !== $b_distance) {
+      return $a_distance <=> $b_distance;
+    }
+
+    $a_original = $a->_spotdeals_original_index ?? PHP_INT_MAX;
+    $b_original = $b->_spotdeals_original_index ?? PHP_INT_MAX;
+    return $a_original <=> $b_original;
+  });
+
+  $view->result = array_values($view->result);
+  _spotdeals_search_smart_location_reorder_rendered_fields($view, $view->result);
+
+  $debug_rows = [];
+  foreach (array_slice($view->result, 0, 10) as $position => $row) {
+    $deal = _spotdeals_search_smart_location_result_entity($row);
+    if (!$deal instanceof NodeInterface) {
+      continue;
+    }
+
+    $venue = _spotdeals_search_smart_location_deal_venue($deal);
+    $debug_rows[] = [
+      'position' => $position + 1,
+      'deal' => $deal->label(),
+      'venue' => $venue instanceof NodeInterface ? $venue->label() : '',
+      'city' => $venue instanceof NodeInterface ? _spotdeals_search_smart_location_node_locality($venue) : '',
+      'distance_km' => isset($row->_spotdeals_distance_km) && is_finite((float) $row->_spotdeals_distance_km)
+        ? round((float) $row->_spotdeals_distance_km, 3)
+        : NULL,
+    ];
+  }
+
+  \Drupal::logger('spotdeals_search_smart_location')->notice(
+    'SMART LOCATION pre_render applied exact city distance sort: before="@before" after="@after" city="@city" rows="@rows"',
+    [
+      '@before' => (string) $before_count,
+      '@after' => (string) count($view->result),
+      '@city' => $exact_city,
+      '@rows' => json_encode($debug_rows, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+    ]
+  );
+}
+
+/**
+ * Forces a specific Views filter handler value.
+ */
+function _spotdeals_search_smart_location_force_filter_value(ViewExecutable $view, string $filter_id, string $value): void {
+  if ($value === '') {
+    return;
+  }
+
+  if (!$view->display_handler) {
+    return;
+  }
+
+  $handler = $view->display_handler->getHandler('filter', $filter_id);
+  if (!$handler) {
+    return;
+  }
+
+  if (property_exists($handler, 'value')) {
+    $handler->value = [
+      'value' => $value,
+      'min' => '',
+      'max' => '',
+    ];
+  }
+
+  if (property_exists($handler, 'operator')) {
+    $handler->operator = '=';
+  }
+
+  if (method_exists($handler, 'acceptExposedInput')) {
+    $handler->acceptExposedInput([$filter_id => $value]);
+  }
+}
+
+/**
+ * Reorders rendered fields to match reordered view results.
+ *
+ * @param array<int,mixed> $rows
+ */
+function _spotdeals_search_smart_location_reorder_rendered_fields(ViewExecutable $view, array $rows): void {
+  if (!isset($view->style_plugin->rendered_fields) || !is_array($view->style_plugin->rendered_fields)) {
+    return;
+  }
+
+  if (empty($rows)) {
+    $view->style_plugin->rendered_fields = [];
+    return;
+  }
+
+  $reordered_rendered_fields = [];
+  foreach ($rows as $new_index => $row) {
+    $old_index = $row->_spotdeals_original_index ?? NULL;
+    if ($old_index !== NULL && array_key_exists($old_index, $view->style_plugin->rendered_fields)) {
+      $reordered_rendered_fields[$new_index] = $view->style_plugin->rendered_fields[$old_index];
+    }
+  }
+
+  if (!empty($reordered_rendered_fields)) {
+    $view->style_plugin->rendered_fields = array_values($reordered_rendered_fields);
+  }
+}
+
+/**
+ * Sync pager/count metadata after post-filtering rows.
+ */
+function _spotdeals_search_smart_location_sync_filtered_pager(ViewExecutable $view): void {
+  $count = count($view->result);
+
+  $view->total_rows = $count;
+
+  if (isset($view->pager)) {
+    if (property_exists($view->pager, 'total_items')) {
+      $view->pager->total_items = $count;
+    }
+
+    if (property_exists($view->pager, 'current_page')) {
+      $view->pager->current_page = 0;
+    }
+
+    if (property_exists($view->pager, 'total_pages')) {
+      $items_per_page = 0;
+      if (method_exists($view->pager, 'getItemsPerPage')) {
+        $items_per_page = (int) $view->pager->getItemsPerPage();
+      }
+      elseif (property_exists($view->pager, 'options') && is_array($view->pager->options)) {
+        $items_per_page = (int) ($view->pager->options['items_per_page'] ?? 0);
+      }
+
+      $view->pager->total_pages = ($items_per_page > 0 && $count > 0)
+        ? (int) ceil($count / $items_per_page)
+        : 1;
+    }
+
+    if (method_exists($view->pager, 'updatePageInfo')) {
+      $view->pager->updatePageInfo();
+    }
+  }
+}
+
+/**
  * Parse one-box input into keywords + zip + city.
+ *
+ * @return array{keywords:string,zip:?string,city:?string}
  */
 function _spotdeals_search_smart_location_parse(string $input): array {
   $normalized = strtolower(trim($input));
@@ -502,7 +690,7 @@ function _spotdeals_search_smart_location_parse(string $input): array {
     if (preg_match('/(^|\s)' . preg_quote($phrase, '/') . '(\s|$)/', $normalized)) {
       $city = $slug;
       $matched_city_phrase = $phrase;
-      $normalized = trim(preg_replace('/(^|\s)' . preg_quote($phrase, '/') . '(\s|$)/', ' ', $normalized) ?? $normalized);
+      $normalized = trim((string) preg_replace('/(^|\s)' . preg_quote($phrase, '/') . '(\s|$)/', ' ', $normalized));
       break;
     }
   }
@@ -581,10 +769,8 @@ function _spotdeals_search_smart_location_known_cities(): array {
  * Resolve an origin coordinate from parsed zip/city.
  *
  * @param array<string, mixed> $parsed
- *   Parsed input.
  *
  * @return array{lat: float, lon: float}|null
- *   Origin coordinate or NULL.
  */
 function _spotdeals_search_smart_location_resolve_origin_from_venues(array $parsed): ?array {
   $zip = isset($parsed['zip']) && is_string($parsed['zip']) ? $parsed['zip'] : '';
@@ -599,7 +785,7 @@ function _spotdeals_search_smart_location_resolve_origin_from_venues(array $pars
     ->accessCheck(FALSE)
     ->condition('type', 'venue')
     ->condition('status', 1)
-    ->range(0, 100);
+    ->range(0, 250);
 
   if ($zip !== '') {
     $query->condition('field_address.postal_code', $zip);
@@ -759,6 +945,18 @@ function _spotdeals_search_smart_location_result_entity(object $row): ?NodeInter
 }
 
 /**
+ * Returns the related venue for a deal.
+ */
+function _spotdeals_search_smart_location_deal_venue(NodeInterface $deal): ?NodeInterface {
+  if (!$deal->hasField('field_venue') || $deal->get('field_venue')->isEmpty()) {
+    return NULL;
+  }
+
+  $venue = $deal->get('field_venue')->entity;
+  return $venue instanceof NodeInterface ? $venue : NULL;
+}
+
+/**
  * Returns a normalized locality label for a venue node.
  */
 function _spotdeals_search_smart_location_node_locality(NodeInterface $node): string {
@@ -775,10 +973,25 @@ function _spotdeals_search_smart_location_node_locality(NodeInterface $node): st
 }
 
 /**
+ * Returns postal code for a venue node.
+ */
+function _spotdeals_search_smart_location_node_postal_code(NodeInterface $node): string {
+  if (!$node->hasField('field_address') || $node->get('field_address')->isEmpty()) {
+    return '';
+  }
+
+  $address = $node->get('field_address')->first();
+  if (!is_object($address) || !isset($address->postal_code)) {
+    return '';
+  }
+
+  return trim((string) $address->postal_code);
+}
+
+/**
  * Returns coordinates from a node or NULL.
  *
  * @return array{0: float, 1: float}|null
- *   Lat/lon pair.
  */
 function _spotdeals_search_smart_location_node_coords(NodeInterface $node): ?array {
   if (!$node->hasField('field_coordinates') || $node->get('field_coordinates')->isEmpty()) {
