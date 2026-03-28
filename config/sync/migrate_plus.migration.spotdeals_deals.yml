@@ -25,41 +25,40 @@ process:
   field_active: field_active
   field_recurring: field_recurring
   field_day_of_week:
-    -
-      plugin: skip_on_empty
+    - plugin: skip_on_empty
       method: process
       source: field_day_of_week
-    -
-      plugin: explode
+    - plugin: explode
       delimiter: '|'
-    -
-      plugin: entity_generate
+    - plugin: entity_generate
       entity_type: taxonomy_term
       value_key: name
       bundle_key: vid
       bundle: day_of_week
   field_deal_category:
-    -
-      plugin: skip_on_empty
+    - plugin: skip_on_empty
       method: process
       source: field_deal_category
-    -
-      plugin: entity_generate
+    - plugin: entity_generate
       entity_type: taxonomy_term
       value_key: name
       bundle_key: vid
       bundle: deal_category
-  field_venue/target_id:
-    -
-      plugin: skip_on_empty
+  field_venue_lookup:
+    - plugin: skip_on_empty
       method: process
       source: field_venue
-    -
-      plugin: entity_lookup
-      entity_type: node
-      value_key: title
-      bundle_key: type
-      bundle: venue
+    - plugin: migration_lookup
+      migration: spotdeals_venues
+      source: field_venue
+      no_stub: true
+  field_venue/target_id:
+    - plugin: skip_on_empty
+      method: row
+      source: '@field_venue_lookup'
+      message: 'Skipping deal because referenced venue could not be resolved.'
+    - plugin: get
+      source: '@field_venue_lookup'
 destination:
   plugin: 'entity:node'
   default_bundle: deal
