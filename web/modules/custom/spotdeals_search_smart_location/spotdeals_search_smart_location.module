@@ -259,12 +259,6 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     _spotdeals_search_smart_location_force_filter_value($view, 'postal_code_exact', $parsed['zip']);
   }
 
-  _spotdeals_search_smart_location_expand_exact_location_result_window($view, [
-    'near_me' => FALSE,
-    'exact_city' => $exact_city,
-    'zip' => $parsed['zip'] ?? '',
-  ]);
-
   $origin = _spotdeals_search_smart_location_resolve_origin_from_venues($parsed);
   if ($origin) {
     $request->attributes->set('spotdeals_search_smart_location.origin', $origin);
@@ -285,64 +279,6 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
       '@origin_lat' => $origin['lat'] ?? '',
       '@origin_lon' => $origin['lon'] ?? '',
       '@search_param' => $search_param,
-    ]
-  );
-}
-
-/**
- * Expands the result window for exact city/zip searches so post-query
- * filtering/sorting does not operate on only the first paged slice.
- *
- * @param \Drupal\views\ViewExecutable $view
- *   The current view.
- * @param array<string,mixed> $smart_location
- *   Parsed smart location data.
- */
-function _spotdeals_search_smart_location_expand_exact_location_result_window(ViewExecutable $view, array $smart_location): void {
-  $is_near_me = !empty($smart_location['near_me']);
-  $exact_city = trim((string) ($smart_location['exact_city'] ?? ''));
-  $zip = trim((string) ($smart_location['zip'] ?? ''));
-
-  if ($is_near_me) {
-    return;
-  }
-
-  if ($exact_city === '' && $zip === '') {
-    return;
-  }
-
-  if (!$view->display_handler) {
-    return;
-  }
-
-  $pager = $view->display_handler->getOption('pager');
-  if (!is_array($pager)) {
-    return;
-  }
-
-  $current_items_per_page = isset($pager['options']['items_per_page'])
-    ? (int) $pager['options']['items_per_page']
-    : 10;
-
-  if ($current_items_per_page >= 100) {
-    return;
-  }
-
-  $pager['options']['items_per_page'] = 100;
-  $view->display_handler->setOption('pager', $pager);
-
-  if (isset($view->pager) && property_exists($view->pager, 'options') && is_array($view->pager->options)) {
-    $view->pager->options['items_per_page'] = 100;
-  }
-
-  \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION expanded exact location result window: view="@view" display="@display" city="@city" zip="@zip" items_per_page="@items"',
-    [
-      '@view' => $view->id(),
-      '@display' => $view->current_display ?: 'page_1',
-      '@city' => $exact_city,
-      '@zip' => $zip,
-      '@items' => '100',
     ]
   );
 }
