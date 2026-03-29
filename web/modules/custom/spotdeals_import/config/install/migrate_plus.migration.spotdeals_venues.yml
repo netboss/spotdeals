@@ -80,6 +80,18 @@ process:
       bundle_key: vid
       bundle: cuisine
 
+  field_tags:
+    - plugin: skip_on_empty
+      method: process
+      source: field_tags
+    - plugin: explode
+      delimiter: '|'
+    - plugin: entity_generate
+      entity_type: taxonomy_term
+      value_key: name
+      bundle_key: vid
+      bundle: tags
+
 destination:
   plugin: entity:node
   default_bundle: venue

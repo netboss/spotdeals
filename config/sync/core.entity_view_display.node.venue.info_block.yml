@@ -19,6 +19,7 @@ dependencies:
     - field.field.node.venue.field_menu_url
     - field.field.node.venue.field_phone
     - field.field.node.venue.field_primary_owner_user
+    - field.field.node.venue.field_tags
     - field.field.node.venue.field_venue_type
     - field.field.node.venue.field_website
     - node.type.venue
@@ -84,6 +85,7 @@ hidden:
   field_longitude: true
   field_menu_url: true
   field_primary_owner_user: true
+  field_tags: true
   field_venue_type: true
   langcode: true
   search_api_excerpt: true
