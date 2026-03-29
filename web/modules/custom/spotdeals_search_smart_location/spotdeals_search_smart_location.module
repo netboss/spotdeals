@@ -152,7 +152,9 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   unset($input['postal_code_exact'], $input['locality_exact']);
 
   $parsed = _spotdeals_search_smart_location_parse($raw);
-  $clean = trim((string) $request->query->get('search_clean', ''));
+  $clean = _spotdeals_search_smart_location_normalize_keywords(
+    trim((string) $request->query->get('search_clean', ''))
+  );
 
   $origin_mode = (string) $request->query->get('search_origin_mode', '');
   $origin_lat = $request->query->get('origin_lat');
@@ -170,6 +172,7 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     );
 
     $keywords = $clean !== '' ? $clean : trim((string) ($parsed['keywords'] ?? ''));
+    $keywords = _spotdeals_search_smart_location_normalize_keywords($keywords);
     $keywords = _spotdeals_search_smart_location_expand_keywords($keywords);
 
     $input['search_raw'] = $raw;
@@ -702,8 +705,7 @@ function _spotdeals_search_smart_location_parse(string $input): array {
     $keywords = trim(str_replace($matched_city_phrase, '', $keywords));
   }
 
-  $keywords = preg_replace('/\s+/', ' ', $keywords ?? '') ?? '';
-  $keywords = trim($keywords);
+  $keywords = _spotdeals_search_smart_location_normalize_keywords($keywords);
 
   return [
     'keywords' => $keywords,
@@ -887,6 +889,26 @@ function _spotdeals_search_smart_location_resolve_origin_from_venues(array $pars
   ];
 }
 
+
+/**
+ * Normalize semantic keywords before they are sent to Solr.
+ */
+function _spotdeals_search_smart_location_normalize_keywords(string $keywords): string {
+  $normalized = strtolower(trim($keywords));
+  if ($normalized === '') {
+    return '';
+  }
+
+  $normalized = preg_replace('/[\.,;:!\?\(\)\[\]\"\']+/u', ' ', $normalized) ?? '';
+  $normalized = preg_replace('/\bnear\s+me\b/u', ' ', $normalized) ?? '';
+  $normalized = preg_replace('/\b(show\s+me|find|search\s+for)\b/u', ' ', $normalized) ?? '';
+  $normalized = preg_replace('/\b(best|top|good)\b/u', ' ', $normalized) ?? '';
+  $normalized = preg_replace('/\bbarbecue\b/u', 'bbq', $normalized) ?? '';
+  $normalized = preg_replace('/\s+/', ' ', $normalized) ?? '';
+
+  return trim($normalized);
+}
+
 /**
  * Resolve nearest known city from browser coordinates.
  */
@@ -938,7 +960,7 @@ function _spotdeals_search_smart_location_nearest_city_from_coords(float $origin
  * Normalize near-me keywords without hardcoded synonym expansion.
  */
 function _spotdeals_search_smart_location_expand_keywords(string $keywords): string {
-  $normalized = strtolower(trim($keywords));
+  $normalized = _spotdeals_search_smart_location_normalize_keywords($keywords);
   if ($normalized === '') {
     return '';
   }
