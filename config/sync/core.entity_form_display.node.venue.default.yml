@@ -18,6 +18,7 @@ dependencies:
     - field.field.node.venue.field_menu_url
     - field.field.node.venue.field_phone
     - field.field.node.venue.field_primary_owner_user
+    - field.field.node.venue.field_tags
     - field.field.node.venue.field_venue_type
     - field.field.node.venue.field_website
     - image.style.thumbnail
@@ -37,7 +38,7 @@ mode: default
 content:
   body:
     type: text_textarea_with_summary
-    weight: 4
+    weight: 5
     region: content
     settings:
       rows: 9
@@ -47,13 +48,13 @@ content:
     third_party_settings: {  }
   created:
     type: datetime_timestamp
-    weight: 6
+    weight: 7
     region: content
     settings: {  }
     third_party_settings: {  }
   field_active:
     type: boolean_checkbox
-    weight: 14
+    weight: 16
     region: content
     settings:
       display_label: true
@@ -67,7 +68,7 @@ content:
     third_party_settings: {  }
   field_claim_contact_email:
     type: email_default
-    weight: 18
+    weight: 20
     region: content
     settings:
       placeholder: ''
@@ -75,7 +76,7 @@ content:
     third_party_settings: {  }
   field_claim_status:
     type: tagify_select_widget
-    weight: 16
+    weight: 18
     region: content
     settings:
       match_operator: CONTAINS
@@ -86,7 +87,7 @@ content:
     third_party_settings: {  }
   field_claimed_by:
     type: tagify_select_widget
-    weight: 17
+    weight: 19
     region: content
     settings:
       match_operator: CONTAINS
@@ -97,21 +98,21 @@ content:
     third_party_settings: {  }
   field_claimed_listing:
     type: boolean_checkbox
-    weight: 15
+    weight: 17
     region: content
     settings:
       display_label: true
     third_party_settings: {  }
   field_coordinates:
     type: geofield_latlon
-    weight: 29
+    weight: 24
     region: content
     settings:
       html5_geolocation: false
     third_party_settings: {  }
   field_cuisine:
     type: tagify_select_widget
-    weight: 13
+    weight: 14
     region: content
     settings:
       match_operator: CONTAINS
@@ -122,7 +123,7 @@ content:
     third_party_settings: {  }
   field_image:
     type: image_image
-    weight: 3
+    weight: 4
     region: content
     settings:
       progress_indicator: throbber
@@ -130,21 +131,21 @@ content:
     third_party_settings: {  }
   field_latitude:
     type: number
-    weight: 27
+    weight: 22
     region: content
     settings:
       placeholder: ''
     third_party_settings: {  }
   field_longitude:
     type: number
-    weight: 28
+    weight: 23
     region: content
     settings:
       placeholder: ''
     third_party_settings: {  }
   field_menu_url:
     type: link_default
-    weight: 12
+    weight: 13
     region: content
     settings:
       placeholder_url: ''
@@ -152,7 +153,7 @@ content:
     third_party_settings: {  }
   field_phone:
     type: string_textfield
-    weight: 10
+    weight: 11
     region: content
     settings:
       size: 60
@@ -160,7 +161,17 @@ content:
     third_party_settings: {  }
   field_primary_owner_user:
     type: entity_reference_autocomplete
-    weight: 26
+    weight: 21
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_tags:
+    type: entity_reference_autocomplete
+    weight: 15
     region: content
     settings:
       match_operator: CONTAINS
@@ -170,7 +181,7 @@ content:
     third_party_settings: {  }
   field_venue_type:
     type: tagify_select_widget
-    weight: 2
+    weight: 3
     region: content
     settings:
       match_operator: CONTAINS
@@ -181,7 +192,7 @@ content:
     third_party_settings: {  }
   field_website:
     type: link_default
-    weight: 11
+    weight: 12
     region: content
     settings:
       placeholder_url: ''
@@ -196,13 +207,13 @@ content:
     third_party_settings: {  }
   path:
     type: path
-    weight: 7
+    weight: 8
     region: content
     settings: {  }
     third_party_settings: {  }
   status:
     type: boolean_checkbox
-    weight: 9
+    weight: 10
     region: content
     settings:
       display_label: true
@@ -217,7 +228,7 @@ content:
     third_party_settings: {  }
   uid:
     type: entity_reference_autocomplete
-    weight: 5
+    weight: 6
     region: content
     settings:
       match_operator: CONTAINS
@@ -226,7 +237,7 @@ content:
       placeholder: ''
     third_party_settings: {  }
   url_redirects:
-    weight: 8
+    weight: 9
     region: content
     settings: {  }
     third_party_settings: {  }
