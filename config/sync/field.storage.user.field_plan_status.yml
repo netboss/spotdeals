@@ -14,6 +14,24 @@ settings:
     -
       value: active
       label: Active
+    -
+      value: inactive
+      label: Inactive
+    -
+      value: trialing
+      label: Trialing
+    -
+      value: canceling
+      label: Canceling
+    -
+      value: past_due
+      label: 'Past due'
+    -
+      value: unpaid
+      label: Unpaid
+    -
+      value: canceled
+      label: Canceled
   allowed_values_function: ''
 module: options
 locked: false

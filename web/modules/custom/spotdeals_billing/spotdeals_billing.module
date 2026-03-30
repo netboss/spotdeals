@@ -1,0 +1,227 @@
+<?php
+
+use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
+use Drupal\user\Entity\User;
+use Drupal\user\UserInterface;
+
+/**
+ * Implements hook_entity_view().
+ */
+function spotdeals_billing_entity_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+  if (!$entity instanceof UserInterface) {
+    return;
+  }
+
+  $current_user = \Drupal::currentUser();
+  if ($current_user->isAnonymous()) {
+    return;
+  }
+
+  // Only show on the logged-in user's own profile page.
+  if ((int) $entity->id() !== (int) $current_user->id()) {
+    return;
+  }
+
+  $route_match = \Drupal::routeMatch();
+  $route_name = $route_match->getRouteName();
+  if ($route_name !== 'entity.user.canonical') {
+    return;
+  }
+
+  $plan_tier = trim((string) ($entity->get('field_plan_tier')->value ?? ''));
+  $plan_status = trim((string) ($entity->get('field_plan_status')->value ?? ''));
+  $plan_renew_at = trim((string) ($entity->get('field_plan_renew_at')->value ?? ''));
+
+  $plan_label = _spotdeals_billing_plan_label($plan_tier);
+  $status_label = _spotdeals_billing_status_label($plan_status, $plan_renew_at);
+  $renew_label = _spotdeals_billing_format_renew_date($plan_renew_at);
+
+  $show_manage_billing = _spotdeals_billing_should_show_manage_billing($plan_tier, $plan_status);
+  $show_upgrade_link = _spotdeals_billing_should_show_upgrade_link($plan_tier, $plan_status);
+
+  $markup = '<section class="spotdeals-billing-status" style="margin: 0 0 2rem 0; padding: 1rem 1.25rem; border: 1px solid #dcdfe4; border-radius: 10px; background: #fafafa;">';
+  $markup .= '<h2 style="margin: 0 0 0.75rem 0; font-size: 1.25rem;">Subscription</h2>';
+  $markup .= '<div style="margin-bottom: 0.35rem;"><strong>Plan:</strong> ' . htmlspecialchars($plan_label, ENT_QUOTES, 'UTF-8') . '</div>';
+  $markup .= '<div style="margin-bottom: 0.35rem;"><strong>Status:</strong> ' . htmlspecialchars($status_label, ENT_QUOTES, 'UTF-8') . '</div>';
+
+  if ($renew_label !== '' && in_array(strtolower($plan_status), ['active', 'canceling', 'trialing'], TRUE)) {
+    $renew_label_prefix = strtolower($plan_status) === 'canceling' ? 'Access until:' : 'Renews:';
+    $markup .= '<div style="margin-bottom: 0.75rem;"><strong>' . htmlspecialchars($renew_label_prefix, ENT_QUOTES, 'UTF-8') . '</strong> ' . htmlspecialchars($renew_label, ENT_QUOTES, 'UTF-8') . '</div>';
+  }
+
+  if ($show_manage_billing) {
+    $manage_billing_link = Link::fromTextAndUrl(
+      'Manage billing',
+      Url::fromUserInput('/account/billing')
+    )->toString();
+
+    $markup .= '<div>' . $manage_billing_link . '</div>';
+  }
+  elseif ($show_upgrade_link) {
+    $upgrade_link = Link::fromTextAndUrl(
+      'Upgrade to Pro',
+      Url::fromRoute('spotdeals_billing.upgrade')
+    )->toString();
+
+    $markup .= '<div>' . $upgrade_link . '</div>';
+  }
+
+  $markup .= '</section>';
+
+  $build['spotdeals_billing_subscription_box'] = [
+    '#type' => 'markup',
+    '#markup' => $markup,
+    '#weight' => -100,
+  ];
+}
+
+/**
+ * Returns TRUE when the given user currently has Pro access.
+ */
+function spotdeals_billing_user_has_pro_access(?UserInterface $account = NULL): bool {
+  if (!$account) {
+    $current_user = \Drupal::currentUser();
+
+    if ($current_user->isAnonymous()) {
+      return FALSE;
+    }
+
+    $account = User::load($current_user->id());
+  }
+
+  if (!$account instanceof UserInterface) {
+    return FALSE;
+  }
+
+  $plan_tier = strtolower(trim((string) ($account->get('field_plan_tier')->value ?? '')));
+  $plan_status = strtolower(trim((string) ($account->get('field_plan_status')->value ?? '')));
+
+  if ($plan_tier !== 'pro') {
+    return FALSE;
+  }
+
+  return in_array($plan_status, ['active', 'trialing', 'canceling', 'past_due', 'unpaid'], TRUE);
+}
+
+/**
+ * Returns TRUE when the current user currently has Pro access.
+ */
+function spotdeals_billing_current_user_has_pro_access(): bool {
+  return spotdeals_billing_user_has_pro_access();
+}
+
+/**
+ * Builds a human-friendly plan label.
+ */
+function _spotdeals_billing_plan_label(string $plan_tier): string {
+  $normalized = strtolower(trim($plan_tier));
+
+  switch ($normalized) {
+    case 'pro':
+      return 'Pro';
+
+    case 'free':
+    case '':
+      return 'Free';
+
+    default:
+      return ucwords(str_replace(['_', '-'], ' ', $normalized));
+  }
+}
+
+/**
+ * Builds a human-friendly status label.
+ */
+function _spotdeals_billing_status_label(string $plan_status, string $plan_renew_at): string {
+  $normalized = strtolower(trim($plan_status));
+  $renew_label = _spotdeals_billing_format_renew_date($plan_renew_at);
+
+  switch ($normalized) {
+    case 'active':
+      return 'Active';
+
+    case 'trialing':
+      return 'Trialing';
+
+    case 'canceling':
+      return $renew_label !== ''
+        ? 'Active (cancels ' . $renew_label . ')'
+        : 'Active (scheduled to cancel)';
+
+    case 'past_due':
+      return 'Past due';
+
+    case 'unpaid':
+      return 'Unpaid';
+
+    case 'canceled':
+      return 'Canceled';
+
+    case 'inactive':
+    case '':
+      return 'Inactive';
+
+    default:
+      return ucwords(str_replace(['_', '-'], ' ', $normalized));
+  }
+}
+
+/**
+ * Determines whether the manage billing link should be shown.
+ */
+function _spotdeals_billing_should_show_manage_billing(string $plan_tier, string $plan_status): bool {
+  $normalized_tier = strtolower(trim($plan_tier));
+  $normalized_status = strtolower(trim($plan_status));
+
+  if ($normalized_tier === '' || $normalized_tier === 'free') {
+    return FALSE;
+  }
+
+  $allowed_statuses = [
+    'active',
+    'trialing',
+    'canceling',
+    'past_due',
+    'unpaid',
+    'canceled',
+  ];
+
+  return in_array($normalized_status, $allowed_statuses, TRUE);
+}
+
+/**
+ * Determines whether the upgrade CTA should be shown.
+ */
+function _spotdeals_billing_should_show_upgrade_link(string $plan_tier, string $plan_status): bool {
+  $normalized_tier = strtolower(trim($plan_tier));
+  $normalized_status = strtolower(trim($plan_status));
+
+  if ($normalized_tier === '' || $normalized_tier === 'free') {
+    return TRUE;
+  }
+
+  return in_array($normalized_status, ['inactive', 'canceled'], TRUE);
+}
+
+/**
+ * Formats the renewal date for display.
+ */
+function _spotdeals_billing_format_renew_date(string $plan_renew_at): string {
+  $plan_renew_at = trim($plan_renew_at);
+
+  if ($plan_renew_at === '') {
+    return '';
+  }
+
+  try {
+    $date = new DrupalDateTime($plan_renew_at);
+    return $date->format('M j, Y');
+  }
+  catch (\Exception $e) {
+    return '';
+  }
+}
