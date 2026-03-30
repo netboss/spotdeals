@@ -52,17 +52,41 @@ class BillingController extends ControllerBase {
    * Upgrade page.
    */
   public function upgradePage() {
+    $account = $this->entityTypeManager()->getStorage('user')->load($this->currentUserProxy->id());
+
+    // 🚫 If already Pro → redirect to billing portal
+    if ($account instanceof UserInterface && spotdeals_billing_user_has_pro_access($account)) {
+      return new RedirectResponse(Url::fromRoute('spotdeals_billing.portal')->toString());
+    }
+
     $monthly_url = Url::fromRoute('spotdeals_billing.checkout', ['plan' => 'monthly']);
     $yearly_url = Url::fromRoute('spotdeals_billing.checkout', ['plan' => 'yearly']);
     $billing_url = Url::fromRoute('spotdeals_billing.portal');
 
-    return [
+    $plan_tier = '';
+    $plan_status = '';
+    $plan_renew_at = '';
+
+    if ($account instanceof UserInterface) {
+      $plan_tier = trim((string) ($account->get('field_plan_tier')->value ?? ''));
+      $plan_status = trim((string) ($account->get('field_plan_status')->value ?? ''));
+      $plan_renew_at = trim((string) ($account->get('field_plan_renew_at')->value ?? ''));
+    }
+
+    $current_plan_markup = '';
+    if ($plan_tier !== '' || $plan_status !== '') {
+      $plan_label = _spotdeals_billing_plan_label($plan_tier);
+      $status_label = _spotdeals_billing_status_label($plan_status, $plan_renew_at);
+      $current_plan_markup = '<p><strong>Current plan:</strong> ' . $plan_label . ' &middot; ' . $status_label . '</p>';
+    }
+
+    $build = [
       '#type' => 'container',
       '#attributes' => [
         'class' => ['spotdeals-billing-upgrade-page'],
       ],
       'intro' => [
-        '#markup' => '<p>Upgrade to Pro to manage unlimited listings and multiple locations.</p>',
+        '#markup' => '<p>Upgrade to Pro to manage unlimited listings and multiple locations.</p>' . $current_plan_markup,
       ],
       'plans' => [
         '#type' => 'container',
@@ -95,18 +119,24 @@ class BillingController extends ControllerBase {
           ],
         ],
       ],
-      'manage' => [
+      '#cache' => [
+        'contexts' => ['user'],
+      ],
+    ];
+
+    // Show billing link ONLY if user somehow has billing access
+    if ($account instanceof UserInterface && _spotdeals_billing_should_show_manage_billing($plan_tier, $plan_status)) {
+      $build['manage'] = [
         '#type' => 'container',
         'link' => [
           '#type' => 'link',
           '#title' => $this->t('Manage existing billing'),
           '#url' => $billing_url,
         ],
-      ],
-      '#cache' => [
-        'contexts' => ['user'],
-      ],
-    ];
+      ];
+    }
+
+    return $build;
   }
 
   /**
@@ -118,6 +148,12 @@ class BillingController extends ControllerBase {
     if (!$account instanceof UserInterface) {
       $this->messenger()->addError($this->t('Unable to load your account.'));
       return new RedirectResponse(Url::fromRoute('<front>')->toString());
+    }
+
+    // 🚫 Already Pro → no need to checkout again
+    if (spotdeals_billing_user_has_pro_access($account)) {
+      $this->messenger()->addStatus($this->t('Your Pro access is already active.'));
+      return new RedirectResponse(Url::fromRoute('spotdeals_billing.portal')->toString());
     }
 
     try {
@@ -144,6 +180,12 @@ class BillingController extends ControllerBase {
       return new RedirectResponse(Url::fromRoute('<front>')->toString());
     }
 
+    // 🚫 HARD GATE — Free users blocked
+    if (!spotdeals_billing_user_has_pro_access($account)) {
+      $this->messenger()->addError($this->t('You need a Pro plan to manage billing.'));
+      return new RedirectResponse(Url::fromRoute('spotdeals_billing.upgrade')->toString());
+    }
+
     try {
       $portal_url = $this->stripeBilling->createBillingPortalUrl($account);
       return new TrustedRedirectResponse($portal_url);
@@ -152,7 +194,7 @@ class BillingController extends ControllerBase {
       $this->getLogger('spotdeals_billing')->error('Stripe portal error: @message', [
         '@message' => $e->getMessage(),
       ]);
-      $this->messenger()->addError($this->t('Billing portal is not available yet for this account.'));
+      $this->messenger()->addError($this->t('Billing portal is not available right now.'));
       return new RedirectResponse(Url::fromRoute('spotdeals_billing.upgrade')->toString());
     }
   }

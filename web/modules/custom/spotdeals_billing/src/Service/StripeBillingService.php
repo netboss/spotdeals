@@ -276,8 +276,9 @@ class StripeBillingService {
       return;
     }
 
-    $status = (string) ($subscription->status ?? '');
-    $is_pro = in_array($status, ['active', 'trialing'], TRUE);
+    $raw_status = (string) ($subscription->status ?? '');
+    $resolved_status = $this->resolveDrupalPlanStatus($subscription, $raw_status);
+    $is_pro = $this->subscriptionShouldHaveProAccess($subscription, $raw_status, $resolved_status);
 
     if ($customer_id !== '') {
       $this->setUserFieldValue($user, 'field_stripe_customer_id', $customer_id);
@@ -287,7 +288,14 @@ class StripeBillingService {
       $this->setUserFieldValue($user, 'field_stripe_subscription_id', $subscription_id);
     }
 
-    $this->setUserFieldValue($user, 'field_plan_status', $status);
+    $resolved_status_value = $this->resolveUserPlanStatusValue([
+      $resolved_status,
+      $raw_status,
+      $resolved_status === 'canceling' ? 'active' : '',
+    ]);
+    if ($resolved_status_value !== NULL) {
+      $this->setUserFieldValue($user, 'field_plan_status', $resolved_status_value);
+    }
 
     $resolved_plan_value = $this->resolveUserPlanTierValue($is_pro ? ['pro'] : ['free']);
     if ($resolved_plan_value !== NULL) {
@@ -307,6 +315,16 @@ class StripeBillingService {
       $iso_date = gmdate('Y-m-d\TH:i:s', $current_period_end);
       $this->setUserFieldValue($user, 'field_plan_renew_at', $iso_date);
     }
+    else {
+      $this->clearUserFieldValue($user, 'field_plan_renew_at');
+    }
+
+    if (!$is_pro && in_array($resolved_status, ['inactive', 'canceled'], TRUE)) {
+      $resolved_free_plan_value = $this->resolveUserPlanTierValue(['free']);
+      if ($resolved_free_plan_value !== NULL) {
+        $this->setUserFieldValue($user, 'field_plan_tier', $resolved_free_plan_value);
+      }
+    }
 
     $this->logger->notice(
       'Stripe renewal timestamp resolved. Event: @event_id, Subscription: @subscription_id, current_period_end: @current_period_end',
@@ -320,12 +338,13 @@ class StripeBillingService {
     $user->save();
 
     $this->logger->notice(
-      'Stripe subscription sync complete. Event: @event_id, Type: @event_type, UID: @uid, Status: @status, Resolved plan tier: @plan, cancel_at_period_end: @cancel_at_period_end',
+      'Stripe subscription sync complete. Event: @event_id, Type: @event_type, UID: @uid, Raw status: @raw_status, Resolved status: @resolved_status, Resolved plan tier: @plan, cancel_at_period_end: @cancel_at_period_end',
       [
         '@event_id' => $event_id ?: 'unknown',
         '@event_type' => $event_type ?: 'unknown',
         '@uid' => $user->id(),
-        '@status' => $status ?: 'unknown',
+        '@raw_status' => $raw_status ?: 'unknown',
+        '@resolved_status' => $resolved_status ?: 'unknown',
         '@plan' => $resolved_plan_value ?: 'unresolved',
         '@cancel_at_period_end' => !empty($subscription->cancel_at_period_end) ? 'true' : 'false',
       ]
@@ -365,6 +384,49 @@ class StripeBillingService {
   }
 
   /**
+   * Resolves the Drupal-visible plan status from Stripe subscription data.
+   */
+  protected function resolveDrupalPlanStatus($subscription, string $raw_status): string {
+    $normalized_status = strtolower(trim($raw_status));
+    $cancel_at_period_end = !empty($subscription->cancel_at_period_end);
+
+    if (in_array($normalized_status, ['active', 'trialing'], TRUE) && $cancel_at_period_end) {
+      return 'canceling';
+    }
+
+    switch ($normalized_status) {
+      case 'active':
+      case 'trialing':
+      case 'past_due':
+      case 'unpaid':
+      case 'canceled':
+      case 'incomplete':
+      case 'incomplete_expired':
+        return $normalized_status;
+
+      case '':
+        return 'inactive';
+
+      default:
+        return $normalized_status;
+    }
+  }
+
+  /**
+   * Determines whether the subscription should keep Pro access.
+   */
+  protected function subscriptionShouldHaveProAccess($subscription, string $raw_status, string $resolved_status): bool {
+    $normalized_raw_status = strtolower(trim($raw_status));
+    $normalized_resolved_status = strtolower(trim($resolved_status));
+
+    if (in_array($normalized_resolved_status, ['canceling', 'active', 'trialing', 'past_due', 'unpaid'], TRUE)) {
+      return TRUE;
+    }
+
+    return in_array($normalized_raw_status, ['active', 'trialing'], TRUE);
+  }
+
+  /**
    * Resolves the actual stored key for field_plan_tier.
    */
   protected function resolveUserPlanTierValue(array $candidates) {
@@ -383,7 +445,49 @@ class StripeBillingService {
 
     $normalized_candidates = [];
     foreach ($candidates as $candidate) {
-      $normalized_candidates[] = mb_strtolower(trim($candidate));
+      $candidate = trim((string) $candidate);
+      if ($candidate !== '') {
+        $normalized_candidates[] = mb_strtolower($candidate);
+      }
+    }
+
+    foreach ($allowed_values as $key => $label) {
+      $normalized_key = mb_strtolower(trim((string) $key));
+      $normalized_label = mb_strtolower(trim((string) $label));
+
+      foreach ($normalized_candidates as $candidate) {
+        if ($candidate === $normalized_key || $candidate === $normalized_label) {
+          return (string) $key;
+        }
+      }
+    }
+
+    return NULL;
+  }
+
+  /**
+   * Resolves the actual stored key for field_plan_status.
+   */
+  protected function resolveUserPlanStatusValue(array $candidates) {
+    $field_definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('user', 'user');
+
+    if (empty($field_definitions['field_plan_status'])) {
+      return NULL;
+    }
+
+    $settings = $field_definitions['field_plan_status']->getSettings();
+    $allowed_values = $settings['allowed_values'] ?? [];
+
+    if (!is_array($allowed_values) || !$allowed_values) {
+      return NULL;
+    }
+
+    $normalized_candidates = [];
+    foreach ($candidates as $candidate) {
+      $candidate = trim((string) $candidate);
+      if ($candidate !== '') {
+        $normalized_candidates[] = mb_strtolower($candidate);
+      }
     }
 
     foreach ($allowed_values as $key => $label) {
@@ -461,6 +565,15 @@ class StripeBillingService {
   protected function setUserFieldValue(UserInterface $user, $field_name, $value) {
     if ($user->hasField($field_name)) {
       $user->set($field_name, $value);
+    }
+  }
+
+  /**
+   * Clears a field only if it exists on the user.
+   */
+  protected function clearUserFieldValue(UserInterface $user, $field_name) {
+    if ($user->hasField($field_name)) {
+      $user->set($field_name, NULL);
     }
   }
 
