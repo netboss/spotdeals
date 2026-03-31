@@ -1133,7 +1133,7 @@ display:
           admin_label: 'Venue: Content'
           entity_type: node
           plugin_id: search_api
-          required: false
+          required: true
           skip_access: false
       use_ajax: false
       header:
