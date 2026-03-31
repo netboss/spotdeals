@@ -54,6 +54,24 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
 
     $request = \Drupal::request();
 
+    $recommended_nids = $request->attributes->get('spotdeals_search_smart_location.recommended_deal_nids');
+    if (is_array($recommended_nids)) {
+      $recommended_nids = array_values(array_unique(array_map('intval', $recommended_nids)));
+      if (!empty($recommended_nids)) {
+        $operator = count($recommended_nids) > 1 ? 'IN' : '=';
+        $value = count($recommended_nids) > 1 ? $recommended_nids : $recommended_nids[0];
+        $query->addCondition('nid', $value, $operator);
+
+        \Drupal::logger('spotdeals_search_smart_location')->notice(
+          'SMART LOCATION subscriber constrained query to recommended deal IDs at PRE_QUERY: nids="@nids" operator="@operator"',
+          [
+            '@nids' => implode(',', $recommended_nids),
+            '@operator' => $operator,
+          ]
+        );
+      }
+    }
+
     $origin_mode = (string) $request->query->get('search_origin_mode', '');
     $origin_lat = $request->query->get('origin_lat');
     $origin_lon = $request->query->get('origin_lon');
