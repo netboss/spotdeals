@@ -1,6 +1,17 @@
 (function (Drupal, once) {
   'use strict';
 
+  const FRESH_SEARCH_PARAMS = [
+    'search_raw',
+    'search_clean',
+    'search_origin_mode',
+    'origin_lat',
+    'origin_lon',
+    'postal_code_exact',
+    'locality_exact',
+    'page'
+  ];
+
   function ensureHidden(form, name) {
     let input = form.querySelector(`input[name="${name}"]`);
     if (!input) {
@@ -14,6 +25,13 @@
 
   function getSearchInput(form) {
     return form.querySelector('input[name="search_deals"], input[name="search_api_fulltext"]');
+  }
+
+  function normalizeSearchValue(value) {
+    return (value || '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   function cleanNearMe(value) {
@@ -32,14 +50,79 @@
     return /reset/i.test(name) || /reset/i.test(value) || /reset/i.test(text);
   }
 
-  function clearNearMeState(form) {
-    ensureHidden(form, 'search_raw').value = '';
-    ensureHidden(form, 'search_clean').value = '';
-    ensureHidden(form, 'search_origin_mode').value = '';
-    ensureHidden(form, 'origin_lat').value = '';
-    ensureHidden(form, 'origin_lon').value = '';
+  function stripActionQuery(form) {
+    const action = form.getAttribute('action') || window.location.pathname;
+    const cleanAction = action.split('?')[0];
+    form.setAttribute('action', cleanAction);
+  }
+
+  function setHiddenValue(form, name, value) {
+    ensureHidden(form, name).value = value;
+  }
+
+  function clearFreshSearchState(form) {
+    FRESH_SEARCH_PARAMS.forEach(function (name) {
+      setHiddenValue(form, name, '');
+    });
+
     delete form.dataset.spotdealsNearMeResolved;
     delete form.dataset.spotdealsNearMePending;
+  }
+
+  function clearNearMeOnlyState(form) {
+    setHiddenValue(form, 'search_clean', '');
+    setHiddenValue(form, 'search_origin_mode', '');
+    setHiddenValue(form, 'origin_lat', '');
+    setHiddenValue(form, 'origin_lon', '');
+
+    delete form.dataset.spotdealsNearMeResolved;
+    delete form.dataset.spotdealsNearMePending;
+  }
+
+  function getInitialSubmittedValue(form, searchInput) {
+    const url = new URL(window.location.href);
+
+    const candidates = [
+      url.searchParams.get('search_raw'),
+      url.searchParams.get('search_deals'),
+      url.searchParams.get('search_api_fulltext'),
+      searchInput ? searchInput.defaultValue : '',
+      searchInput ? searchInput.value : ''
+    ];
+
+    for (let i = 0; i < candidates.length; i++) {
+      const value = (candidates[i] || '').trim();
+      if (value !== '') {
+        return value;
+      }
+    }
+
+    return '';
+  }
+
+  function ensureLastSubmittedKeywords(form, searchInput) {
+    if (typeof form.dataset.spotdealsLastSubmittedKeywords !== 'undefined') {
+      return;
+    }
+
+    form.dataset.spotdealsLastSubmittedKeywords = normalizeSearchValue(
+      getInitialSubmittedValue(form, searchInput)
+    );
+  }
+
+  function keywordsChanged(form, searchInput) {
+    ensureLastSubmittedKeywords(form, searchInput);
+
+    const currentValue = normalizeSearchValue(searchInput ? searchInput.value : '');
+    const lastSubmittedValue = form.dataset.spotdealsLastSubmittedKeywords || '';
+
+    return currentValue !== lastSubmittedValue;
+  }
+
+  function rememberSubmittedKeywords(form, searchInput) {
+    form.dataset.spotdealsLastSubmittedKeywords = normalizeSearchValue(
+      searchInput ? searchInput.value : ''
+    );
   }
 
   function submitPreparedForm(form, submitter) {
@@ -69,6 +152,21 @@
   Drupal.behaviors.spotdealsNearMe = {
     attach(context) {
       once('spotdeals-near-me', 'form.views-exposed-form', context).forEach((form) => {
+        const searchInput = getSearchInput(form);
+
+        if (!searchInput) {
+          return;
+        }
+
+        ensureLastSubmittedKeywords(form, searchInput);
+
+        let lastClickedSubmitter = null;
+
+        searchInput.addEventListener('input', function () {
+          delete form.dataset.spotdealsNearMeResolved;
+          delete form.dataset.spotdealsNearMePending;
+        });
+
         form.addEventListener('click', function (event) {
           const target = event.target;
           if (!(target instanceof Element)) {
@@ -80,13 +178,49 @@
             return;
           }
 
+          lastClickedSubmitter = button;
+
           if (isResetButton(button)) {
-            clearNearMeState(form);
+            clearFreshSearchState(form);
+            form.dataset.spotdealsLastSubmittedKeywords = '';
+            stripActionQuery(form);
+          }
+        }, true);
+
+        form.addEventListener('submit', function (event) {
+          const submitter = event.submitter || lastClickedSubmitter;
+          const currentSearchInput = getSearchInput(form);
+
+          if (!currentSearchInput) {
+            return;
+          }
+
+          stripActionQuery(form);
+
+          if (isResetButton(submitter)) {
+            clearFreshSearchState(form);
+            form.dataset.spotdealsLastSubmittedKeywords = '';
+            return;
+          }
+
+          const rawValue = (currentSearchInput.value || '').trim();
+          const hasKeywordChange = keywordsChanged(form, currentSearchInput);
+
+          if (hasKeywordChange) {
+            clearFreshSearchState(form);
+          }
+
+          setHiddenValue(form, 'search_raw', rawValue);
+
+          if (!/\bnear\s+me\b/i.test(rawValue)) {
+            clearNearMeOnlyState(form);
+            rememberSubmittedKeywords(form, currentSearchInput);
             return;
           }
 
           if (form.dataset.spotdealsNearMeResolved === '1') {
             delete form.dataset.spotdealsNearMeResolved;
+            rememberSubmittedKeywords(form, currentSearchInput);
             return;
           }
 
@@ -96,30 +230,20 @@
             return;
           }
 
-          const searchInput = getSearchInput(form);
-          if (!searchInput) {
-            return;
-          }
-
-          const originalValue = (searchInput.value || '').trim();
-          if (!/\bnear\s+me\b/i.test(originalValue)) {
-            ensureHidden(form, 'search_clean').value = '';
-            return;
-          }
-
           event.preventDefault();
           event.stopImmediatePropagation();
 
           form.dataset.spotdealsNearMePending = '1';
 
-          ensureHidden(form, 'search_origin_mode').value = 'browser';
-          ensureHidden(form, 'search_raw').value = originalValue;
-          ensureHidden(form, 'search_clean').value = cleanNearMe(originalValue);
-          ensureHidden(form, 'origin_lat').value = '';
-          ensureHidden(form, 'origin_lon').value = '';
+          setHiddenValue(form, 'search_origin_mode', 'browser');
+          setHiddenValue(form, 'search_raw', rawValue);
+          setHiddenValue(form, 'search_clean', cleanNearMe(rawValue));
+          setHiddenValue(form, 'origin_lat', '');
+          setHiddenValue(form, 'origin_lon', '');
 
           const finish = function () {
-            submitPreparedForm(form, button);
+            rememberSubmittedKeywords(form, currentSearchInput);
+            submitPreparedForm(form, submitter);
           };
 
           if (!navigator.geolocation) {
@@ -129,8 +253,8 @@
 
           navigator.geolocation.getCurrentPosition(
             function (position) {
-              ensureHidden(form, 'origin_lat').value = String(position.coords.latitude);
-              ensureHidden(form, 'origin_lon').value = String(position.coords.longitude);
+              setHiddenValue(form, 'origin_lat', String(position.coords.latitude));
+              setHiddenValue(form, 'origin_lon', String(position.coords.longitude));
               finish();
             },
             function () {
