@@ -38,7 +38,25 @@ process:
   field_address/address_line1: field_address_address_line1
   field_address/locality: field_address_locality
   field_address/administrative_area: field_address_administrative_area
-  field_address/postal_code: field_address_postal_code
+
+  _postal_code_trimmed:
+    - plugin: skip_on_empty
+      method: process
+      source: field_address_postal_code
+    - plugin: callback
+      callable: trim
+
+  field_address/postal_code:
+    - plugin: skip_on_empty
+      method: process
+      source: '@_postal_code_trimmed'
+    - plugin: callback
+      callable: preg_replace
+      unpack_source: true
+      source:
+        - '/\.0$/'
+        - ''
+        - '@_postal_code_trimmed'
 
   field_latitude:
     - plugin: skip_on_empty
