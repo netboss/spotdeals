@@ -12,3 +12,9 @@ services:
     arguments:
       - '@entity_type.manager'
       - '@spotdeals_search_smart_location.near_me_result_extractor'
+
+  spotdeals_search_smart_location.recommendation_service:
+    class: Drupal\spotdeals_search_smart_location\RecommendationService
+    arguments:
+      - '@spotdeals_search_smart_location.near_me_ranker'
+      - '@entity_type.manager'

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
 use Drupal\views\ViewExecutable;
 
@@ -38,8 +39,10 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
     '#value' => '',
   ];
 
-  $request = \Drupal::request();
+  $form['#validate'][] = 'spotdeals_search_smart_location_recommendation_validate';
+  $form['#submit'][] = 'spotdeals_search_smart_location_exposed_form_submit';
 
+  $request = \Drupal::request();
   $is_reset_request = FALSE;
   foreach (['reset', 'op'] as $key) {
     $value = $request->query->get($key);
@@ -49,7 +52,40 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
     }
   }
 
+  $recommendation_mode = !$is_reset_request
+    && _spotdeals_search_smart_location_is_recommendation_mode($request->query->all());
+  $recommendation_cuisines_value = $is_reset_request
+    ? ''
+    : (string) $request->query->get('recommendation_cuisines', '');
+
+  $form['help_me_choose'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Help me choose'),
+    '#default_value' => $recommendation_mode ? 1 : 0,
+    '#weight' => 100,
+  ];
+
+  $form['recommendation_cuisines'] = [
+    '#type' => 'textfield',
+    '#title' => t('Cuisine preferences'),
+    '#default_value' => $recommendation_cuisines_value,
+    '#description' => t('Enter 2 to 5 cuisine ideas separated by spaces, for example: mexican bbq thai'),
+    '#size' => 60,
+    '#maxlength' => 255,
+    '#weight' => 101,
+    '#states' => [
+      'visible' => [
+        ':input[name="help_me_choose"]' => ['checked' => TRUE],
+      ],
+      'required' => [
+        ':input[name="help_me_choose"]' => ['checked' => TRUE],
+      ],
+    ],
+  ];
+
   if ($is_reset_request) {
+    $form['help_me_choose']['#default_value'] = 0;
+    $form['recommendation_cuisines']['#default_value'] = '';
     if (isset($form['search_deals'])) {
       $form['search_deals']['#default_value'] = '';
       $form['search_deals']['#attributes']['value'] = '';
@@ -143,7 +179,17 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   }
   $raw = trim($raw);
 
-  if ($raw === '') {
+  $recommendation_mode = _spotdeals_search_smart_location_is_recommendation_mode($input + $request->query->all());
+  $recommendation_cuisines = _spotdeals_search_smart_location_parse_recommendation_cuisines(
+    (string) ($input['recommendation_cuisines'] ?? $request->query->get('recommendation_cuisines', ''))
+  );
+  $recommendation_keywords = implode(' ', $recommendation_cuisines);
+
+  $request->attributes->set('spotdeals_search_smart_location.recommendation_mode', $recommendation_mode);
+  $request->attributes->set('spotdeals_search_smart_location.recommendation_cuisines', $recommendation_cuisines);
+  $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', []);
+
+  if ($raw === '' && !$recommendation_mode) {
     return;
   }
 
@@ -171,7 +217,9 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
       (float) $origin_lon
     );
 
-    $keywords = $clean !== '' ? $clean : trim((string) ($parsed['keywords'] ?? ''));
+    $keywords = $recommendation_mode && $recommendation_keywords !== ''
+      ? $recommendation_keywords
+      : ($clean !== '' ? $clean : trim((string) ($parsed['keywords'] ?? '')));
     $keywords = _spotdeals_search_smart_location_normalize_keywords($keywords);
     $keywords = _spotdeals_search_smart_location_expand_keywords($keywords);
 
@@ -200,6 +248,12 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
       ->rankDealNids((float) $origin_lat, (float) $origin_lon, $keywords);
 
     $request->attributes->set('spotdeals_search_smart_location.ranked_deal_nids', $ranked_nids);
+
+    if ($recommendation_mode && !empty($recommendation_cuisines)) {
+      $recommended_nids = \Drupal::service('spotdeals_search_smart_location.recommendation_service')
+        ->recommendDealNids((float) $origin_lat, (float) $origin_lon, $recommendation_cuisines);
+      $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', $recommended_nids);
+    }
 
     \Drupal::logger('spotdeals_search_smart_location')->notice(
       'SMART LOCATION browser near me applied: view="@view" display="@display" raw="@raw" keywords="@keywords" nearest_city="@city" origin_lat="@lat" origin_lon="@lon" ranked_count="@ranked" city_filter="off"',
@@ -235,6 +289,10 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     return;
   }
 
+  if ($recommendation_mode && $recommendation_keywords !== '') {
+    $parsed['keywords'] = $recommendation_keywords;
+  }
+
   $input['search_raw'] = $raw;
   $input[$search_param] = $parsed['keywords'];
 
@@ -266,6 +324,12 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   $origin = _spotdeals_search_smart_location_resolve_origin_from_venues($parsed);
   if ($origin) {
     $request->attributes->set('spotdeals_search_smart_location.origin', $origin);
+
+    if ($recommendation_mode && $recommendation_keywords !== '') {
+      $recommended_nids = \Drupal::service('spotdeals_search_smart_location.recommendation_service')
+        ->recommendDealNids((float) $origin['lat'], (float) $origin['lon'], $recommendation_cuisines);
+      $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', $recommended_nids);
+    }
   }
 
   $view->setExposedInput($input);
@@ -309,6 +373,14 @@ function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $vie
   $exact_city = (string) $request->attributes->get('spotdeals_search_smart_location.city', '');
 
   if (empty($view->result)) {
+    return;
+  }
+
+  $recommendation_mode = (bool) $request->attributes->get('spotdeals_search_smart_location.recommendation_mode', FALSE);
+  $recommended_nids = $request->attributes->get('spotdeals_search_smart_location.recommended_deal_nids');
+
+  if ($recommendation_mode) {
+    _spotdeals_search_smart_location_apply_recommendation_order($view, $recommended_nids);
     return;
   }
 
@@ -569,6 +641,71 @@ function _spotdeals_search_smart_location_apply_city_distance_sort(ViewExecutabl
 }
 
 /**
+ * Applies recommendation ordering and limits the same page results.
+ *
+ * @param array<int,int>|mixed $recommended_nids
+ */
+function _spotdeals_search_smart_location_apply_recommendation_order(ViewExecutable $view, $recommended_nids): void {
+  $order_map = is_array($recommended_nids) ? array_flip(array_values($recommended_nids)) : [];
+  $before_count = count($view->result);
+
+  if (empty($order_map)) {
+    $view->result = [];
+    _spotdeals_search_smart_location_reorder_rendered_fields($view, []);
+    _spotdeals_search_smart_location_sync_filtered_pager($view);
+
+    \Drupal::logger('spotdeals_search_smart_location')->notice(
+      'SMART LOCATION recommendation mode produced no ranked results to display.'
+    );
+    return;
+  }
+
+  $filtered = [];
+  foreach ($view->result as $index => $row) {
+    $deal = _spotdeals_search_smart_location_result_entity($row);
+    if (!$deal instanceof NodeInterface) {
+      continue;
+    }
+
+    $nid = (int) $deal->id();
+    if (!isset($order_map[$nid])) {
+      continue;
+    }
+
+    $row->_spotdeals_recommendation_rank = $order_map[$nid];
+    $row->_spotdeals_original_index = $index;
+    $filtered[] = $row;
+  }
+
+  usort($filtered, static function ($a, $b): int {
+    $a_rank = $a->_spotdeals_recommendation_rank ?? PHP_INT_MAX;
+    $b_rank = $b->_spotdeals_recommendation_rank ?? PHP_INT_MAX;
+    if ($a_rank !== $b_rank) {
+      return $a_rank <=> $b_rank;
+    }
+
+    $a_original = $a->_spotdeals_original_index ?? PHP_INT_MAX;
+    $b_original = $b->_spotdeals_original_index ?? PHP_INT_MAX;
+    return $a_original <=> $b_original;
+  });
+
+  $filtered = array_slice(array_values($filtered), 0, 5);
+
+  $view->result = $filtered;
+  _spotdeals_search_smart_location_reorder_rendered_fields($view, $view->result);
+  _spotdeals_search_smart_location_sync_filtered_pager($view);
+
+  \Drupal::logger('spotdeals_search_smart_location')->notice(
+    'SMART LOCATION recommendation mode reordered same-page results: before="@before" after="@after" ranked_count="@ranked"',
+    [
+      '@before' => (string) $before_count,
+      '@after' => (string) count($view->result),
+      '@ranked' => (string) count($order_map),
+    ]
+  );
+}
+
+/**
  * Forces a specific Views filter handler value.
  */
 function _spotdeals_search_smart_location_force_filter_value(ViewExecutable $view, string $filter_id, string $value): void {
@@ -665,6 +802,92 @@ function _spotdeals_search_smart_location_sync_filtered_pager(ViewExecutable $vi
       $view->pager->updatePageInfo();
     }
   }
+}
+
+/**
+ * Submit handler for the deals finder exposed form.
+ */
+function spotdeals_search_smart_location_exposed_form_submit(array &$form, FormStateInterface $form_state): void {
+  $trigger = $form_state->getTriggeringElement();
+  $trigger_value = '';
+
+  if (is_array($trigger) && isset($trigger['#value']) && is_string($trigger['#value'])) {
+    $trigger_value = strtolower($trigger['#value']);
+  }
+
+  $op_value = $form_state->getValue('op');
+  if ($trigger_value === '' && is_string($op_value)) {
+    $trigger_value = strtolower($op_value);
+  }
+
+  if (strpos($trigger_value, 'reset') === FALSE) {
+    return;
+  }
+
+  $path = \Drupal::request()->getPathInfo();
+  $form_state->setRedirectUrl(Url::fromUserInput($path));
+}
+
+/**
+ * Recommendation-mode validation for the deals finder exposed form.
+ */
+function spotdeals_search_smart_location_recommendation_validate(array &$form, FormStateInterface $form_state): void {
+  $trigger = $form_state->getTriggeringElement();
+  if (is_array($trigger) && isset($trigger['#value']) && is_string($trigger['#value']) && stripos($trigger['#value'], 'reset') !== FALSE) {
+    return;
+  }
+
+  $values = $form_state->getValues();
+  if (!_spotdeals_search_smart_location_is_recommendation_mode($values)) {
+    return;
+  }
+
+  $cuisines = _spotdeals_search_smart_location_parse_recommendation_cuisines(
+    (string) ($values['recommendation_cuisines'] ?? '')
+  );
+
+  if (count($cuisines) < 2) {
+    $form_state->setErrorByName('recommendation_cuisines', t('Please enter at least 2 cuisine preferences for Help me choose.'));
+    return;
+  }
+
+  if (count($cuisines) > 5) {
+    $form_state->setErrorByName('recommendation_cuisines', t('Please enter no more than 5 cuisine preferences for Help me choose.'));
+  }
+}
+
+/**
+ * Returns TRUE when recommendation mode is enabled.
+ *
+ * @param array<string,mixed> $values
+ */
+function _spotdeals_search_smart_location_is_recommendation_mode(array $values): bool {
+  $value = $values['help_me_choose'] ?? FALSE;
+
+  if (is_string($value)) {
+    return in_array(strtolower($value), ['1', 'true', 'on', 'yes'], TRUE);
+  }
+
+  return !empty($value);
+}
+
+/**
+ * Parses recommendation cuisines into normalized tokens.
+ *
+ * @return array<int,string>
+ */
+function _spotdeals_search_smart_location_parse_recommendation_cuisines(string $value): array {
+  $value = strtolower(trim($value));
+  if ($value === '') {
+    return [];
+  }
+
+  $value = preg_replace('/[,|\/]+/', ' ', $value) ?? $value;
+  $value = _spotdeals_search_smart_location_normalize_keywords($value);
+  $parts = preg_split('/\s+/', $value) ?: [];
+  $parts = array_values(array_unique(array_filter(array_map('trim', $parts))));
+
+  return $parts;
 }
 
 /**
@@ -1169,4 +1392,3 @@ function _spotdeals_search_smart_location_haversine_km(float $lat1, float $lon1,
 
   return $earth_radius_km * $angle;
 }
-
