@@ -6,6 +6,7 @@ dependencies:
     - node.type.deal
     - node.type.venue
   module:
+    - contact
     - node
     - webform
 id: venue_owner
@@ -13,6 +14,7 @@ label: 'Venue Owner'
 weight: 4
 is_admin: false
 permissions:
+  - 'access site-wide contact form'
   - 'create deal content'
   - 'create venue content'
   - 'delete own deal content'
