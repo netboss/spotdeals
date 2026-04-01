@@ -1,0 +1,12 @@
+uuid: 29faa627-e388-4b09-b776-e1137c22100b
+langcode: en
+status: true
+dependencies: {  }
+id: spotdeals_contact_form
+label: 'SpotDeals contact form'
+recipients:
+  - admin@spotdeals.app
+reply: "Hi there,\r\n\r\nThanks for contacting SpotDeals — we’ve received your message and our team will review it shortly.\r\n\r\nWe aim to respond as quickly as possible, usually within 24–48 hours.\r\n\r\nWhile you wait, you can explore the best local deals happening near you:\r\n👉 https://spotdeals.app\r\n\r\nIf your message is about:\r\n• Claiming a venue\r\n• Managing your business listing\r\n• Subscription or billing questions\r\n\r\nWe’ve got you covered and will make sure it gets to the right person.\r\n\r\nThanks again for using SpotDeals!\r\n\r\n– The SpotDeals Team"
+weight: 0
+message: "Thanks for reaching out to SpotDeals! 🎉\r\n\r\nWe’ve received your message and will get back to you as soon as possible.\r\n\r\nIn the meantime, feel free to explore the latest deals near you — your next favorite spot might be just around the corner.\r\n\r\n– The SpotDeals Team"
+redirect: /deals
