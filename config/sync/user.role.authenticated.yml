@@ -8,6 +8,7 @@ dependencies:
     - node.type.claim
   module:
     - comment
+    - contact
     - file
     - filter
     - media
@@ -25,6 +26,7 @@ permissions:
   - 'access comments'
   - 'access content'
   - 'access shortcuts'
+  - 'access site-wide contact form'
   - 'create claim content'
   - 'delete own files'
   - 'post comments'
