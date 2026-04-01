@@ -3,7 +3,7 @@ _core:
 langcode: en
 uuid: 420a2bcc-5a7c-4f59-992d-85ce4a2d0d2b
 name: SpotDeals
-mail: igl67@yahoo.com
+mail: admin@spotdeals.app
 slogan: 'Local, time-based deals discovery starting with food and drink'
 page:
   403: ''

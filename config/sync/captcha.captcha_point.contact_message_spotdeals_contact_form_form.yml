@@ -1,0 +1,7 @@
+uuid: 4160ba22-b772-4be3-ba90-6c3e900bf18b
+langcode: en
+status: true
+dependencies: {  }
+formId: contact_message_spotdeals_contact_form_form
+captchaType: recaptcha/reCAPTCHA
+label: contact_message_spotdeals_contact_form_form
