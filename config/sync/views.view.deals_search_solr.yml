@@ -680,7 +680,7 @@ display:
           exclude: false
           alter:
             alter_text: true
-            text: "{% if not field_primary_owner_user %}\r\n  Claim this listing\r\n{% endif %}"
+            text: "{% if not field_primary_owner_user %}\r\n  Claim this listing\r\n{% endif %}\r\n<br><br>\r\n<hr>"
             make_link: true
             path: '/user/login?destination=/create/claim?venue={{ nid }}'
             absolute: false
@@ -751,7 +751,7 @@ display:
               - '1'
               - '@count'
       pager:
-        type: mini
+        type: full
         options:
           offset: 0
           pagination_heading_level: h4
@@ -759,8 +759,10 @@ display:
           total_pages: null
           id: 0
           tags:
-            next: ››
-            previous: ‹‹
+            next: 'Next ›'
+            previous: '‹ Previous'
+            first: '« First'
+            last: 'Last »'
           expose:
             items_per_page: false
             items_per_page_label: 'Items per page'
@@ -769,16 +771,19 @@ display:
             items_per_page_options_all_label: '- All -'
             offset: false
             offset_label: Offset
+          quantity: 9
       exposed_form:
-        type: basic
+        type: input_required
         options:
-          submit_button: 'Find deal'
+          submit_button: 'Find deals'
           reset_button: true
           reset_button_label: Reset
           exposed_sorts_label: 'Sort by'
           expose_sort_order: true
           sort_asc_label: Asc
           sort_desc_label: Desc
+          text_input_required: "<h4>Start typing to find deals near you</h4>\r\n<p>Try:</p>\r\n<ul>\r\n<li>tacos near me</li>\r\n<li>happy hour</li>\r\n<li>monday lunch port orange</li>\r\n<li>mexican daytona beach</li>\r\n<li>bbq orlando</li>\r\n</ul>"
+          text_input_required_format: full_html
       access:
         type: none
         options: {  }
@@ -829,7 +834,7 @@ display:
           exposed: true
           expose:
             operator_id: search_api_fulltext_op
-            label: 'Find Deal'
+            label: 'Find deal near you'
             description: ''
             use_operator: false
             operator: search_api_fulltext_op
@@ -875,7 +880,7 @@ display:
             max: ''
             value: ''
           group: 1
-          exposed: true
+          exposed: false
           expose:
             operator_id: name_op
             label: 'Day of Week » Taxonomy term » Name'
@@ -969,7 +974,7 @@ display:
             max: ''
             value: ''
           group: 1
-          exposed: true
+          exposed: false
           expose:
             operator_id: name_1_op
             label: 'Deal Category » Taxonomy term » Name'
@@ -1158,7 +1163,7 @@ display:
           plugin_id: text
           empty: false
           content:
-            value: "<style>\r\nhr {\r\n  border: 0.5px solid #d9d9d9;\r\n}\r\n\r\nh2 {\r\n  padding-bottom: 0;\r\n  margin-bottom: 0;\r\n  margin-top: 0;\r\n}\r\n\r\nh3 {\r\n  margin-bottom: 0;\r\n  margin-top: 20px;\r\n}\r\n\r\n.views-field.views-field-field-price-offer-text {\r\n  font-size: 18px;\r\n  margin-bottom: 10px;\r\n}\r\n</style>"
+            value: "<style>\r\nhr {\r\n  border: 0.5px solid #d9d9d9;\r\n  margin-bottom: 0;\r\n}\r\n\r\nh2 {\r\n  padding-bottom: 0;\r\n  margin-bottom: 0;\r\n  margin-top: 0;\r\n}\r\n\r\nh3 {\r\n  margin-bottom: 0;\r\n  margin-top: 20px;\r\n}\r\n\r\n.views-field.views-field-field-price-offer-text {\r\n  font-size: 18px;\r\n  margin-bottom: 10px;\r\n}\r\n</style>"
             format: full_html
           tokenize: false
       display_extenders: {  }
