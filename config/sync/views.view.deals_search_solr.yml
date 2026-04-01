@@ -680,7 +680,7 @@ display:
           exclude: false
           alter:
             alter_text: true
-            text: "{% if not field_primary_owner_user %}\r\n  Claim this listing\r\n{% endif %}\r\n<br><br>\r\n<hr>"
+            text: "{% if not field_primary_owner_user %}\r\n  Claim this listing\r\n{% endif %}\r\n<br><br><br>\r\n<hr>"
             make_link: true
             path: '/user/login?destination=/create/claim?venue={{ nid }}'
             absolute: false
@@ -1163,7 +1163,7 @@ display:
           plugin_id: text
           empty: false
           content:
-            value: "<style>\r\nhr {\r\n  border: 0.5px solid #d9d9d9;\r\n  margin-bottom: 0;\r\n}\r\n\r\nh2 {\r\n  padding-bottom: 0;\r\n  margin-bottom: 0;\r\n  margin-top: 0;\r\n}\r\n\r\nh3 {\r\n  margin-bottom: 0;\r\n  margin-top: 20px;\r\n}\r\n\r\n.views-field.views-field-field-price-offer-text {\r\n  font-size: 18px;\r\n  margin-bottom: 10px;\r\n}\r\n</style>"
+            value: "<style>\r\nhr {\r\n  border: 0.5px solid #d9d9d9;\r\n  margin-bottom: 0;\r\n}\r\n\r\n.views-row:last-child hr {\r\n  display: none;\r\n}\r\n\r\nh2 {\r\n  padding-bottom: 0;\r\n  margin-bottom: 0;\r\n  margin-top: 0;\r\n}\r\n\r\nh3 {\r\n  margin-bottom: 0;\r\n  margin-top: 20px;\r\n}\r\n\r\n.views-field.views-field-field-price-offer-text {\r\n  font-size: 18px;\r\n  margin-bottom: 10px;\r\n}\r\n</style>"
             format: full_html
           tokenize: false
       display_extenders: {  }
