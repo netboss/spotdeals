@@ -1152,20 +1152,7 @@ display:
           plugin_id: result
           empty: false
           content: 'Displaying @start - @end of @total'
-      footer:
-        area:
-          id: area
-          table: views
-          field: area
-          relationship: none
-          group_type: group
-          admin_label: ''
-          plugin_id: text
-          empty: false
-          content:
-            value: "<style>\r\nhr {\r\n  border: 0.5px solid #d9d9d9;\r\n  margin-bottom: 0;\r\n}\r\n\r\n.views-row:last-child hr {\r\n  display: none;\r\n}\r\n\r\nh2 {\r\n  padding-bottom: 0;\r\n  margin-bottom: 0;\r\n  margin-top: 0;\r\n}\r\n\r\nh3 {\r\n  margin-bottom: 0;\r\n  margin-top: 20px;\r\n}\r\n\r\n.views-field.views-field-field-price-offer-text {\r\n  font-size: 18px;\r\n  margin-bottom: 10px;\r\n}\r\n</style>"
-            format: full_html
-          tokenize: false
+      footer: {  }
       display_extenders: {  }
     cache_metadata:
       max-age: -1

@@ -43,7 +43,7 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
   }
 
   /**
-   * Applies a hard Solr geofilt and distance-first sort for browser near-me searches.
+   * Applies a hard Solr geofilt for browser near-me searches.
    */
   public function preQuery(PreQueryEvent $event): void {
     $query = $event->getSearchApiQuery();
@@ -54,22 +54,29 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
 
     $request = \Drupal::request();
 
-    $recommended_nids = $request->attributes->get('spotdeals_search_smart_location.recommended_deal_nids');
-    if (is_array($recommended_nids)) {
-      $recommended_nids = array_values(array_unique(array_map('intval', $recommended_nids)));
-      if (!empty($recommended_nids)) {
-        $operator = count($recommended_nids) > 1 ? 'IN' : '=';
-        $value = count($recommended_nids) > 1 ? $recommended_nids : $recommended_nids[0];
-        $query->addCondition('nid', $value, $operator);
+    $recommendation_mode = (bool) $request->attributes->get(
+      'spotdeals_search_smart_location.recommendation_mode',
+      FALSE
+    );
 
-        \Drupal::logger('spotdeals_search_smart_location')->notice(
-          'SMART LOCATION subscriber constrained query to recommended deal IDs at PRE_QUERY: nids="@nids" operator="@operator"',
-          [
-            '@nids' => implode(',', $recommended_nids),
-            '@operator' => $operator,
-          ]
-        );
-      }
+    $recommended_nids = $request->attributes->get('spotdeals_search_smart_location.recommended_deal_nids');
+    $recommended_nids = is_array($recommended_nids)
+      ? array_values(array_unique(array_map('intval', $recommended_nids)))
+      : [];
+
+    if ($recommendation_mode && !empty($recommended_nids)) {
+      $operator = count($recommended_nids) > 1 ? 'IN' : '=';
+      $value = count($recommended_nids) > 1 ? $recommended_nids : $recommended_nids[0];
+      $query->addCondition('nid', $value, $operator);
+
+      \Drupal::logger('spotdeals_search_smart_location')->notice(
+        'SMART LOCATION subscriber constrained query to recommended deal IDs at PRE_QUERY: recommendation_mode="@recommendation_mode" nids="@nids" operator="@operator"',
+        [
+          '@recommendation_mode' => $recommendation_mode ? '1' : '0',
+          '@nids' => implode(',', $recommended_nids),
+          '@operator' => $operator,
+        ]
+      );
     }
 
     $origin_mode = (string) $request->query->get('search_origin_mode', '');
@@ -107,9 +114,10 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
 
     if (!$is_browser_near_me) {
       \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION subscriber skipped geofilt at PRE_QUERY: source="@source" near_me="0" lat="@lat" lon="@lon"',
+        'SMART LOCATION subscriber skipped geofilt at PRE_QUERY: source="@source" near_me="0" recommendation_mode="@recommendation_mode" lat="@lat" lon="@lon"',
         [
           '@source' => $source ?? '',
+          '@recommendation_mode' => $recommendation_mode ? '1' : '0',
           '@lat' => (string) $lat,
           '@lon' => (string) $lon,
         ]
@@ -131,12 +139,25 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
       ->createFilterQuery(self::GEO_FILTER_KEY)
       ->setQuery($geo_filter);
 
-    // Also provide global spatial params so geodist() sorting uses the same point/field.
     $solarium_query->addParam('sfield', self::SOLR_GEO_FIELD);
     $solarium_query->addParam('pt', $pt);
 
-    // Force distance-first ordering at Solr level so the final rendered HTML uses
-    // the same nearest-first order as the query result.
+    if ($recommendation_mode) {
+      \Drupal::logger('spotdeals_search_smart_location')->notice(
+        'SMART LOCATION subscriber applied PRE_QUERY geofilt with recommended-NID query constraint and without forced Solr sort: source="@source" near_me="1" recommendation_mode="1" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq"',
+        [
+          '@source' => $source ?? '',
+          '@lat' => (string) $lat,
+          '@lon' => (string) $lon,
+          '@radius' => (string) self::DEFAULT_RADIUS_KM,
+          '@search_api_geo_field' => self::SEARCH_API_GEO_FIELD,
+          '@solr_geo_field' => self::SOLR_GEO_FIELD,
+          '@fq' => $geo_filter,
+        ]
+      );
+      return;
+    }
+
     if (method_exists($solarium_query, 'clearSorts')) {
       $solarium_query->clearSorts();
     }
@@ -144,12 +165,11 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
       $solarium_query->setSorts([]);
     }
 
-    $distance_sort = sprintf('geodist(%s,%F,%F)', self::SOLR_GEO_FIELD, $lat, $lon);
-    $solarium_query->addSort($distance_sort, 'asc');
+    $solarium_query->addSort('geodist()', 'asc');
     $solarium_query->addSort('score', 'desc');
 
     \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION subscriber applied PRE_QUERY geofilt and forced Solr distance sort: source="@source" near_me="1" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq" sort="@sort"',
+      'SMART LOCATION subscriber applied PRE_QUERY geofilt and forced Solr distance sort: source="@source" near_me="1" recommendation_mode="0" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq" sort="@sort"',
       [
         '@source' => $source ?? '',
         '@lat' => (string) $lat,
@@ -158,7 +178,7 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
         '@search_api_geo_field' => self::SEARCH_API_GEO_FIELD,
         '@solr_geo_field' => self::SOLR_GEO_FIELD,
         '@fq' => $geo_filter,
-        '@sort' => $distance_sort . ' asc, score desc',
+        '@sort' => 'geodist() asc, score desc',
       ]
     );
   }
