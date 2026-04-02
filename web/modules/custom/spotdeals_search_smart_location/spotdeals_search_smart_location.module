@@ -60,7 +60,7 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
 
   $form['help_me_choose'] = [
     '#type' => 'checkbox',
-    '#title' => t('Help me choose'),
+    '#title' => t('Not sure what to eat? We’ll pick for you!'),
     '#default_value' => $recommendation_mode ? 1 : 0,
     '#weight' => 100,
   ];
