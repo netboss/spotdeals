@@ -8,8 +8,8 @@
   --spotdeals-text-soft: #5b6472;
   --spotdeals-accent: #8db61f;
   --spotdeals-accent-dark: #6f9117;
-  --spotdeals-radius: 16px;
-  --spotdeals-radius-sm: 10px;
+  --spotdeals-radius: 8px;
+  --spotdeals-radius-sm: 5px;
   --spotdeals-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
   --spotdeals-shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.035);
   --spotdeals-space-1: 0.5rem;
@@ -188,7 +188,7 @@ h1.page-title {
 .spotdeals-finder__filters input[type="reset"],
 .spotdeals-finder__filters button {
   min-height: 2.9rem;
-  border-radius: 12px;
+  border-radius: 6px;
   font-weight: 700;
   transition:
     background-color 0.2s ease,

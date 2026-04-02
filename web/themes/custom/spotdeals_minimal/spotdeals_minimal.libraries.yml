@@ -4,3 +4,4 @@ global:
     theme:
       css/style.css: {}
       css/views.css: {}
+      css/form.css: {}
