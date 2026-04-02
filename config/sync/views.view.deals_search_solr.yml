@@ -782,13 +782,13 @@ display:
           expose_sort_order: true
           sort_asc_label: Asc
           sort_desc_label: Desc
-          text_input_required: "<h4>Start typing to find deals near you</h4>\r\n<p>Try:</p>\r\n<ul>\r\n<li>tacos near me</li>\r\n<li>happy hour</li>\r\n<li>monday lunch port orange</li>\r\n<li>mexican daytona beach</li>\r\n<li>bbq orlando</li>\r\n</ul>"
+          text_input_required: "<h4>Search using food, time, or location — or combine them</h4>\r\n<p>Try:</p>\r\n<ul>\r\n<li>tacos</li>\r\n<li>happy hour</li>\r\n<li>lunch port orange</li>\r\n<li>mexican daytona beach</li>\r\n<li>bbq orlando</li>\r\n<li>arepas tampa</a>\r\n<li>cuban miami</li>\r\n</ul>\r\n<h4>Not sure what you want?</h4>\r\n<p>Select <strong>Not sure what to eat? We’ll pick for you!</strong> and enter a few cuisines (e.g. mexican thai bbq) — we’ll pick something for you nearby.</p>"
           text_input_required_format: full_html
       access:
         type: none
         options: {  }
       cache:
-        type: search_api_none
+        type: search_api_tag
         options: {  }
       empty:
         area:
