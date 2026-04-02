@@ -228,10 +228,13 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   $origin_lat = $request->query->get('origin_lat');
   $origin_lon = $request->query->get('origin_lon');
 
-  $is_browser_near_me = $origin_mode === 'browser'
+  $has_browser_origin = $origin_mode === 'browser'
     && is_numeric($origin_lat)
-    && is_numeric($origin_lon)
-    && preg_match('/\bnear\s+me\b/i', $raw);
+    && is_numeric($origin_lon);
+
+  $is_browser_near_me = $has_browser_origin
+    && empty($parsed['zip'])
+    && empty($parsed['city']);
 
   if ($is_browser_near_me) {
     $nearest_city = _spotdeals_search_smart_location_nearest_city_from_coords(
@@ -281,7 +284,7 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     }
 
     \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION browser near me applied: view="@view" display="@display" raw="@raw" keywords="@keywords" solr_keywords="@solr_keywords" recommendation_mode="@recommendation_mode" recommended_count="@recommended" nearest_city="@city" origin_lat="@lat" origin_lon="@lon" ranked_count="@ranked" city_filter="off"',
+      'SMART LOCATION default near-me applied from browser origin: view="@view" display="@display" raw="@raw" keywords="@keywords" solr_keywords="@solr_keywords" recommendation_mode="@recommendation_mode" recommended_count="@recommended" nearest_city="@city" origin_lat="@lat" origin_lon="@lon" ranked_count="@ranked" city_filter="off"',
       [
         '@view' => $view->id(),
         '@display' => $display_id,
@@ -307,11 +310,12 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
 
   if (empty($parsed['zip']) && empty($parsed['city'])) {
     \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION no location found: view="@view" display="@display" raw="@raw"',
+      'SMART LOCATION no explicit location found and no browser origin available: view="@view" display="@display" raw="@raw" recommendation_mode="@recommendation_mode"',
       [
         '@view' => $view->id(),
         '@display' => $display_id,
         '@raw' => $raw,
+        '@recommendation_mode' => $recommendation_mode ? '1' : '0',
       ]
     );
     return;
@@ -363,7 +367,7 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   $view->setExposedInput($input);
 
   \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION applied: view="@view" display="@display" raw="@raw" keywords="@keywords" zip="@zip" city="@city" exact_city="@exact_city" origin_lat="@origin_lat" origin_lon="@origin_lon" search_param="@search_param"',
+    'SMART LOCATION applied explicit location override: view="@view" display="@display" raw="@raw" keywords="@keywords" zip="@zip" city="@city" exact_city="@exact_city" origin_lat="@origin_lat" origin_lon="@origin_lon" search_param="@search_param"',
     [
       '@view' => $view->id(),
       '@display' => $display_id,

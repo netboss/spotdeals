@@ -38,6 +38,11 @@
     return value.replace(/\bnear\s+me\b/ig, ' ').replace(/\s+/g, ' ').trim();
   }
 
+  function helpMeChooseEnabled(form) {
+    const checkbox = form.querySelector('input[name="help_me_choose"]');
+    return !!(checkbox && checkbox.checked);
+  }
+
   function isResetButton(button) {
     if (!button) {
       return false;
@@ -204,6 +209,7 @@
           }
 
           const rawValue = (currentSearchInput.value || '').trim();
+          const recommendationMode = helpMeChooseEnabled(form);
           const hasKeywordChange = keywordsChanged(form, currentSearchInput);
 
           if (hasKeywordChange) {
@@ -212,7 +218,7 @@
 
           setHiddenValue(form, 'search_raw', rawValue);
 
-          if (!/\bnear\s+me\b/i.test(rawValue)) {
+          if (rawValue === '' && !recommendationMode) {
             clearNearMeOnlyState(form);
             rememberSubmittedKeywords(form, currentSearchInput);
             return;
