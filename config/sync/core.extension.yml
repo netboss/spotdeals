@@ -85,4 +85,5 @@ module:
 theme:
   olivero: 0
   claro: 0
+  spotdeals_minimal: 0
 profile: standard

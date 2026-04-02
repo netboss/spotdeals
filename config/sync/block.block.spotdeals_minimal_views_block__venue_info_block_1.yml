@@ -1,0 +1,30 @@
+uuid: b0f2db3e-5404-400c-a811-eaada417db2d
+langcode: en
+status: true
+dependencies:
+  config:
+    - views.view.venue_info
+  module:
+    - system
+    - views
+  theme:
+    - spotdeals_minimal
+id: spotdeals_minimal_views_block__venue_info_block_1
+theme: spotdeals_minimal
+region: sidebar
+weight: -8
+provider: null
+plugin: 'views_block:venue_info-block_1'
+settings:
+  id: 'views_block:venue_info-block_1'
+  label: ''
+  label_display: visible
+  provider: views
+  context_mapping: {  }
+  views_label: ''
+  items_per_page: null
+visibility:
+  request_path:
+    id: request_path
+    negate: false
+    pages: '/venue/*/*'

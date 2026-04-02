@@ -1,0 +1,50 @@
+hr {
+  border: 0.5px solid #d9d9d9;
+  margin-bottom: 0;
+}
+
+.views-row:last-child hr {
+  display: none;
+}
+
+h2 {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  margin-top: 0;
+}
+
+h3 {
+  margin-bottom: 0;
+  margin-top: 20px;
+}
+
+.views-field.views-field-field-price-offer-text {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.form-type-boolean {
+  display: flex;
+  align-items: center;
+}
+
+.form--inline {
+  & .form-actions {
+    margin-top: 0;
+    display: flex;
+    gap: 5px;
+  }
+}
+
+.form-actions .button {
+  margin-block: 0;
+  flex: 1;
+  margin: 0;
+}
+
+@media screen and (min-width: 992px) {
+  .form-actions .button {
+    flex: 0;
+    margin-block: var(--sp1);
+  }
+}
