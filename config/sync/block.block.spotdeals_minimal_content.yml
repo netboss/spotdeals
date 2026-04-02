@@ -1,0 +1,22 @@
+uuid: 55be717d-8e05-4b35-b897-5114585fe711
+langcode: en
+status: true
+dependencies:
+  module:
+    - system
+  theme:
+    - spotdeals_minimal
+_core:
+  default_config_hash: erQSEZF2XUjNmgTl0uNRBzmg18ZGXwUcw2FhApoeuHk
+id: spotdeals_minimal_content
+theme: spotdeals_minimal
+region: content
+weight: 0
+provider: null
+plugin: system_main_block
+settings:
+  id: system_main_block
+  label: 'Main page content'
+  label_display: '0'
+  provider: system
+visibility: {  }

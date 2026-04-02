@@ -1,0 +1,22 @@
+uuid: 76bf1ee1-00db-42d4-b612-d5568bc81588
+langcode: en
+status: false
+dependencies:
+  module:
+    - system
+  theme:
+    - spotdeals_minimal
+_core:
+  default_config_hash: eYL19CLDyinGTWYQfBD1DswWzglEotE_kHnHx3AxTXM
+id: spotdeals_minimal_powered
+theme: spotdeals_minimal
+region: footer_bottom
+weight: 0
+provider: null
+plugin: system_powered_by_block
+settings:
+  id: system_powered_by_block
+  label: 'Powered by Drupal'
+  label_display: '0'
+  provider: system
+visibility: {  }

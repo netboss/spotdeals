@@ -1,0 +1,99 @@
+{#
+/**
+ * @file
+ * Theme override for the Deals Search (Solr) view.
+ *
+ * Available variables:
+ * - attributes: HTML attributes for the container.
+ * - css_name: A CSS-safe version of the view name.
+ * - css_class: CSS classes.
+ * - header: The view header.
+ * - footer: The view footer.
+ * - rows: The results.
+ * - empty: The empty text.
+ * - exposed: Exposed widget form / filters.
+ * - pager: The pager output.
+ * - more: "More" link.
+ * - feed_icons: Feed icons.
+ * - title: The view title.
+ * - attachment_before: Attachments before.
+ * - attachment_after: Attachments after.
+ * - dom_id: Unique DOM id.
+ */
+#}
+{%
+  set classes = [
+    'view',
+    'view-' ~ id,
+    'view-id-' ~ id,
+    'view-display-id-' ~ display_id,
+    dom_id ? 'js-view-dom-id-' ~ dom_id,
+    'spotdeals-finder'
+  ]
+%}
+<div{{ attributes.addClass(classes) }}>
+  <section class="spotdeals-finder__intro">
+    {% if title and not is_front %}
+      <h2 class="spotdeals-finder__title">{{ title }}</h2>
+    {% endif %}
+    <p class="spotdeals-finder__description">
+      Search by food, time, or location to discover nearby deals.
+    </p>
+  </section>
+
+  {% if exposed %}
+    <section class="spotdeals-finder__filters">
+      {{ exposed }}
+    </section>
+  {% endif %}
+
+  <section class="spotdeals-finder__results">
+    {% if header %}
+      <div class="view-header">
+        {{ header }}
+      </div>
+    {% endif %}
+
+    {% if attachment_before %}
+      <div class="attachment attachment-before">
+        {{ attachment_before }}
+      </div>
+    {% endif %}
+
+    {% if rows %}
+      <div class="view-content">
+        {{ rows }}
+      </div>
+    {% elseif empty %}
+      <div class="view-empty">
+        {{ empty }}
+      </div>
+    {% endif %}
+
+    {% if pager %}
+      {{ pager }}
+    {% endif %}
+
+    {% if attachment_after %}
+      <div class="attachment attachment-after">
+        {{ attachment_after }}
+      </div>
+    {% endif %}
+
+    {% if more %}
+      {{ more }}
+    {% endif %}
+
+    {% if footer %}
+      <div class="view-footer">
+        {{ footer }}
+      </div>
+    {% endif %}
+
+    {% if feed_icons %}
+      <div class="feed-icons">
+        {{ feed_icons }}
+      </div>
+    {% endif %}
+  </section>
+</div>

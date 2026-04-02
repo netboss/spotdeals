@@ -1,0 +1,20 @@
+uuid: 31c70b9b-1367-4a35-bdf0-e5b642702cd6
+langcode: en
+status: true
+dependencies:
+  theme:
+    - spotdeals_minimal
+_core:
+  default_config_hash: Q9_2whdOj1YIomfvsIfopROW4FT_X5pY0DjdOiOaQ5U
+id: spotdeals_minimal_primary_admin_actions
+theme: spotdeals_minimal
+region: highlighted
+weight: -5
+provider: null
+plugin: local_actions_block
+settings:
+  id: local_actions_block
+  label: 'Primary admin actions'
+  label_display: '0'
+  provider: core
+visibility: {  }

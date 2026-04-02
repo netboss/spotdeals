@@ -1,0 +1,24 @@
+name: SpotDeals Minimal
+type: theme
+description: 'Minimal Olivero subtheme for SpotDeals.'
+package: Custom
+core_version_requirement: ^11
+base theme: olivero
+
+libraries:
+  - spotdeals_minimal/global
+
+regions:
+  header: Header
+  primary_menu: Primary menu
+  secondary_menu: Secondary menu
+  hero: Hero
+  highlighted: Highlighted
+  breadcrumb: Breadcrumb
+  social: Social Bar
+  content_above: Content Above
+  content: Content
+  sidebar: Sidebar
+  content_below: Content Below
+  footer_top: Footer Top
+  footer_bottom: Footer Bottom

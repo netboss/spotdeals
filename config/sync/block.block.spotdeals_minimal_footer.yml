@@ -1,0 +1,25 @@
+uuid: 048b94a7-cff6-4373-aa6c-abb8fe34e90a
+langcode: en
+status: true
+dependencies:
+  config:
+    - system.menu.footer
+  module:
+    - system
+  theme:
+    - spotdeals_minimal
+id: spotdeals_minimal_footer
+theme: spotdeals_minimal
+region: footer_top
+weight: 0
+provider: null
+plugin: 'system_menu_block:footer'
+settings:
+  id: 'system_menu_block:footer'
+  label: 'Keep Exploring'
+  label_display: visible
+  provider: system
+  level: 1
+  depth: null
+  expand_all_items: false
+visibility: {  }
