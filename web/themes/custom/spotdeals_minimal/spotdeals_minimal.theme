@@ -1,0 +1,85 @@
+<?php
+
+use Drupal\views\ViewExecutable;
+
+/**
+ * Implements hook_preprocess_views_view().
+ */
+function spotdeals_minimal_preprocess_views_view(array &$variables) {
+  if (empty($variables['view']) || !$variables['view'] instanceof ViewExecutable) {
+    return;
+  }
+
+  $view = $variables['view'];
+
+  if ($view->id() !== 'deals_search_solr') {
+    return;
+  }
+
+  $variables['spotdeals_result_count'] = is_array($view->result) ? count($view->result) : 0;
+}
+
+/**
+ * Implements hook_views_pre_render().
+ */
+function spotdeals_minimal_views_pre_render(ViewExecutable $view) {
+  $request = \Drupal::request();
+
+  // Only target the Deals Finder view.
+  if ($view->id() !== 'deals_search_solr') {
+    return;
+  }
+
+  // For normal requests, keep the full page render untouched.
+  if (!$request->headers->get('HX-Request')) {
+    return;
+  }
+
+  // For HTMX requests, return only the results block markup.
+  $output = [];
+
+  if (!empty($view->header)) {
+    $output['header'] = $view->header;
+  }
+
+  if (!empty($view->attachment_before)) {
+    $output['attachment_before'] = $view->attachment_before;
+  }
+
+  if (!empty($view->result)) {
+    $output['rows'] = $view->style_plugin->render($view->result);
+  }
+  elseif (!empty($view->empty)) {
+    $output['empty'] = $view->empty;
+  }
+
+  if (!empty($view->pager)) {
+    $output['pager'] = $view->pager->render();
+  }
+
+  if (!empty($view->attachment_after)) {
+    $output['attachment_after'] = $view->attachment_after;
+  }
+
+  $output['result_count'] = is_array($view->result) ? count($view->result) : 0;
+  $output['is_recommendation_mode'] = (bool) $request->query->get('help_me_choose');
+
+  $view->element['#children'] = [
+    '#theme' => 'spotdeals_results_only',
+    '#data' => $output,
+  ];
+}
+
+/**
+ * Implements hook_theme().
+ */
+function spotdeals_minimal_theme() {
+  return [
+    'spotdeals_results_only' => [
+      'variables' => [
+        'data' => NULL,
+      ],
+      'template' => 'spotdeals-results-only',
+    ],
+  ];
+}

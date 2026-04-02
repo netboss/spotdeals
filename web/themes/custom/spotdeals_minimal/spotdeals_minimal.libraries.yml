@@ -5,3 +5,13 @@ global:
       css/style.css: {}
       css/views.css: {}
       css/form.css: {}
+
+  js:
+    https://unpkg.com/htmx.org@1.9.12:
+      type: external
+      minified: true
+    js/theme-fixes.js: {}
+
+  dependencies:
+    - core/drupal
+    - core/once

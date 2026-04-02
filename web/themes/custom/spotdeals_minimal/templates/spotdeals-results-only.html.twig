@@ -1,0 +1,38 @@
+<div class="spotdeals-finder__results">
+  {% if data.is_recommendation_mode %}
+    <div class="view-header">
+      Displaying {{ data.result_count > 0 ? 1 : 0 }} - {{ data.result_count }} of {{ data.result_count }}
+    </div>
+  {% elseif data.header %}
+    <div class="view-header">
+      {{ data.header }}
+    </div>
+  {% endif %}
+
+  {% if data.attachment_before %}
+    <div class="attachment attachment-before">
+      {{ data.attachment_before }}
+    </div>
+  {% endif %}
+
+  {% if data.rows %}
+    <div class="view-content" data-result-count="{{ data.result_count }}">
+      {{ data.rows }}
+    </div>
+  {% elseif data.empty %}
+    <div class="view-empty" data-result-count="{{ data.result_count }}">
+      {{ data.empty }}
+    </div>
+  {% endif %}
+
+  {% if not data.is_recommendation_mode and data.pager %}
+    {{ data.pager }}
+  {% endif %}
+
+  {% if data.attachment_after %}
+    <div class="attachment attachment-after">
+      {{ data.attachment_after }}
+    </div>
+  {% endif %}
+</div>
+

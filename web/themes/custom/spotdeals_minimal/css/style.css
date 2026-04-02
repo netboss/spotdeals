@@ -232,6 +232,10 @@ h1.page-title {
   border-color: #c6d0dd;
 }
 
+.spotdeals-finder__filters input#edit-reset:hover {
+  color: #454545;
+}
+
 /* Captcha / details blocks inside search form */
 .spotdeals-finder__filters details,
 .spotdeals-finder__filters .captcha,
@@ -305,6 +309,12 @@ h1.page-title {
 .spotdeals-finder__results .view-content:first-child,
 .spotdeals-finder__results .view-empty:first-child {
   margin-top: 0;
+}
+
+/* Add loading state */
+.spotdeals-finder__results.htmx-request {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
 }
 
 /* Empty state */

@@ -19,6 +19,7 @@
  * - attachment_before: Attachments before.
  * - attachment_after: Attachments after.
  * - dom_id: Unique DOM id.
+ * - spotdeals_result_count: Real number of rendered result rows.
  */
 #}
 {%
@@ -43,7 +44,15 @@
 
   {% if exposed %}
     <section class="spotdeals-finder__filters">
-      {{ exposed }}
+      <div
+        hx-get="/"
+        hx-target=".spotdeals-finder__results"
+        hx-select=".spotdeals-finder__results"
+        hx-swap="outerHTML"
+        hx-push-url="true"
+      >
+        {{ exposed }}
+      </div>
     </section>
   {% endif %}
 
@@ -61,11 +70,11 @@
     {% endif %}
 
     {% if rows %}
-      <div class="view-content">
+      <div class="view-content" data-result-count="{{ spotdeals_result_count }}">
         {{ rows }}
       </div>
     {% elseif empty %}
-      <div class="view-empty">
+      <div class="view-empty" data-result-count="{{ spotdeals_result_count }}">
         {{ empty }}
       </div>
     {% endif %}
