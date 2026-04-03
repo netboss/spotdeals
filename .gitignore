@@ -208,3 +208,9 @@ web/modules/custom/spotdeals_import/data/venues.geocoded.csv
 
 # Private files (Drupal)
 private/
+
+# Archived data files
+web/modules/custom/spotdeals_import/data/archived
+web/modules/custom/spotdeals_import/data/archived/*
+web/modules/custom/spotdeals_import/data/venues_repair_audit_correct.csv
+web/modules/custom/spotdeals_import/data/venues_plus_100_real_safe_audit.csv
