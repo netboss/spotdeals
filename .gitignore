@@ -205,3 +205,6 @@ android/
 # Geocoding script
 add_geo.py
 web/modules/custom/spotdeals_import/data/venues.geocoded.csv
+
+# Private files (Drupal)
+private/
