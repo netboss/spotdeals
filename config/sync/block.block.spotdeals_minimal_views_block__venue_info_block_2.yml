@@ -1,0 +1,30 @@
+uuid: fb4087a1-1574-4a5f-933c-424d080d87c1
+langcode: en
+status: true
+dependencies:
+  config:
+    - views.view.venue_info
+  module:
+    - system
+    - views
+  theme:
+    - spotdeals_minimal
+id: spotdeals_minimal_views_block__venue_info_block_2
+theme: spotdeals_minimal
+region: sidebar
+weight: 0
+provider: null
+plugin: 'views_block:venue_info-block_2'
+settings:
+  id: 'views_block:venue_info-block_2'
+  label: ''
+  label_display: visible
+  provider: views
+  context_mapping: {  }
+  views_label: ''
+  items_per_page: null
+visibility:
+  request_path:
+    id: request_path
+    negate: false
+    pages: "/deals/*\r\n/deals/*/*"

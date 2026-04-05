@@ -12,6 +12,7 @@ dependencies:
     - field.field.node.venue.field_claimed_listing
     - field.field.node.venue.field_coordinates
     - field.field.node.venue.field_cuisine
+    - field.field.node.venue.field_featured
     - field.field.node.venue.field_image
     - field.field.node.venue.field_latitude
     - field.field.node.venue.field_longitude
@@ -120,6 +121,13 @@ content:
       placeholder: ''
       show_entity_id: 0
       parent_selection: 1
+    third_party_settings: {  }
+  field_featured:
+    type: boolean_checkbox
+    weight: 26
+    region: content
+    settings:
+      display_label: true
     third_party_settings: {  }
   field_image:
     type: image_image

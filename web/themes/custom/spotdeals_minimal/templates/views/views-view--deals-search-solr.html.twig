@@ -33,14 +33,16 @@
   ]
 %}
 <div{{ attributes.addClass(classes) }}>
-  <section class="spotdeals-finder__intro">
-    {% if title and not is_front %}
-      <h2 class="spotdeals-finder__title">{{ title }}</h2>
-    {% endif %}
-    <p class="spotdeals-finder__description">
-      {{ "Search by food type, or location to discover nearby deals."|t }}
-    </p>
-  </section>
+  {% if display_id == 'page_1' %}
+    <section class="spotdeals-finder__intro">
+      {% if title and not is_front %}
+        <h2 class="spotdeals-finder__title">{{ title }}</h2>
+      {% endif %}
+      <p class="spotdeals-finder__description">
+        {{ "Search by food type, or location to discover nearby deals."|t }}
+      </p>
+    </section>
+  {% endif %}
 
   {% if exposed %}
     <section class="spotdeals-finder__filters">

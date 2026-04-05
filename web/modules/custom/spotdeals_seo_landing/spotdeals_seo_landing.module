@@ -1,0 +1,82 @@
+<?php
+
+declare(strict_types=1);
+
+use Drupal\Core\Database\Database;
+use Drupal\views\ViewExecutable;
+
+/**
+ * Implements hook_views_pre_execute().
+ */
+function spotdeals_seo_landing_views_pre_execute(ViewExecutable $view): void {
+  if ($view->id() !== 'venue_info') {
+    return;
+  }
+
+  if ((string) $view->current_display !== 'block_2') {
+    return;
+  }
+
+  $request_path = \Drupal::request()->getPathInfo();
+  if (!is_string($request_path) || strpos($request_path, '/deals/') !== 0) {
+    return;
+  }
+
+  $segments = array_values(array_filter(explode('/', trim($request_path, '/'))));
+  if (count($segments) < 2 || $segments[0] !== 'deals') {
+    return;
+  }
+
+  $city_slug = trim((string) $segments[1]);
+  if ($city_slug === '') {
+    return;
+  }
+
+  $city_label = _spotdeals_seo_landing_resolve_city_label($city_slug);
+  if ($city_label === NULL) {
+    return;
+  }
+
+  $view->args[0] = $city_label;
+}
+
+/**
+ * Resolves a city slug like "port-orange" to the stored locality label.
+ */
+function _spotdeals_seo_landing_resolve_city_label(string $city_slug): ?string {
+  $normalized_target = _spotdeals_seo_landing_normalize_for_comparison($city_slug);
+
+  $query = Database::getConnection()->select('node__field_address', 'fa');
+  $query->addField('fa', 'field_address_locality');
+  $query->isNotNull('fa.field_address_locality');
+  $query->condition('fa.field_address_locality', '', '<>');
+  $query->distinct();
+  $query->orderBy('fa.field_address_locality', 'ASC');
+
+  $localities = $query->execute()->fetchCol();
+
+  foreach ($localities as $locality) {
+    if (!is_string($locality)) {
+      continue;
+    }
+
+    if (_spotdeals_seo_landing_normalize_for_comparison($locality) === $normalized_target) {
+      return trim($locality);
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Normalizes a slug or label for reliable comparison.
+ */
+function _spotdeals_seo_landing_normalize_for_comparison(string $value): string {
+  $value = trim($value);
+  $value = mb_strtolower($value, 'UTF-8');
+  $value = str_replace(['-', '_'], ' ', $value);
+  $value = preg_replace('/[^[:alnum:]\s]+/u', ' ', $value) ?? '';
+  $value = preg_replace('/\s+/u', ' ', $value) ?? '';
+
+  return trim($value);
+}

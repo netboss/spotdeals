@@ -67,6 +67,7 @@ module:
   spotdeals_billing: 0
   spotdeals_import: 0
   spotdeals_search_smart_location: 0
+  spotdeals_seo_landing: 0
   system: 0
   tagify: 0
   taxonomy: 0
