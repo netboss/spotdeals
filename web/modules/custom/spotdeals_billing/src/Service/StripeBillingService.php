@@ -326,10 +326,7 @@ class StripeBillingService {
       }
     }
 
-    $role_changed = FALSE;
-    if (function_exists('spotdeals_billing_sync_venue_owner_role')) {
-      $role_changed = spotdeals_billing_sync_venue_owner_role($user);
-    }
+    $role_changed = $this->syncVenueOwnerRole($user, $is_pro);
 
     $this->logger->notice(
       'Stripe renewal timestamp resolved. Event: @event_id, Subscription: @subscription_id, current_period_end: @current_period_end',
@@ -438,6 +435,27 @@ class StripeBillingService {
     }
 
     return in_array($normalized_raw_status, ['active', 'trialing'], TRUE);
+  }
+
+
+  /**
+   * Synchronizes the Venue Owner role from resolved Pro access.
+   */
+  protected function syncVenueOwnerRole(UserInterface $user, bool $should_have_role): bool {
+    $role_id = 'venue_owner';
+    $has_role = $user->hasRole($role_id);
+
+    if ($should_have_role && !$has_role) {
+      $user->addRole($role_id);
+      return TRUE;
+    }
+
+    if (!$should_have_role && $has_role) {
+      $user->removeRole($role_id);
+      return TRUE;
+    }
+
+    return FALSE;
   }
 
   /**
