@@ -5,6 +5,7 @@ use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
+use Drupal\node\NodeInterface;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
 
@@ -31,6 +32,9 @@ function spotdeals_billing_entity_view(array &$build, EntityInterface $entity, E
   if ($route_name !== 'entity.user.canonical') {
     return;
   }
+
+  // Keep the billing-derived role aligned whenever the profile renders.
+  spotdeals_billing_sync_venue_owner_role($entity);
 
   $plan_tier = trim((string) ($entity->get('field_plan_tier')->value ?? ''));
   $plan_status = trim((string) ($entity->get('field_plan_status')->value ?? ''));
@@ -77,6 +81,12 @@ function spotdeals_billing_entity_view(array &$build, EntityInterface $entity, E
     '#markup' => $markup,
     '#weight' => -100,
   ];
+
+  if (!spotdeals_billing_user_has_pro_access($entity)) {
+    return;
+  }
+
+  $build['spotdeals_billing_management_box'] = spotdeals_billing_build_profile_management_box($entity);
 }
 
 /**
@@ -112,6 +122,108 @@ function spotdeals_billing_user_has_pro_access(?UserInterface $account = NULL): 
  */
 function spotdeals_billing_current_user_has_pro_access(): bool {
   return spotdeals_billing_user_has_pro_access();
+}
+
+/**
+ * Synchronizes the Venue Owner role with the user's current billing access.
+ */
+function spotdeals_billing_sync_venue_owner_role(UserInterface $account): bool {
+  $role_id = 'venue_owner';
+  $should_have_role = spotdeals_billing_user_has_pro_access($account);
+  $has_role = $account->hasRole($role_id);
+
+  if ($should_have_role && !$has_role) {
+    $account->addRole($role_id);
+    return TRUE;
+  }
+
+  if (!$should_have_role && $has_role) {
+    $account->removeRole($role_id);
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Builds the profile box with venue and deal management links.
+ */
+function spotdeals_billing_build_profile_management_box(UserInterface $account): array {
+  $items = [];
+
+  $create_venue_link = Link::fromTextAndUrl(
+    'Create a venue',
+    Url::fromUserInput('/node/add/venue')
+  )->toString();
+
+  $items[] = '<li style="margin-bottom: 0.5rem;">' . $create_venue_link . '</li>';
+
+  $venues = spotdeals_billing_load_owned_venues($account);
+
+  if ($venues) {
+    foreach ($venues as $venue) {
+      $venue_title = htmlspecialchars($venue->label(), ENT_QUOTES, 'UTF-8');
+      $view_link = Link::fromTextAndUrl(
+        'View venue',
+        $venue->toUrl()
+      )->toString();
+      $edit_link = Link::fromTextAndUrl(
+        'Update venue',
+        Url::fromUserInput('/node/' . $venue->id() . '/edit')
+      )->toString();
+      $add_deal_link = Link::fromTextAndUrl(
+        'Add deal for this venue',
+        Url::fromUserInput('/node/add/deal?venue=' . $venue->id())
+      )->toString();
+
+      $items[] = '<li style="margin-bottom: 0.75rem;">'
+        . '<div><strong>' . $venue_title . '</strong></div>'
+        . '<div style="margin-top: 0.25rem;">' . $view_link . ' &middot; ' . $edit_link . ' &middot; ' . $add_deal_link . '</div>'
+        . '</li>';
+    }
+  }
+  else {
+    $items[] = '<li>You do not have any claimed venues yet. Once a venue is assigned to your account, its update and deal links will appear here.</li>';
+  }
+
+  $markup = '<section class="spotdeals-billing-management" style="margin: 0 0 2rem 0; padding: 1rem 1.25rem; border: 1px solid #dcdfe4; border-radius: 10px; background: #fafafa;">';
+  $markup .= '<h2 style="margin: 0 0 0.75rem 0; font-size: 1.25rem;">Venue and deal management</h2>';
+  $markup .= '<p style="margin: 0 0 0.75rem 0;">Your Pro plan includes access to create venues, update your claimed venues, and add deals for each claimed venue.</p>';
+  $markup .= '<ul style="margin: 0; padding-left: 1.25rem;">' . implode('', $items) . '</ul>';
+  $markup .= '</section>';
+
+  return [
+    '#type' => 'markup',
+    '#markup' => $markup,
+    '#weight' => -99,
+  ];
+}
+
+/**
+ * Loads venues owned by the given user.
+ *
+ * @return \Drupal\node\NodeInterface[]
+ *   Owned venue nodes ordered by title.
+ */
+function spotdeals_billing_load_owned_venues(UserInterface $account): array {
+  $storage = \Drupal::entityTypeManager()->getStorage('node');
+  $query = $storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('type', 'venue')
+    ->condition('field_primary_owner_user', $account->id())
+    ->sort('title', 'ASC');
+
+  $ids = $query->execute();
+  if (empty($ids)) {
+    return [];
+  }
+
+  $venues = $storage->loadMultiple($ids);
+  $venues = array_filter($venues, static function ($entity) {
+    return $entity instanceof NodeInterface && $entity->bundle() === 'venue';
+  });
+
+  return $venues;
 }
 
 /**

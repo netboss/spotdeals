@@ -36,6 +36,50 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
     }
   }
 
+  // Allow venue owners to open a new deal form already tied to one of their venues.
+  if ($entity->bundle() === 'deal' && $entity->isNew() && $current_user->isAuthenticated()) {
+    $account = User::load($current_user->id());
+    $venue_id = (int) \Drupal::request()->query->get('venue');
+
+    if ($account instanceof UserInterface && $venue_id > 0) {
+      $venue = Node::load($venue_id);
+
+      if ($venue instanceof NodeInterface && $venue->bundle() === 'venue') {
+        if ($is_admin || spotdeals_admin_user_owns_venue($account, $venue)) {
+          if ($entity->hasField('field_venue')) {
+            $entity->set('field_venue', ['target_id' => $venue->id()]);
+          }
+
+          if (isset($form['field_venue']['widget'][0]['target_id'])) {
+            $form['field_venue']['widget'][0]['target_id']['#default_value'] = $venue;
+            $form['field_venue']['widget'][0]['target_id']['#access'] = FALSE;
+          }
+          elseif (isset($form['field_venue'])) {
+            $form['field_venue']['#access'] = FALSE;
+          }
+        }
+        else {
+          $form['spotdeals_admin_deal_block_message'] = [
+            '#type' => 'container',
+            '#weight' => -1200,
+            '#attributes' => [
+              'class' => ['messages', 'messages--error'],
+            ],
+            'content' => [
+              '#markup' => t('You can only add deals to venues assigned to your account.'),
+            ],
+          ];
+
+          if (isset($form['actions']['submit'])) {
+            $form['actions']['submit']['#access'] = FALSE;
+          }
+        }
+      }
+    }
+
+    return;
+  }
+
   if ($entity->bundle() !== 'claim') {
     return;
   }
@@ -713,6 +757,17 @@ function spotdeals_admin_user_owned_venue_count(UserInterface $user) {
 
   $ids = $query->execute();
   return is_array($ids) ? count($ids) : 0;
+}
+
+/**
+ * Returns TRUE if the given user owns the given venue.
+ */
+function spotdeals_admin_user_owns_venue(UserInterface $user, NodeInterface $venue) {
+  if (!$venue->hasField('field_primary_owner_user') || $venue->get('field_primary_owner_user')->isEmpty()) {
+    return FALSE;
+  }
+
+  return (int) $venue->get('field_primary_owner_user')->target_id === (int) $user->id();
 }
 
 /**
