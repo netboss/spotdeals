@@ -326,6 +326,11 @@ class StripeBillingService {
       }
     }
 
+    $role_changed = FALSE;
+    if (function_exists('spotdeals_billing_sync_venue_owner_role')) {
+      $role_changed = spotdeals_billing_sync_venue_owner_role($user);
+    }
+
     $this->logger->notice(
       'Stripe renewal timestamp resolved. Event: @event_id, Subscription: @subscription_id, current_period_end: @current_period_end',
       [
@@ -349,6 +354,15 @@ class StripeBillingService {
         '@cancel_at_period_end' => !empty($subscription->cancel_at_period_end) ? 'true' : 'false',
       ]
     );
+
+    if ($role_changed) {
+      $this->logger->notice(
+        'Venue Owner role synchronization updated roles for user @uid during Stripe subscription sync.',
+        [
+          '@uid' => $user->id(),
+        ]
+      );
+    }
   }
 
   /**
