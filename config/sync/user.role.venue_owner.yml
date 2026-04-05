@@ -3,10 +3,12 @@ langcode: en
 status: true
 dependencies:
   config:
+    - filter.format.full_html
     - node.type.deal
     - node.type.venue
   module:
     - contact
+    - filter
     - node
     - webform
 id: venue_owner
@@ -21,4 +23,5 @@ permissions:
   - 'delete own venue content'
   - 'edit own deal content'
   - 'edit own venue content'
+  - 'use text format full_html'
   - 'view own webform submission'
