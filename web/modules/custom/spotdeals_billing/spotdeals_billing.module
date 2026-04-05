@@ -153,7 +153,7 @@ function spotdeals_billing_build_profile_management_box(UserInterface $account):
 
   $create_venue_link = Link::fromTextAndUrl(
     'Create a venue',
-    Url::fromUserInput('/node/add/venue')
+    Url::fromUserInput('/create/venue')
   )->toString();
 
   $items[] = '<li style="margin-bottom: 0.5rem;">' . $create_venue_link . '</li>';
@@ -173,7 +173,7 @@ function spotdeals_billing_build_profile_management_box(UserInterface $account):
       )->toString();
       $add_deal_link = Link::fromTextAndUrl(
         'Add deal for this venue',
-        Url::fromUserInput('/node/add/deal?venue=' . $venue->id())
+        Url::fromUserInput('/create/deal?venue=' . $venue->id())
       )->toString();
 
       $items[] = '<li style="margin-bottom: 0.75rem;">'
