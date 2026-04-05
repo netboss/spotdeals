@@ -1,0 +1,19 @@
+spotdeals_seo_landing.deals_city:
+  path: '/deals/{city}'
+  defaults:
+    _controller: '\Drupal\spotdeals_seo_landing\Controller\DealsSeoLandingController::cityPage'
+    _title_callback: '\Drupal\spotdeals_seo_landing\Controller\DealsSeoLandingController::cityTitle'
+  requirements:
+    _permission: 'access content'
+    city: '[a-z0-9-]+'
+
+spotdeals_seo_landing.deals_city_category:
+  path: '/deals/{city}/{category}'
+  defaults:
+    _controller: '\Drupal\spotdeals_seo_landing\Controller\DealsSeoLandingController::cityCategoryPage'
+    _title_callback: '\Drupal\spotdeals_seo_landing\Controller\DealsSeoLandingController::cityCategoryTitle'
+  requirements:
+    _permission: 'access content'
+    city: '[a-z0-9-]+'
+    category: '[a-z0-9-]+'
+

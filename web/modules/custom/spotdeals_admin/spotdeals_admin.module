@@ -26,11 +26,19 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
     return;
   }
 
+  $current_user = \Drupal::currentUser();
+  $is_admin = $current_user->hasRole('administrator');
+
+  // Keep featured venue controls admin-only on venue edit forms.
+  if ($entity->bundle() === 'venue' && !$is_admin) {
+    if (isset($form['field_featured'])) {
+      $form['field_featured']['#access'] = FALSE;
+    }
+  }
+
   if ($entity->bundle() !== 'claim') {
     return;
   }
-
-  $current_user = \Drupal::currentUser();
 
   \Drupal::logger('spotdeals_admin')->notice(
     'Claim form alter running. form_id: %form_id | user: %user | roles: %roles',
@@ -233,7 +241,7 @@ function spotdeals_admin_form_alter(array &$form, FormStateInterface $form_state
   }
 
   // Hide admin/review fields for non-admin users.
-  if (!$current_user->hasRole('administrator')) {
+  if (!$is_admin) {
     $review_fields = [
       'field_claim_status',
       'field_decision_reason',
@@ -449,6 +457,10 @@ function spotdeals_admin_node_view_alter(array &$build, EntityInterface $entity,
     // Keep the owner field internal. Do not show it on the venue page.
     if (isset($build['field_primary_owner_user'])) {
       unset($build['field_primary_owner_user']);
+    }
+
+    if (!$current_user->hasRole('administrator') && isset($build['field_featured'])) {
+      unset($build['field_featured']);
     }
 
     // Already claimed by someone: do not show the claim CTA.

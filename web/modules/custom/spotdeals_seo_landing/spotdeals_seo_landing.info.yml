@@ -1,0 +1,7 @@
+name: SpotDeals SEO Landing
+type: module
+description: 'SEO landing pages for city and deal-category pages backed by the Deals Search (Solr) view.'
+package: SpotDeals
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:views
