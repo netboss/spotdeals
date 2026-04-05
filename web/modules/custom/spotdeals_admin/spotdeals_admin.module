@@ -1,14 +1,56 @@
 <?php
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Cache\RefinableCacheableDependencyInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\node\Entity\Node;
 use Drupal\node\NodeInterface;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
+
+
+/**
+ * Implements hook_node_access().
+ */
+function spotdeals_admin_node_access(NodeInterface $node, $op, AccountInterface $account) {
+  if ($op !== 'update') {
+    return AccessResult::neutral();
+  }
+
+  if ($node->bundle() !== 'venue') {
+    return AccessResult::neutral();
+  }
+
+  if (!$account->isAuthenticated() || !$account->hasRole('venue_owner')) {
+    return AccessResult::neutral()
+      ->cachePerPermissions()
+      ->cachePerUser()
+      ->addCacheableDependency($node);
+  }
+
+  if (!$node->hasField('field_primary_owner_user') || $node->get('field_primary_owner_user')->isEmpty()) {
+    return AccessResult::neutral()
+      ->cachePerPermissions()
+      ->cachePerUser()
+      ->addCacheableDependency($node);
+  }
+
+  if ((int) $node->get('field_primary_owner_user')->target_id === (int) $account->id()) {
+    return AccessResult::allowed()
+      ->cachePerPermissions()
+      ->cachePerUser()
+      ->addCacheableDependency($node);
+  }
+
+  return AccessResult::neutral()
+    ->cachePerPermissions()
+    ->cachePerUser()
+    ->addCacheableDependency($node);
+}
 
 /**
  * Implements hook_form_alter().
