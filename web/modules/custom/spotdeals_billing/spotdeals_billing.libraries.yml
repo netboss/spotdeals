@@ -1,0 +1,4 @@
+spotdeals_billing:
+  css:
+    theme:
+      css/style.css: {}
