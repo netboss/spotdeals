@@ -667,19 +667,33 @@ h1.page-title {
   }
 }
 
+/* Page and layout */
+.page-wrapper {
+  margin-inline: auto;
+}
+
+.main-content__container {
+  padding-inline: 0;
+}
+
+/* Style right sidebar */
+.block-views {
+  background: linear-gradient(180deg, #f9fbfd 0%, #f4f7fb 100%);
+  border: 1px solid var(--spotdeals-border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
 /* FORCE sticky to work */
 @media (min-width: 1024px) {
+  .main-content__container {
+    padding-inline: var(--container-padding);
+  }
+
   .region--sidebar {
     align-self: start;
     position: sticky;
     top: calc(1.5rem + 40px);
-  }
-
-  .block-views {
-    background: linear-gradient(180deg, #f9fbfd 0%, #f4f7fb 100%);
-    border: 1px solid var(--spotdeals-border);
-    border-radius: 6px;
-    padding: 1rem;
   }
 }
 
