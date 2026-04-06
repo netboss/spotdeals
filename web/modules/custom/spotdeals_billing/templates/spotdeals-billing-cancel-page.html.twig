@@ -1,0 +1,9 @@
+<section class="spotdeals-billing-message-page spotdeals-billing-message-page--cancel">
+  <p>{{ message }}</p>
+
+  {% if upgrade_url %}
+    <p>
+      <a href="{{ upgrade_url }}">{{ upgrade_link_text }}</a>
+    </p>
+  {% endif %}
+</section>

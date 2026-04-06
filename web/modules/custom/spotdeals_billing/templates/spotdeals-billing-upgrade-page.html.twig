@@ -1,0 +1,37 @@
+<section class="spotdeals-billing-upgrade-page">
+  <div class="spotdeals-billing-upgrade-page__intro">
+    <p>{{ intro_text }}</p>
+
+    {% if show_current_plan %}
+      <p>
+        <strong>Current plan:</strong>
+        {{ current_plan_label }} &middot; {{ current_status_label }}
+      </p>
+    {% endif %}
+  </div>
+
+  <div class="spotdeals-billing-plans">
+    <div class="spotdeals-billing-plan">
+      <h2>{{ monthly_title }}</h2>
+      <p>{{ monthly_price }}</p>
+      <p>
+        <a href="{{ monthly_url }}" class="button button--primary">{{ monthly_cta_text }}</a>
+      </p>
+    </div>
+
+    <div class="spotdeals-billing-plan">
+      <h2>{{ yearly_title }}</h2>
+      <p>{{ yearly_price }}</p>
+      <p><strong>{{ yearly_save_text }}</strong></p>
+      <p>
+        <a href="{{ yearly_url }}" class="button button--primary">{{ yearly_cta_text }}</a>
+      </p>
+    </div>
+  </div>
+
+  {% if show_manage_billing %}
+    <div class="spotdeals-billing-upgrade-page__manage">
+      <a href="{{ manage_billing_url }}">{{ manage_billing_text }}</a>
+    </div>
+  {% endif %}
+</section>

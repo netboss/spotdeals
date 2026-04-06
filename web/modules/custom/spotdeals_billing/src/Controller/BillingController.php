@@ -54,14 +54,14 @@ class BillingController extends ControllerBase {
   public function upgradePage() {
     $account = $this->entityTypeManager()->getStorage('user')->load($this->currentUserProxy->id());
 
-    // 🚫 If already Pro → redirect to billing portal
+    // Already Pro: redirect to billing portal.
     if ($account instanceof UserInterface && spotdeals_billing_user_has_pro_access($account)) {
       return new RedirectResponse(Url::fromRoute('spotdeals_billing.portal')->toString());
     }
 
-    $monthly_url = Url::fromRoute('spotdeals_billing.checkout', ['plan' => 'monthly']);
-    $yearly_url = Url::fromRoute('spotdeals_billing.checkout', ['plan' => 'yearly']);
-    $billing_url = Url::fromRoute('spotdeals_billing.portal');
+    $monthly_url = Url::fromRoute('spotdeals_billing.checkout', ['plan' => 'monthly'])->toString();
+    $yearly_url = Url::fromRoute('spotdeals_billing.checkout', ['plan' => 'yearly'])->toString();
+    $billing_url = Url::fromRoute('spotdeals_billing.portal')->toString();
 
     $plan_tier = '';
     $plan_status = '';
@@ -73,70 +73,35 @@ class BillingController extends ControllerBase {
       $plan_renew_at = trim((string) ($account->get('field_plan_renew_at')->value ?? ''));
     }
 
-    $current_plan_markup = '';
-    if ($plan_tier !== '' || $plan_status !== '') {
-      $plan_label = _spotdeals_billing_plan_label($plan_tier);
-      $status_label = _spotdeals_billing_status_label($plan_status, $plan_renew_at);
-      $current_plan_markup = '<p><strong>Current plan:</strong> ' . $plan_label . ' &middot; ' . $status_label . '</p>';
-    }
+    $show_current_plan = ($plan_tier !== '' || $plan_status !== '');
 
-    $build = [
-      '#type' => 'container',
-      '#attributes' => [
-        'class' => ['spotdeals-billing-upgrade-page'],
-      ],
-      'intro' => [
-        '#markup' => '<p>Upgrade to Pro to manage unlimited listings and multiple locations.</p>' . $current_plan_markup,
-      ],
-      'plans' => [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['spotdeals-billing-plans'],
-        ],
-        'monthly' => [
-          '#type' => 'container',
-          '#attributes' => ['class' => ['spotdeals-billing-plan']],
-          'title' => ['#markup' => '<h2>Pro Monthly</h2>'],
-          'price' => ['#markup' => '<p>$19.99 / month</p>'],
-          'cta' => [
-            '#type' => 'link',
-            '#title' => $this->t('Choose monthly'),
-            '#url' => $monthly_url,
-            '#attributes' => ['class' => ['button', 'button--primary']],
-          ],
-        ],
-        'yearly' => [
-          '#type' => 'container',
-          '#attributes' => ['class' => ['spotdeals-billing-plan']],
-          'title' => ['#markup' => '<h2>Pro Yearly</h2>'],
-          'price' => ['#markup' => '<p>$179 / year</p>'],
-          'save' => ['#markup' => '<p><strong>Save about 25%</strong></p>'],
-          'cta' => [
-            '#type' => 'link',
-            '#title' => $this->t('Choose yearly'),
-            '#url' => $yearly_url,
-            '#attributes' => ['class' => ['button', 'button--primary']],
-          ],
+    return [
+      '#theme' => 'spotdeals_billing_upgrade_page',
+      '#intro_text' => $this->t('Upgrade to Pro to manage unlimited listings and multiple locations.'),
+      '#show_current_plan' => $show_current_plan,
+      '#current_plan_label' => _spotdeals_billing_plan_label($plan_tier),
+      '#current_status_label' => _spotdeals_billing_status_label($plan_status, $plan_renew_at),
+      '#monthly_title' => $this->t('Pro Monthly'),
+      '#monthly_price' => $this->t('$19.99 / month'),
+      '#monthly_cta_text' => $this->t('Choose monthly'),
+      '#monthly_url' => $monthly_url,
+      '#yearly_title' => $this->t('Pro Yearly'),
+      '#yearly_price' => $this->t('$179 / year'),
+      '#yearly_save_text' => $this->t('Save about 25%'),
+      '#yearly_cta_text' => $this->t('Choose yearly'),
+      '#yearly_url' => $yearly_url,
+      '#show_manage_billing' => $account instanceof UserInterface && _spotdeals_billing_should_show_manage_billing($plan_tier, $plan_status),
+      '#manage_billing_text' => $this->t('Manage existing billing'),
+      '#manage_billing_url' => $billing_url,
+      '#attached' => [
+        'library' => [
+          'spotdeals_billing/spotdeals_billing',
         ],
       ],
       '#cache' => [
         'contexts' => ['user'],
       ],
     ];
-
-    // Show billing link ONLY if user somehow has billing access
-    if ($account instanceof UserInterface && _spotdeals_billing_should_show_manage_billing($plan_tier, $plan_status)) {
-      $build['manage'] = [
-        '#type' => 'container',
-        'link' => [
-          '#type' => 'link',
-          '#title' => $this->t('Manage existing billing'),
-          '#url' => $billing_url,
-        ],
-      ];
-    }
-
-    return $build;
   }
 
   /**
@@ -150,7 +115,7 @@ class BillingController extends ControllerBase {
       return new RedirectResponse(Url::fromRoute('<front>')->toString());
     }
 
-    // 🚫 Already Pro → no need to checkout again
+    // Already Pro: no need to checkout again.
     if (spotdeals_billing_user_has_pro_access($account)) {
       $this->messenger()->addStatus($this->t('Your Pro access is already active.'));
       return new RedirectResponse(Url::fromRoute('spotdeals_billing.portal')->toString());
@@ -180,7 +145,7 @@ class BillingController extends ControllerBase {
       return new RedirectResponse(Url::fromRoute('<front>')->toString());
     }
 
-    // 🚫 HARD GATE — Free users blocked
+    // Hard gate: Free users blocked.
     if (!spotdeals_billing_user_has_pro_access($account)) {
       $this->messenger()->addError($this->t('You need a Pro plan to manage billing.'));
       return new RedirectResponse(Url::fromRoute('spotdeals_billing.upgrade')->toString());
@@ -204,7 +169,13 @@ class BillingController extends ControllerBase {
    */
   public function successPage() {
     return [
-      '#markup' => '<p>Your payment was received. We are confirming your subscription now. If your plan does not update within a minute, refresh the page.</p>',
+      '#theme' => 'spotdeals_billing_success_page',
+      '#message' => $this->t('Your payment was received. We are confirming your subscription now. If your plan does not update within a minute, refresh the page.'),
+      '#attached' => [
+        'library' => [
+          'spotdeals_billing/spotdeals_billing',
+        ],
+      ],
       '#cache' => [
         'contexts' => ['user'],
       ],
@@ -216,7 +187,15 @@ class BillingController extends ControllerBase {
    */
   public function cancelPage() {
     return [
-      '#markup' => '<p>Your checkout was canceled. You can return to the upgrade page whenever you are ready.</p>',
+      '#theme' => 'spotdeals_billing_cancel_page',
+      '#message' => $this->t('Your checkout was canceled. You can return to the upgrade page whenever you are ready.'),
+      '#upgrade_url' => Url::fromRoute('spotdeals_billing.upgrade')->toString(),
+      '#upgrade_link_text' => $this->t('Return to upgrade page'),
+      '#attached' => [
+        'library' => [
+          'spotdeals_billing/spotdeals_billing',
+        ],
+      ],
       '#cache' => [
         'contexts' => ['user'],
       ],

@@ -1,0 +1,16 @@
+<section class="spotdeals-billing-status">
+  <h2>Subscription</h2>
+
+  <div class="plan-label"><strong>Plan:</strong> {{ plan_label }}</div>
+  <div class="status-label"><strong>Status:</strong> {{ status_label }}</div>
+
+  {% if show_renew_label %}
+    <div class="show-renew-label"><strong>{{ renew_label_prefix }}</strong> {{ renew_label }}</div>
+  {% endif %}
+
+  {% if manage_billing_url %}
+    <div><a href="{{ manage_billing_url }}">Manage billing</a></div>
+  {% elseif upgrade_url %}
+    <div><a href="{{ upgrade_url }}">Upgrade to Pro</a></div>
+  {% endif %}
+</section>

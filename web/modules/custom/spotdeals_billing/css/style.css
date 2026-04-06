@@ -1,0 +1,136 @@
+.spotdeals-billing-management,
+.spotdeals-billing-status {
+  margin: 0 0 2rem 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid #dcdfe4;
+  border-radius: 10px;
+  background: #fafafa;
+
+  h2 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.25rem;
+  }
+
+  p {
+    margin: 0 0 0.75rem 0;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Status-specific tweaks */
+.spotdeals-billing-status {
+  .plan-label,
+  .status-label {
+    margin-bottom: 0.35rem;
+  }
+
+  .show-renew-label {
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* =========================
+   Upgrade page
+   ========================= */
+
+.spotdeals-billing-upgrade-page {
+  margin: 0 0 2rem 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid #dcdfe4;
+  border-radius: 10px;
+  background: #fafafa;
+
+  &__intro {
+    margin-bottom: 1.25rem;
+
+    p {
+      margin: 0 0 0.75rem 0;
+    }
+  }
+
+  &__manage {
+    margin-top: 0.5rem;
+  }
+}
+
+/* Plans layout */
+.spotdeals-billing-plans {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 0 0 1rem 0;
+}
+
+.spotdeals-billing-plan {
+  flex: 1 1 280px;
+  min-width: 280px;
+  padding: 1rem 1.25rem;
+  border: 1px solid #dcdfe4;
+  border-radius: 10px;
+  background: #ffffff;
+
+  h2 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.25rem;
+  }
+
+  p {
+    margin: 0 0 0.75rem 0;
+  }
+}
+
+/* =========================
+   Message pages (success/cancel)
+   ========================= */
+
+.spotdeals-billing-message-page {
+  margin: 0 0 2rem 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid #dcdfe4;
+  border-radius: 10px;
+  background: #fafafa;
+
+  p {
+    margin: 0 0 0.75rem 0;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  &--success {
+    border-color: #c6e6c6;
+    background: #f3fbf3;
+  }
+
+  &--cancel {
+    border-color: #f0d5d5;
+    background: #fff5f5;
+  }
+}
+
+/* =========================
+   Responsive
+   ========================= */
+
+@media (max-width: 767px) {
+  .spotdeals-billing-plans {
+    display: block;
+  }
+
+  .spotdeals-billing-plan {
+    min-width: 0;
+
+    +.spotdeals-billing-plan {
+      margin-top: 1rem;
+    }
+  }
+}

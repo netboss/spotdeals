@@ -1,0 +1,25 @@
+<section class="spotdeals-billing-management">
+  <h2>Venue and deal management</h2>
+  <p>Your Pro plan includes access to create venues, update your claimed venues, and add deals for each claimed venue.</p>
+
+  <ul>
+    <li><a href="{{ create_venue_url }}">Create a venue</a></li>
+
+    {% if has_venues %}
+      {% for venue in venues %}
+        <li class="has-venues">
+          <div><strong>{{ venue.title }}</strong></div>
+          <div class="has-venues--container">
+            <a href="{{ venue.view_url }}">View venue</a>
+            &middot;
+            <a href="{{ venue.edit_url }}">Update venue</a>
+            &middot;
+            <a href="{{ venue.add_deal_url }}">Add deal for this venue</a>
+          </div>
+        </li>
+      {% endfor %}
+    {% else %}
+      <li>You do not have any claimed venues yet. Once a venue is assigned to your account, its update and deal links will appear here.</li>
+    {% endif %}
+  </ul>
+</section>
