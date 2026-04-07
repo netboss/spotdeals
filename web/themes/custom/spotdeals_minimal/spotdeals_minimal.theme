@@ -35,38 +35,34 @@ function spotdeals_minimal_views_pre_render(ViewExecutable $view) {
     return;
   }
 
-  // For HTMX requests, return only the results block markup.
-  $output = [];
-
-  if (!empty($view->header)) {
-    $output['header'] = $view->header;
+  $rows = [];
+  if (!empty($view->result) && !empty($view->style_plugin)) {
+    $rows = $view->style_plugin->render($view->result);
   }
 
-  if (!empty($view->attachment_before)) {
-    $output['attachment_before'] = $view->attachment_before;
-  }
-
-  if (!empty($view->result)) {
-    $output['rows'] = $view->style_plugin->render($view->result);
-  }
-  elseif (!empty($view->empty)) {
-    $output['empty'] = $view->empty;
-  }
-
+  $pager = [];
   if (!empty($view->pager)) {
-    $output['pager'] = $view->pager->render();
+    $pager = $view->pager->render($view);
   }
 
-  if (!empty($view->attachment_after)) {
-    $output['attachment_after'] = $view->attachment_after;
-  }
+  $data = [
+    'rows' => $rows,
+    'pager' => $pager,
+    'result_count' => is_array($view->result) ? count($view->result) : 0,
+    'is_recommendation_mode' => (bool) $request->query->get('help_me_choose'),
+    'has_results' => !empty($view->result),
+  ];
 
-  $output['result_count'] = is_array($view->result) ? count($view->result) : 0;
-  $output['is_recommendation_mode'] = (bool) $request->query->get('help_me_choose');
-
-  $view->element['#children'] = [
+  // Replace the full view render array for HTMX requests with a clean,
+  // render-safe theme array. Do not assign render arrays to #children.
+  $view->element = [
     '#theme' => 'spotdeals_results_only',
-    '#data' => $output,
+    '#data' => $data,
+    '#cache' => [
+      'contexts' => $view->element['#cache']['contexts'] ?? [],
+      'tags' => $view->element['#cache']['tags'] ?? [],
+      'max-age' => $view->element['#cache']['max-age'] ?? -1,
+    ],
   ];
 }
 
