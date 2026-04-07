@@ -1,0 +1,13 @@
+services:
+  spotdeals_admin.plan_tier:
+    class: Drupal\spotdeals_admin\Service\PlanTierService
+    arguments: ['@entity_type.manager', '@current_user']
+
+  spotdeals_admin.claim_eligibility:
+    class: Drupal\spotdeals_admin\Service\ClaimEligibilityService
+    arguments: ['@entity_type.manager', '@current_user', '@spotdeals_admin.plan_tier']
+
+  spotdeals_admin.claim_workflow:
+    class: Drupal\spotdeals_admin\Service\ClaimWorkflowService
+    arguments: ['@entity_type.manager', '@current_user', '@logger.factory']
+
