@@ -23,6 +23,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 final class MostSearchedBlock extends BlockBase implements ContainerFactoryPluginInterface {
 
   /**
+   * Cache max-age for the block in seconds.
+   */
+  private const CACHE_MAX_AGE = 1800;
+
+  /**
    * Constructs a popular searches block.
    */
   public function __construct(
@@ -55,7 +60,7 @@ final class MostSearchedBlock extends BlockBase implements ContainerFactoryPlugi
     if ($popular === []) {
       return [
         '#cache' => [
-          'max-age' => 1800,
+          'max-age' => self::CACHE_MAX_AGE,
         ],
       ];
     }
@@ -87,7 +92,7 @@ final class MostSearchedBlock extends BlockBase implements ContainerFactoryPlugi
     if ($items === []) {
       return [
         '#cache' => [
-          'max-age' => 1800,
+          'max-age' => self::CACHE_MAX_AGE,
         ],
       ];
     }
@@ -109,9 +114,16 @@ final class MostSearchedBlock extends BlockBase implements ContainerFactoryPlugi
         ],
       ],
       '#cache' => [
-        'max-age' => 1800,
+        'max-age' => self::CACHE_MAX_AGE,
       ],
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCacheMaxAge(): int {
+    return self::CACHE_MAX_AGE;
   }
 
 }
