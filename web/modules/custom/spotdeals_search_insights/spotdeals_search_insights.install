@@ -1,0 +1,54 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * Install file for SpotDeals Search Insights.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function spotdeals_search_insights_schema(): array {
+  $schema['spotdeals_search_insights_log'] = [
+    'description' => 'Stores normalized user search terms for Popular Searches.',
+    'fields' => [
+      'id' => [
+        'description' => 'Primary ID.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'keyword_raw' => [
+        'description' => 'Original search value submitted by the user.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'keyword_normalized' => [
+        'description' => 'Normalized search term used for aggregation.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'created' => [
+        'description' => 'Unix timestamp when the search was logged.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'keyword_normalized' => ['keyword_normalized'],
+      'created' => ['created'],
+      'keyword_normalized_created' => ['keyword_normalized', 'created'],
+    ],
+  ];
+
+  return $schema;
+}

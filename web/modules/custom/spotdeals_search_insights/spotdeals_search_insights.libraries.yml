@@ -1,0 +1,9 @@
+popular_searches_block:
+  css:
+    theme:
+      css/popular-searches-block.css: {}
+  js:
+    js/popular-searches-block.js: {}
+  dependencies:
+    - core/drupal
+    - core/once

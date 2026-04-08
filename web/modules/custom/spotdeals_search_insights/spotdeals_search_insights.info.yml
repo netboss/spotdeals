@@ -1,0 +1,7 @@
+name: SpotDeals Search Insights
+type: module
+description: Logs search terms and shows a popular searches sidebar block.
+core_version_requirement: ^10 || ^11
+package: Custom
+dependencies:
+  - drupal:block

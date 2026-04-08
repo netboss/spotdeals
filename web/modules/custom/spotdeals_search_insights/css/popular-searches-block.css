@@ -1,0 +1,69 @@
+#block-spotdeals-minimal-spotdealspopularsearches,
+.block-spotdeals-search-insights-most-searched {
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid #dbe3ea;
+  border-radius: 4px;
+  background: #f3f6f9;
+  box-sizing: border-box;
+}
+
+#block-spotdeals-minimal-spotdealspopularsearches .block-title,
+.block-spotdeals-search-insights-most-searched .block-title {
+  margin: 0 0 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  font-weight: 700;
+  color: #5f6b7a;
+}
+
+#block-spotdeals-minimal-spotdealspopularsearches .block-content,
+.block-spotdeals-search-insights-most-searched .block-content {
+  margin: 0;
+  padding: 0;
+}
+
+#block-spotdeals-minimal-spotdealspopularsearches .spotdeals-popular-searches,
+.block-spotdeals-search-insights-most-searched .spotdeals-popular-searches {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#block-spotdeals-minimal-spotdealspopularsearches .spotdeals-popular-searches li,
+.block-spotdeals-search-insights-most-searched .spotdeals-popular-searches li {
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+#block-spotdeals-minimal-spotdealspopularsearches .spotdeals-popular-searches li:last-child,
+.block-spotdeals-search-insights-most-searched .spotdeals-popular-searches li:last-child {
+  margin-bottom: 0;
+}
+
+#block-spotdeals-minimal-spotdealspopularsearches .spotdeals-popular-searches a,
+.block-spotdeals-search-insights-most-searched .spotdeals-popular-searches a {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1.45;
+  font-weight: 400;
+  text-decoration: none;
+}
+
+#block-spotdeals-minimal-spotdealspopularsearches .spotdeals-popular-searches a:hover,
+#block-spotdeals-minimal-spotdealspopularsearches .spotdeals-popular-searches a:focus,
+.block-spotdeals-search-insights-most-searched .spotdeals-popular-searches a:hover,
+.block-spotdeals-search-insights-most-searched .spotdeals-popular-searches a:focus {
+  text-decoration: underline;
+}
+
+#block-spotdeals-minimal-spotdealspopularsearches ul,
+.block-spotdeals-search-insights-most-searched ul {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
