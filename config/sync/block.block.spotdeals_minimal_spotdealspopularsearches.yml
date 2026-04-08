@@ -1,0 +1,25 @@
+uuid: 2d6cb102-deed-44df-a032-24461f3af035
+langcode: en
+status: true
+dependencies:
+  module:
+    - spotdeals_search_insights
+    - system
+  theme:
+    - spotdeals_minimal
+id: spotdeals_minimal_spotdealspopularsearches
+theme: spotdeals_minimal
+region: sidebar
+weight: 0
+provider: null
+plugin: spotdeals_search_insights_most_searched
+settings:
+  id: spotdeals_search_insights_most_searched
+  label: 'SpotDeals popular searches'
+  label_display: '0'
+  provider: spotdeals_search_insights
+visibility:
+  request_path:
+    id: request_path
+    negate: false
+    pages: '<front>'
