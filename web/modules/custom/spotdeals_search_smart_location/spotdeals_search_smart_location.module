@@ -272,7 +272,7 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
 
     $solr_keywords = $keywords;
 
-    _spotdeals_search_smart_location_log_search_insight($raw, $solr_keywords, $recommendation_mode);
+    _spotdeals_search_smart_location_prepare_search_insight($raw, $solr_keywords, $recommendation_mode);
 
     $input['search_raw'] = $raw;
     $input[$search_param] = $solr_keywords;
@@ -327,7 +327,7 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     $parsed['keywords'] = $recommendation_keywords;
   }
 
-  _spotdeals_search_smart_location_log_search_insight($raw, (string) ($parsed['keywords'] ?? ''), $recommendation_mode);
+  _spotdeals_search_smart_location_prepare_search_insight($raw, (string) ($parsed['keywords'] ?? ''), $recommendation_mode);
 
   $input['search_raw'] = $raw;
   $input[$search_param] = $parsed['keywords'];
@@ -396,6 +396,7 @@ function spotdeals_search_smart_location_views_pre_render(ViewExecutable $view):
   }
 
   _spotdeals_search_smart_location_apply_ranked_order($view);
+  _spotdeals_search_smart_location_commit_search_insight($view);
 }
 
 /**
@@ -1499,11 +1500,14 @@ function _spotdeals_search_smart_location_haversine_km(float $lat1, float $lon1,
   return $earth_radius_km * $angle;
 }
 
-
 /**
- * Logs one normalized search term for the search insights block.
+ * Stores a pending normalized search term for later result-aware logging.
  */
-function _spotdeals_search_smart_location_log_search_insight(string $raw, string $normalized, bool $recommendation_mode): void {
+function _spotdeals_search_smart_location_prepare_search_insight(string $raw, string $normalized, bool $recommendation_mode): void {
+  $request = \Drupal::request();
+
+  $request->attributes->remove('spotdeals_search_smart_location.pending_search_insight');
+
   if ($recommendation_mode) {
     return;
   }
@@ -1519,6 +1523,41 @@ function _spotdeals_search_smart_location_log_search_insight(string $raw, string
     return;
   }
 
+  $request->attributes->set('spotdeals_search_smart_location.pending_search_insight', [
+    'raw' => $raw,
+    'normalized' => $normalized,
+  ]);
+}
+
+/**
+ * Logs one normalized search term only when the rendered search has results.
+ */
+function _spotdeals_search_smart_location_commit_search_insight(ViewExecutable $view): void {
+  if (!\Drupal::hasService('spotdeals_search_insights.logger')) {
+    return;
+  }
+
+  $request = \Drupal::request();
+  $pending = $request->attributes->get('spotdeals_search_smart_location.pending_search_insight');
+
+  if (!is_array($pending)) {
+    return;
+  }
+
+  $request->attributes->remove('spotdeals_search_smart_location.pending_search_insight');
+
+  $result_count = is_array($view->result ?? NULL) ? count($view->result) : 0;
+  if ($result_count < 1) {
+    return;
+  }
+
+  $raw = isset($pending['raw']) && is_string($pending['raw']) ? trim($pending['raw']) : '';
+  $normalized = isset($pending['normalized']) && is_string($pending['normalized']) ? trim($pending['normalized']) : '';
+
+  if ($raw === '' || $normalized === '') {
+    return;
+  }
+
   try {
     \Drupal::service('spotdeals_search_insights.logger')->log($raw, $normalized);
   }
@@ -1529,3 +1568,4 @@ function _spotdeals_search_smart_location_log_search_insight(string $raw, string
     );
   }
 }
+
