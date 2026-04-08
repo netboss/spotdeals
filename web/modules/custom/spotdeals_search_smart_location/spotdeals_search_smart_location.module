@@ -272,6 +272,8 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
 
     $solr_keywords = $keywords;
 
+    _spotdeals_search_smart_location_log_search_insight($raw, $solr_keywords, $recommendation_mode);
+
     $input['search_raw'] = $raw;
     $input[$search_param] = $solr_keywords;
 
@@ -324,6 +326,8 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   if ($recommendation_mode && $recommendation_keywords !== '') {
     $parsed['keywords'] = $recommendation_keywords;
   }
+
+  _spotdeals_search_smart_location_log_search_insight($raw, (string) ($parsed['keywords'] ?? ''), $recommendation_mode);
 
   $input['search_raw'] = $raw;
   $input[$search_param] = $parsed['keywords'];
@@ -1493,4 +1497,35 @@ function _spotdeals_search_smart_location_haversine_km(float $lat1, float $lon1,
   ));
 
   return $earth_radius_km * $angle;
+}
+
+
+/**
+ * Logs one normalized search term for the search insights block.
+ */
+function _spotdeals_search_smart_location_log_search_insight(string $raw, string $normalized, bool $recommendation_mode): void {
+  if ($recommendation_mode) {
+    return;
+  }
+
+  $raw = trim($raw);
+  $normalized = trim($normalized);
+
+  if ($raw === '' || $normalized === '') {
+    return;
+  }
+
+  if (!\Drupal::hasService('spotdeals_search_insights.logger')) {
+    return;
+  }
+
+  try {
+    \Drupal::service('spotdeals_search_insights.logger')->log($raw, $normalized);
+  }
+  catch (\Throwable $e) {
+    \Drupal::logger('spotdeals_search_smart_location')->warning(
+      'SMART LOCATION search insight logging skipped due to logger error: @message',
+      ['@message' => $e->getMessage()]
+    );
+  }
 }

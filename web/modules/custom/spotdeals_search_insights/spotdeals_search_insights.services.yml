@@ -1,0 +1,6 @@
+services:
+  spotdeals_search_insights.logger:
+    class: Drupal\spotdeals_search_insights\Service\SearchInsightsLogger
+    arguments:
+      - '@database'
+      - '@datetime.time'
