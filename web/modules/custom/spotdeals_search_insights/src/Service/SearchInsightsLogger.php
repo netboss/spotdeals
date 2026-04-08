@@ -23,6 +23,16 @@ final class SearchInsightsLogger {
   private const MAX_LIMIT = 20;
 
   /**
+   * Minimum number of searches required to appear in the block.
+   */
+  private const MIN_SEARCH_COUNT = 2;
+
+  /**
+   * Minimum normalized keyword length to log.
+   */
+  private const MIN_KEYWORD_LENGTH = 3;
+
+  /**
    * Constructs a search insights logger.
    */
   public function __construct(
@@ -66,6 +76,9 @@ final class SearchInsightsLogger {
     $query->addExpression('COUNT(*)', 'search_count');
     $query->condition('created', $since, '>=');
     $query->groupBy('keyword_normalized');
+    $query->having('COUNT(*) >= :min_search_count', [
+      ':min_search_count' => self::MIN_SEARCH_COUNT,
+    ]);
     $query->orderBy('search_count', 'DESC');
     $query->orderBy('keyword_normalized', 'ASC');
     $query->range(0, $limit);
@@ -96,7 +109,7 @@ final class SearchInsightsLogger {
       return FALSE;
     }
 
-    if (mb_strlen($normalized) < 2) {
+    if (mb_strlen($normalized) < self::MIN_KEYWORD_LENGTH) {
       return FALSE;
     }
 
@@ -104,13 +117,11 @@ final class SearchInsightsLogger {
       return FALSE;
     }
 
-    $blocked = [
-      'near me',
-      'reset',
-      'search',
-    ];
+    if (preg_match('/^\d+$/', $normalized)) {
+      return FALSE;
+    }
 
-    return !in_array($normalized, $blocked, TRUE);
+    return (bool) preg_match('/[\p{L}\p{N}]/u', $normalized);
   }
 
   /**
