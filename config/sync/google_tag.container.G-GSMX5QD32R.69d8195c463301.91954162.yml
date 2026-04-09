@@ -1,0 +1,24 @@
+uuid: add2eb62-de58-483f-9184-92bcb02ad5da
+langcode: en
+status: true
+dependencies: {  }
+id: G-GSMX5QD32R.69d8195c463301.91954162
+label: G-GSMX5QD32R
+weight: 0
+tag_container_ids:
+  - G-GSMX5QD32R
+advanced_settings:
+  consent_mode: false
+dimensions_metrics: {  }
+conditions: {  }
+events:
+  sign_up:
+    method: CMS
+  generate_lead:
+    value: ''
+    currency: ''
+  custom: {  }
+  webform_purchase: {  }
+  search: {  }
+  login:
+    method: CMS

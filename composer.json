@@ -27,6 +27,7 @@
         "drupal/devel": "^5.5",
         "drupal/entity_reference_revisions": "^1.14",
         "drupal/geofield": "^10.3",
+        "drupal/google_tag": "^2.0",
         "drupal/honeypot": "^2.2",
         "drupal/metatag": "^2.2",
         "drupal/migrate_plus": "^6.0",
