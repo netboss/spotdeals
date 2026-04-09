@@ -75,6 +75,7 @@ final class NearMeRanker {
         'title' => $this->normalize((string) $venue->label()),
         'description' => $this->normalize($venue->hasField('field_short_description') && !$venue->get('field_short_description')->isEmpty() ? (string) $venue->get('field_short_description')->value : ''),
         'cuisine' => $this->normalize($this->venueCuisineText($venue)),
+        'tags' => $this->normalize($this->venueTagsText($venue)),
       ];
     }
 
@@ -167,6 +168,7 @@ final class NearMeRanker {
     $venue_title = $venueData['title'] ?? '';
     $venue_description = $venueData['description'] ?? '';
     $venue_cuisine = $venueData['cuisine'] ?? '';
+    $venue_tags = $venueData['tags'] ?? '';
 
     $score = 0;
 
@@ -178,6 +180,9 @@ final class NearMeRanker {
     }
     if ($venue_cuisine !== '' && str_contains($venue_cuisine, $keywords)) {
       $score += 90;
+    }
+    if ($venue_tags !== '' && str_contains($venue_tags, $keywords)) {
+      $score += 75;
     }
     if ($body !== '' && str_contains($body, $keywords)) {
       $score += 60;
@@ -200,6 +205,9 @@ final class NearMeRanker {
       if (str_contains($venue_cuisine, $token)) {
         $score += 16;
       }
+      if (str_contains($venue_tags, $token)) {
+        $score += 14;
+      }
       if (str_contains($body, $token)) {
         $score += 10;
       }
@@ -209,6 +217,31 @@ final class NearMeRanker {
     }
 
     return $score;
+  }
+
+  /**
+   * Returns normalized tag text for a venue.
+   */
+  private function venueTagsText(NodeInterface $venue): string {
+    if (!$venue->hasField('field_tags') || $venue->get('field_tags')->isEmpty()) {
+      return '';
+    }
+
+    $field = $venue->get('field_tags');
+    $parts = [];
+
+    foreach ($field as $item) {
+      if (isset($item->entity) && $item->entity) {
+        $parts[] = (string) $item->entity->label();
+        continue;
+      }
+
+      if (isset($item->value) && is_string($item->value) && trim($item->value) !== '') {
+        $parts[] = $item->value;
+      }
+    }
+
+    return implode(' ', $parts);
   }
 
   /**
