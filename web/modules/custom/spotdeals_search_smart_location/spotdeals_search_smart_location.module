@@ -270,6 +270,43 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
       $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', $recommended_nids);
     }
 
+    $request->attributes->set('spotdeals_search_smart_location.fallback_broader_search', FALSE);
+    $request->attributes->set('spotdeals_search_smart_location.fallback_broader_search_pending', FALSE);
+    $request->attributes->set('spotdeals_search_smart_location.browser_near_me_context', [
+      'keywords' => $keywords,
+      'nearest_city' => $nearest_city ?? '',
+      'origin_lat' => (float) $origin_lat,
+      'origin_lon' => (float) $origin_lon,
+      'search_param' => $search_param,
+    ]);
+
+    if (!$recommendation_mode && $keywords !== '' && empty($ranked_nids)) {
+      $broader_ranked_nids = \Drupal::service('spotdeals_search_smart_location.near_me_ranker')
+        ->rankDealNids((float) $origin_lat, (float) $origin_lon, $keywords, 1000.0);
+
+      if (!empty($broader_ranked_nids)) {
+        $request->attributes->set('spotdeals_search_smart_location.fallback_broader_search', TRUE);
+        $request->attributes->set('spotdeals_search_smart_location.browser_near_me', FALSE);
+        $request->attributes->set('spotdeals_search_smart_location.city', '');
+        $request->attributes->set('spotdeals_search_smart_location.zip', '');
+        $request->attributes->set('spotdeals_search_smart_location.ranked_deal_nids', []);
+
+        \Drupal::logger('spotdeals_search_smart_location')->notice(
+          'SMART LOCATION broadened browser near-me keyword search before View execution: view="@view" display="@display" raw="@raw" keywords="@keywords" nearest_city="@city" origin_lat="@lat" origin_lon="@lon" local_ranked_count="0" broader_ranked_count="@broader"',
+          [
+            '@view' => $view->id(),
+            '@display' => $display_id,
+            '@raw' => $raw,
+            '@keywords' => $keywords,
+            '@city' => $nearest_city ?? '',
+            '@lat' => (string) $origin_lat,
+            '@lon' => (string) $origin_lon,
+            '@broader' => (string) count($broader_ranked_nids),
+          ]
+        );
+      }
+    }
+
     $solr_keywords = $keywords;
 
     _spotdeals_search_smart_location_prepare_search_insight($raw, $solr_keywords, $recommendation_mode);
@@ -414,7 +451,14 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
 
   $request = \Drupal::request();
   $recommendation_mode = (bool) $request->attributes->get('spotdeals_search_smart_location.recommendation_mode', FALSE);
-  if (!$recommendation_mode) {
+  $fallback_broader_search = (bool) $request->attributes->get('spotdeals_search_smart_location.fallback_broader_search', FALSE);
+
+  if (!$recommendation_mode && !$fallback_broader_search) {
+    return;
+  }
+
+  if ($fallback_broader_search && !$recommendation_mode) {
+    _spotdeals_search_smart_location_add_fallback_message();
     return;
   }
 
@@ -458,7 +502,14 @@ function spotdeals_search_smart_location_preprocess_views_view_unformatted(array
 
   $request = \Drupal::request();
   $recommendation_mode = (bool) $request->attributes->get('spotdeals_search_smart_location.recommendation_mode', FALSE);
-  if (!$recommendation_mode) {
+  $fallback_broader_search = (bool) $request->attributes->get('spotdeals_search_smart_location.fallback_broader_search', FALSE);
+
+  if (!$recommendation_mode && !$fallback_broader_search) {
+    return;
+  }
+
+  if ($fallback_broader_search && !$recommendation_mode) {
+    _spotdeals_search_smart_location_add_fallback_message();
     return;
   }
 
@@ -516,6 +567,22 @@ function spotdeals_search_smart_location_preprocess_views_view_unformatted(array
       '@ranked' => (string) count($order_map),
     ]
   );
+}
+
+/**
+ * Adds the broader-search fallback status message exactly once.
+ */
+function _spotdeals_search_smart_location_add_fallback_message(): void {
+  $request = \Drupal::request();
+  if ((bool) $request->attributes->get('spotdeals_search_smart_location.fallback_message_added', FALSE)) {
+    return;
+  }
+
+  $request->attributes->set('spotdeals_search_smart_location.fallback_message_added', TRUE);
+
+  \Drupal::messenger()->addStatus(t('No nearby matches found for “@query”. Showing broader Florida matches instead.', [
+    '@query' => (string) $request->attributes->get('spotdeals_search_smart_location.raw_query', ''),
+  ]));
 }
 
 /**
