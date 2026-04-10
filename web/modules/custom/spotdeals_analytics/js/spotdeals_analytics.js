@@ -446,6 +446,26 @@
           });
         });
       });
+
+      /**
+       * ========================
+       * CLAIM SUBMIT EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-claim-submit', '.node-claim-form', context).forEach((form) => {
+        form.addEventListener('submit', function () {
+
+          const params = new URLSearchParams(window.location.search);
+          const venueId = params.get('venue') || '';
+
+          sendEvent('claim_submit', {
+            venue_id: venueId,
+            page_location: window.location.href,
+            page_path: window.location.pathname + window.location.search
+          });
+
+        });
+      });
     }
   };
 
