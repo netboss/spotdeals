@@ -64,6 +64,62 @@
     }
   }
 
+  /**
+   * Get the active search term from the current URL.
+   */
+  function getCurrentSearchTerm() {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get('search_clean') || params.get('search_deals') || '').trim();
+  }
+
+  /**
+   * Get the nearest views row for a clicked element.
+   */
+  function getResultRow(element) {
+    return element.closest('.views-row');
+  }
+
+  /**
+   * Extract venue title from a result row.
+   */
+  function getVenueTitleFromRow(row) {
+    if (!row) {
+      return '';
+    }
+
+    const venueEl = row.querySelector('.venue-title');
+    return venueEl ? venueEl.textContent.trim() : '';
+  }
+
+  /**
+   * Extract deal title from a result row.
+   */
+  function getDealTitleFromRow(row) {
+    if (!row) {
+      return '';
+    }
+
+    const dealLink = row.querySelector('.deal-title a');
+    return dealLink ? dealLink.textContent.trim() : '';
+  }
+
+  /**
+   * Extract venue id from a claim link href.
+   */
+  function getVenueIdFromClaimHref(href) {
+    if (!href) {
+      return '';
+    }
+
+    try {
+      const url = new URL(href, window.location.origin);
+      return (url.searchParams.get('venue') || '').trim();
+    }
+    catch (e) {
+      return '';
+    }
+  }
+
   Drupal.behaviors.spotdealsAnalytics = {
     attach(context) {
 
@@ -137,26 +193,61 @@
        */
       once('spotdeals-analytics-deal-click', '.deal-title a', context).forEach((link) => {
         link.addEventListener('click', function () {
+          const row = getResultRow(link);
           const dealTitle = link.textContent.trim();
-
-          let venueTitle = '';
-          const row = link.closest('.views-row');
-
-          if (row) {
-            const venueEl = row.querySelector('.venue-title');
-            if (venueEl) {
-              venueTitle = venueEl.textContent.trim();
-            }
-          }
-
-          const params = new URLSearchParams(window.location.search);
-          const searchTerm = params.get('search_clean') || params.get('search_deals') || '';
+          const venueTitle = getVenueTitleFromRow(row);
+          const searchTerm = getCurrentSearchTerm();
 
           sendEvent('deal_click', {
             deal_title: dealTitle,
             venue_name: venueTitle,
             search_term: searchTerm,
             page_location: window.location.href
+          });
+        });
+      });
+
+      /**
+       * ========================
+       * VENUE CLICK EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-venue-click', '.venue-title a', context).forEach((link) => {
+        link.addEventListener('click', function () {
+          const row = getResultRow(link);
+          const venueTitle = link.textContent.trim();
+          const dealTitle = getDealTitleFromRow(row);
+          const searchTerm = getCurrentSearchTerm();
+
+          sendEvent('venue_click', {
+            venue_name: venueTitle,
+            deal_title: dealTitle,
+            search_term: searchTerm,
+            page_location: window.location.href
+          });
+        });
+      });
+
+      /**
+       * ========================
+       * CLAIM LISTING CLICK EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-claim-click', 'a[href*="/create/claim"]', context).forEach((link) => {
+        link.addEventListener('click', function () {
+          const row = getResultRow(link);
+          const venueTitle = getVenueTitleFromRow(row);
+          const dealTitle = getDealTitleFromRow(row);
+          const searchTerm = getCurrentSearchTerm();
+          const venueId = getVenueIdFromClaimHref(link.href);
+
+          sendEvent('claim_listing_click', {
+            venue_name: venueTitle,
+            venue_id: venueId,
+            deal_title: dealTitle,
+            search_term: searchTerm,
+            page_location: window.location.href,
+            claim_url: link.href
           });
         });
       });
