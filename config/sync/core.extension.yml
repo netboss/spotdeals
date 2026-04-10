@@ -65,6 +65,7 @@ module:
   search_api_solr: 0
   shortcut: 0
   spotdeals_admin: 0
+  spotdeals_analytics: 0
   spotdeals_billing: 0
   spotdeals_import: 0
   spotdeals_search_insights: 0

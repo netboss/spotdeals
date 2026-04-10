@@ -1,0 +1,7 @@
+tracking:
+  version: 1.x
+  js:
+    js/spotdeals_analytics.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
