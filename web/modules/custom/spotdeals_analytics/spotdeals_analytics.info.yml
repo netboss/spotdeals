@@ -1,0 +1,7 @@
+name: SpotDeals Analytics
+type: module
+description: 'Custom analytics events for SpotDeals.'
+package: SpotDeals
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:system

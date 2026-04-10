@@ -1,0 +1,15 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * SpotDeals Analytics module hooks.
+ */
+
+/**
+ * Implements hook_page_attachments().
+ */
+function spotdeals_analytics_page_attachments(array &$attachments): void {
+  $attachments['#attached']['library'][] = 'spotdeals_analytics/tracking';
+}
