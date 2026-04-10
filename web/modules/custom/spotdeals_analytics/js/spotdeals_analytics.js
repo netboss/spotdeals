@@ -413,6 +413,39 @@
         });
       });
 
+      /**
+       * ========================
+       * UPGRADE MONTHLY PLAN CLICK EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-upgrade-monthly-plan-click', '.spotdeals-billing-upgrade-page__monthly--link', context).forEach((link) => {
+        link.addEventListener('click', function () {
+          sendEvent('upgrade_monthly_plan_click', {
+            plan_period: 'monthly',
+            upgrade_path: window.location.pathname,
+            page_location: window.location.href,
+            page_path: window.location.pathname + window.location.search,
+            target_url: link.href
+          });
+        });
+      });
+
+      /**
+       * ========================
+       * UPGRADE YEARLY PLAN CLICK EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-upgrade-yearly-plan-click', '.spotdeals-billing-upgrade-page__yearly--link', context).forEach((link) => {
+        link.addEventListener('click', function () {
+          sendEvent('upgrade_yearly_plan_click', {
+            plan_period: 'yearly',
+            upgrade_path: window.location.pathname,
+            page_location: window.location.href,
+            page_path: window.location.pathname + window.location.search,
+            target_url: link.href
+          });
+        });
+      });
     }
   };
 
