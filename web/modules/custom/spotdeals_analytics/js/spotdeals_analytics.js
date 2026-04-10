@@ -376,6 +376,22 @@
 
       /**
        * ========================
+       * UPGRADE CLICK EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-upgrade-click', '.upgrade-pro-link', context).forEach((link) => {
+        link.addEventListener('click', function () {
+          sendEvent('upgrade_click', {
+            upgrade_path: window.location.pathname,
+            page_location: window.location.href,
+            page_path: window.location.pathname + window.location.search,
+            target_url: link.href
+          });
+        });
+      });
+
+      /**
+       * ========================
        * UPGRADE SUCCESS EVENT
        * ========================
        */
