@@ -466,6 +466,41 @@
 
         });
       });
+
+      /**
+       * ========================
+       * CLAIM SUBMIT SUCCESS EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-claim-submit-success', 'html', context).forEach(() => {
+        const pagePath = window.location.pathname;
+        const isDealsLandingPage = pagePath === '/' || pagePath === '/deals';
+
+        if (!isDealsLandingPage) {
+          return;
+        }
+
+        const pageText = document.body.textContent || '';
+        const claimSuccessMatch = pageText.match(/Claim\s+.+\s+has been created\./i);
+
+        if (!claimSuccessMatch) {
+          return;
+        }
+
+        const successMessage = claimSuccessMatch[0];
+        const trackKey = 'claim_submit_success.' + pagePath + '.' + successMessage;
+
+        if (alreadyTracked(trackKey)) {
+          return;
+        }
+
+        sendEvent('claim_submit_success', {
+          success_message: successMessage,
+          page_location: window.location.href,
+          page_path: window.location.pathname + window.location.search
+        });
+      });
+
     }
   };
 
