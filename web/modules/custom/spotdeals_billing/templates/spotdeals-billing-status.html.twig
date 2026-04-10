@@ -9,8 +9,8 @@
   {% endif %}
 
   {% if manage_billing_url %}
-    <div><a href="{{ manage_billing_url }}">Manage billing</a></div>
+    <div><a href="{{ manage_billing_url }}" class="manage-billing-link">Manage billing</a></div>
   {% elseif upgrade_url %}
-    <div><a href="{{ upgrade_url }}">Upgrade to Pro</a></div>
+    <div><a href="{{ upgrade_url }}" class="upgrade-pro-link">Upgrade to Pro</a></div>
   {% endif %}
 </section>
