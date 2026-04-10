@@ -46,11 +46,11 @@
   }
 
   /**
-   * Prevent duplicate search tracking.
+   * Prevent duplicate tracking for the same URL in the same tab.
    */
-  function alreadyTracked(payload) {
+  function alreadyTracked(key) {
     try {
-      const storageKey = 'spotdeals_analytics.search.' + payload.page_path;
+      const storageKey = 'spotdeals_analytics.' + key;
 
       if (window.sessionStorage.getItem(storageKey)) {
         return true;
@@ -69,7 +69,7 @@
 
       /**
        * ========================
-       * SEARCH EVENT (existing)
+       * SEARCH EVENT
        * ========================
        */
       once('spotdeals-analytics-search', 'html', context).forEach(() => {
@@ -79,7 +79,7 @@
           return;
         }
 
-        if (alreadyTracked(payload)) {
+        if (alreadyTracked('search.' + payload.page_path)) {
           return;
         }
 
@@ -97,16 +97,48 @@
 
       /**
        * ========================
-       * DEAL CLICK EVENT (NEW)
+       * ZERO RESULTS EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-zero-results', 'html', context).forEach(() => {
+        const payload = getSearchPayload();
+
+        if (!payload) {
+          return;
+        }
+
+        const dealLinks = document.querySelectorAll('.deal-title a');
+        const hasResults = dealLinks.length > 0;
+
+        if (hasResults) {
+          return;
+        }
+
+        if (alreadyTracked('zero_results.' + payload.page_path)) {
+          return;
+        }
+
+        sendEvent('zero_results', {
+          search_term: payload.search_term,
+          search_raw: payload.search_raw,
+          search_origin_mode: payload.search_origin_mode,
+          postal_code_exact: payload.postal_code_exact,
+          locality_exact: payload.locality_exact,
+          page_number: payload.page,
+          page_location: payload.page_location,
+          page_path: payload.page_path
+        });
+      });
+
+      /**
+       * ========================
+       * DEAL CLICK EVENT
        * ========================
        */
       once('spotdeals-analytics-deal-click', '.deal-title a', context).forEach((link) => {
-
         link.addEventListener('click', function () {
-
           const dealTitle = link.textContent.trim();
 
-          // Try to find the venue title in the same result row.
           let venueTitle = '';
           const row = link.closest('.views-row');
 
@@ -126,9 +158,7 @@
             search_term: searchTerm,
             page_location: window.location.href
           });
-
         });
-
       });
 
     }
