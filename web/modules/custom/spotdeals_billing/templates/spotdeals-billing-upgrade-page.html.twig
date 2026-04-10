@@ -15,7 +15,7 @@
       <h2>{{ monthly_title }}</h2>
       <p>{{ monthly_price }}</p>
       <p>
-        <a href="{{ monthly_url }}" class="button button--primary">{{ monthly_cta_text }}</a>
+        <a href="{{ monthly_url }}" class="button button--primary spotdeals-billing-upgrade-page__monthly--link">{{ monthly_cta_text }}</a>
       </p>
     </div>
 
@@ -24,14 +24,14 @@
       <p>{{ yearly_price }}</p>
       <p><strong>{{ yearly_save_text }}</strong></p>
       <p>
-        <a href="{{ yearly_url }}" class="button button--primary">{{ yearly_cta_text }}</a>
+        <a href="{{ yearly_url }}" class="button button--primary spotdeals-billing-upgrade-page__yearly--link">{{ yearly_cta_text }}</a>
       </p>
     </div>
   </div>
 
   {% if show_manage_billing %}
     <div class="spotdeals-billing-upgrade-page__manage">
-      <a href="{{ manage_billing_url }}">{{ manage_billing_text }}</a>
+      <a href="{{ manage_billing_url }}" class="spotdeals-billing-upgrade-page__manage--link">{{ manage_billing_text }}</a>
     </div>
   {% endif %}
 </section>
