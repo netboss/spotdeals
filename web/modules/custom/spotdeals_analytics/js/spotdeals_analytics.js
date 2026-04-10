@@ -120,6 +120,57 @@
     }
   }
 
+  /**
+   * Extract venue id from the current URL.
+   */
+  function getVenueIdFromCurrentUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get('venue') || '').trim();
+  }
+
+  /**
+   * Check whether the current page is the claim form.
+   */
+  function isClaimFormPage() {
+    return window.location.pathname === '/create/claim';
+  }
+
+  /**
+   * Check whether the current page is the login page for claim flow.
+   */
+  function isClaimLoginPage() {
+    if (window.location.pathname !== '/user/login') {
+      return false;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const destination = params.get('destination') || '';
+
+    return destination.indexOf('/create/claim') !== -1;
+  }
+
+  /**
+   * Get claim destination from the login page.
+   */
+  function getClaimDestination() {
+    const params = new URLSearchParams(window.location.search);
+    return (params.get('destination') || '').trim();
+  }
+
+  /**
+   * Check whether the current page is the upgrade page.
+   */
+  function isUpgradePage() {
+    return window.location.pathname === '/account/upgrade';
+  }
+
+  /**
+   * Check whether the current page is the upgrade success page.
+   */
+  function isUpgradeSuccessPage() {
+    return window.location.pathname === '/account/upgrade/success';
+  }
+
   Drupal.behaviors.spotdealsAnalytics = {
     attach(context) {
 
@@ -249,6 +300,100 @@
             page_location: window.location.href,
             claim_url: link.href
           });
+        });
+      });
+
+      /**
+       * ========================
+       * CLAIM FORM VIEW EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-claim-form-view', 'html', context).forEach(() => {
+        if (!isClaimFormPage()) {
+          return;
+        }
+
+        const venueId = getVenueIdFromCurrentUrl();
+        const trackKey = 'claim_form_view.' + window.location.pathname + window.location.search;
+
+        if (alreadyTracked(trackKey)) {
+          return;
+        }
+
+        sendEvent('claim_form_view', {
+          venue_id: venueId,
+          page_location: window.location.href,
+          page_path: window.location.pathname + window.location.search
+        });
+      });
+
+      /**
+       * ========================
+       * LOGIN REQUIRED FOR CLAIM EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-login-required-claim', 'html', context).forEach(() => {
+        if (!isClaimLoginPage()) {
+          return;
+        }
+
+        const destination = getClaimDestination();
+        const trackKey = 'login_required_for_claim.' + window.location.pathname + window.location.search;
+
+        if (alreadyTracked(trackKey)) {
+          return;
+        }
+
+        sendEvent('login_required_for_claim', {
+          destination: destination,
+          page_location: window.location.href,
+          page_path: window.location.pathname + window.location.search
+        });
+      });
+
+      /**
+       * ========================
+       * UPGRADE PAGE VIEW EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-upgrade-page-view', 'html', context).forEach(() => {
+        if (!isUpgradePage()) {
+          return;
+        }
+
+        const trackKey = 'upgrade_click.' + window.location.pathname + window.location.search;
+
+        if (alreadyTracked(trackKey)) {
+          return;
+        }
+
+        sendEvent('upgrade_click', {
+          upgrade_path: window.location.pathname,
+          page_location: window.location.href,
+          page_path: window.location.pathname + window.location.search
+        });
+      });
+
+      /**
+       * ========================
+       * UPGRADE SUCCESS EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-upgrade-success', 'html', context).forEach(() => {
+        if (!isUpgradeSuccessPage()) {
+          return;
+        }
+
+        const trackKey = 'upgrade_success.' + window.location.pathname + window.location.search;
+
+        if (alreadyTracked(trackKey)) {
+          return;
+        }
+
+        sendEvent('upgrade_success', {
+          success_path: window.location.pathname,
+          page_location: window.location.href,
+          page_path: window.location.pathname + window.location.search
         });
       });
 
