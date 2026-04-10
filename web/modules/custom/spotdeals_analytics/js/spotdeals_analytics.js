@@ -2,10 +2,7 @@
   'use strict';
 
   /**
-   * Returns a normalized search payload from the current URL.
-   *
-   * @returns {Object|null}
-   *   A payload object or null if this is not a searchable page state.
+   * Get search payload from URL.
    */
   function getSearchPayload() {
     const params = new URLSearchParams(window.location.search);
@@ -20,7 +17,6 @@
 
     const searchTerm = searchClean || searchDeals;
 
-    // Only fire on meaningful searches.
     if (!searchTerm) {
       return null;
     }
@@ -39,36 +35,18 @@
   }
 
   /**
-   * Sends the GA4 search event if gtag is available.
-   *
-   * @param {Object} payload
-   *   The event payload.
+   * Send GA event safely.
    */
-  function sendSearchEvent(payload) {
+  function sendEvent(eventName, data) {
     if (typeof window.gtag !== 'function') {
       return;
     }
 
-    window.gtag('event', payload.event_name, {
-      search_term: payload.search_term,
-      search_raw: payload.search_raw,
-      search_origin_mode: payload.search_origin_mode,
-      postal_code_exact: payload.postal_code_exact,
-      locality_exact: payload.locality_exact,
-      page_number: payload.page,
-      page_location: payload.page_location,
-      page_path: payload.page_path
-    });
+    window.gtag('event', eventName, data);
   }
 
   /**
-   * Prevents duplicate firing for the same URL in the same tab/session.
-   *
-   * @param {Object} payload
-   *   The event payload.
-   *
-   * @returns {boolean}
-   *   TRUE if the event has already been fired for this URL.
+   * Prevent duplicate search tracking.
    */
   function alreadyTracked(payload) {
     try {
@@ -82,13 +60,18 @@
       return false;
     }
     catch (e) {
-      // If sessionStorage is unavailable, fail open and allow tracking.
       return false;
     }
   }
 
   Drupal.behaviors.spotdealsAnalytics = {
     attach(context) {
+
+      /**
+       * ========================
+       * SEARCH EVENT (existing)
+       * ========================
+       */
       once('spotdeals-analytics-search', 'html', context).forEach(() => {
         const payload = getSearchPayload();
 
@@ -100,8 +83,54 @@
           return;
         }
 
-        sendSearchEvent(payload);
+        sendEvent('search', {
+          search_term: payload.search_term,
+          search_raw: payload.search_raw,
+          search_origin_mode: payload.search_origin_mode,
+          postal_code_exact: payload.postal_code_exact,
+          locality_exact: payload.locality_exact,
+          page_number: payload.page,
+          page_location: payload.page_location,
+          page_path: payload.page_path
+        });
       });
+
+      /**
+       * ========================
+       * DEAL CLICK EVENT (NEW)
+       * ========================
+       */
+      once('spotdeals-analytics-deal-click', '.deal-title a', context).forEach((link) => {
+
+        link.addEventListener('click', function () {
+
+          const dealTitle = link.textContent.trim();
+
+          // Try to find the venue title in the same result row.
+          let venueTitle = '';
+          const row = link.closest('.views-row');
+
+          if (row) {
+            const venueEl = row.querySelector('.venue-title');
+            if (venueEl) {
+              venueTitle = venueEl.textContent.trim();
+            }
+          }
+
+          const params = new URLSearchParams(window.location.search);
+          const searchTerm = params.get('search_clean') || params.get('search_deals') || '';
+
+          sendEvent('deal_click', {
+            deal_title: dealTitle,
+            venue_name: venueTitle,
+            search_term: searchTerm,
+            page_location: window.location.href
+          });
+
+        });
+
+      });
+
     }
   };
 
