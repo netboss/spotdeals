@@ -31,7 +31,6 @@ Drink Specials,Surprise drink specials,Daily,Happy Hour,Drink Special,Bulldog Sp
 Happy Hour,Discounted drinks and appetizers,Weekdays,4pm–7pm,Happy Hour,Cafe DaVinci,1.0,1,
 Happy Hour,Happy-hour food and cocktails,Daily,Happy Hour,Happy Hour,Chicas Cuban Cafe,1.0,1,
 Happy Hour,Bud Light 16oz $3 · Miller Lite 16oz $3 · Coors Light 16oz $3,Weekdays,3pm–6pm,Happy Hour,Chili's Orange City,1.0,1,
-Happy Hour,$5 margaritas · Happy Hour all day everyday,Daily,11:30am–7pm,Happy Hour,Corkscrew Bar & Grille,1.0,1,
 Happy Hour,Happy Hour drink prices,Daily,Happy Hour,Happy Hour,Cranes Roost,1.0,1,
 Happy Hour,Happy hour specials,Daily,Happy Hour,Happy Hour,Fiesta Grande Mexican Grill,1.0,1,
 Lunch Club,"Buy 5 lunches, get the 6th free",Weekdays,11am–3pm,Lunch Special,Flagler Tavern,1.0,1,
@@ -1089,3 +1088,5 @@ Olympic Breakfast Combo,Breakfast combo featuring café staples.,Daily,Morning,B
 Greek Deli Lunch,Sandwich or salad combo from the deli counter.,Daily,Lunch,Lunch Special,Greek Market & Deli,1.0,1,
 Family Breakfast Special,Breakfast special with comfort-food favorites.,Daily,Morning,Breakfast Special,Fiona's Family Restaurant,1.0,1,
 Greek Bowl Combo,Mediterranean bowl or pita with side pairing.,Daily,Lunch,Combo,Little Greek Fresh Grill Bradenton,1.0,1,
+Happy Hour,$5 margaritas · Happy Hour all day everyday,Daily,11:30am–7pm,Happy Hour,Corkscrew Bar & Grille,1.0,1,
+Steak Night,$14 steak dinner,Thursday,5pm – 9pm,Dinner Special,Corkscrew Bar & Grille,1.0,0,
