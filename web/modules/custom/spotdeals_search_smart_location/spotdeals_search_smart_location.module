@@ -628,7 +628,7 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
     !is_numeric($origin['lon'])
   ) {
     \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION pre_render near-me city-priority sort skipped: missing origin.'
+      'SMART LOCATION pre_render near-me distance sort skipped: missing origin.'
     );
     return;
   }
@@ -674,18 +674,12 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
     }
 
     $locality = _spotdeals_search_smart_location_node_locality($venue);
-    $is_nearest_city = $nearest_city !== ''
-      && _spotdeals_search_smart_location_normalize_city($locality) === _spotdeals_search_smart_location_normalize_city($nearest_city);
 
-    $city_centroid_distance = $locality !== ''
-      ? _spotdeals_search_smart_location_city_centroid_distance_km($locality, $origin_lat, $origin_lon)
-      : PHP_FLOAT_MAX;
-
-    $row->_spotdeals_city_bucket = $is_nearest_city ? 0 : 1;
-    $row->_spotdeals_city_distance_km = $city_centroid_distance;
     $row->_spotdeals_distance_km = $distance_km;
     $row->_spotdeals_rank_index = $order_map[$nid] ?? PHP_INT_MAX;
     $row->_spotdeals_original_index = $index;
+    $row->_spotdeals_nearest_city_match = $nearest_city !== ''
+      && _spotdeals_search_smart_location_normalize_city($locality) === _spotdeals_search_smart_location_normalize_city($nearest_city);
     $filtered[] = $row;
   }
 
@@ -695,7 +689,7 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
     _spotdeals_search_smart_location_sync_filtered_pager($view);
 
     \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION pre_render near-me city-priority sort removed all rows: before="@before" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius"',
+      'SMART LOCATION pre_render near-me distance sort removed all rows: before="@before" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius"',
       [
         '@before' => (string) $before_count,
         '@missing' => (string) $missing_coords,
@@ -708,18 +702,6 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
   }
 
   usort($filtered, static function ($a, $b): int {
-    $a_city_bucket = $a->_spotdeals_city_bucket ?? 1;
-    $b_city_bucket = $b->_spotdeals_city_bucket ?? 1;
-    if ($a_city_bucket !== $b_city_bucket) {
-      return $a_city_bucket <=> $b_city_bucket;
-    }
-
-    $a_city_distance = $a->_spotdeals_city_distance_km ?? PHP_FLOAT_MAX;
-    $b_city_distance = $b->_spotdeals_city_distance_km ?? PHP_FLOAT_MAX;
-    if ($a_city_distance !== $b_city_distance) {
-      return $a_city_distance <=> $b_city_distance;
-    }
-
     $a_distance = $a->_spotdeals_distance_km ?? PHP_FLOAT_MAX;
     $b_distance = $b->_spotdeals_distance_km ?? PHP_FLOAT_MAX;
     if ($a_distance !== $b_distance) {
@@ -755,11 +737,12 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
       'venue' => $venue instanceof NodeInterface ? $venue->label() : '',
       'city' => $venue instanceof NodeInterface ? _spotdeals_search_smart_location_node_locality($venue) : '',
       'distance_km' => isset($row->_spotdeals_distance_km) ? round((float) $row->_spotdeals_distance_km, 3) : NULL,
+      'nearest_city_match' => !empty($row->_spotdeals_nearest_city_match) ? 1 : 0,
     ];
   }
 
   \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION pre_render applied hard near-me radius filter and city-priority distance sort: before="@before" after="@after" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius" ranked_count="@ranked" nearest_city="@nearest_city" rows="@rows"',
+    'SMART LOCATION pre_render applied hard near-me radius filter and strict distance sort: before="@before" after="@after" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius" ranked_count="@ranked" nearest_city="@nearest_city" rows="@rows"',
     [
       '@before' => (string) $before_count,
       '@after' => (string) count($view->result),

@@ -28,7 +28,9 @@ final class NearMeRanker {
   /**
    * Returns ordered deal node IDs for a near-me search.
    *
-   * Distance is primary. Keywords only decide eligibility.
+   * Distance is primary. Keywords influence ranking confidence, but nearby
+   * candidates inside the radius should not be excluded solely because their
+   * text fields are sparse or incomplete.
    *
    * @return array<int, int>
    *   Ordered deal node IDs.
@@ -119,16 +121,11 @@ final class NearMeRanker {
 
       $score = $this->keywordScore($deal, $candidate_venues[$venue_nid], $keywords, $tokens);
 
-      // Keep broad near-me coverage. Only drop rows when there are keywords and
-      // the score is clearly non-matching.
-      if ($keywords !== '' && $score < 5) {
-        continue;
-      }
-
       $deal_nid = (int) $deal->id();
       $ranked[] = [
         'nid' => $deal_nid,
         'distance' => (float) $candidate_venues[$venue_nid]['distance'],
+        'score' => $score,
         'position' => $deal_positions[$deal_nid] ?? PHP_INT_MAX,
       ];
     }
@@ -137,6 +134,11 @@ final class NearMeRanker {
       $distance_compare = $a['distance'] <=> $b['distance'];
       if ($distance_compare !== 0) {
         return $distance_compare;
+      }
+
+      $score_compare = $b['score'] <=> $a['score'];
+      if ($score_compare !== 0) {
+        return $score_compare;
       }
 
       $position_compare = $a['position'] <=> $b['position'];

@@ -19,6 +19,11 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
   private const DEFAULT_RADIUS_KM = 25.0;
 
   /**
+   * Maximum number of ranked deal IDs to constrain in Solr.
+   */
+  private const MAX_RANKED_NIDS = 250;
+
+  /**
    * Search API field machine name.
    */
   private const SEARCH_API_GEO_FIELD = 'field_coordinates';
@@ -125,6 +130,26 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
       return;
     }
 
+    $ranked_nids = $request->attributes->get('spotdeals_search_smart_location.ranked_deal_nids');
+    $ranked_nids = is_array($ranked_nids)
+      ? array_values(array_unique(array_map('intval', $ranked_nids)))
+      : [];
+
+    if (!$recommendation_mode && !empty($ranked_nids)) {
+      $ranked_nids = array_slice($ranked_nids, 0, self::MAX_RANKED_NIDS);
+      $operator = count($ranked_nids) > 1 ? 'IN' : '=';
+      $value = count($ranked_nids) > 1 ? $ranked_nids : $ranked_nids[0];
+      $query->addCondition('nid', $value, $operator);
+
+      \Drupal::logger('spotdeals_search_smart_location')->notice(
+        'SMART LOCATION subscriber constrained browser near-me query to ranked deal IDs at PRE_QUERY: nids_count="@count" operator="@operator"',
+        [
+          '@count' => (string) count($ranked_nids),
+          '@operator' => $operator,
+        ]
+      );
+    }
+
     $solarium_query = $event->getSolariumQuery();
 
     $pt = sprintf('%F,%F', $lat, $lon);
@@ -169,7 +194,7 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
     $solarium_query->addSort('score', 'desc');
 
     \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION subscriber applied PRE_QUERY geofilt and forced Solr distance sort: source="@source" near_me="1" recommendation_mode="0" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq" sort="@sort"',
+      'SMART LOCATION subscriber applied PRE_QUERY geofilt and forced Solr distance sort: source="@source" near_me="1" recommendation_mode="0" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq" sort="@sort" ranked_constraint_count="@ranked_count"',
       [
         '@source' => $source ?? '',
         '@lat' => (string) $lat,
@@ -179,6 +204,7 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
         '@solr_geo_field' => self::SOLR_GEO_FIELD,
         '@fq' => $geo_filter,
         '@sort' => 'geodist() asc, score desc',
+        '@ranked_count' => (string) count($ranked_nids),
       ]
     );
   }
