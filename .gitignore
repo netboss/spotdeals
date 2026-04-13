@@ -216,3 +216,7 @@ web/modules/custom/spotdeals_import/data/audits
 web/modules/custom/spotdeals_import/data/audits/*
 web/modules/custom/spotdeals_import/data/venues_repair_audit_correct.csv
 web/modules/custom/spotdeals_import/data/venues_plus_100_real_safe_audit.csv
+
+# Local debugging scripts
+inspect_recommendation.php
+test_search_api_id.php

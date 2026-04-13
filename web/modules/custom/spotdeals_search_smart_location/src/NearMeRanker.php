@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\spotdeals_search_smart_location;
 
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node\NodeInterface;
 
@@ -35,14 +36,18 @@ final class NearMeRanker {
    * @return array<int, int>
    *   Ordered deal node IDs.
    */
-  public function rankDealNids(float $originLat, float $originLon, string $keywords, float $radiusKm = self::DEFAULT_RADIUS_KM): array {
+  public function rankDealNids(
+    float $originLat,
+    float $originLon,
+    string $keywords,
+    float $radiusKm = self::DEFAULT_RADIUS_KM,
+  ): array {
     $keywords = $this->normalize($keywords);
     $tokens = $this->tokens($keywords);
 
-    $venue_storage = $this->entityTypeManager->getStorage('node');
-    $deal_storage = $this->entityTypeManager->getStorage('node');
+    $node_storage = $this->entityTypeManager->getStorage('node');
 
-    $venue_nids = $this->entityTypeManager->getStorage('node')->getQuery()
+    $venue_nids = $node_storage->getQuery()
       ->accessCheck(FALSE)
       ->condition('type', 'venue')
       ->condition('status', 1)
@@ -52,14 +57,10 @@ final class NearMeRanker {
       return [];
     }
 
-    $venues = $venue_storage->loadMultiple($venue_nids);
+    $venues = $this->safeLoadNodes($node_storage, $venue_nids, 'venue');
 
     $candidate_venues = [];
     foreach ($venues as $venue) {
-      if (!$venue instanceof NodeInterface) {
-        continue;
-      }
-
       $coords = $this->resultExtractor->extractVenueCoords($venue);
       if ($coords === NULL) {
         continue;
@@ -75,7 +76,11 @@ final class NearMeRanker {
       $candidate_venues[(int) $venue->id()] = [
         'distance' => $distance,
         'title' => $this->normalize((string) $venue->label()),
-        'description' => $this->normalize($venue->hasField('field_short_description') && !$venue->get('field_short_description')->isEmpty() ? (string) $venue->get('field_short_description')->value : ''),
+        'description' => $this->normalize(
+          $venue->hasField('field_short_description') && !$venue->get('field_short_description')->isEmpty()
+            ? (string) $venue->get('field_short_description')->value
+            : ''
+        ),
         'cuisine' => $this->normalize($this->venueCuisineText($venue)),
         'tags' => $this->normalize($this->venueTagsText($venue)),
       ];
@@ -85,7 +90,7 @@ final class NearMeRanker {
       return [];
     }
 
-    $deal_nids = $this->entityTypeManager->getStorage('node')->getQuery()
+    $deal_nids = $node_storage->getQuery()
       ->accessCheck(FALSE)
       ->condition('type', 'deal')
       ->condition('status', 1)
@@ -97,14 +102,10 @@ final class NearMeRanker {
     }
 
     $deal_positions = array_flip(array_values($deal_nids));
-    $deals = $deal_storage->loadMultiple($deal_nids);
+    $deals = $this->safeLoadNodes($node_storage, $deal_nids, 'deal');
 
     $ranked = [];
     foreach ($deals as $deal) {
-      if (!$deal instanceof NodeInterface) {
-        continue;
-      }
-
       if (!$deal->hasField('field_venue') || $deal->get('field_venue')->isEmpty()) {
         continue;
       }
@@ -150,6 +151,62 @@ final class NearMeRanker {
     });
 
     return array_values(array_map(static fn(array $row): int => $row['nid'], $ranked));
+  }
+
+  /**
+   * Safely loads node entities one by one and skips broken records.
+   *
+   * This prevents a single corrupted entity from crashing the full request.
+   *
+   * @param \Drupal\Core\Entity\EntityStorageInterface $storage
+   *   Node storage.
+   * @param array<int,int|string> $ids
+   *   Entity IDs to load.
+   * @param string $label
+   *   Context label for logging.
+   *
+   * @return array<int,\Drupal\node\NodeInterface>
+   *   Loaded nodes only.
+   */
+  private function safeLoadNodes(EntityStorageInterface $storage, array $ids, string $label): array {
+    $loaded = [];
+
+    foreach ($ids as $id) {
+      $id = (int) $id;
+      if ($id <= 0) {
+        continue;
+      }
+
+      try {
+        $entity = $storage->load($id);
+      }
+      catch (\Throwable $e) {
+        \Drupal::logger('spotdeals_search_smart_location')->error(
+          'SMART LOCATION skipped broken @label entity during safe load: id="@id" error="@error"',
+          [
+            '@label' => $label,
+            '@id' => (string) $id,
+            '@error' => $e->getMessage(),
+          ]
+        );
+        continue;
+      }
+
+      if (!$entity instanceof NodeInterface) {
+        \Drupal::logger('spotdeals_search_smart_location')->warning(
+          'SMART LOCATION skipped non-node @label entity during safe load: id="@id"',
+          [
+            '@label' => $label,
+            '@id' => (string) $id,
+          ]
+        );
+        continue;
+      }
+
+      $loaded[] = $entity;
+    }
+
+    return $loaded;
   }
 
   /**

@@ -71,7 +71,11 @@
       </div>
     {% endif %}
 
-    {% if rows %}
+    {% if spotdeals_direct_recommendation %}
+      <div class="view-content" data-result-count="1">
+        {{ spotdeals_direct_recommendation }}
+      </div>
+    {% elseif rows %}
       <div class="view-content" data-result-count="{{ spotdeals_result_count }}">
         {{ rows }}
       </div>

@@ -25,7 +25,7 @@ final class RecommendationService {
   /**
    * Maximum number of top ties to randomize across.
    */
-  private const RANDOM_TIE_LIMIT = 3;
+  private const RANDOM_TIE_LIMIT = 7;
 
   /**
    * Constructs a recommendation service.
@@ -40,7 +40,8 @@ final class RecommendationService {
    *
    * The recommendation logic:
    * - starts from near-me candidates inside the configured radius
-   * - strongly favors matches that overlap more selected cuisines
+   * - optionally favors overlaps with selected cuisines
+   * - excludes previously shown venues for the current session
    * - keeps only the best deal per venue
    * - randomizes only inside the strongest top tier
    *
@@ -49,9 +50,13 @@ final class RecommendationService {
    * @param float $originLon
    *   Origin longitude.
    * @param array<int,string> $cuisines
-   *   Recommendation cuisines.
+   *   Optional recommendation cuisines.
    * @param float $radiusKm
    *   Search radius.
+   * @param array<int,string> $excludedCuisines
+   *   Optional excluded cuisine tokens.
+   * @param array<int,int> $excludedVenueNids
+   *   Venue node IDs already shown in the current recommendation session.
    *
    * @return array<int,int>
    *   A single recommended deal node ID, or an empty array.
@@ -59,37 +64,186 @@ final class RecommendationService {
   public function recommendDealNids(
     float $originLat,
     float $originLon,
-    array $cuisines,
+    array $cuisines = [],
     float $radiusKm = self::DEFAULT_RADIUS_KM,
+    array $excludedCuisines = [],
+    array $excludedVenueNids = [],
   ): array {
     $cuisines = $this->normalizeCuisineTokens($cuisines);
-    if (count($cuisines) < 2) {
-      return [];
+    $excludedCuisines = $this->normalizeCuisineTokens($excludedCuisines);
+    $excludedVenueNids = array_values(array_unique(array_filter(
+      array_map('intval', $excludedVenueNids),
+      static fn(int $nid): bool => $nid > 0
+    )));
+
+    $candidateSets = [];
+
+    if (!empty($cuisines)) {
+      $candidateSets[] = $this->buildCandidates(
+        $originLat,
+        $originLon,
+        $cuisines,
+        $radiusKm,
+        $excludedCuisines,
+        $excludedVenueNids
+      );
+      $candidateSets[] = $this->buildCandidates(
+        $originLat,
+        $originLon,
+        $cuisines,
+        $radiusKm,
+        [],
+        $excludedVenueNids
+      );
     }
 
-    $ranked_nids = $this->nearMeRanker->rankDealNids(
+    $candidateSets[] = $this->buildCandidates(
       $originLat,
       $originLon,
-      implode(' ', $cuisines),
+      [],
+      $radiusKm,
+      $excludedCuisines,
+      $excludedVenueNids
+    );
+    $candidateSets[] = $this->buildCandidates(
+      $originLat,
+      $originLon,
+      [],
+      $radiusKm,
+      [],
+      $excludedVenueNids
+    );
+
+    if ($radiusKm < 1000.0) {
+      if (!empty($cuisines)) {
+        $candidateSets[] = $this->buildCandidates(
+          $originLat,
+          $originLon,
+          $cuisines,
+          1000.0,
+          $excludedCuisines,
+          $excludedVenueNids
+        );
+        $candidateSets[] = $this->buildCandidates(
+          $originLat,
+          $originLon,
+          $cuisines,
+          1000.0,
+          [],
+          $excludedVenueNids
+        );
+      }
+
+      $candidateSets[] = $this->buildCandidates(
+        $originLat,
+        $originLon,
+        [],
+        1000.0,
+        $excludedCuisines,
+        $excludedVenueNids
+      );
+      $candidateSets[] = $this->buildCandidates(
+        $originLat,
+        $originLon,
+        [],
+        1000.0,
+        [],
+        $excludedVenueNids
+      );
+    }
+
+    foreach ($candidateSets as $candidates) {
+      if (empty($candidates)) {
+        continue;
+      }
+
+      usort($candidates, fn(array $a, array $b): int => $this->compareCandidates($a, $b));
+
+      $top = $candidates[0];
+      $topTier = array_values(array_filter(
+        $candidates,
+        static function (array $candidate) use ($top): bool {
+          if (($candidate['preference_mode'] ?? FALSE) !== ($top['preference_mode'] ?? FALSE)) {
+            return FALSE;
+          }
+
+          if (!empty($top['preference_mode'])) {
+            return $candidate['overlap_count'] === $top['overlap_count']
+              && $candidate['score'] >= ($top['score'] - 20);
+          }
+
+          return $candidate['score'] >= ($top['score'] - 25);
+        }
+      ));
+
+      if (empty($topTier)) {
+        $topTier = [$top];
+      }
+
+      $topTier = array_slice($topTier, 0, self::RANDOM_TIE_LIMIT);
+      $picked = $topTier[array_rand($topTier)];
+
+      return [(int) $picked['deal_nid']];
+    }
+
+    return [];
+  }
+
+  /**
+   * Builds scored recommendation candidates for one attempt.
+   *
+   * @param array<int,string> $cuisines
+   *   Optional normalized cuisine tokens.
+   * @param array<int,string> $excludedCuisines
+   *   Optional excluded cuisine tokens.
+   * @param array<int,int> $excludedVenueNids
+   *   Venue node IDs already shown in the current recommendation session.
+   *
+   * @return array<int,array<string,int|string|bool>>
+   *   Recommendation candidates keyed numerically.
+   */
+  private function buildCandidates(
+    float $originLat,
+    float $originLon,
+    array $cuisines,
+    float $radiusKm,
+    array $excludedCuisines,
+    array $excludedVenueNids,
+  ): array {
+    $query = !empty($cuisines) ? implode(' ', $cuisines) : '';
+
+    $rankedNids = $this->nearMeRanker->rankDealNids(
+      $originLat,
+      $originLon,
+      $query,
       $radiusKm
     );
 
-    if (empty($ranked_nids)) {
+    if (empty($rankedNids) && $query !== '') {
+      $rankedNids = $this->nearMeRanker->rankDealNids(
+        $originLat,
+        $originLon,
+        '',
+        $radiusKm
+      );
+    }
+
+    if (empty($rankedNids)) {
       return [];
     }
 
-    $candidate_nids = array_slice(array_values($ranked_nids), 0, self::CANDIDATE_LIMIT);
-    $deals = $this->entityTypeManager->getStorage('node')->loadMultiple($candidate_nids);
+    $candidateNids = array_slice(array_values($rankedNids), 0, self::CANDIDATE_LIMIT);
+    $deals = $this->entityTypeManager->getStorage('node')->loadMultiple($candidateNids);
 
     if (empty($deals)) {
       return [];
     }
 
-    $rank_index_map = array_flip($candidate_nids);
-    $best_by_venue = [];
+    $rankIndexMap = array_flip($candidateNids);
+    $bestByVenue = [];
 
-    foreach ($candidate_nids as $deal_nid) {
-      $deal = $deals[$deal_nid] ?? NULL;
+    foreach ($candidateNids as $dealNid) {
+      $deal = $deals[$dealNid] ?? NULL;
       if (!$deal instanceof NodeInterface) {
         continue;
       }
@@ -99,37 +253,33 @@ final class RecommendationService {
         continue;
       }
 
-      $candidate = $this->buildCandidate($deal, $venue, $cuisines, (int) ($rank_index_map[$deal_nid] ?? PHP_INT_MAX));
+      $venueNid = (int) $venue->id();
+      if (in_array($venueNid, $excludedVenueNids, TRUE)) {
+        continue;
+      }
+
+      $venueCuisineTokens = $this->extractVenueCuisineTokens($venue);
+      if (!empty($excludedCuisines) && !empty(array_intersect($excludedCuisines, $venueCuisineTokens))) {
+        continue;
+      }
+
+      $candidate = $this->buildCandidate(
+        $deal,
+        $venue,
+        $cuisines,
+        $venueCuisineTokens,
+        (int) ($rankIndexMap[$dealNid] ?? PHP_INT_MAX)
+      );
       if ($candidate === NULL) {
         continue;
       }
 
-      $venue_nid = $candidate['venue_nid'];
-      if (!isset($best_by_venue[$venue_nid]) || $this->isBetterCandidate($candidate, $best_by_venue[$venue_nid])) {
-        $best_by_venue[$venue_nid] = $candidate;
+      if (!isset($bestByVenue[$venueNid]) || $this->isBetterCandidate($candidate, $bestByVenue[$venueNid])) {
+        $bestByVenue[$venueNid] = $candidate;
       }
     }
 
-    if (empty($best_by_venue)) {
-      return [];
-    }
-
-    $candidates = array_values($best_by_venue);
-    usort($candidates, fn(array $a, array $b): int => $this->compareCandidates($a, $b));
-
-    $top = $candidates[0];
-    $top_tier = array_values(array_filter(
-      $candidates,
-      static function (array $candidate) use ($top): bool {
-        return $candidate['overlap_count'] === $top['overlap_count']
-          && $candidate['score'] >= ($top['score'] - 20);
-      }
-    ));
-
-    $top_tier = array_slice($top_tier, 0, self::RANDOM_TIE_LIMIT);
-    $picked = $top_tier[array_rand($top_tier)];
-
-    return [(int) $picked['deal_nid']];
+    return array_values($bestByVenue);
   }
 
   /**
@@ -137,85 +287,116 @@ final class RecommendationService {
    *
    * @param array<int,string> $cuisines
    *   Normalized cuisine tokens.
+   * @param array<int,string> $venueCuisineTokens
+   *   Normalized venue cuisine tokens.
    *
-   * @return array<string,int|string>|null
+   * @return array<string,int|string|bool>|null
    *   Candidate data or NULL.
    */
-  private function buildCandidate(NodeInterface $deal, NodeInterface $venue, array $cuisines, int $rankIndex): ?array {
-    $deal_title = $this->normalize((string) $deal->label());
-    $deal_body = $this->normalize(
+  private function buildCandidate(
+    NodeInterface $deal,
+    NodeInterface $venue,
+    array $cuisines,
+    array $venueCuisineTokens,
+    int $rankIndex,
+  ): ?array {
+    $dealTitle = $this->normalize((string) $deal->label());
+    $dealBody = $this->normalize(
       $deal->hasField('body') && !$deal->get('body')->isEmpty()
         ? (string) $deal->get('body')->value
         : ''
     );
-    $venue_title = $this->normalize((string) $venue->label());
-    $venue_description = $this->normalize(
+    $venueTitle = $this->normalize((string) $venue->label());
+    $venueDescription = $this->normalize(
       $venue->hasField('field_short_description') && !$venue->get('field_short_description')->isEmpty()
         ? (string) $venue->get('field_short_description')->value
         : ''
     );
-    $venue_cuisine = $this->normalize($this->venueCuisineText($venue));
+    $venueCuisine = implode(' ', $venueCuisineTokens);
 
     $haystacks = [
-      'venue_cuisine' => $venue_cuisine,
-      'deal_title' => $deal_title,
-      'venue_title' => $venue_title,
-      'deal_body' => $deal_body,
-      'venue_description' => $venue_description,
+      'venue_cuisine' => $venueCuisine,
+      'deal_title' => $dealTitle,
+      'venue_title' => $venueTitle,
+      'deal_body' => $dealBody,
+      'venue_description' => $venueDescription,
     ];
 
-    $overlap_count = 0;
+    $preferenceMode = !empty($cuisines);
+    $overlapCount = 0;
     $score = 0;
 
-    foreach ($cuisines as $cuisine) {
-      if ($cuisine === '') {
-        continue;
+    if ($preferenceMode) {
+      foreach ($cuisines as $cuisine) {
+        if ($cuisine === '') {
+          continue;
+        }
+
+        $matched = FALSE;
+
+        if ($haystacks['venue_cuisine'] !== '' && str_contains($haystacks['venue_cuisine'], $cuisine)) {
+          $score += 80;
+          $matched = TRUE;
+        }
+        if ($haystacks['deal_title'] !== '' && str_contains($haystacks['deal_title'], $cuisine)) {
+          $score += 45;
+          $matched = TRUE;
+        }
+        if ($haystacks['venue_title'] !== '' && str_contains($haystacks['venue_title'], $cuisine)) {
+          $score += 30;
+          $matched = TRUE;
+        }
+        if ($haystacks['deal_body'] !== '' && str_contains($haystacks['deal_body'], $cuisine)) {
+          $score += 18;
+          $matched = TRUE;
+        }
+        if ($haystacks['venue_description'] !== '' && str_contains($haystacks['venue_description'], $cuisine)) {
+          $score += 12;
+          $matched = TRUE;
+        }
+
+        if ($matched) {
+          $overlapCount++;
+        }
       }
 
-      $matched = FALSE;
-
-      if ($haystacks['venue_cuisine'] !== '' && str_contains($haystacks['venue_cuisine'], $cuisine)) {
-        $score += 80;
-        $matched = TRUE;
+      if ($overlapCount === 0) {
+        return NULL;
       }
-      if ($haystacks['deal_title'] !== '' && str_contains($haystacks['deal_title'], $cuisine)) {
+
+      if ($overlapCount > 1) {
+        $score += ($overlapCount - 1) * 120;
+      }
+    }
+    else {
+      if ($haystacks['venue_cuisine'] !== '') {
         $score += 45;
-        $matched = TRUE;
       }
-      if ($haystacks['venue_title'] !== '' && str_contains($haystacks['venue_title'], $cuisine)) {
-        $score += 30;
-        $matched = TRUE;
+      if ($haystacks['deal_title'] !== '') {
+        $score += 25;
       }
-      if ($haystacks['deal_body'] !== '' && str_contains($haystacks['deal_body'], $cuisine)) {
-        $score += 18;
-        $matched = TRUE;
+      if ($haystacks['venue_description'] !== '') {
+        $score += 15;
       }
-      if ($haystacks['venue_description'] !== '' && str_contains($haystacks['venue_description'], $cuisine)) {
-        $score += 12;
-        $matched = TRUE;
+      if ($haystacks['deal_body'] !== '') {
+        $score += 10;
       }
-
-      if ($matched) {
-        $overlap_count++;
+      if ($venueTitle !== '') {
+        $score += 5;
       }
     }
 
-    if ($overlap_count === 0) {
-      return NULL;
-    }
-
-    if ($overlap_count > 1) {
-      $score += ($overlap_count - 1) * 120;
-    }
+    $score += max(0, 60 - min($rankIndex, 60));
 
     return [
       'deal_nid' => (int) $deal->id(),
       'venue_nid' => (int) $venue->id(),
-      'overlap_count' => $overlap_count,
+      'overlap_count' => $overlapCount,
       'score' => $score,
       'rank_index' => $rankIndex,
       'deal_title' => (string) $deal->label(),
       'venue_title' => (string) $venue->label(),
+      'preference_mode' => $preferenceMode,
     ];
   }
 
@@ -223,6 +404,10 @@ final class RecommendationService {
    * Compares two candidates.
    */
   private function compareCandidates(array $a, array $b): int {
+    if (($a['preference_mode'] ?? FALSE) !== ($b['preference_mode'] ?? FALSE)) {
+      return !empty($a['preference_mode']) ? -1 : 1;
+    }
+
     if ($a['overlap_count'] !== $b['overlap_count']) {
       return $b['overlap_count'] <=> $a['overlap_count'];
     }
@@ -274,6 +459,16 @@ final class RecommendationService {
   }
 
   /**
+   * Returns normalized venue cuisine tokens.
+   *
+   * @return array<int,string>
+   *   Unique normalized cuisine tokens.
+   */
+  private function extractVenueCuisineTokens(NodeInterface $venue): array {
+    return $this->normalizeCuisineTokens([$this->venueCuisineText($venue)]);
+  }
+
+  /**
    * Normalizes cuisine tokens from the request.
    *
    * @param array<int,string> $cuisines
@@ -283,12 +478,24 @@ final class RecommendationService {
    *   Unique normalized tokens.
    */
   private function normalizeCuisineTokens(array $cuisines): array {
-    $normalized = array_map(
-      fn(string $value): string => $this->normalize($value),
-      $cuisines
-    );
+    $normalized = [];
 
-    return array_values(array_unique(array_filter($normalized)));
+    foreach ($cuisines as $value) {
+      $value = $this->normalize((string) $value);
+      if ($value === '') {
+        continue;
+      }
+
+      $parts = preg_split('/\s+/', $value) ?: [];
+      foreach ($parts as $part) {
+        $part = trim($part);
+        if ($part !== '') {
+          $normalized[] = $part;
+        }
+      }
+    }
+
+    return array_values(array_unique($normalized));
   }
 
   /**
