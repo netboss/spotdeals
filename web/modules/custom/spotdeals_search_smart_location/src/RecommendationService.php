@@ -40,7 +40,7 @@ final class RecommendationService {
    *
    * The recommendation logic:
    * - starts from near-me candidates inside the configured radius
-   * - optionally favors overlaps with selected cuisines
+   * - optionally requires overlaps with selected cuisines
    * - excludes previously shown venues for the current session
    * - keeps only the best deal per venue
    * - randomizes only inside the strongest top tier
@@ -69,6 +69,8 @@ final class RecommendationService {
     array $excludedCuisines = [],
     array $excludedVenueNids = [],
   ): array {
+    $startedAt = microtime(TRUE);
+
     $cuisines = $this->normalizeCuisineTokens($cuisines);
     $excludedCuisines = $this->normalizeCuisineTokens($excludedCuisines);
     $excludedVenueNids = array_values(array_unique(array_filter(
@@ -87,35 +89,19 @@ final class RecommendationService {
         $excludedCuisines,
         $excludedVenueNids
       );
-      $candidateSets[] = $this->buildCandidates(
-        $originLat,
-        $originLon,
-        $cuisines,
-        $radiusKm,
-        [],
-        $excludedVenueNids
-      );
-    }
 
-    $candidateSets[] = $this->buildCandidates(
-      $originLat,
-      $originLon,
-      [],
-      $radiusKm,
-      $excludedCuisines,
-      $excludedVenueNids
-    );
-    $candidateSets[] = $this->buildCandidates(
-      $originLat,
-      $originLon,
-      [],
-      $radiusKm,
-      [],
-      $excludedVenueNids
-    );
+      if (!empty($excludedCuisines)) {
+        $candidateSets[] = $this->buildCandidates(
+          $originLat,
+          $originLon,
+          $cuisines,
+          $radiusKm,
+          [],
+          $excludedVenueNids
+        );
+      }
 
-    if ($radiusKm < 1000.0) {
-      if (!empty($cuisines)) {
+      if ($radiusKm < 1000.0) {
         $candidateSets[] = $this->buildCandidates(
           $originLat,
           $originLon,
@@ -124,35 +110,67 @@ final class RecommendationService {
           $excludedCuisines,
           $excludedVenueNids
         );
+
+        if (!empty($excludedCuisines)) {
+          $candidateSets[] = $this->buildCandidates(
+            $originLat,
+            $originLon,
+            $cuisines,
+            1000.0,
+            [],
+            $excludedVenueNids
+          );
+        }
+      }
+    }
+    else {
+      $candidateSets[] = $this->buildCandidates(
+        $originLat,
+        $originLon,
+        [],
+        $radiusKm,
+        $excludedCuisines,
+        $excludedVenueNids
+      );
+
+      if (!empty($excludedCuisines)) {
         $candidateSets[] = $this->buildCandidates(
           $originLat,
           $originLon,
-          $cuisines,
-          1000.0,
+          [],
+          $radiusKm,
           [],
           $excludedVenueNids
         );
       }
 
-      $candidateSets[] = $this->buildCandidates(
-        $originLat,
-        $originLon,
-        [],
-        1000.0,
-        $excludedCuisines,
-        $excludedVenueNids
-      );
-      $candidateSets[] = $this->buildCandidates(
-        $originLat,
-        $originLon,
-        [],
-        1000.0,
-        [],
-        $excludedVenueNids
-      );
+      if ($radiusKm < 1000.0) {
+        $candidateSets[] = $this->buildCandidates(
+          $originLat,
+          $originLon,
+          [],
+          1000.0,
+          $excludedCuisines,
+          $excludedVenueNids
+        );
+
+        if (!empty($excludedCuisines)) {
+          $candidateSets[] = $this->buildCandidates(
+            $originLat,
+            $originLon,
+            [],
+            1000.0,
+            [],
+            $excludedVenueNids
+          );
+        }
+      }
     }
 
-    foreach ($candidateSets as $candidates) {
+    $setSizes = array_map(static fn(array $set): int => count($set), $candidateSets);
+    $attemptSizesJson = json_encode($setSizes, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]';
+
+    foreach ($candidateSets as $attemptIndex => $candidates) {
       if (empty($candidates)) {
         continue;
       }
@@ -183,8 +201,34 @@ final class RecommendationService {
       $topTier = array_slice($topTier, 0, self::RANDOM_TIE_LIMIT);
       $picked = $topTier[array_rand($topTier)];
 
+      $this->logTiming(sprintf(
+        'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="%d" top_tier_count="%d" picked_deal_nid="%d" picked_venue_nid="%d"',
+        $this->formatMs($startedAt),
+        count($cuisines),
+        count($excludedCuisines),
+        count($excludedVenueNids),
+        (string) $radiusKm,
+        count($candidateSets),
+        $attemptSizesJson,
+        $attemptIndex + 1,
+        count($topTier),
+        (int) $picked['deal_nid'],
+        (int) $picked['venue_nid'],
+      ));
+
       return [(int) $picked['deal_nid']];
     }
+
+    $this->logTiming(sprintf(
+      'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="0" top_tier_count="0" picked_deal_nid="" picked_venue_nid=""',
+      $this->formatMs($startedAt),
+      count($cuisines),
+      count($excludedCuisines),
+      count($excludedVenueNids),
+      (string) $radiusKm,
+      count($candidateSets),
+      $attemptSizesJson,
+    ));
 
     return [];
   }
@@ -218,15 +262,6 @@ final class RecommendationService {
       $query,
       $radiusKm
     );
-
-    if (empty($rankedNids) && $query !== '') {
-      $rankedNids = $this->nearMeRanker->rankDealNids(
-        $originLat,
-        $originLon,
-        '',
-        $radiusKm
-      );
-    }
 
     if (empty($rankedNids)) {
       return [];
@@ -506,6 +541,23 @@ final class RecommendationService {
     $value = preg_replace('/[^\p{L}\p{N}\s]+/u', ' ', $value) ?? $value;
     $value = preg_replace('/\s+/', ' ', $value) ?? $value;
     return trim($value);
+  }
+
+  /**
+   * Logs timing details for recommendation requests.
+   *
+   * @param string $message
+   *   Log message.
+   */
+  private function logTiming(string $message): void {
+    \Drupal::logger('spotdeals_search_smart_location')->notice($message);
+  }
+
+  /**
+   * Formats elapsed milliseconds since a start time.
+   */
+  private function formatMs(float $startedAt): string {
+    return number_format((microtime(TRUE) - $startedAt) * 1000, 2, '.', '');
   }
 
 }
