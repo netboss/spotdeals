@@ -683,6 +683,9 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
         'spotdeals-direct-recommendation',
       ],
     ],
+    '#cache' => [
+      'max-age' => 0,
+    ],
   ];
 
   if ($venue instanceof NodeInterface) {
@@ -795,11 +798,8 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
     ];
   }
 
-  $build['#cache']['contexts'][] = 'url.query_args';
-  $build['#cache']['contexts'][] = 'session';
-
   \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION recommendation mode built direct recommendation view-like render: deal_nid="@nid" venue_nid="@venue_nid" venue_label="@venue"',
+    'SMART LOCATION recommendation mode built lightweight direct recommendation render: deal_nid="@nid" venue_nid="@venue_nid" venue_label="@venue"',
     [
       '@nid' => (string) $deal_nid,
       '@venue_nid' => $venue instanceof NodeInterface ? (string) $venue->id() : '',
