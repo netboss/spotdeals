@@ -39,10 +39,16 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
     '#value' => '',
   ];
 
+  $request = \Drupal::request();
+
+  $form['recommendation_action'] = [
+    '#type' => 'hidden',
+    '#value' => (string) $request->query->get('recommendation_action', ''),
+  ];
+
   $form['#validate'][] = 'spotdeals_search_smart_location_recommendation_validate';
   $form['#submit'][] = 'spotdeals_search_smart_location_exposed_form_submit';
 
-  $request = \Drupal::request();
   $is_reset_request = FALSE;
   foreach (['reset', 'op'] as $key) {
     $value = $request->query->get($key);
@@ -58,6 +64,8 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
     ? ''
     : (string) $request->query->get('recommendation_cuisines', '');
 
+  $form['#attributes']['data-recommendation-active'] = _spotdeals_search_smart_location_has_current_recommendation() ? '1' : '0';
+
   $form['help_me_choose'] = [
     '#type' => 'checkbox',
     '#title' => t('Not sure what to eat? We’ll pick for you!'),
@@ -69,15 +77,12 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
     '#type' => 'textfield',
     '#title' => t('Cuisine preferences'),
     '#default_value' => $recommendation_cuisines_value,
-    '#description' => t('Enter 2 to 5 cuisine ideas separated by spaces, for example: mexican bbq thai'),
+    '#description' => t('Optional. Enter up to 5 cuisine ideas separated by spaces, or leave this empty and we’ll surprise you.'),
     '#size' => 60,
     '#maxlength' => 255,
     '#weight' => 101,
     '#states' => [
       'visible' => [
-        ':input[name="help_me_choose"]' => ['checked' => TRUE],
-      ],
-      'required' => [
         ':input[name="help_me_choose"]' => ['checked' => TRUE],
       ],
     ],
@@ -90,6 +95,7 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
 
     if (isset($form['actions']['submit'])) {
       $form['actions']['submit']['#weight'] = 0;
+      $form['actions']['submit']['#value'] = _spotdeals_search_smart_location_has_current_recommendation() ? t('Try again') : t('Find deals');
     }
 
     if (isset($form['actions']['reset'])) {
@@ -99,6 +105,7 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
 
   if (isset($form['submit'])) {
     $form['submit']['#weight'] = 110;
+    $form['submit']['#value'] = _spotdeals_search_smart_location_has_current_recommendation() ? t('Try again') : t('Find deals');
   }
 
   if (isset($form['reset'])) {
@@ -211,6 +218,28 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   $request->attributes->set('spotdeals_search_smart_location.recommendation_cuisines', $recommendation_cuisines);
   $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', []);
 
+  $recommendation_action = strtolower(trim((string) ($input['recommendation_action'] ?? $request->query->get('recommendation_action', ''))));
+  $request->attributes->set('spotdeals_search_smart_location.recommendation_action', $recommendation_action);
+
+  if ($recommendation_action === 'reset') {
+    _spotdeals_search_smart_location_reset_recommendation_session();
+  }
+  elseif ($recommendation_action === 'retry') {
+    _spotdeals_search_smart_location_apply_recommendation_action_to_session($recommendation_action);
+  }
+
+  $excluded_venue_nids = _spotdeals_search_smart_location_get_recommendation_exclusions();
+  $request->attributes->set('spotdeals_search_smart_location.excluded_venue_nids', $excluded_venue_nids);
+
+  \Drupal::logger('spotdeals_search_smart_location')->notice(
+    'SMART LOCATION recommendation request state: action="@action" excluded="@excluded" current="@current"',
+    [
+      '@action' => $recommendation_action,
+      '@excluded' => json_encode($excluded_venue_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+      '@current' => json_encode(\Drupal::request()->getSession()->get('spotdeals_search_smart_location.current_recommendation', []), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+    ]
+  );
+
   if ($raw === '' && !$recommendation_mode) {
     return;
   }
@@ -264,10 +293,30 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     $request->attributes->set('spotdeals_search_smart_location.ranked_deal_nids', $ranked_nids);
 
     $recommended_nids = [];
-    if ($recommendation_mode && !empty($recommendation_cuisines)) {
+    if ($recommendation_mode) {
       $recommended_nids = \Drupal::service('spotdeals_search_smart_location.recommendation_service')
-        ->recommendDealNids((float) $origin_lat, (float) $origin_lon, $recommendation_cuisines);
+        ->recommendDealNids(
+          (float) $origin_lat,
+          (float) $origin_lon,
+          $recommendation_cuisines,
+          25.0,
+          [],
+          $excluded_venue_nids
+        );
       $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', $recommended_nids);
+      $request->attributes->set(
+        'spotdeals_search_smart_location.direct_recommendation_deal_nid',
+        !empty($recommended_nids[0]) ? (int) $recommended_nids[0] : 0
+      );
+      _spotdeals_search_smart_location_store_current_recommendation($recommended_nids);
+
+      \Drupal::logger('spotdeals_search_smart_location')->notice(
+        'SMART LOCATION recommendation service result from browser origin: excluded="@excluded" recommended="@recommended"',
+        [
+          '@excluded' => json_encode($excluded_venue_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+          '@recommended' => json_encode($recommended_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+        ]
+      );
     }
 
     $request->attributes->set('spotdeals_search_smart_location.fallback_broader_search', FALSE);
@@ -398,10 +447,30 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   if ($origin) {
     $request->attributes->set('spotdeals_search_smart_location.origin', $origin);
 
-    if ($recommendation_mode && $recommendation_keywords !== '') {
+    if ($recommendation_mode) {
       $recommended_nids = \Drupal::service('spotdeals_search_smart_location.recommendation_service')
-        ->recommendDealNids((float) $origin['lat'], (float) $origin['lon'], $recommendation_cuisines);
+        ->recommendDealNids(
+          (float) $origin['lat'],
+          (float) $origin['lon'],
+          $recommendation_cuisines,
+          25.0,
+          [],
+          $excluded_venue_nids
+        );
       $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', $recommended_nids);
+      $request->attributes->set(
+        'spotdeals_search_smart_location.direct_recommendation_deal_nid',
+        !empty($recommended_nids[0]) ? (int) $recommended_nids[0] : 0
+      );
+      _spotdeals_search_smart_location_store_current_recommendation($recommended_nids);
+
+      \Drupal::logger('spotdeals_search_smart_location')->notice(
+        'SMART LOCATION recommendation service result from resolved origin: excluded="@excluded" recommended="@recommended"',
+        [
+          '@excluded' => json_encode($excluded_venue_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+          '@recommended' => json_encode($recommended_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+        ]
+      );
     }
   }
 
@@ -432,7 +501,13 @@ function spotdeals_search_smart_location_views_pre_render(ViewExecutable $view):
     return;
   }
 
-  _spotdeals_search_smart_location_apply_ranked_order($view);
+  $request = \Drupal::request();
+  $recommendation_mode = (bool) $request->attributes->get('spotdeals_search_smart_location.recommendation_mode', FALSE);
+
+  if (!$recommendation_mode) {
+    _spotdeals_search_smart_location_apply_ranked_order($view);
+  }
+
   _spotdeals_search_smart_location_commit_search_insight($view);
 }
 
@@ -462,15 +537,21 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
     return;
   }
 
-  $recommended_nids = $request->attributes->get('spotdeals_search_smart_location.recommended_deal_nids');
-  $has_recommendation = is_array($recommended_nids) && !empty($recommended_nids);
+  $direct_recommendation_deal_nid = _spotdeals_search_smart_location_get_direct_recommendation_deal_nid();
+  $variables['spotdeals_direct_recommendation'] = [];
+
+  if ($direct_recommendation_deal_nid > 0) {
+    $variables['spotdeals_direct_recommendation'] = _spotdeals_search_smart_location_build_direct_recommendation_render($direct_recommendation_deal_nid);
+  }
+
+  $has_recommendation = !empty($variables['spotdeals_direct_recommendation']);
+  $variables['attributes']['data-recommendation-active'] = $has_recommendation ? '1' : '0';
 
   _spotdeals_search_smart_location_sync_filtered_pager($view, $has_recommendation ? 1 : 0);
 
   // The pager summary text is still built from internal pager state in a way
-  // that does not reliably reflect our late recommendation filtering.
-  // Since recommendation mode intentionally shows exactly one card, suppress the
-  // misleading summary text for this mode only.
+  // that does not reliably reflect our recommendation flow.
+  // Recommendation mode intentionally shows exactly one selected deal card.
   $view->element['#attached']['html_head'][] = [
     [
       '#tag' => 'style',
@@ -478,6 +559,20 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
     ],
     'spotdeals_search_smart_location_hide_recommendation_pager_summary',
   ];
+
+  if ($has_recommendation) {
+    \Drupal::logger('spotdeals_search_smart_location')->notice(
+      'SMART LOCATION recommendation mode prepared direct recommendation render at preprocess_views_view: deal_nid="@nid"',
+      [
+        '@nid' => (string) $direct_recommendation_deal_nid,
+      ]
+    );
+  }
+  else {
+    \Drupal::logger('spotdeals_search_smart_location')->notice(
+      'SMART LOCATION recommendation mode had no direct recommendation render available at preprocess_views_view.'
+    );
+  }
 
   \Drupal::logger('spotdeals_search_smart_location')->notice(
     'SMART LOCATION recommendation mode adjusted pager summary at preprocess_views_view: forced_count="@count" summary_hidden="1"',
@@ -513,60 +608,339 @@ function spotdeals_search_smart_location_preprocess_views_view_unformatted(array
     return;
   }
 
-  $recommended_nids = $request->attributes->get('spotdeals_search_smart_location.recommended_deal_nids');
-  $order_map = is_array($recommended_nids) ? array_flip(array_values($recommended_nids)) : [];
-  $before_count = is_array($variables['rows'] ?? NULL) ? count($variables['rows']) : 0;
-
-  if (empty($order_map) || empty($variables['rows']) || !is_array($variables['rows'])) {
-    $variables['rows'] = [];
-    _spotdeals_search_smart_location_sync_filtered_pager($view, 0);
-
-    \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION recommendation mode produced no rendered rows to display at preprocess.'
-    );
+  $direct_recommendation_deal_nid = _spotdeals_search_smart_location_get_direct_recommendation_deal_nid();
+  if ($direct_recommendation_deal_nid <= 0) {
     return;
   }
 
-  $selected = [];
-  foreach ($view->result as $index => $row) {
-    $deal = _spotdeals_search_smart_location_result_entity($row);
-    if (!$deal instanceof NodeInterface) {
-      continue;
-    }
+  $before_count = is_array($variables['rows'] ?? NULL) ? count($variables['rows']) : 0;
+  $variables['rows'] = [];
 
-    $nid = (int) $deal->id();
-    if (!isset($order_map[$nid])) {
-      continue;
-    }
+  \Drupal::logger('spotdeals_search_smart_location')->notice(
+    'SMART LOCATION recommendation mode bypassed rendered view rows because direct recommendation rendering is active: before="@before" deal_nid="@nid"',
+    [
+      '@before' => (string) $before_count,
+      '@nid' => (string) $direct_recommendation_deal_nid,
+    ]
+  );
+}
 
-    if (!array_key_exists($index, $variables['rows'])) {
-      continue;
-    }
+/**
+ * Returns the selected direct recommendation deal nid for the current request.
+ */
+function _spotdeals_search_smart_location_get_direct_recommendation_deal_nid(): int {
+  $request = \Drupal::request();
+  $direct_deal_nid = (int) $request->attributes->get('spotdeals_search_smart_location.direct_recommendation_deal_nid', 0);
+  if ($direct_deal_nid > 0) {
+    return $direct_deal_nid;
+  }
 
-    $selected[] = [
-      'rank' => $order_map[$nid],
-      'row' => $variables['rows'][$index],
-      'nid' => $nid,
+  $current = $request->getSession()->get('spotdeals_search_smart_location.current_recommendation', []);
+  if (is_array($current) && !empty($current['deal_nid'])) {
+    return (int) $current['deal_nid'];
+  }
+
+  return 0;
+}
+
+/**
+ * Builds the render array for the selected direct recommendation deal.
+ *
+ * @return array<string,mixed>
+ *   A render array for the recommended deal card.
+ */
+function _spotdeals_search_smart_location_build_direct_recommendation_render(int $deal_nid): array {
+  if ($deal_nid <= 0) {
+    return [];
+  }
+
+  $deal = \Drupal::entityTypeManager()->getStorage('node')->load($deal_nid);
+  if (!$deal instanceof NodeInterface) {
+    return [];
+  }
+
+  $venue = _spotdeals_search_smart_location_deal_venue($deal);
+  $venue_label = $venue instanceof NodeInterface ? $venue->label() : '';
+  $venue_location = $venue instanceof NodeInterface
+    ? _spotdeals_search_smart_location_format_direct_recommendation_location($venue)
+    : '';
+  $deal_label = $deal->label();
+  $summary = _spotdeals_search_smart_location_extract_direct_recommendation_text($deal, [
+    'body',
+    'field_description',
+    'field_deal_description',
+    'field_offer_description',
+    'field_details',
+    'field_special_description',
+  ]);
+  $meta_values = _spotdeals_search_smart_location_collect_direct_recommendation_meta($deal, 3);
+
+  $build = [
+    '#type' => 'container',
+    '#attributes' => [
+      'class' => [
+        'views-row',
+        'spotdeals-direct-recommendation',
+      ],
+    ],
+  ];
+
+  if ($venue instanceof NodeInterface) {
+    $build['venue_title'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['views-field', 'views-field-title'],
+      ],
+      'content' => [
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#attributes' => [
+          'class' => ['venue-title'],
+        ],
+        'link' => [
+          '#type' => 'link',
+          '#title' => $venue_label,
+          '#url' => $venue->toUrl(),
+        ],
+      ],
     ];
   }
 
-  usort($selected, static function (array $a, array $b): int {
-    return ($a['rank'] ?? PHP_INT_MAX) <=> ($b['rank'] ?? PHP_INT_MAX);
-  });
+  if ($venue_location !== '') {
+    $build['venue_location'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['views-field', 'views-field-field-address-locality'],
+      ],
+      'content' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['field-content'],
+        ],
+        '#plain_text' => $venue_location,
+      ],
+    ];
+  }
 
-  $selected = array_slice($selected, 0, 1);
-  $variables['rows'] = array_values(array_map(static fn(array $item): array => $item['row'], $selected));
+  $build['deal_title'] = [
+    '#type' => 'container',
+    '#attributes' => [
+      'class' => ['views-field', 'views-field-title-1'],
+    ],
+    'content' => [
+      '#type' => 'html_tag',
+      '#tag' => 'h3',
+      '#attributes' => [
+        'class' => ['deal-title'],
+      ],
+      'link' => [
+        '#type' => 'link',
+        '#title' => $deal_label,
+        '#url' => $deal->toUrl(),
+      ],
+    ],
+  ];
 
-  _spotdeals_search_smart_location_sync_filtered_pager($view, count($variables['rows']));
+  if ($summary !== '') {
+    $build['summary'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['views-field', 'views-field-body'],
+      ],
+      'content' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['field-content'],
+        ],
+        '#plain_text' => $summary,
+      ],
+    ];
+  }
+
+  if (!empty($meta_values)) {
+    foreach ($meta_values as $delta => $value) {
+      $build['meta_' . $delta] = [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['views-field', 'views-field-nothing'],
+        ],
+        'content' => [
+          '#type' => 'container',
+          '#attributes' => [
+            'class' => ['field-content'],
+          ],
+          '#plain_text' => $value,
+        ],
+      ];
+    }
+  }
+
+  if ($venue instanceof NodeInterface) {
+    $build['venue_link'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['views-field', 'views-field-view-node'],
+      ],
+      'content' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['field-content'],
+        ],
+        'link' => [
+          '#type' => 'link',
+          '#title' => t('View venue'),
+          '#url' => $venue->toUrl(),
+        ],
+      ],
+    ];
+  }
+
+  $build['#cache']['contexts'][] = 'url.query_args';
+  $build['#cache']['contexts'][] = 'session';
 
   \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION recommendation mode enforced single rendered row at preprocess: before="@before" after="@after" ranked_count="@ranked"',
+    'SMART LOCATION recommendation mode built direct recommendation view-like render: deal_nid="@nid" venue_nid="@venue_nid" venue_label="@venue"',
     [
-      '@before' => (string) $before_count,
-      '@after' => (string) count($variables['rows']),
-      '@ranked' => (string) count($order_map),
+      '@nid' => (string) $deal_nid,
+      '@venue_nid' => $venue instanceof NodeInterface ? (string) $venue->id() : '',
+      '@venue' => $venue_label,
     ]
   );
+
+  return $build;
+}
+
+/**
+ * Extracts the best text snippet for a direct recommendation card.
+ *
+ * @param array<int,string> $preferred_fields
+ *   Preferred field machine names in priority order.
+ */
+function _spotdeals_search_smart_location_extract_direct_recommendation_text(NodeInterface $deal, array $preferred_fields): string {
+  foreach ($preferred_fields as $field_name) {
+    $value = _spotdeals_search_smart_location_get_direct_recommendation_field_text($deal, $field_name);
+    $value = _spotdeals_search_smart_location_filter_direct_recommendation_text($value);
+    if ($value !== '') {
+      return $value;
+    }
+  }
+
+  foreach ($deal->getFieldDefinitions() as $field_name => $definition) {
+    if ($definition->isComputed()) {
+      continue;
+    }
+    if (in_array($field_name, ['nid', 'vid', 'type', 'uuid', 'langcode', 'revision_timestamp', 'revision_uid', 'revision_log', 'uid', 'title', 'status', 'created', 'changed', 'promote', 'sticky', 'default_langcode', 'revision_translation_affected', 'path', 'menu_link', 'field_venue'], TRUE)) {
+      continue;
+    }
+
+    $value = _spotdeals_search_smart_location_get_direct_recommendation_field_text($deal, $field_name);
+    $value = _spotdeals_search_smart_location_filter_direct_recommendation_text($value);
+    if ($value !== '') {
+      return $value;
+    }
+  }
+
+  return '';
+}
+
+/**
+ * Collects compact deal metadata text lines for the direct recommendation card.
+ *
+ * @return array<int,string>
+ *   Metadata lines.
+ */
+function _spotdeals_search_smart_location_collect_direct_recommendation_meta(NodeInterface $deal, int $limit = 3): array {
+  $preferred_fields = [
+    'field_price',
+    'field_price_details',
+    'field_time',
+    'field_time_range',
+    'field_start_time',
+    'field_end_time',
+    'field_days',
+    'field_day',
+    'field_day_of_week',
+    'field_notes',
+  ];
+
+  $values = [];
+  foreach ($preferred_fields as $field_name) {
+    $value = _spotdeals_search_smart_location_get_direct_recommendation_field_text($deal, $field_name);
+    $value = _spotdeals_search_smart_location_filter_direct_recommendation_text($value);
+    if ($value === '' || in_array($value, $values, TRUE)) {
+      continue;
+    }
+
+    $values[] = $value;
+    if (count($values) >= $limit) {
+      break;
+    }
+  }
+
+  return $values;
+}
+
+/**
+ * Returns a cleaned text value for a direct recommendation field.
+ */
+function _spotdeals_search_smart_location_get_direct_recommendation_field_text(NodeInterface $deal, string $field_name): string {
+  if (!$deal->hasField($field_name) || $deal->get($field_name)->isEmpty()) {
+    return '';
+  }
+
+  $value = trim((string) $deal->get($field_name)->value);
+  if ($value === '') {
+    $value = trim($deal->get($field_name)->getString());
+  }
+
+  $value = html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+  $value = preg_replace('/\s+/u', ' ', $value) ?? '';
+  return trim($value);
+}
+
+/**
+ * Filters noisy text values from the direct recommendation card.
+ */
+function _spotdeals_search_smart_location_filter_direct_recommendation_text(string $value): string {
+  $value = trim($value);
+  if ($value === '') {
+    return '';
+  }
+
+  if (preg_match('/^\d+$/', $value)) {
+    return '';
+  }
+
+  $normalized = strtolower($value);
+  $blocked = [
+    '1',
+    '47',
+    '60',
+    'claim this listing',
+    'view venue',
+  ];
+  if (in_array($normalized, $blocked, TRUE)) {
+    return '';
+  }
+
+  return $value;
+}
+
+/**
+ * Formats the venue location line to match the normal search cards.
+ */
+function _spotdeals_search_smart_location_format_direct_recommendation_location(NodeInterface $venue): string {
+  $city = _spotdeals_search_smart_location_node_locality($venue);
+  $state = '';
+  if ($venue->hasField('field_address') && !$venue->get('field_address')->isEmpty()) {
+    $address = $venue->get('field_address')->first();
+    if ($address && isset($address->administrative_area)) {
+      $state = trim((string) $address->administrative_area);
+    }
+  }
+
+  $parts = array_values(array_filter([$city, $state]));
+  return implode(', ', $parts);
 }
 
 /**
@@ -982,6 +1356,8 @@ function spotdeals_search_smart_location_exposed_form_submit(array &$form, FormS
     return;
   }
 
+  _spotdeals_search_smart_location_reset_recommendation_session();
+
   $path = \Drupal::request()->getPathInfo();
   $form_state->setRedirectUrl(Url::fromUserInput($path));
 }
@@ -1004,10 +1380,6 @@ function spotdeals_search_smart_location_recommendation_validate(array &$form, F
     (string) ($values['recommendation_cuisines'] ?? '')
   );
 
-  if (count($cuisines) < 2) {
-    $form_state->setErrorByName('recommendation_cuisines', t('Please enter at least 2 cuisine preferences for Help me choose.'));
-    return;
-  }
 
   if (count($cuisines) > 5) {
     $form_state->setErrorByName('recommendation_cuisines', t('Please enter no more than 5 cuisine preferences for Help me choose.'));
@@ -1027,6 +1399,124 @@ function _spotdeals_search_smart_location_is_recommendation_mode(array $values):
   }
 
   return !empty($value);
+}
+
+
+/**
+ * Returns venue IDs excluded in the current recommendation session.
+ *
+ * @return array<int,int>
+ *   Excluded venue node IDs.
+ */
+function _spotdeals_search_smart_location_get_recommendation_exclusions(): array {
+  $session = \Drupal::request()->getSession();
+  $excluded_venue_nids = $session->get('spotdeals_search_smart_location.excluded_venue_nids', []);
+
+  return array_values(array_unique(array_filter(
+    array_map('intval', is_array($excluded_venue_nids) ? $excluded_venue_nids : []),
+    static fn(int $nid): bool => $nid > 0
+  )));
+}
+
+/**
+ * Returns TRUE when a current recommendation exists in session.
+ */
+function _spotdeals_search_smart_location_has_current_recommendation(): bool {
+  $current = \Drupal::request()->getSession()->get('spotdeals_search_smart_location.current_recommendation', []);
+  return is_array($current) && !empty($current['deal_nid']) && !empty($current['venue_nid']);
+}
+
+/**
+ * Clears recommendation-session state.
+ */
+function _spotdeals_search_smart_location_reset_recommendation_session(): void {
+  $session = \Drupal::request()->getSession();
+  $session->remove('spotdeals_search_smart_location.excluded_venue_nids');
+  $session->remove('spotdeals_search_smart_location.current_recommendation');
+}
+
+/**
+ * Stores the current recommendation for the next try-again action.
+ *
+ * @param array<int,int> $recommended_nids
+ *   Recommended deal NIDs.
+ */
+function _spotdeals_search_smart_location_store_current_recommendation(array $recommended_nids): void {
+  $session = \Drupal::request()->getSession();
+
+  $recommended_nids = array_values(array_unique(array_filter(
+    array_map('intval', $recommended_nids),
+    static fn(int $nid): bool => $nid > 0
+  )));
+
+  if (empty($recommended_nids)) {
+    $session->remove('spotdeals_search_smart_location.current_recommendation');
+    return;
+  }
+
+  $deal = \Drupal::entityTypeManager()->getStorage('node')->load($recommended_nids[0]);
+  if (!$deal instanceof NodeInterface) {
+    $session->remove('spotdeals_search_smart_location.current_recommendation');
+    return;
+  }
+
+  $venue = _spotdeals_search_smart_location_deal_venue($deal);
+  $venue_nid = $venue instanceof NodeInterface ? (int) $venue->id() : 0;
+
+  if ($venue_nid <= 0) {
+    $session->remove('spotdeals_search_smart_location.current_recommendation');
+    return;
+  }
+
+  $session->set('spotdeals_search_smart_location.current_recommendation', [
+    'deal_nid' => (int) $deal->id(),
+    'venue_nid' => $venue_nid,
+  ]);
+
+  \Drupal::logger('spotdeals_search_smart_location')->notice(
+    'SMART LOCATION stored current recommendation in session: deal_nid="@deal" venue_nid="@venue"',
+    [
+      '@deal' => (string) $deal->id(),
+      '@venue' => (string) $venue_nid,
+    ]
+  );
+}
+
+/**
+ * Applies the current recommendation to session exclusions.
+ */
+function _spotdeals_search_smart_location_apply_recommendation_action_to_session(string $action): void {
+  if ($action !== 'retry') {
+    return;
+  }
+
+  $session = \Drupal::request()->getSession();
+  $current = $session->get('spotdeals_search_smart_location.current_recommendation', []);
+
+  if (!is_array($current) || empty($current['venue_nid'])) {
+    $session->remove('spotdeals_search_smart_location.excluded_venue_nids');
+    return;
+  }
+
+  // Keep only the immediately previous venue excluded for the next
+  // recommendation attempt. This matches the product rule that the last
+  // recommended result must not repeat in the same session, while avoiding
+  // exhausting the pool after just a few retries.
+  $venue_nid = (int) $current['venue_nid'];
+  if ($venue_nid <= 0) {
+    $session->remove('spotdeals_search_smart_location.excluded_venue_nids');
+    return;
+  }
+
+  $session->set('spotdeals_search_smart_location.excluded_venue_nids', [$venue_nid]);
+
+  \Drupal::logger('spotdeals_search_smart_location')->notice(
+    'SMART LOCATION applied retry exclusion in session: excluded_venue_nids="@excluded" from_current="@current"',
+    [
+      '@excluded' => json_encode([$venue_nid], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+      '@current' => json_encode($current, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+    ]
+  );
 }
 
 /**
@@ -1618,4 +2108,3 @@ function _spotdeals_search_smart_location_commit_search_insight(ViewExecutable $
     );
   }
 }
-

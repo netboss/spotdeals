@@ -66,23 +66,9 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
 
     $recommended_nids = $request->attributes->get('spotdeals_search_smart_location.recommended_deal_nids');
     $recommended_nids = is_array($recommended_nids)
-      ? array_values(array_unique(array_map('intval', $recommended_nids)))
+      ? array_values(array_unique(array_filter(array_map('intval', $recommended_nids))))
       : [];
 
-    if ($recommendation_mode && !empty($recommended_nids)) {
-      $operator = count($recommended_nids) > 1 ? 'IN' : '=';
-      $value = count($recommended_nids) > 1 ? $recommended_nids : $recommended_nids[0];
-      $query->addCondition('nid', $value, $operator);
-
-      \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION subscriber constrained query to recommended deal IDs at PRE_QUERY: recommendation_mode="@recommendation_mode" nids="@nids" operator="@operator"',
-        [
-          '@recommendation_mode' => $recommendation_mode ? '1' : '0',
-          '@nids' => implode(',', $recommended_nids),
-          '@operator' => $operator,
-        ]
-      );
-    }
 
     $origin_mode = (string) $request->query->get('search_origin_mode', '');
     $origin_lat = $request->query->get('origin_lat');
@@ -132,7 +118,7 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
 
     $ranked_nids = $request->attributes->get('spotdeals_search_smart_location.ranked_deal_nids');
     $ranked_nids = is_array($ranked_nids)
-      ? array_values(array_unique(array_map('intval', $ranked_nids)))
+      ? array_values(array_unique(array_filter(array_map('intval', $ranked_nids))))
       : [];
 
     if (!$recommendation_mode && !empty($ranked_nids)) {
@@ -146,6 +132,18 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
         [
           '@count' => (string) count($ranked_nids),
           '@operator' => $operator,
+        ]
+      );
+    }
+
+    if ($recommendation_mode && !empty($recommended_nids)) {
+      \Drupal::logger('spotdeals_search_smart_location')->notice(
+        'SMART LOCATION subscriber left recommendation mode unconstrained at PRE_QUERY because direct recommendation rendering is active: source="@source" lat="@lat" lon="@lon" recommended_nids="@nids"',
+        [
+          '@source' => $source ?? '',
+          '@lat' => (string) $lat,
+          '@lon' => (string) $lon,
+          '@nids' => implode(',', $recommended_nids),
         ]
       );
     }
@@ -166,22 +164,6 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
 
     $solarium_query->addParam('sfield', self::SOLR_GEO_FIELD);
     $solarium_query->addParam('pt', $pt);
-
-    if ($recommendation_mode) {
-      \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION subscriber applied PRE_QUERY geofilt with recommended-NID query constraint and without forced Solr sort: source="@source" near_me="1" recommendation_mode="1" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq"',
-        [
-          '@source' => $source ?? '',
-          '@lat' => (string) $lat,
-          '@lon' => (string) $lon,
-          '@radius' => (string) self::DEFAULT_RADIUS_KM,
-          '@search_api_geo_field' => self::SEARCH_API_GEO_FIELD,
-          '@solr_geo_field' => self::SOLR_GEO_FIELD,
-          '@fq' => $geo_filter,
-        ]
-      );
-      return;
-    }
 
     if (method_exists($solarium_query, 'clearSorts')) {
       $solarium_query->clearSorts();

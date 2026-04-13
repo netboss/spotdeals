@@ -65,10 +65,54 @@
     ensureHidden(form, name).value = value;
   }
 
+  function getHiddenValue(form, name) {
+    return ensureHidden(form, name).value || '';
+  }
+
+  function getRecommendationView(form) {
+    if (form) {
+      const closestView = form.closest('.view-id-deals_search_solr');
+      if (closestView) {
+        return closestView;
+      }
+    }
+
+    return document.querySelector('.view-id-deals_search_solr.view-display-id-page_1')
+      || document.querySelector('.view-id-deals_search_solr');
+  }
+
+  function getRecommendationRows(form) {
+    const view = getRecommendationView(form);
+    if (!view) {
+      return [];
+    }
+
+    return Array.from(view.querySelectorAll('.views-row'));
+  }
+
+  function isRecommendationActive(form) {
+    const formState = form.dataset.recommendationActive || '';
+    const view = getRecommendationView(form);
+    const viewState = view ? (view.dataset.recommendationActive || '') : '';
+
+    if (formState === '1' || viewState === '1') {
+      return true;
+    }
+
+    if (!helpMeChooseEnabled(form)) {
+      return false;
+    }
+
+    return getRecommendationRows(form).length === 1;
+  }
+
   function clearFreshSearchState(form) {
     FRESH_SEARCH_PARAMS.forEach(function (name) {
       setHiddenValue(form, name, '');
     });
+
+    setHiddenValue(form, 'recommendation_action', '');
+    form.dataset.recommendationActive = '0';
 
     delete form.dataset.spotdealsNearMeResolved;
     delete form.dataset.spotdealsNearMePending;
@@ -154,6 +198,33 @@
     }, 0);
   }
 
+  function getPrimarySubmitButton(form) {
+    const buttons = form.querySelectorAll('input[type="submit"], button[type="submit"]');
+    for (let i = 0; i < buttons.length; i++) {
+      if (!isResetButton(buttons[i])) {
+        return buttons[i];
+      }
+    }
+    return null;
+  }
+
+  function updatePrimarySubmitLabel(form) {
+    const submit = getPrimarySubmitButton(form);
+    if (!submit) {
+      return;
+    }
+
+    const active = isRecommendationActive(form);
+    const label = active ? 'Try again' : 'Find deals';
+
+    if (submit.tagName.toLowerCase() === 'input') {
+      submit.value = label;
+    }
+    else {
+      submit.textContent = label;
+    }
+  }
+
   Drupal.behaviors.spotdealsNearMe = {
     attach(context) {
       once('spotdeals-near-me', 'form.views-exposed-form', context).forEach((form) => {
@@ -163,14 +234,34 @@
           return;
         }
 
+        ensureHidden(form, 'recommendation_action');
         ensureLastSubmittedKeywords(form, searchInput);
+        updatePrimarySubmitLabel(form);
 
         let lastClickedSubmitter = null;
 
         searchInput.addEventListener('input', function () {
           delete form.dataset.spotdealsNearMeResolved;
           delete form.dataset.spotdealsNearMePending;
+          setHiddenValue(form, 'recommendation_action', '');
+          form.dataset.recommendationActive = '0';
+          updatePrimarySubmitLabel(form);
         });
+
+        const helpMeChooseCheckbox = form.querySelector('input[name="help_me_choose"]');
+        if (helpMeChooseCheckbox) {
+          helpMeChooseCheckbox.addEventListener('change', function () {
+            delete form.dataset.spotdealsNearMeResolved;
+            delete form.dataset.spotdealsNearMePending;
+            setHiddenValue(form, 'recommendation_action', '');
+
+            if (!helpMeChooseCheckbox.checked) {
+              form.dataset.recommendationActive = '0';
+            }
+
+            updatePrimarySubmitLabel(form);
+          });
+        }
 
         form.addEventListener('click', function (event) {
           const target = event.target;
@@ -189,6 +280,7 @@
             clearFreshSearchState(form);
             form.dataset.spotdealsLastSubmittedKeywords = '';
             stripActionQuery(form);
+            updatePrimarySubmitLabel(form);
           }
         }, true);
 
@@ -205,6 +297,7 @@
           if (isResetButton(submitter)) {
             clearFreshSearchState(form);
             form.dataset.spotdealsLastSubmittedKeywords = '';
+            updatePrimarySubmitLabel(form);
             return;
           }
 
@@ -220,8 +313,18 @@
 
           if (rawValue === '' && !recommendationMode) {
             clearNearMeOnlyState(form);
+            setHiddenValue(form, 'recommendation_action', '');
             rememberSubmittedKeywords(form, currentSearchInput);
+            updatePrimarySubmitLabel(form);
             return;
+          }
+
+          if (!recommendationMode) {
+            setHiddenValue(form, 'recommendation_action', '');
+            form.dataset.recommendationActive = '0';
+          }
+          else if (isRecommendationActive(form) && getHiddenValue(form, 'recommendation_action') === '') {
+            setHiddenValue(form, 'recommendation_action', 'retry');
           }
 
           if (form.dataset.spotdealsNearMeResolved === '1') {
