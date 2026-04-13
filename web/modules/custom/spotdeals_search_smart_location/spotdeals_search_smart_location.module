@@ -209,6 +209,9 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   $raw = trim($raw);
 
   $recommendation_mode = _spotdeals_search_smart_location_is_recommendation_mode($input + $request->query->all());
+  if ($recommendation_mode) {
+    \Drupal::service('page_cache_kill_switch')->trigger();
+  }
   $recommendation_cuisines = _spotdeals_search_smart_location_parse_recommendation_cuisines(
     (string) ($input['recommendation_cuisines'] ?? $request->query->get('recommendation_cuisines', ''))
   );
@@ -528,6 +531,14 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
   $recommendation_mode = (bool) $request->attributes->get('spotdeals_search_smart_location.recommendation_mode', FALSE);
   $fallback_broader_search = (bool) $request->attributes->get('spotdeals_search_smart_location.fallback_broader_search', FALSE);
 
+  if ($recommendation_mode) {
+    \Drupal::service('page_cache_kill_switch')->trigger();
+    $view->element['#cache']['max-age'] = 0;
+    $variables['#cache']['max-age'] = 0;
+    $variables['#cache']['contexts'] = [];
+    $variables['#cache']['tags'] = [];
+  }
+
   if (!$recommendation_mode && !$fallback_broader_search) {
     return;
   }
@@ -799,7 +810,7 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
   }
 
   \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION recommendation mode built lightweight direct recommendation render: deal_nid="@nid" venue_nid="@venue_nid" venue_label="@venue"',
+    'SMART LOCATION recommendation mode built uncached direct recommendation view-like render: deal_nid="@nid" venue_nid="@venue_nid" venue_label="@venue"',
     [
       '@nid' => (string) $deal_nid,
       '@venue_nid' => $venue instanceof NodeInterface ? (string) $venue->id() : '',
