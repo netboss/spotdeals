@@ -256,6 +256,14 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     trim((string) $request->query->get('search_clean', ''))
   );
 
+  $recommendation_fallback_source = $clean !== ''
+    ? $clean
+    : trim((string) ($parsed['keywords'] ?? ''));
+  $effective_recommendation_cuisines = !empty($recommendation_cuisines)
+    ? $recommendation_cuisines
+    : _spotdeals_search_smart_location_parse_recommendation_cuisines($recommendation_fallback_source);
+  $effective_recommendation_keywords = implode(' ', $effective_recommendation_cuisines);
+
   $origin_mode = (string) $request->query->get('search_origin_mode', '');
   $origin_lat = $request->query->get('origin_lat');
   $origin_lon = $request->query->get('origin_lon');
@@ -274,8 +282,8 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
       (float) $origin_lon
     );
 
-    $keywords = $recommendation_mode && $recommendation_keywords !== ''
-      ? $recommendation_keywords
+    $keywords = $recommendation_mode && $effective_recommendation_keywords !== ''
+      ? $effective_recommendation_keywords
       : ($clean !== '' ? $clean : trim((string) ($parsed['keywords'] ?? '')));
     $keywords = _spotdeals_search_smart_location_normalize_keywords($keywords);
     $keywords = _spotdeals_search_smart_location_expand_keywords($keywords);
@@ -301,7 +309,7 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
         ->recommendDealNids(
           (float) $origin_lat,
           (float) $origin_lon,
-          $recommendation_cuisines,
+          $effective_recommendation_cuisines,
           25.0,
           [],
           $excluded_venue_nids
@@ -412,8 +420,8 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     return;
   }
 
-  if ($recommendation_mode && $recommendation_keywords !== '') {
-    $parsed['keywords'] = $recommendation_keywords;
+  if ($recommendation_mode && $effective_recommendation_keywords !== '') {
+    $parsed['keywords'] = $effective_recommendation_keywords;
   }
 
   _spotdeals_search_smart_location_prepare_search_insight($raw, (string) ($parsed['keywords'] ?? ''), $recommendation_mode);
@@ -455,7 +463,7 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
         ->recommendDealNids(
           (float) $origin['lat'],
           (float) $origin['lon'],
-          $recommendation_cuisines,
+          $effective_recommendation_cuisines,
           25.0,
           [],
           $excluded_venue_nids
