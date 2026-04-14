@@ -208,14 +208,89 @@
     return null;
   }
 
+  function getRecommendationHelper(form, searchInput) {
+    if (!searchInput || !searchInput.parentNode) {
+      return null;
+    }
+
+    let helper = form.querySelector('.spotdeals-help-me-choose-helper');
+    if (helper) {
+      return helper;
+    }
+
+    helper = document.createElement('div');
+    helper.className = 'spotdeals-help-me-choose-helper';
+    helper.style.marginTop = '6px';
+    helper.style.fontSize = '0.875rem';
+    helper.style.lineHeight = '1.4';
+    helper.style.color = '#6b7280';
+    helper.style.display = 'none';
+    searchInput.parentNode.appendChild(helper);
+
+    return helper;
+  }
+
+  function syncSearchInputUi(form, searchInput) {
+    if (!searchInput) {
+      return;
+    }
+
+    const recommendationMode = helpMeChooseEnabled(form);
+    const helper = getRecommendationHelper(form, searchInput);
+
+    searchInput.readOnly = recommendationMode;
+    searchInput.setAttribute('aria-disabled', recommendationMode ? 'true' : 'false');
+
+    if (recommendationMode) {
+      searchInput.classList.add('spotdeals-readonly-recommendation-mode');
+      searchInput.style.backgroundColor = '#f3f4f6';
+      searchInput.style.color = '#6b7280';
+      searchInput.style.borderColor = '#d1d5db';
+      searchInput.style.cursor = 'not-allowed';
+      searchInput.style.opacity = '1';
+      searchInput.style.caretColor = 'transparent';
+      searchInput.setAttribute('tabindex', '-1');
+      searchInput.blur();
+
+      if (helper) {
+        helper.textContent = 'Sit back — we’ll pick a great deal nearby.';
+        helper.style.display = '';
+      }
+    }
+    else {
+      searchInput.classList.remove('spotdeals-readonly-recommendation-mode');
+      searchInput.style.backgroundColor = '';
+      searchInput.style.color = '';
+      searchInput.style.borderColor = '';
+      searchInput.style.cursor = '';
+      searchInput.style.opacity = '';
+      searchInput.style.caretColor = '';
+      searchInput.removeAttribute('tabindex');
+
+      if (helper) {
+        helper.textContent = '';
+        helper.style.display = 'none';
+      }
+    }
+  }
+
   function updatePrimarySubmitLabel(form) {
     const submit = getPrimarySubmitButton(form);
     if (!submit) {
       return;
     }
 
-    const active = isRecommendationActive(form);
-    const label = active ? 'Try again' : 'Find deals';
+    const recommendationMode = helpMeChooseEnabled(form);
+    let label = 'Find deals';
+
+    if (recommendationMode) {
+      if (isRecommendationActive(form)) {
+        label = 'Try again';
+      }
+      else {
+        label = 'Find deal';
+      }
+    }
 
     if (submit.tagName.toLowerCase() === 'input') {
       submit.value = label;
@@ -223,6 +298,21 @@
     else {
       submit.textContent = label;
     }
+  }
+
+  function suppressReadonlyRecommendationInteraction(event, form, searchInput) {
+    if (!searchInput || event.target !== searchInput) {
+      return;
+    }
+
+    if (!helpMeChooseEnabled(form)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    searchInput.blur();
   }
 
   Drupal.behaviors.spotdealsNearMe = {
@@ -236,9 +326,22 @@
 
         ensureHidden(form, 'recommendation_action');
         ensureLastSubmittedKeywords(form, searchInput);
+        syncSearchInputUi(form, searchInput);
         updatePrimarySubmitLabel(form);
 
         let lastClickedSubmitter = null;
+
+        searchInput.addEventListener('mousedown', function (event) {
+          suppressReadonlyRecommendationInteraction(event, form, searchInput);
+        }, true);
+
+        searchInput.addEventListener('click', function (event) {
+          suppressReadonlyRecommendationInteraction(event, form, searchInput);
+        }, true);
+
+        searchInput.addEventListener('focus', function (event) {
+          suppressReadonlyRecommendationInteraction(event, form, searchInput);
+        }, true);
 
         searchInput.addEventListener('input', function () {
           delete form.dataset.spotdealsNearMeResolved;
@@ -259,6 +362,7 @@
               form.dataset.recommendationActive = '0';
             }
 
+            syncSearchInputUi(form, searchInput);
             updatePrimarySubmitLabel(form);
           });
         }
@@ -280,6 +384,7 @@
             clearFreshSearchState(form);
             form.dataset.spotdealsLastSubmittedKeywords = '';
             stripActionQuery(form);
+            syncSearchInputUi(form, searchInput);
             updatePrimarySubmitLabel(form);
           }
         }, true);
@@ -297,6 +402,7 @@
           if (isResetButton(submitter)) {
             clearFreshSearchState(form);
             form.dataset.spotdealsLastSubmittedKeywords = '';
+            syncSearchInputUi(form, currentSearchInput);
             updatePrimarySubmitLabel(form);
             return;
           }
