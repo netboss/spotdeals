@@ -122,6 +122,56 @@ final class RecommendationService {
           );
         }
       }
+
+      // If strict cuisine-overlap recommendation attempts produce no result,
+      // keep the same ranking keywords but relax the overlap requirement so a
+      // retry still returns exactly one recommendation instead of falling back
+      // to the full normal results list.
+      $candidateSets[] = $this->buildCandidates(
+        $originLat,
+        $originLon,
+        [],
+        $radiusKm,
+        $excludedCuisines,
+        $excludedVenueNids,
+        $cuisines
+      );
+
+      if (!empty($excludedCuisines)) {
+        $candidateSets[] = $this->buildCandidates(
+          $originLat,
+          $originLon,
+          [],
+          $radiusKm,
+          [],
+          $excludedVenueNids,
+          $cuisines
+        );
+      }
+
+      if ($radiusKm < 1000.0) {
+        $candidateSets[] = $this->buildCandidates(
+          $originLat,
+          $originLon,
+          [],
+          1000.0,
+          $excludedCuisines,
+          $excludedVenueNids,
+          $cuisines
+        );
+
+        if (!empty($excludedCuisines)) {
+          $candidateSets[] = $this->buildCandidates(
+            $originLat,
+            $originLon,
+            [],
+            1000.0,
+            [],
+            $excludedVenueNids,
+            $cuisines
+          );
+        }
+      }
     }
     else {
       $candidateSets[] = $this->buildCandidates(
@@ -242,6 +292,9 @@ final class RecommendationService {
    *   Optional excluded cuisine tokens.
    * @param array<int,int> $excludedVenueNids
    *   Venue node IDs already shown in the current recommendation session.
+   * @param array<int,string> $rankingKeywords
+   *   Optional normalized tokens used only for near-me ranking while keeping
+   *   recommendation scoring relaxed.
    *
    * @return array<int,array<string,int|string|bool>>
    *   Recommendation candidates keyed numerically.
@@ -253,8 +306,11 @@ final class RecommendationService {
     float $radiusKm,
     array $excludedCuisines,
     array $excludedVenueNids,
+    array $rankingKeywords = [],
   ): array {
-    $query = !empty($cuisines) ? implode(' ', $cuisines) : '';
+    $rankingKeywords = $this->normalizeCuisineTokens($rankingKeywords);
+    $queryTokens = !empty($rankingKeywords) ? $rankingKeywords : $cuisines;
+    $query = !empty($queryTokens) ? implode(' ', $queryTokens) : '';
 
     $rankedNids = $this->nearMeRanker->rankDealNids(
       $originLat,
@@ -348,6 +404,11 @@ final class RecommendationService {
         : ''
     );
     $venueCuisine = implode(' ', $venueCuisineTokens);
+    $venueTags = $this->normalize(
+      $venue->hasField('field_tags') && !$venue->get('field_tags')->isEmpty()
+        ? $this->venueTagsText($venue)
+        : ''
+    );
 
     $haystacks = [
       'venue_cuisine' => $venueCuisine,
@@ -355,6 +416,7 @@ final class RecommendationService {
       'venue_title' => $venueTitle,
       'deal_body' => $dealBody,
       'venue_description' => $venueDescription,
+      'venue_tags' => $venueTags,
     ];
 
     $preferenceMode = !empty($cuisines);
@@ -389,6 +451,10 @@ final class RecommendationService {
           $score += 12;
           $matched = TRUE;
         }
+        if ($haystacks['venue_tags'] !== '' && str_contains($haystacks['venue_tags'], $cuisine)) {
+          $score += 20;
+          $matched = TRUE;
+        }
 
         if ($matched) {
           $overlapCount++;
@@ -412,6 +478,9 @@ final class RecommendationService {
       }
       if ($haystacks['venue_description'] !== '') {
         $score += 15;
+      }
+      if ($haystacks['venue_tags'] !== '') {
+        $score += 12;
       }
       if ($haystacks['deal_body'] !== '') {
         $score += 10;
@@ -501,6 +570,31 @@ final class RecommendationService {
    */
   private function extractVenueCuisineTokens(NodeInterface $venue): array {
     return $this->normalizeCuisineTokens([$this->venueCuisineText($venue)]);
+  }
+
+  /**
+   * Returns normalized tag text for a venue.
+   */
+  private function venueTagsText(NodeInterface $venue): string {
+    if (!$venue->hasField('field_tags') || $venue->get('field_tags')->isEmpty()) {
+      return '';
+    }
+
+    $field = $venue->get('field_tags');
+    $parts = [];
+
+    foreach ($field as $item) {
+      if (isset($item->entity) && $item->entity) {
+        $parts[] = (string) $item->entity->label();
+        continue;
+      }
+
+      if (isset($item->value) && is_string($item->value) && trim($item->value) !== '') {
+        $parts[] = $item->value;
+      }
+    }
+
+    return implode(' ', $parts);
   }
 
   /**

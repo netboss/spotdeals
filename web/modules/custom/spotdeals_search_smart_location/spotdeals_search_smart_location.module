@@ -9,6 +9,21 @@ use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
 use Drupal\views\ViewExecutable;
 
+
+/**
+ * Implements hook_theme().
+ */
+function spotdeals_search_smart_location_theme(): array {
+  return [
+    'spotdeals_search_smart_location_recommendation_note' => [
+      'variables' => [
+        'keyword' => '',
+      ],
+      'template' => 'spotdeals-search-smart-location-recommendation-note',
+    ],
+  ];
+}
+
 /**
  * Implements hook_form_views_exposed_form_alter().
  */
@@ -564,6 +579,14 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
   }
 
   $has_recommendation = !empty($variables['spotdeals_direct_recommendation']);
+
+  if ($has_recommendation) {
+    $recommendation_nearby_message = _spotdeals_search_smart_location_build_recommendation_nearby_message($direct_recommendation_deal_nid);
+    if (!empty($recommendation_nearby_message)) {
+      $variables['spotdeals_direct_recommendation'] = ['recommendation_nearby_message' => $recommendation_nearby_message] + $variables['spotdeals_direct_recommendation'];
+    }
+  }
+
   $variables['attributes']['data-recommendation-active'] = $has_recommendation ? '1' : '0';
 
   _spotdeals_search_smart_location_sync_filtered_pager($view, $has_recommendation ? 1 : 0);
@@ -976,6 +999,130 @@ function _spotdeals_search_smart_location_add_fallback_message(): void {
   \Drupal::messenger()->addStatus(t('No nearby matches found for “@query”. Showing broader Florida matches instead.', [
     '@query' => (string) $request->attributes->get('spotdeals_search_smart_location.raw_query', ''),
   ]));
+}
+
+/**
+ * Builds the nearby recommendation fallback message exactly once.
+ *
+ * @return array<string,mixed>
+ *   Inline recommendation message render array, or an empty array.
+ */
+function _spotdeals_search_smart_location_build_recommendation_nearby_message(int $deal_nid): array {
+  if ($deal_nid <= 0) {
+    return [];
+  }
+
+  $request = \Drupal::request();
+  if ((bool) $request->attributes->get('spotdeals_search_smart_location.recommendation_nearby_message_added', FALSE)) {
+    return [];
+  }
+
+  $raw_query = trim((string) $request->attributes->get('spotdeals_search_smart_location.raw_query', ''));
+  if ($raw_query === '') {
+    return [];
+  }
+
+  if (_spotdeals_search_smart_location_direct_recommendation_matches_query($deal_nid, $raw_query)) {
+    return [];
+  }
+
+  $parsed = _spotdeals_search_smart_location_parse($raw_query);
+  $keyword = trim((string) ($parsed['keywords'] ?? ''));
+  if ($keyword === '') {
+    $keyword = _spotdeals_search_smart_location_normalize_keywords($raw_query);
+  }
+
+  if ($keyword === '') {
+    return [];
+  }
+
+  $request->attributes->set('spotdeals_search_smart_location.recommendation_nearby_message_added', TRUE);
+
+  // Inline recommendation message rendered via Twig template.
+  // Keep presentation out of PHP.
+  return [
+    '#theme' => 'spotdeals_search_smart_location_recommendation_note',
+    '#keyword' => $keyword,
+    '#attached' => [
+      'library' => [
+        'spotdeals_search_smart_location/recommendation_note',
+      ],
+    ],
+    '#cache' => [
+      'max-age' => 0,
+    ],
+  ];
+}
+
+/**
+ * Returns TRUE when the selected direct recommendation matches the query.
+ */
+function _spotdeals_search_smart_location_direct_recommendation_matches_query(int $deal_nid, string $raw_query): bool {
+  $deal = \Drupal::entityTypeManager()->getStorage('node')->load($deal_nid);
+  if (!$deal instanceof NodeInterface) {
+    return FALSE;
+  }
+
+  $tokens = preg_split('/\s+/', _spotdeals_search_smart_location_expand_keywords($raw_query)) ?: [];
+  $tokens = array_values(array_unique(array_filter(array_map('trim', $tokens))));
+  if (empty($tokens)) {
+    return TRUE;
+  }
+
+  $haystacks = [];
+  $haystacks[] = _spotdeals_search_smart_location_expand_keywords((string) $deal->label());
+
+  if ($deal->hasField('body') && !$deal->get('body')->isEmpty()) {
+    $haystacks[] = _spotdeals_search_smart_location_expand_keywords((string) $deal->get('body')->value);
+  }
+
+  $venue = NULL;
+  if ($deal->hasField('field_venue') && !$deal->get('field_venue')->isEmpty()) {
+    $venue_entity = $deal->get('field_venue')->entity;
+    if ($venue_entity instanceof NodeInterface) {
+      $venue = $venue_entity;
+    }
+  }
+
+  if ($venue instanceof NodeInterface) {
+    $haystacks[] = _spotdeals_search_smart_location_expand_keywords((string) $venue->label());
+
+    if ($venue->hasField('field_short_description') && !$venue->get('field_short_description')->isEmpty()) {
+      $haystacks[] = _spotdeals_search_smart_location_expand_keywords((string) $venue->get('field_short_description')->value);
+    }
+
+    $haystacks[] = _spotdeals_search_smart_location_expand_keywords(_spotdeals_search_smart_location_collect_node_term_labels($venue, 'field_cuisine'));
+    $haystacks[] = _spotdeals_search_smart_location_expand_keywords(_spotdeals_search_smart_location_collect_node_term_labels($venue, 'field_tags'));
+  }
+
+  $haystack = implode(' ', array_filter($haystacks));
+  if ($haystack === '') {
+    return FALSE;
+  }
+
+  foreach ($tokens as $token) {
+    if ($token !== '' && str_contains($haystack, $token)) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Collects referenced term labels from a node field.
+ */
+function _spotdeals_search_smart_location_collect_node_term_labels(NodeInterface $node, string $field_name): string {
+  if (!$node->hasField($field_name) || $node->get($field_name)->isEmpty()) {
+    return '';
+  }
+
+  $labels = [];
+  foreach ($node->get($field_name)->referencedEntities() as $entity) {
+    $labels[] = (string) $entity->label();
+  }
+
+  return implode(' ', $labels);
 }
 
 /**
