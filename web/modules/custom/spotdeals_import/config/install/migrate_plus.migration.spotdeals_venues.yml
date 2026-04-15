@@ -32,6 +32,15 @@ process:
       method: process
       source: field_website_title
 
+  field_menu_url/uri:
+    - plugin: skip_on_empty
+      method: process
+      source: field_menu_url
+
+  field_menu_url/title:
+    plugin: default_value
+    default_value: 'Menu'
+
   field_claimed_listing: field_claimed_listing
 
   field_address/country_code: field_address_country_code
