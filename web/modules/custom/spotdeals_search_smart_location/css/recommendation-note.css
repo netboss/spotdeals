@@ -1,0 +1,48 @@
+.spotdeals-recommendation-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  background: #05080d;
+  color: #ffffff;
+  border-radius: 0;
+}
+
+.spotdeals-recommendation-note__icon {
+  position: relative;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 50%;
+  background: #69be28;
+}
+
+.spotdeals-recommendation-note__icon::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 5px;
+  width: 5px;
+  height: 9px;
+  border-right: 2px solid #05080d;
+  border-bottom: 2px solid #05080d;
+  transform: rotate(45deg);
+}
+
+.spotdeals-recommendation-note__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.spotdeals-recommendation-note__line {
+  display: block;
+  line-height: 1.4;
+}
+
+.spotdeals-recommendation-note strong {
+  font-weight: 700;
+}

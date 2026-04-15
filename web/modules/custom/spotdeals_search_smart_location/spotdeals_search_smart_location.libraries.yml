@@ -4,3 +4,9 @@ near_me:
   dependencies:
     - core/drupal
     - core/once
+
+
+recommendation_note:
+  css:
+    theme:
+      css/recommendation-note.css: {}
