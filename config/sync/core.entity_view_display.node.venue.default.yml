@@ -26,7 +26,9 @@ dependencies:
     - responsive_image.styles.wide
   module:
     - address
+    - link
     - responsive_image
+    - taxonomy
     - text
     - user
 id: node.venue.default
@@ -56,7 +58,7 @@ content:
       format_custom_false: ''
       format_custom_true: ''
     third_party_settings: {  }
-    weight: 7
+    weight: 8
     region: content
   field_image:
     type: responsive_image
@@ -69,6 +71,18 @@ content:
     third_party_settings: {  }
     weight: 2
     region: content
+  field_menu_url:
+    type: link
+    label: hidden
+    settings:
+      trim_length: 80
+      url_only: false
+      url_plain: false
+      rel: ''
+      target: ''
+    third_party_settings: {  }
+    weight: 6
+    region: content
   field_primary_owner_user:
     type: entity_reference_label
     label: above
@@ -78,18 +92,17 @@ content:
     weight: 5
     region: content
   field_tags:
-    type: entity_reference_label
+    type: entity_reference_rss_category
     label: above
-    settings:
-      link: false
+    settings: {  }
     third_party_settings: {  }
-    weight: 6
+    weight: 7
     region: content
   field_venue_type:
     type: entity_reference_label
     label: hidden
     settings:
-      link: true
+      link: false
     third_party_settings: {  }
     weight: 1
     region: content
@@ -108,7 +121,6 @@ hidden:
   field_cuisine: true
   field_latitude: true
   field_longitude: true
-  field_menu_url: true
   field_phone: true
   field_website: true
   langcode: true
