@@ -530,7 +530,20 @@ function spotdeals_search_smart_location_views_pre_render(ViewExecutable $view):
   $request = \Drupal::request();
   $recommendation_mode = (bool) $request->attributes->get('spotdeals_search_smart_location.recommendation_mode', FALSE);
 
-  if (!$recommendation_mode) {
+  if ($recommendation_mode) {
+    $direct_recommendation_deal_nid = _spotdeals_search_smart_location_get_direct_recommendation_deal_nid();
+    if ($direct_recommendation_deal_nid > 0) {
+      _spotdeals_search_smart_location_disable_view_empty_state($view);
+
+      \Drupal::logger('spotdeals_search_smart_location')->notice(
+        'SMART LOCATION recommendation mode suppressed Views empty-state output at views_pre_render: deal_nid="@nid"',
+        [
+          '@nid' => (string) $direct_recommendation_deal_nid,
+        ]
+      );
+    }
+  }
+  else {
     _spotdeals_search_smart_location_apply_ranked_order($view);
   }
 
@@ -585,6 +598,11 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
     if (!empty($recommendation_nearby_message)) {
       $variables['spotdeals_direct_recommendation'] = ['recommendation_nearby_message' => $recommendation_nearby_message] + $variables['spotdeals_direct_recommendation'];
     }
+
+    // Recommendation mode replaces the normal view rows with our own direct
+    // recommendation render. Prevent the view's empty text/instructions from
+    // flashing while the next recommendation page is loading.
+    $variables['empty'] = [];
   }
 
   $variables['attributes']['data-recommendation-active'] = $has_recommendation ? '1' : '0';
@@ -604,7 +622,7 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
 
   if ($has_recommendation) {
     \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION recommendation mode prepared direct recommendation render at preprocess_views_view: deal_nid="@nid"',
+      'SMART LOCATION recommendation mode prepared direct recommendation render at preprocess_views_view: deal_nid="@nid" empty_text_suppressed="1"',
       [
         '@nid' => (string) $direct_recommendation_deal_nid,
       ]
@@ -622,6 +640,26 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
       '@count' => $has_recommendation ? '1' : '0',
     ]
   );
+}
+
+/**
+ * Prevents Views from rendering the no-results area for recommendation mode.
+ */
+function _spotdeals_search_smart_location_disable_view_empty_state(ViewExecutable $view): void {
+  if (isset($view->empty)) {
+    $view->empty = [];
+  }
+
+  if (isset($view->display_handler)) {
+    $empty = $view->display_handler->getOption('empty');
+    if (!empty($empty)) {
+      $view->display_handler->setOption('empty', []);
+    }
+
+    if (isset($view->display_handler->handlers['empty']) && is_array($view->display_handler->handlers['empty'])) {
+      $view->display_handler->handlers['empty'] = [];
+    }
+  }
 }
 
 /**
