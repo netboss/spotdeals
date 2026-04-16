@@ -12,6 +12,8 @@
     'page'
   ];
 
+  const RETRY_LOADING_MIN_MS = 650;
+
   function ensureHidden(form, name) {
     let input = form.querySelector(`input[name="${name}"]`);
     if (!input) {
@@ -116,6 +118,7 @@
 
     delete form.dataset.spotdealsNearMeResolved;
     delete form.dataset.spotdealsNearMePending;
+    delete form.dataset.spotdealsRetryLoadingStartedAt;
   }
 
   function clearNearMeOnlyState(form) {
@@ -126,6 +129,7 @@
 
     delete form.dataset.spotdealsNearMeResolved;
     delete form.dataset.spotdealsNearMePending;
+    delete form.dataset.spotdealsRetryLoadingStartedAt;
   }
 
   function getInitialSubmittedValue(form, searchInput) {
@@ -315,6 +319,245 @@
     searchInput.blur();
   }
 
+  function getResultsWrapper(form) {
+    const view = getRecommendationView(form);
+    if (!view) {
+      return null;
+    }
+
+    return view.querySelector('.spotdeals-finder__results');
+  }
+
+  function buildRetryAjaxUrl() {
+    return '/spotdeals-search-smart-location/recommendation/ajax';
+  }
+
+  function shouldUseRetryAjax(form) {
+    if (!helpMeChooseEnabled(form)) {
+      return false;
+    }
+
+    return getHiddenValue(form, 'recommendation_action') === 'retry';
+  }
+
+  function showRetryLoadingState(form) {
+    const resultsWrapper = getResultsWrapper(form);
+    if (!resultsWrapper) {
+      return;
+    }
+
+    form.dataset.spotdealsRetryLoadingStartedAt = String(Date.now());
+
+    resultsWrapper.innerHTML = ''
+      + '<div class="spotdeals-recommendation-note spotdeals-recommendation-note--loading" aria-live="polite">'
+      + '  <div class="spotdeals-recommendation-note__icon" aria-hidden="true"></div>'
+      + '  <div class="spotdeals-recommendation-note__content">'
+      + '    <span class="spotdeals-recommendation-note__line"><strong>Finding another nearby pick…</strong></span>'
+      + '  </div>'
+      + '</div>';
+  }
+
+  function buildRetryAjaxPayload(form, submitter) {
+    const formData = new FormData(form);
+    formData.set('recommendation_action', 'retry');
+
+    if (submitter && submitter.name && !formData.has(submitter.name)) {
+      formData.append(submitter.name, submitter.value || '');
+    }
+
+    return formData;
+  }
+
+  function getRetryLoadingDelay(form) {
+    const startedAt = parseInt(form.dataset.spotdealsRetryLoadingStartedAt || '0', 10);
+    if (!startedAt) {
+      return 0;
+    }
+
+    const elapsed = Date.now() - startedAt;
+    return Math.max(0, RETRY_LOADING_MIN_MS - elapsed);
+  }
+
+  function clearRetryLoadingState(form) {
+    delete form.dataset.spotdealsRetryLoadingStartedAt;
+  }
+
+  function extractViewHtmlFromResponseText(responseText) {
+    if (!responseText || typeof responseText !== 'string') {
+      return '';
+    }
+
+    const trimmed = responseText.trim();
+    if (!trimmed) {
+      return '';
+    }
+
+    // If backend already returned HTML, use it directly.
+    if (trimmed.charAt(0) === '<') {
+      return trimmed;
+    }
+
+    // Try JSON shape: { success: true, view_html: "...", recommendation_active: true }
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed.view_html === 'string') {
+        return parsed.view_html;
+      }
+    }
+    catch (e) {
+      // Not JSON. Fall through and return empty so caller can decide.
+    }
+
+    return '';
+  }
+
+  function extractRecommendationActiveFromResponseText(responseText) {
+    if (!responseText || typeof responseText !== 'string') {
+      return true;
+    }
+
+    const trimmed = responseText.trim();
+    if (!trimmed || trimmed.charAt(0) === '<') {
+      return true;
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed.recommendation_active !== 'undefined') {
+        return !!parsed.recommendation_active;
+      }
+    }
+    catch (e) {
+      // Ignore and default true.
+    }
+
+    return true;
+  }
+
+  function applyRetryAjaxHtml(form, viewHtml, recommendationActive) {
+    const resultsWrapper = getResultsWrapper(form);
+    if (!resultsWrapper) {
+      return;
+    }
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(viewHtml || '', 'text/html');
+
+    // Prefer the dedicated results wrapper if the backend returns a full page/view.
+    const responseResultsWrapper = doc.querySelector('.spotdeals-finder__results');
+    if (responseResultsWrapper) {
+      resultsWrapper.innerHTML = responseResultsWrapper.innerHTML;
+    }
+    else {
+      const responseView = doc.querySelector('.view-id-deals_search_solr');
+      const fragments = [];
+
+      if (responseView) {
+        const selectors = [
+          '.view-header',
+          '.attachment-before',
+          '.view-content',
+          '.view-empty',
+          '.pager',
+          '.attachment-after',
+          '.more-link',
+          '.view-footer',
+          '.feed-icons'
+        ];
+
+        selectors.forEach(function (selector) {
+          responseView.querySelectorAll(selector).forEach(function (element) {
+            fragments.push(element.outerHTML);
+          });
+        });
+      }
+
+      if (fragments.length > 0) {
+        resultsWrapper.innerHTML = fragments.join('');
+      }
+      else if (viewHtml && viewHtml.trim().charAt(0) === '<') {
+        resultsWrapper.innerHTML = viewHtml;
+      }
+      else {
+        resultsWrapper.innerHTML = ''
+          + '<div class="view-empty" data-result-count="0">'
+          + '  <p>No nearby pick could be found right now. Please try again.</p>'
+          + '</div>';
+      }
+    }
+
+    const view = getRecommendationView(form);
+    const activeValue = recommendationActive ? '1' : '0';
+
+    form.dataset.recommendationActive = activeValue;
+
+    if (view) {
+      view.dataset.recommendationActive = activeValue;
+    }
+
+    if (typeof Drupal.attachBehaviors === 'function') {
+      Drupal.attachBehaviors(resultsWrapper);
+    }
+
+    updatePrimarySubmitLabel(form);
+    clearRetryLoadingState(form);
+  }
+
+  function submitPreparedRetryAjax(form, submitter) {
+    const payload = buildRetryAjaxPayload(form, submitter);
+    const resultsWrapper = getResultsWrapper(form);
+
+    if (!resultsWrapper) {
+      submitPreparedForm(form, submitter);
+      return;
+    }
+
+    fetch(buildRetryAjaxUrl(), {
+      method: 'POST',
+      body: payload,
+      credentials: 'same-origin',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json, text/html'
+      }
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error('Retry recommendation request failed.');
+        }
+
+        return response.text();
+      })
+      .then(function (responseText) {
+        const viewHtml = extractViewHtmlFromResponseText(responseText);
+        const recommendationActive = extractRecommendationActiveFromResponseText(responseText);
+
+        if (!viewHtml) {
+          throw new Error('Retry recommendation payload was invalid.');
+        }
+
+        const applyResponse = function () {
+          form.dataset.spotdealsNearMeResolved = '1';
+          delete form.dataset.spotdealsNearMePending;
+          setHiddenValue(form, 'recommendation_action', 'retry');
+
+          applyRetryAjaxHtml(form, viewHtml, recommendationActive);
+        };
+
+        const delay = getRetryLoadingDelay(form);
+        if (delay > 0) {
+          window.setTimeout(applyResponse, delay);
+        }
+        else {
+          applyResponse();
+        }
+      })
+      .catch(function () {
+        clearRetryLoadingState(form);
+        submitPreparedForm(form, submitter);
+      });
+  }
+
   Drupal.behaviors.spotdealsNearMe = {
     attach(context) {
       once('spotdeals-near-me', 'form.views-exposed-form', context).forEach((form) => {
@@ -348,6 +591,7 @@
           delete form.dataset.spotdealsNearMePending;
           setHiddenValue(form, 'recommendation_action', '');
           form.dataset.recommendationActive = '0';
+          clearRetryLoadingState(form);
           updatePrimarySubmitLabel(form);
         });
 
@@ -362,6 +606,7 @@
               form.dataset.recommendationActive = '0';
             }
 
+            clearRetryLoadingState(form);
             syncSearchInputUi(form, searchInput);
             updatePrimarySubmitLabel(form);
           });
@@ -456,8 +701,20 @@
           setHiddenValue(form, 'origin_lat', '');
           setHiddenValue(form, 'origin_lon', '');
 
+          const useRetryAjax = shouldUseRetryAjax(form);
+
+          if (useRetryAjax) {
+            showRetryLoadingState(form);
+          }
+
           const finish = function () {
             rememberSubmittedKeywords(form, currentSearchInput);
+
+            if (useRetryAjax) {
+              submitPreparedRetryAjax(form, submitter);
+              return;
+            }
+
             submitPreparedForm(form, submitter);
           };
 

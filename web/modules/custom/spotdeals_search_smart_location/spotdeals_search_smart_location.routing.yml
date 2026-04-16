@@ -1,0 +1,7 @@
+spotdeals_search_smart_location.recommendation_ajax:
+  path: '/spotdeals-search-smart-location/recommendation/ajax'
+  defaults:
+    _controller: '\Drupal\spotdeals_search_smart_location\Controller\RecommendationAjaxController::recommendation'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'
