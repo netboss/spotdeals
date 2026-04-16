@@ -392,12 +392,10 @@
       return '';
     }
 
-    // If backend already returned HTML, use it directly.
     if (trimmed.charAt(0) === '<') {
       return trimmed;
     }
 
-    // Try JSON shape: { success: true, view_html: "...", recommendation_active: true }
     try {
       const parsed = JSON.parse(trimmed);
       if (parsed && typeof parsed.view_html === 'string') {
@@ -405,7 +403,7 @@
       }
     }
     catch (e) {
-      // Not JSON. Fall through and return empty so caller can decide.
+      // Not JSON.
     }
 
     return '';
@@ -443,7 +441,6 @@
     const parser = new DOMParser();
     const doc = parser.parseFromString(viewHtml || '', 'text/html');
 
-    // Prefer the dedicated results wrapper if the backend returns a full page/view.
     const responseResultsWrapper = doc.querySelector('.spotdeals-finder__results');
     if (responseResultsWrapper) {
       resultsWrapper.innerHTML = responseResultsWrapper.innerHTML;
@@ -674,14 +671,20 @@
             setHiddenValue(form, 'recommendation_action', '');
             form.dataset.recommendationActive = '0';
           }
-          else if (isRecommendationActive(form) && getHiddenValue(form, 'recommendation_action') === '') {
+          else if (isRecommendationActive(form)) {
             setHiddenValue(form, 'recommendation_action', 'retry');
           }
 
-          if (form.dataset.spotdealsNearMeResolved === '1') {
+          const useRetryAjax = shouldUseRetryAjax(form);
+
+          if (form.dataset.spotdealsNearMeResolved === '1' && !useRetryAjax) {
             delete form.dataset.spotdealsNearMeResolved;
             rememberSubmittedKeywords(form, currentSearchInput);
             return;
+          }
+
+          if (useRetryAjax) {
+            delete form.dataset.spotdealsNearMeResolved;
           }
 
           if (form.dataset.spotdealsNearMePending === '1') {
@@ -700,8 +703,6 @@
           setHiddenValue(form, 'search_clean', cleanNearMe(rawValue));
           setHiddenValue(form, 'origin_lat', '');
           setHiddenValue(form, 'origin_lon', '');
-
-          const useRetryAjax = shouldUseRetryAjax(form);
 
           if (useRetryAjax) {
             showRetryLoadingState(form);
