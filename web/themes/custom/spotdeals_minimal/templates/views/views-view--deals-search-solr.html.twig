@@ -46,7 +46,7 @@
 
   {% if exposed %}
     <section class="spotdeals-finder__filters">
-      <div
+      {#<div
         hx-get="/"
         hx-target=".spotdeals-finder__results"
         hx-select=".spotdeals-finder__results"
@@ -54,7 +54,8 @@
         hx-push-url="true"
       >
         {{ exposed }}
-      </div>
+      </div>#}
+      {{ exposed }}
     </section>
   {% endif %}
 
