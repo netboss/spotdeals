@@ -42,6 +42,16 @@ process:
       bundle_key: vid
       bundle: deal_category
 
+  field_cta/uri:
+    - plugin: skip_on_empty
+      method: process
+      source: field_cta
+
+  field_cta/title:
+    - plugin: skip_on_empty
+      method: process
+      source: field_cta_title
+
   field_venue_lookup:
     - plugin: skip_on_empty
       method: process

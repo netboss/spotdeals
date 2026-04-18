@@ -5,6 +5,7 @@ dependencies:
   config:
     - field.field.node.deal.body
     - field.field.node.deal.field_active
+    - field.field.node.deal.field_cta
     - field.field.node.deal.field_day_of_week
     - field.field.node.deal.field_deal_category
     - field.field.node.deal.field_image
@@ -41,6 +42,18 @@ content:
       format_custom_true: ''
     third_party_settings: {  }
     weight: 107
+    region: content
+  field_cta:
+    type: link
+    label: hidden
+    settings:
+      trim_length: 80
+      url_only: false
+      url_plain: false
+      rel: '0'
+      target: _blank
+    third_party_settings: {  }
+    weight: 7
     region: content
   field_day_of_week:
     type: entity_reference_label
@@ -94,8 +107,8 @@ content:
       trim_length: 80
       url_only: false
       url_plain: false
-      rel: ''
-      target: ''
+      rel: '0'
+      target: _blank
     third_party_settings: {  }
     weight: 106
     region: content

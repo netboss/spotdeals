@@ -6,6 +6,7 @@ dependencies:
     - core.entity_view_mode.node.teaser
     - field.field.node.deal.body
     - field.field.node.deal.field_active
+    - field.field.node.deal.field_cta
     - field.field.node.deal.field_day_of_week
     - field.field.node.deal.field_deal_category
     - field.field.node.deal.field_image
@@ -51,6 +52,7 @@ content:
     region: content
 hidden:
   field_active: true
+  field_cta: true
   field_day_of_week: true
   field_deal_category: true
   field_price_offer_text: true
