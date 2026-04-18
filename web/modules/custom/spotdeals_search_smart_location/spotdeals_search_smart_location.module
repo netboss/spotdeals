@@ -716,6 +716,11 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
     'field_special_description',
   ]);
   $meta_values = _spotdeals_search_smart_location_collect_direct_recommendation_meta($deal, 3);
+  $cta = _spotdeals_search_smart_location_get_preferred_cta($deal, $venue);
+  $deal_category = _spotdeals_search_smart_location_get_deal_category_label($deal);
+  $directions_url = $venue instanceof NodeInterface
+    ? _spotdeals_search_smart_location_build_directions_url($venue)
+    : '';
 
   $build = [
     '#type' => 'container',
@@ -751,7 +756,7 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
     ];
   }
 
-  if ($venue_location !== '') {
+  if ($venue_location !== '' || $directions_url !== '') {
     $build['venue_location'] = [
       '#type' => 'container',
       '#attributes' => [
@@ -762,9 +767,38 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
         '#attributes' => [
           'class' => ['field-content'],
         ],
-        '#plain_text' => $venue_location,
       ],
     ];
+
+    if ($venue_location !== '') {
+      $build['venue_location']['content']['location'] = [
+        '#plain_text' => $venue_location,
+      ];
+    }
+
+    if ($directions_url !== '') {
+      if ($venue_location !== '') {
+        $build['venue_location']['content']['separator'] = [
+          '#plain_text' => ' - ',
+        ];
+      }
+
+      $build['venue_location']['content']['directions'] = [
+        '#type' => 'link',
+        '#title' => t('Get directions'),
+        '#url' => Url::fromUri($directions_url),
+        '#options' => [
+          'attributes' => [
+            'class' => [
+              'field--name-field-directions',
+              'spotdeals-directions-link',
+            ],
+            'target' => '_blank',
+            'rel' => 'noopener noreferrer',
+          ],
+        ],
+      ];
+    }
   }
 
   $build['deal_title'] = [
@@ -800,6 +834,54 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
         '#plain_text' => $summary,
       ],
     ];
+  }
+
+  if ($deal_category !== '' || !empty($cta)) {
+    $build['cta_row'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['views-field', 'views-field-nothing'],
+      ],
+      'content' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['field-content'],
+        ],
+      ],
+    ];
+
+    if ($deal_category !== '') {
+      $build['cta_row']['content']['deal_category'] = [
+        '#plain_text' => $deal_category,
+      ];
+    }
+
+    if ($deal_category !== '' && !empty($cta)) {
+      $build['cta_row']['content']['separator'] = [
+        '#plain_text' => ' - ',
+      ];
+    }
+
+    if (!empty($cta)) {
+      $build['cta_row']['content']['cta'] = [
+        '#type' => 'html_tag',
+        '#tag' => 'span',
+        '#attributes' => [
+          'class' => ['field--name-field-cta'],
+        ],
+        'link' => [
+          '#type' => 'link',
+          '#title' => $cta['title'],
+          '#url' => Url::fromUri($cta['uri']),
+          '#options' => [
+            'attributes' => [
+              'target' => '_blank',
+              'rel' => 'noopener noreferrer',
+            ],
+          ],
+        ],
+      ];
+    }
   }
 
   if (!empty($meta_values)) {
@@ -841,15 +923,113 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
   }
 
   \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION recommendation mode built uncached direct recommendation view-like render: deal_nid="@nid" venue_nid="@venue_nid" venue_label="@venue"',
+    'SMART LOCATION recommendation mode built uncached direct recommendation view-like render: deal_nid="@nid" venue_nid="@venue_nid" venue_label="@venue" cta_present="@cta" directions_present="@directions"',
     [
       '@nid' => (string) $deal_nid,
       '@venue_nid' => $venue instanceof NodeInterface ? (string) $venue->id() : '',
       '@venue' => $venue_label,
+      '@cta' => !empty($cta) ? '1' : '0',
+      '@directions' => $directions_url !== '' ? '1' : '0',
     ]
   );
 
   return $build;
+}
+
+
+/**
+ * Returns the preferred CTA for the recommendation card.
+ *
+ * @return array{uri:string,title:string}
+ *   CTA link data, or an empty array when unavailable.
+ */
+function _spotdeals_search_smart_location_get_preferred_cta(NodeInterface $deal, ?NodeInterface $venue = NULL): array {
+  foreach ([[$deal, 'field_cta'], [$venue, 'field_cta']] as [$entity, $field_name]) {
+    if (!$entity instanceof NodeInterface) {
+      continue;
+    }
+
+    $cta = _spotdeals_search_smart_location_get_link_field_value($entity, $field_name);
+    if (!empty($cta)) {
+      return $cta;
+    }
+  }
+
+  return [];
+}
+
+/**
+ * Returns normalized link-field data for a node field.
+ *
+ * @return array{uri:string,title:string}
+ *   Link data, or an empty array when unavailable.
+ */
+function _spotdeals_search_smart_location_get_link_field_value(NodeInterface $node, string $field_name): array {
+  if (!$node->hasField($field_name) || $node->get($field_name)->isEmpty()) {
+    return [];
+  }
+
+  $item = $node->get($field_name)->first();
+  if (!$item || empty($item->uri)) {
+    return [];
+  }
+
+  $uri = trim((string) $item->uri);
+  if ($uri === '') {
+    return [];
+  }
+
+  $title = trim((string) ($item->title ?? ''));
+  if ($title === '') {
+    $title = t('Learn more')->render();
+  }
+
+  return [
+    'uri' => $uri,
+    'title' => $title,
+  ];
+}
+
+/**
+ * Returns the first deal category label, if available.
+ */
+function _spotdeals_search_smart_location_get_deal_category_label(NodeInterface $deal): string {
+  if (!$deal->hasField('field_deal_category') || $deal->get('field_deal_category')->isEmpty()) {
+    return '';
+  }
+
+  $item = $deal->get('field_deal_category')->first();
+  if (!$item || empty($item->entity)) {
+    return '';
+  }
+
+  return trim((string) $item->entity->label());
+}
+
+/**
+ * Builds an external Google Maps directions URL for a venue.
+ */
+function _spotdeals_search_smart_location_build_directions_url(NodeInterface $venue): string {
+  $destination = _spotdeals_search_smart_location_format_direct_recommendation_location($venue);
+
+  if ($destination === '' && $venue->hasField('field_address') && !$venue->get('field_address')->isEmpty()) {
+    $address = $venue->get('field_address')->first();
+    if ($address) {
+      $parts = array_filter([
+        trim((string) ($address->address_line1 ?? '')),
+        trim((string) ($address->locality ?? '')),
+        trim((string) ($address->administrative_area ?? '')),
+        trim((string) ($address->postal_code ?? '')),
+      ]);
+      $destination = implode(', ', $parts);
+    }
+  }
+
+  if ($destination === '') {
+    return '';
+  }
+
+  return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($destination);
 }
 
 /**
@@ -871,7 +1051,7 @@ function _spotdeals_search_smart_location_extract_direct_recommendation_text(Nod
     if ($definition->isComputed()) {
       continue;
     }
-    if (in_array($field_name, ['nid', 'vid', 'type', 'uuid', 'langcode', 'revision_timestamp', 'revision_uid', 'revision_log', 'uid', 'title', 'status', 'created', 'changed', 'promote', 'sticky', 'default_langcode', 'revision_translation_affected', 'path', 'menu_link', 'field_venue'], TRUE)) {
+    if (in_array($field_name, ['nid', 'vid', 'type', 'uuid', 'langcode', 'revision_timestamp', 'revision_uid', 'revision_log', 'uid', 'title', 'status', 'created', 'changed', 'promote', 'sticky', 'default_langcode', 'revision_translation_affected', 'path', 'menu_link', 'field_venue', 'field_cta', 'field_menu_url', 'field_website', 'field_phone', 'field_address', 'field_coordinates', 'field_latitude', 'field_longitude'], TRUE)) {
       continue;
     }
 
