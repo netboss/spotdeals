@@ -1715,7 +1715,7 @@ display:
           exclude: false
           alter:
             alter_text: true
-            text: '{{ name_1 }} - {{ field_cta }}'
+            text: '{{ name_1 }} - <span class="field--name-field-cta">{{ field_cta }}</span>'
             make_link: false
             path: ''
             absolute: false
