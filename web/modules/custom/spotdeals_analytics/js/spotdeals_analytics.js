@@ -171,6 +171,151 @@
     return window.location.pathname === '/account/upgrade/success';
   }
 
+  /**
+   * Check whether a clicked link is inside the CTA field wrapper.
+   */
+  function isCtaLink(link) {
+    if (!link || !link.closest) {
+      return false;
+    }
+
+    return !!link.closest('.field--name-field-cta');
+  }
+
+  /**
+   * Check whether a clicked link is inside the menu field wrapper.
+   */
+  function isMenuLink(link) {
+    if (!link || !link.closest) {
+      return false;
+    }
+
+    return !!link.closest('.field--name-field-menu-url');
+  }
+
+  /**
+   * Get the visible label for a clicked action link.
+   */
+  function getActionLabel(link) {
+    if (!link) {
+      return '';
+    }
+
+    return (link.textContent || '').trim();
+  }
+
+  /**
+   * Infer CTA type from label text.
+   */
+  function getCtaType(label) {
+    const normalized = (label || '').trim().toLowerCase();
+
+    if (!normalized) {
+      return '';
+    }
+
+    if (normalized.indexOf('reserv') !== -1) {
+      return 'reservation';
+    }
+
+    if (normalized.indexOf('book') !== -1) {
+      return 'booking';
+    }
+
+    if (normalized.indexOf('delivery') !== -1) {
+      return 'delivery';
+    }
+
+    if (normalized.indexOf('order') !== -1) {
+      return 'order';
+    }
+
+    if (normalized.indexOf('ticket') !== -1) {
+      return 'ticket';
+    }
+
+    if (normalized.indexOf('waitlist') !== -1) {
+      return 'waitlist';
+    }
+
+    if (normalized.indexOf('claim') !== -1) {
+      return 'claim';
+    }
+
+    return 'other';
+  }
+
+  /**
+   * Get node type from body classes.
+   */
+  function getCurrentNodeType() {
+    const body = document.body;
+
+    if (!body) {
+      return '';
+    }
+
+    if (body.classList.contains('node--type-deal')) {
+      return 'deal';
+    }
+
+    if (body.classList.contains('node--type-venue')) {
+      return 'venue';
+    }
+
+    return '';
+  }
+
+  /**
+   * Get current page title as fallback context.
+   */
+  function getCurrentPageTitle() {
+    const selectors = [
+      'h1.page-title',
+      '.page-title',
+      'h1'
+    ];
+
+    for (let i = 0; i < selectors.length; i++) {
+      const element = document.querySelector(selectors[i]);
+
+      if (element && element.textContent) {
+        const title = element.textContent.trim();
+
+        if (title) {
+          return title;
+        }
+      }
+    }
+
+    return '';
+  }
+
+  /**
+   * Get venue/deal context for clicked action links.
+   */
+  function getActionContext(link) {
+    const row = getResultRow(link);
+    let venueTitle = getVenueTitleFromRow(row);
+    let dealTitle = getDealTitleFromRow(row);
+    const nodeType = getCurrentNodeType();
+    const currentPageTitle = getCurrentPageTitle();
+
+    if (!row && currentPageTitle) {
+      if (nodeType === 'venue' && !venueTitle) {
+        venueTitle = currentPageTitle;
+      }
+      else if (nodeType === 'deal' && !dealTitle) {
+        dealTitle = currentPageTitle;
+      }
+    }
+
+    return {
+      venue_title: venueTitle,
+      deal_title: dealTitle
+    };
+  }
+
   Drupal.behaviors.spotdealsAnalytics = {
     attach(context) {
 
@@ -275,6 +420,66 @@
             deal_title: dealTitle,
             search_term: searchTerm,
             page_location: window.location.href
+          });
+        });
+      });
+
+      /**
+       * ========================
+       * CTA CLICK EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-cta-click', 'html', context).forEach(() => {
+        document.addEventListener('click', function (event) {
+          const link = event.target.closest('a');
+
+          if (!isCtaLink(link)) {
+            return;
+          }
+
+          const label = getActionLabel(link);
+          const ctaType = getCtaType(label);
+          const actionContext = getActionContext(link);
+          const searchTerm = getCurrentSearchTerm();
+
+          sendEvent('cta_click', {
+            cta_label: label,
+            cta_type: ctaType,
+            venue_name: actionContext.venue_title,
+            deal_title: actionContext.deal_title,
+            search_term: searchTerm,
+            target_url: link.href,
+            page_location: window.location.href,
+            page_path: window.location.pathname + window.location.search
+          });
+        });
+      });
+
+      /**
+       * ========================
+       * MENU CLICK EVENT
+       * ========================
+       */
+      once('spotdeals-analytics-menu-click', 'html', context).forEach(() => {
+        document.addEventListener('click', function (event) {
+          const link = event.target.closest('a');
+
+          if (!isMenuLink(link)) {
+            return;
+          }
+
+          const label = getActionLabel(link);
+          const actionContext = getActionContext(link);
+          const searchTerm = getCurrentSearchTerm();
+
+          sendEvent('menu_click', {
+            menu_label: label,
+            venue_name: actionContext.venue_title,
+            deal_title: actionContext.deal_title,
+            search_term: searchTerm,
+            target_url: link.href,
+            page_location: window.location.href,
+            page_path: window.location.pathname + window.location.search
           });
         });
       });
