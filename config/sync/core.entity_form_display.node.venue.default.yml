@@ -11,6 +11,7 @@ dependencies:
     - field.field.node.venue.field_claimed_by
     - field.field.node.venue.field_claimed_listing
     - field.field.node.venue.field_coordinates
+    - field.field.node.venue.field_cta
     - field.field.node.venue.field_cuisine
     - field.field.node.venue.field_featured
     - field.field.node.venue.field_image
@@ -55,7 +56,7 @@ content:
     third_party_settings: {  }
   field_active:
     type: boolean_checkbox
-    weight: 16
+    weight: 17
     region: content
     settings:
       display_label: true
@@ -69,7 +70,7 @@ content:
     third_party_settings: {  }
   field_claim_contact_email:
     type: email_default
-    weight: 20
+    weight: 21
     region: content
     settings:
       placeholder: ''
@@ -77,7 +78,7 @@ content:
     third_party_settings: {  }
   field_claim_status:
     type: tagify_select_widget
-    weight: 18
+    weight: 19
     region: content
     settings:
       match_operator: CONTAINS
@@ -88,7 +89,7 @@ content:
     third_party_settings: {  }
   field_claimed_by:
     type: tagify_select_widget
-    weight: 19
+    weight: 20
     region: content
     settings:
       match_operator: CONTAINS
@@ -99,21 +100,29 @@ content:
     third_party_settings: {  }
   field_claimed_listing:
     type: boolean_checkbox
-    weight: 17
+    weight: 18
     region: content
     settings:
       display_label: true
     third_party_settings: {  }
   field_coordinates:
     type: geofield_latlon
-    weight: 24
+    weight: 25
     region: content
     settings:
       html5_geolocation: false
     third_party_settings: {  }
+  field_cta:
+    type: link_default
+    weight: 14
+    region: content
+    settings:
+      placeholder_url: ''
+      placeholder_title: ''
+    third_party_settings: {  }
   field_cuisine:
     type: tagify_select_widget
-    weight: 14
+    weight: 15
     region: content
     settings:
       match_operator: CONTAINS
@@ -139,14 +148,14 @@ content:
     third_party_settings: {  }
   field_latitude:
     type: number
-    weight: 22
+    weight: 23
     region: content
     settings:
       placeholder: ''
     third_party_settings: {  }
   field_longitude:
     type: number
-    weight: 23
+    weight: 24
     region: content
     settings:
       placeholder: ''
@@ -169,7 +178,7 @@ content:
     third_party_settings: {  }
   field_primary_owner_user:
     type: entity_reference_autocomplete
-    weight: 21
+    weight: 22
     region: content
     settings:
       match_operator: CONTAINS
@@ -179,7 +188,7 @@ content:
     third_party_settings: {  }
   field_tags:
     type: entity_reference_autocomplete
-    weight: 15
+    weight: 16
     region: content
     settings:
       match_operator: CONTAINS

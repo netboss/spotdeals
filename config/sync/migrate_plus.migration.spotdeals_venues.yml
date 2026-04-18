@@ -44,6 +44,17 @@ process:
   field_menu_url/title:
     plugin: default_value
     default_value: Menu
+  field_cta/uri:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_cta
+
+  field_cta/title:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: field_cta_title
   field_claimed_listing: field_claimed_listing
   field_address/country_code: field_address_country_code
   field_address/address_line1: field_address_address_line1

@@ -1,0 +1,23 @@
+uuid: 19536bfc-3438-423a-834f-d8a16eaffd80
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_cta
+    - node.type.deal
+  module:
+    - link
+id: node.deal.field_cta
+field_name: field_cta
+entity_type: node
+bundle: deal
+label: 'Call to action'
+description: "Add a direct action link for this deal (e.g. order, reserve, or book this offer).<br>\r\nIf left empty, the venue’s main action link will be used instead."
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  title: 1
+  link_type: 16
+field_type: link
