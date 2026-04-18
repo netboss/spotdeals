@@ -1431,7 +1431,7 @@ display:
           exclude: false
           alter:
             alter_text: true
-            text: '{{ field_address__locality }}, {{ field_address__administrative_area }}'
+            text: '{{ field_address__locality }}, {{ field_address__administrative_area }} - <a target="_blank" href="https://www.google.com/maps/search/?api=1&query={{ field_address|striptags|url_encode }}">Get directions</a>'
             make_link: false
             path: ''
             absolute: false
@@ -1715,7 +1715,7 @@ display:
           exclude: false
           alter:
             alter_text: true
-            text: '{{ name_1 }} - <span class="field--name-field-cta">{{ field_cta }}</span>'
+            text: '{{ name_1 }}{% if field_cta %} - <span class="field--name-field-cta">{{ field_cta }}</span>{% endif %}'
             make_link: false
             path: ''
             absolute: false
