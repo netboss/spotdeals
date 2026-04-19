@@ -1,0 +1,17 @@
+<div class="spotdeals-yelp-summary">
+  {% if rating %}
+    <div class="spotdeals-yelp-rating">Yelp rating: {{ rating }}/5</div>
+  {% endif %}
+
+  {% if review_count %}
+    <div class="spotdeals-yelp-count">{{ review_count }} review{{ review_count == 1 ? '' : 's' }}</div>
+  {% endif %}
+
+  {% if business_url %}
+    <div class="spotdeals-yelp-link"><a href="{{ business_url }}" target="_blank" rel="noopener noreferrer">View on Yelp</a></div>
+  {% endif %}
+
+  {% if show_attribution %}
+    <div class="spotdeals-yelp-attribution">Powered by Yelp</div>
+  {% endif %}
+</div>

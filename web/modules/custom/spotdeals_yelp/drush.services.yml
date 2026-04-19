@@ -1,0 +1,9 @@
+services:
+  spotdeals_yelp.commands:
+    class: Drupal\spotdeals_yelp\Commands\SpotdealsYelpCommands
+    arguments:
+      - '@entity_type.manager'
+      - '@spotdeals_yelp.venue_sync_manager'
+      - '@logger.channel.spotdeals_yelp'
+    tags:
+      - { name: drush.command }
