@@ -9,15 +9,19 @@ cck_plugin_method: null
 migration_tags: null
 migration_group: spotdeals
 label: 'SpotDeals Venues Import'
+
 source:
   plugin: csv
   path: modules/custom/spotdeals_import/data/venues.csv
   header_row_count: 1
   ids:
     - title
+
 process:
   title: title
+
   field_phone: field_phone
+
   field_short_description/value:
     -
       plugin: skip_on_empty
@@ -26,24 +30,29 @@ process:
   field_short_description/format:
     plugin: default_value
     default_value: basic_html
+
   field_website/uri:
     -
       plugin: skip_on_empty
       method: process
       source: field_website_uri
+
   field_website/title:
     -
       plugin: skip_on_empty
       method: process
       source: field_website_title
+
   field_menu_url/uri:
     -
       plugin: skip_on_empty
       method: process
       source: field_menu_url
+
   field_menu_url/title:
     plugin: default_value
     default_value: Menu
+
   field_cta/uri:
     -
       plugin: skip_on_empty
@@ -55,47 +64,64 @@ process:
       plugin: skip_on_empty
       method: process
       source: field_cta_title
+
   field_claimed_listing: field_claimed_listing
+
   field_address/country_code: field_address_country_code
   field_address/address_line1: field_address_address_line1
   field_address/locality: field_address_locality
   field_address/administrative_area: field_address_administrative_area
-  _postal_code_trimmed:
-    -
-      plugin: skip_on_empty
-      method: process
-      source: field_address_postal_code
-    -
-      plugin: callback
-      callable: trim
   field_address/postal_code:
     -
       plugin: skip_on_empty
       method: process
-      source: '@_postal_code_trimmed'
-    -
-      plugin: callback
-      callable: preg_replace
-      unpack_source: true
-      source:
-        - /\.0$/
-        - ''
-        - '@_postal_code_trimmed'
-  field_latitude:
+      source: field_address_postal_code
+
+  _latitude_source:
     -
       plugin: skip_on_empty
       method: process
       source: field_latitude
-  field_longitude:
+    -
+      plugin: callback
+      callable: trim
+
+  _latitude_clean:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: '@_latitude_source'
+    -
+      plugin: callback
+      callable: floatval
+
+  _longitude_source:
     -
       plugin: skip_on_empty
       method: process
       source: field_longitude
+    -
+      plugin: callback
+      callable: trim
+
+  _longitude_clean:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: '@_longitude_source'
+    -
+      plugin: callback
+      callable: floatval
+
+  field_latitude: '@_latitude_clean'
+  field_longitude: '@_longitude_clean'
+
   field_coordinates:
     plugin: geofield_latlon
     source:
-      - field_latitude
-      - field_longitude
+      - '@_latitude_clean'
+      - '@_longitude_clean'
+
   field_venue_type:
     -
       plugin: skip_on_empty
@@ -110,6 +136,7 @@ process:
       value_key: name
       bundle_key: vid
       bundle: venue_type
+
   field_cuisine:
     -
       plugin: skip_on_empty
@@ -124,6 +151,7 @@ process:
       value_key: name
       bundle_key: vid
       bundle: cuisine
+
   field_tags:
     -
       plugin: skip_on_empty
@@ -138,9 +166,11 @@ process:
       value_key: name
       bundle_key: vid
       bundle: tags
+
 destination:
   plugin: 'entity:node'
   default_bundle: venue
+
 idMap: {  }
 migration_dependencies: null
 include: null

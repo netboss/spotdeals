@@ -57,41 +57,47 @@ process:
   field_address/address_line1: field_address_address_line1
   field_address/locality: field_address_locality
   field_address/administrative_area: field_address_administrative_area
-
-  _postal_code_trimmed:
-    - plugin: skip_on_empty
-      method: process
-      source: field_address_postal_code
-    - plugin: callback
-      callable: trim
-
   field_address/postal_code:
     - plugin: skip_on_empty
       method: process
-      source: '@_postal_code_trimmed'
-    - plugin: callback
-      callable: preg_replace
-      unpack_source: true
-      source:
-        - '/\.0$/'
-        - ''
-        - '@_postal_code_trimmed'
+      source: field_address_postal_code
 
-  field_latitude:
+  _latitude_source:
     - plugin: skip_on_empty
       method: process
       source: field_latitude
+    - plugin: callback
+      callable: trim
 
-  field_longitude:
+  _latitude_clean:
+    - plugin: skip_on_empty
+      method: process
+      source: '@_latitude_source'
+    - plugin: callback
+      callable: floatval
+
+  _longitude_source:
     - plugin: skip_on_empty
       method: process
       source: field_longitude
+    - plugin: callback
+      callable: trim
+
+  _longitude_clean:
+    - plugin: skip_on_empty
+      method: process
+      source: '@_longitude_source'
+    - plugin: callback
+      callable: floatval
+
+  field_latitude: '@_latitude_clean'
+  field_longitude: '@_longitude_clean'
 
   field_coordinates:
     plugin: geofield_latlon
     source:
-      - field_latitude
-      - field_longitude
+      - '@_latitude_clean'
+      - '@_longitude_clean'
 
   field_venue_type:
     - plugin: skip_on_empty
