@@ -1,0 +1,13 @@
+enabled: true
+sync_enabled: true
+venue_page_display_enabled: true
+card_display_enabled: true
+refresh_interval_hours: 24
+sync_batch_size: 25
+auto_match_enabled: true
+min_match_confidence: 0.90
+request_timeout: 10
+cache_ttl_seconds: 86400
+default_locale: en_US
+log_verbose: false
+api_key: ''

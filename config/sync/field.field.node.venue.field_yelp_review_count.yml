@@ -1,0 +1,23 @@
+uuid: b3e24dd6-7cf6-48cf-9237-2cc882c54d66
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_yelp_review_count
+    - node.type.venue
+id: node.venue.field_yelp_review_count
+field_name: field_yelp_review_count
+entity_type: node
+bundle: venue
+label: 'yelp review count'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

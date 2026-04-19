@@ -1,0 +1,23 @@
+spotdeals_yelp.settings:
+  path: '/admin/config/services/spotdeals-yelp'
+  defaults:
+    _form: '\Drupal\spotdeals_yelp\Form\YelpSettingsForm'
+    _title: 'SpotDeals Yelp settings'
+  requirements:
+    _permission: 'administer spotdeals yelp settings'
+
+spotdeals_yelp.review:
+  path: '/admin/content/spotdeals-yelp/review'
+  defaults:
+    _controller: '\Drupal\spotdeals_yelp\Controller\YelpAdminController::review'
+    _title: 'SpotDeals Yelp review queue'
+  requirements:
+    _permission: 'review spotdeals yelp matches'
+
+spotdeals_yelp.status:
+  path: '/admin/content/spotdeals-yelp/status'
+  defaults:
+    _controller: '\Drupal\spotdeals_yelp\Controller\YelpAdminController::status'
+    _title: 'SpotDeals Yelp status'
+  requirements:
+    _permission: 'review spotdeals yelp matches'

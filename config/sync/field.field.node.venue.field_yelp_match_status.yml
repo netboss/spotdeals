@@ -1,0 +1,21 @@
+uuid: 45b846c3-98ba-4500-b9ab-73943df5d7b3
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_yelp_match_status
+    - node.type.venue
+  module:
+    - options
+id: node.venue.field_yelp_match_status
+field_name: field_yelp_match_status
+entity_type: node
+bundle: venue
+label: 'Yelp match status'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string
