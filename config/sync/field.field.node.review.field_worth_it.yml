@@ -1,0 +1,21 @@
+uuid: 23ff34f7-1d10-49de-aba0-b9782204ea9c
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_worth_it
+    - node.type.review
+id: node.review.field_worth_it
+field_name: field_worth_it
+entity_type: node
+bundle: review
+label: 'Worth it'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean

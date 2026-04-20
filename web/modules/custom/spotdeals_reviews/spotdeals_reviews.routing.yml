@@ -1,0 +1,7 @@
+spotdeals_reviews.submit:
+  path: '/spotdeals-reviews/submit'
+  defaults:
+    _controller: 'spotdeals_reviews.review_controller:submit'
+  requirements:
+    _user_is_logged_in: 'TRUE'
+  methods: [POST]

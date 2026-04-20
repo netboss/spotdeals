@@ -1,0 +1,11 @@
+uuid: 8a900dbe-224f-4afa-92a5-bf263e527985
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.review
+id: node.review
+target_entity_type_id: node
+target_bundle: review
+default_langcode: site_default
+language_alterable: false

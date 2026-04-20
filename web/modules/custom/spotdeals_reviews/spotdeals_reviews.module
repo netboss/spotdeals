@@ -1,0 +1,129 @@
+<?php
+
+declare(strict_types=1);
+
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Url;
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_theme().
+ */
+function spotdeals_reviews_theme(): array {
+  return [
+    'spotdeals_review_widget' => [
+      'variables' => [
+        'node_id' => 0,
+        'node_type' => '',
+        'venue_id' => 0,
+        'deal_id' => 0,
+        'stats' => [],
+        'user_review' => [],
+        'is_authenticated' => FALSE,
+        'login_url' => '',
+        'submit_url' => '',
+        'csrf_token' => '',
+      ],
+      'template' => 'spotdeals-review-widget',
+    ],
+    'spotdeals_review_summary' => [
+      'variables' => [
+        'stats' => [],
+        'context_type' => '',
+      ],
+      'template' => 'spotdeals-review-summary',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_entity_view().
+ */
+function spotdeals_reviews_entity_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, string $view_mode): void {
+  if (!$entity instanceof NodeInterface) {
+    return;
+  }
+
+  if (!in_array($entity->bundle(), ['deal', 'venue'], TRUE)) {
+    return;
+  }
+
+  $reviewService = \Drupal::service('spotdeals_reviews.review_service');
+  $context = $reviewService->getContextForNode($entity);
+  $dealId = $context['deal_id'];
+  $venueId = $context['venue_id'];
+
+  if ($venueId <= 0 && $dealId <= 0) {
+    return;
+  }
+
+  if ($view_mode === 'full') {
+    $currentUser = \Drupal::currentUser();
+    $stats = $reviewService->getStatsForContext($venueId, $dealId);
+    $userReview = $currentUser->isAuthenticated()
+      ? $reviewService->getUserReviewForContext((int) $currentUser->id(), $venueId, $dealId)
+      : NULL;
+
+    $loginUrl = Url::fromRoute('user.login', [], [
+      'query' => [
+        'destination' => \Drupal::request()->getRequestUri(),
+      ],
+    ])->toString();
+
+    $build['spotdeals_reviews_widget'] = [
+      '#theme' => 'spotdeals_review_widget',
+      '#weight' => 200,
+      '#node_id' => (int) $entity->id(),
+      '#node_type' => $entity->bundle(),
+      '#venue_id' => $venueId,
+      '#deal_id' => $dealId,
+      '#stats' => $stats,
+      '#user_review' => $userReview ?? [],
+      '#is_authenticated' => $currentUser->isAuthenticated(),
+      '#login_url' => $loginUrl,
+      '#submit_url' => Url::fromRoute('spotdeals_reviews.submit')->toString(),
+      '#csrf_token' => $reviewService->getCsrfToken(),
+      '#attached' => [
+        'library' => [
+          'spotdeals_reviews/widget',
+        ],
+      ],
+      '#cache' => [
+        'contexts' => ['user', 'route'],
+        'tags' => array_values(array_filter([
+          'node:' . $entity->id(),
+          $venueId > 0 ? 'node:' . $venueId : NULL,
+          $dealId > 0 ? 'node:' . $dealId : NULL,
+        ])),
+      ],
+    ];
+
+    return;
+  }
+
+  $summary = $reviewService->buildSummaryData($venueId, $dealId, $entity->bundle());
+  if ((int) ($summary['total_reviews'] ?? 0) <= 0) {
+    return;
+  }
+
+  $build['spotdeals_reviews_summary'] = [
+    '#theme' => 'spotdeals_review_summary',
+    '#weight' => 25,
+    '#stats' => $summary,
+    '#context_type' => $entity->bundle(),
+    '#attached' => [
+      'library' => [
+        'spotdeals_reviews/widget',
+      ],
+    ],
+    '#cache' => [
+      'contexts' => ['route'],
+      'tags' => array_values(array_filter([
+        'node:' . $entity->id(),
+        $venueId > 0 ? 'node:' . $venueId : NULL,
+        $dealId > 0 ? 'node:' . $dealId : NULL,
+      ])),
+    ],
+  ];
+}

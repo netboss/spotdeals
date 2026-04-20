@@ -1,0 +1,19 @@
+uuid: e0d8ef68-e03c-446c-884e-c540a7209e6f
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_review_deal
+field_name: field_review_deal
+entity_type: node
+type: entity_reference
+settings:
+  target_type: node
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

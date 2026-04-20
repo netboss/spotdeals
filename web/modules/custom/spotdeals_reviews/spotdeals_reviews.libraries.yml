@@ -1,0 +1,10 @@
+widget:
+  css:
+    theme:
+      css/spotdeals_reviews.css: {}
+  js:
+    js/spotdeals_reviews.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/once

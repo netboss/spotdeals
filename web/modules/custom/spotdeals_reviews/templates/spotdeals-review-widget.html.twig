@@ -1,0 +1,63 @@
+<div class="spotdeals-review-widget"
+  data-spotdeals-review-widget
+  data-node-id="{{ node_id }}"
+  data-node-type="{{ node_type }}"
+  data-venue-id="{{ venue_id }}"
+  data-deal-id="{{ deal_id }}"
+  data-submit-url="{{ submit_url }}"
+  data-csrf-token="{{ csrf_token }}"
+  data-login-url="{{ login_url }}"
+  data-is-authenticated="{{ is_authenticated ? '1' : '0' }}"
+  data-worth-it="{{ user_review.worth_it is same as(true) ? '1' : (user_review.worth_it is same as(false) ? '0' : '') }}"
+  data-would-go-again="{{ user_review.would_go_again is same as(true) ? '1' : (user_review.would_go_again is same as(false) ? '0' : '') }}">
+
+  <div class="spotdeals-review-widget__header">
+    <h3 class="spotdeals-review-widget__title">Community feedback</h3>
+    <p class="spotdeals-review-widget__summary">
+      {% if stats.total_reviews > 0 %}
+        <strong data-review-total>{{ stats.total_reviews }}</strong> review{{ stats.total_reviews == 1 ? '' : 's' }} so far.
+      {% else %}
+        No reviews yet. Be the first to share whether this {{ node_type == 'deal' ? 'deal' : 'venue' }} was worth it.
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="spotdeals-review-widget__stats">
+    <div class="spotdeals-review-widget__stat">
+      <span class="spotdeals-review-widget__stat-label">Worth it</span>
+      <strong class="spotdeals-review-widget__stat-value" data-worth-it-percent>{{ stats.worth_it_percent }}</strong>%
+      <span class="spotdeals-review-widget__stat-meta">(<span data-worth-it-yes>{{ stats.worth_it_yes }}</span>/<span data-worth-it-answered>{{ stats.worth_it_answered }}</span>)</span>
+    </div>
+    <div class="spotdeals-review-widget__stat">
+      <span class="spotdeals-review-widget__stat-label">Would go again</span>
+      <strong class="spotdeals-review-widget__stat-value" data-would-go-again-percent>{{ stats.would_go_again_percent }}</strong>%
+      <span class="spotdeals-review-widget__stat-meta">(<span data-would-go-again-yes>{{ stats.would_go_again_yes }}</span>/<span data-would-go-again-answered>{{ stats.would_go_again_answered }}</span>)</span>
+    </div>
+  </div>
+
+  {% if is_authenticated %}
+    <div class="spotdeals-review-widget__questions">
+      <div class="spotdeals-review-widget__question">
+        <div class="spotdeals-review-widget__question-text">Was this {{ node_type == 'deal' ? 'deal' : 'place' }} worth it?</div>
+        <div class="spotdeals-review-widget__buttons">
+          <button type="button" class="spotdeals-review-widget__button{{ user_review.worth_it is same as(true) ? ' is-active' : '' }}" data-review-field="worth_it" data-review-value="1">👍 Yes</button>
+          <button type="button" class="spotdeals-review-widget__button{{ user_review.worth_it is same as(false) ? ' is-active' : '' }}" data-review-field="worth_it" data-review-value="0">👎 No</button>
+        </div>
+      </div>
+
+      <div class="spotdeals-review-widget__question{{ user_review.worth_it is same as(null) or user_review.worth_it is empty ? ' is-hidden' : '' }}" data-would-go-again-question>
+        <div class="spotdeals-review-widget__question-text">Would you go again?</div>
+        <div class="spotdeals-review-widget__buttons">
+          <button type="button" class="spotdeals-review-widget__button{{ user_review.would_go_again is same as(true) ? ' is-active' : '' }}" data-review-field="would_go_again" data-review-value="1">👍 Yes</button>
+          <button type="button" class="spotdeals-review-widget__button{{ user_review.would_go_again is same as(false) ? ' is-active' : '' }}" data-review-field="would_go_again" data-review-value="0">👎 No</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="spotdeals-review-widget__message" aria-live="polite" data-review-message></div>
+  {% else %}
+    <div class="spotdeals-review-widget__anon">
+      <a class="spotdeals-review-widget__login-link" href="{{ login_url }}">Log in to leave quick feedback</a>
+    </div>
+  {% endif %}
+</div>

@@ -1,0 +1,144 @@
+.spotdeals-review-widget {
+  margin-top: 2rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.spotdeals-review-widget__header {
+  margin-bottom: 1rem;
+}
+
+.spotdeals-review-widget__title {
+  margin: 0 0 .35rem;
+  font-size: 1.25rem;
+}
+
+.spotdeals-review-widget__summary {
+  margin: 0;
+}
+
+.spotdeals-review-widget__stats {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.spotdeals-review-widget__stat {
+  min-width: 180px;
+  padding: .75rem 1rem;
+  background: #f7f7f7;
+  border-radius: 8px;
+}
+
+.spotdeals-review-widget__stat-label {
+  display: block;
+  margin-bottom: .25rem;
+  font-size: .9rem;
+}
+
+.spotdeals-review-widget__stat-value {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.spotdeals-review-widget__stat-meta {
+  display: block;
+  margin-top: .35rem;
+  font-size: .85rem;
+  color: #666;
+}
+
+.spotdeals-review-widget__questions {
+  display: grid;
+  gap: 1rem;
+}
+
+.spotdeals-review-widget__question-text {
+  margin-bottom: .5rem;
+  font-weight: 600;
+}
+
+.spotdeals-review-widget__buttons {
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.spotdeals-review-widget__button {
+  appearance: none;
+  border: 1px solid #c7c7c7;
+  background: #fff;
+  border-radius: 999px;
+  padding: .55rem 1rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.spotdeals-review-widget__button.is-active {
+  border-color: #111;
+  font-weight: 600;
+}
+
+.spotdeals-review-widget__question.is-hidden {
+  display: none;
+}
+
+.spotdeals-review-widget__message {
+  min-height: 1.5rem;
+  margin-top: .75rem;
+  font-size: .95rem;
+}
+
+.spotdeals-review-widget__message.is-error {
+  color: #b42318;
+}
+
+.spotdeals-review-widget__message.is-success {
+  color: #067647;
+}
+
+.spotdeals-review-widget__login-link {
+  font-weight: 600;
+}
+
+.spotdeals-review-widget.is-loading .spotdeals-review-widget__button {
+  opacity: .65;
+  pointer-events: none;
+}
+
+/* =========================
+   REVIEW SUMMARY (IMPROVED)
+   ========================= */
+
+.spotdeals-review-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin-block: .5rem;
+  font-size: .8rem;
+  line-height: 1.3;
+  color: #6b7280;
+}
+
+.spotdeals-review-summary__icon {
+  flex: 0 0 auto;
+  font-size: .85rem;
+}
+
+.spotdeals-review-summary__text {
+  font-weight: 600;
+  color: #374151;
+}
+
+.spotdeals-review-summary__count {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+/* subtle hover polish (optional but nice) */
+.spotdeals-review-summary:hover {
+  color: #374151;
+}

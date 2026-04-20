@@ -820,6 +820,41 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
     ],
   ];
 
+  if (\Drupal::moduleHandler()->moduleExists('spotdeals_reviews')) {
+    try {
+      $review_summary = \Drupal::service('spotdeals_reviews.review_service')
+        ->buildSummaryData($venue instanceof NodeInterface ? (int) $venue->id() : 0, (int) $deal->id(), 'deal');
+
+      if ((int) ($review_summary['total_reviews'] ?? 0) > 0) {
+        $build['review_summary'] = [
+          '#type' => 'container',
+          '#attributes' => [
+            'class' => ['views-field', 'views-field-nothing', 'views-field-review-summary'],
+          ],
+          'content' => [
+            '#theme' => 'spotdeals_review_summary',
+            '#stats' => $review_summary,
+            '#context_type' => 'deal',
+          ],
+          '#attached' => [
+            'library' => [
+              'spotdeals_reviews/widget',
+            ],
+          ],
+        ];
+      }
+    }
+    catch (\Throwable $exception) {
+      \Drupal::logger('spotdeals_search_smart_location')->warning(
+        'SMART LOCATION recommendation review summary could not be built for deal @nid: @message',
+        [
+          '@nid' => (string) $deal->id(),
+          '@message' => $exception->getMessage(),
+        ]
+      );
+    }
+  }
+
   if ($summary !== '') {
     $build['summary'] = [
       '#type' => 'container',

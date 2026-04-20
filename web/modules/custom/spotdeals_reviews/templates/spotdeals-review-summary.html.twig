@@ -1,0 +1,26 @@
+{#
+/**
+ * @file
+ * SpotDeals review summary (used in cards + detail pages).
+ *
+ * Variables:
+ * - stats.total_reviews
+ * - stats.worth_it_percent
+ */
+#}
+
+{% if stats.total_reviews > 0 %}
+  {% set percent = stats.worth_it_percent|default(0) %}
+  {% set icon = percent >= 50 ? '👍' : '👎' %}
+  {% set sentiment = percent >= 50 ? 'positive' : 'negative' %}
+
+  <div
+    class="spotdeals-review-summary spotdeals-review-summary--{{ sentiment }}"
+    data-spotdeals-review-summary
+    aria-label="{{ percent }}% worth it based on {{ stats.total_reviews }} {{ stats.total_reviews == 1 ? 'review' : 'reviews' }}"
+  >
+    <span class="spotdeals-review-summary__icon" aria-hidden="true">{{ icon }}</span>
+    <span class="spotdeals-review-summary__text">{{ percent }}% worth it</span>
+    <span class="spotdeals-review-summary__count">({{ stats.total_reviews }} {{ stats.total_reviews == 1 ? 'review' : 'reviews' }})</span>
+  </div>
+{% endif %}

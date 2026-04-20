@@ -1,0 +1,18 @@
+uuid: 01d49eb7-dc1a-401c-9909-261549a6ec7d
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: node.field_would_go_again
+field_name: field_would_go_again
+entity_type: node
+type: boolean
+settings: {  }
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

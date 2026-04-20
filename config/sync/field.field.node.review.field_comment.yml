@@ -1,0 +1,19 @@
+uuid: 916ee728-1a5d-433e-9a2f-2156517d258e
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_comment
+    - node.type.review
+id: node.review.field_comment
+field_name: field_comment
+entity_type: node
+bundle: review
+label: Comment
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string_long

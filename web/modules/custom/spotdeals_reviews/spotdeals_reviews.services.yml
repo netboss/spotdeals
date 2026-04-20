@@ -1,0 +1,23 @@
+services:
+  logger.channel.spotdeals_reviews:
+    parent: logger.channel_base
+    arguments: ['spotdeals_reviews']
+
+  spotdeals_reviews.review_service:
+    class: Drupal\spotdeals_reviews\Service\ReviewService
+    arguments:
+      - '@entity_type.manager'
+      - '@current_user'
+      - '@csrf_token'
+      - '@request_stack'
+      - '@logger.channel.spotdeals_reviews'
+      - '@cache_tags.invalidator'
+
+  spotdeals_reviews.review_controller:
+    class: Drupal\spotdeals_reviews\Controller\ReviewController
+    arguments:
+      - '@spotdeals_reviews.review_service'
+      - '@current_user'
+      - '@csrf_token'
+    tags:
+      - { name: controller.service_arguments }

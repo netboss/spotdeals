@@ -702,3 +702,9 @@ h1.page-title {
     gap: var(--sp2);
   }
 }
+
+.sd-review-summary {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 4px;
+}

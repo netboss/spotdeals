@@ -1,5 +1,8 @@
 <?php
 
+use Drupal\Core\Render\Markup;
+use Drupal\Component\Render\MarkupInterface;
+use Drupal\node\NodeInterface;
 use Drupal\views\ViewExecutable;
 
 /**
@@ -17,6 +20,83 @@ function spotdeals_minimal_preprocess_views_view(array &$variables) {
   }
 
   $variables['spotdeals_result_count'] = is_array($view->result) ? count($view->result) : 0;
+
+  if (isset($variables['rows']) && !empty($view->result)) {
+    $summary_map = spotdeals_minimal_build_review_summary_map($view);
+    if (!empty($summary_map)) {
+      $variables['rows'] = spotdeals_minimal_apply_review_summaries_to_rows($variables['rows'], $view, $summary_map);
+
+      // Ensure the review summary CSS/JS library is attached on the normal
+      // /deals page render path. The summary HTML is rendered in isolation, so
+      // attachments from the review theme hook do not bubble automatically.
+      $variables['view']->element['#attached']['library'][] = 'spotdeals_reviews/widget';
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_views_view_fields().
+ */
+function spotdeals_minimal_preprocess_views_view_fields(array &$variables) {
+  if (empty($variables['view']) || !$variables['view'] instanceof ViewExecutable) {
+    return;
+  }
+
+  $view = $variables['view'];
+  if ($view->id() !== 'deals_search_solr' || $view->current_display !== 'page_1') {
+    return;
+  }
+
+  if (empty($variables['row']) || empty($variables['row']->_entity) || !$variables['row']->_entity instanceof NodeInterface) {
+    return;
+  }
+
+  $entity = $variables['row']->_entity;
+  if ($entity->bundle() !== 'deal') {
+    return;
+  }
+
+  if (!\Drupal::hasService('spotdeals_reviews.review_service')) {
+    return;
+  }
+
+  $deal_id = (int) $entity->id();
+  if ($deal_id <= 0) {
+    $variables['spotdeals_review_summary'] = '';
+    return;
+  }
+
+  $venue_id = 0;
+  if ($entity->hasField('field_venue') && !$entity->get('field_venue')->isEmpty()) {
+    $venue_id = (int) $entity->get('field_venue')->target_id;
+  }
+
+  $review_service = \Drupal::service('spotdeals_reviews.review_service');
+  $renderer = \Drupal::service('renderer');
+
+  $stats = $review_service->buildSummaryData($venue_id, $deal_id, 'deal');
+
+  // Fallback to venue summary if the deal itself has no reviews yet.
+  if ((int) ($stats['total_reviews'] ?? 0) <= 0 && $venue_id > 0) {
+    $stats = $review_service->buildSummaryData($venue_id, 0, 'venue');
+  }
+
+  if ((int) ($stats['total_reviews'] ?? 0) <= 0) {
+    $variables['spotdeals_review_summary'] = '';
+    return;
+  }
+
+  $build = [
+    '#theme' => 'spotdeals_review_summary',
+    '#stats' => $stats,
+    '#attached' => [
+      'library' => [
+        'spotdeals_reviews/widget',
+      ],
+    ],
+  ];
+
+  $variables['spotdeals_review_summary'] = Markup::create((string) $renderer->renderInIsolation($build));
 }
 
 /**
@@ -25,12 +105,10 @@ function spotdeals_minimal_preprocess_views_view(array &$variables) {
 function spotdeals_minimal_views_pre_render(ViewExecutable $view) {
   $request = \Drupal::request();
 
-  // Only target the Deals Finder view.
   if ($view->id() !== 'deals_search_solr') {
     return;
   }
 
-  // For normal requests, keep the full page render untouched.
   if (!$request->headers->get('HX-Request')) {
     return;
   }
@@ -45,17 +123,24 @@ function spotdeals_minimal_views_pre_render(ViewExecutable $view) {
     $pager = $view->pager->render($view);
   }
 
+  $summary_map = spotdeals_minimal_build_review_summary_map($view);
+  if (!empty($summary_map) && !empty($rows)) {
+    $rows = spotdeals_minimal_apply_review_summaries_to_rows($rows, $view, $summary_map);
+  }
+
   $data = [
     'rows' => $rows,
     'pager' => $pager,
     'result_count' => is_array($view->result) ? count($view->result) : 0,
     'is_recommendation_mode' => (bool) $request->query->get('help_me_choose'),
     'has_results' => !empty($view->result),
+    'header' => $view->display_handler->getOption('header'),
+    'attachment_before' => $view->attachment_before ?? NULL,
+    'attachment_after' => $view->attachment_after ?? NULL,
+    'empty' => $view->empty ?? NULL,
   ];
 
-  // Replace the full view render array for HTMX requests with a clean,
-  // render-safe theme array. Do not assign render arrays to #children.
-  $view->element = [
+  $element = [
     '#theme' => 'spotdeals_results_only',
     '#data' => $data,
     '#cache' => [
@@ -64,6 +149,12 @@ function spotdeals_minimal_views_pre_render(ViewExecutable $view) {
       'max-age' => $view->element['#cache']['max-age'] ?? -1,
     ],
   ];
+
+  if (!empty($summary_map)) {
+    $element['#attached']['library'][] = 'spotdeals_reviews/widget';
+  }
+
+  $view->element = $element;
 }
 
 /**
@@ -78,4 +169,280 @@ function spotdeals_minimal_theme() {
       'template' => 'spotdeals-results-only',
     ],
   ];
+}
+
+/**
+ * Builds review summaries keyed by deal node id for the current result set.
+ *
+ * @return array<int,string>
+ *   Rendered HTML summaries keyed by deal id.
+ */
+function spotdeals_minimal_build_review_summary_map(ViewExecutable $view): array {
+  if (empty($view->result)) {
+    return [];
+  }
+
+  if (!\Drupal::hasService('spotdeals_reviews.review_service')) {
+    return [];
+  }
+
+  $review_service = \Drupal::service('spotdeals_reviews.review_service');
+  $renderer = \Drupal::service('renderer');
+
+  $summary_map = [];
+
+  foreach ($view->result as $row) {
+    if (empty($row->_entity) || !method_exists($row->_entity, 'bundle')) {
+      continue;
+    }
+
+    $entity = $row->_entity;
+    if ($entity->bundle() !== 'deal') {
+      continue;
+    }
+
+    $deal_id = (int) $entity->id();
+    if ($deal_id <= 0 || isset($summary_map[$deal_id])) {
+      continue;
+    }
+
+    $venue_id = 0;
+    if ($entity->hasField('field_venue') && !$entity->get('field_venue')->isEmpty()) {
+      $venue_id = (int) $entity->get('field_venue')->target_id;
+    }
+
+    $stats = $review_service->buildSummaryData($venue_id, $deal_id, 'deal');
+
+    // Fallback to venue summary when deal summary has no reviews.
+    if ((int) ($stats['total_reviews'] ?? 0) <= 0 && $venue_id > 0) {
+      $stats = $review_service->buildSummaryData($venue_id, 0, 'venue');
+    }
+
+    if ((int) ($stats['total_reviews'] ?? 0) <= 0) {
+      continue;
+    }
+
+    $build = [
+      '#theme' => 'spotdeals_review_summary',
+      '#stats' => $stats,
+      '#attached' => [
+        'library' => [
+          'spotdeals_reviews/widget',
+        ],
+      ],
+    ];
+
+    $summary_map[$deal_id] = (string) $renderer->renderInIsolation($build);
+  }
+
+  return $summary_map;
+}
+
+/**
+ * Applies rendered review summaries to rows output.
+ *
+ * @param mixed $rows
+ *   Views rows output.
+ * @param \Drupal\views\ViewExecutable $view
+ *   The current view.
+ * @param array<int,string> $summary_map
+ *   Review summaries keyed by deal id.
+ *
+ * @return mixed
+ *   Updated rows output.
+ */
+function spotdeals_minimal_apply_review_summaries_to_rows(mixed $rows, ViewExecutable $view, array $summary_map): mixed {
+  if (empty($rows) || empty($view->result) || empty($summary_map)) {
+    return $rows;
+  }
+
+  if (is_array($rows)) {
+    foreach ($rows as $key => $row_output) {
+      $row_result = $view->result[$key] ?? NULL;
+      $deal_id = spotdeals_minimal_extract_result_deal_id($row_result);
+      if ($deal_id > 0 && !empty($summary_map[$deal_id])) {
+        $rows[$key] = spotdeals_minimal_inject_review_summary($row_output, $summary_map[$deal_id]);
+      }
+      elseif (is_array($row_output)) {
+        $rows[$key] = spotdeals_minimal_apply_review_summaries_to_nested_row_array($row_output, $summary_map);
+      }
+    }
+
+    return $rows;
+  }
+
+  if (is_string($rows) || $rows instanceof MarkupInterface) {
+    return spotdeals_minimal_inject_review_summaries_into_rows_markup((string) $rows, $view, $summary_map);
+  }
+
+  return $rows;
+}
+
+/**
+ * Applies review summaries recursively to nested row render arrays.
+ *
+ * @param array $row_output
+ *   One row output array.
+ * @param array<int,string> $summary_map
+ *   Review summaries keyed by deal id.
+ *
+ * @return array
+ *   Updated row output array.
+ */
+function spotdeals_minimal_apply_review_summaries_to_nested_row_array(array $row_output, array $summary_map): array {
+  foreach ($row_output as $key => $value) {
+    if ($key === '#markup' && (is_string($value) || $value instanceof MarkupInterface)) {
+      $deal_id = spotdeals_minimal_extract_deal_id_from_markup((string) $value);
+      if ($deal_id > 0 && !empty($summary_map[$deal_id])) {
+        $row_output[$key] = spotdeals_minimal_inject_review_summary($value, $summary_map[$deal_id]);
+      }
+      continue;
+    }
+
+    if (is_array($value)) {
+      $row_output[$key] = spotdeals_minimal_apply_review_summaries_to_nested_row_array($value, $summary_map);
+    }
+  }
+
+  return $row_output;
+}
+
+/**
+ * Extracts a deal id from a Views result row.
+ */
+function spotdeals_minimal_extract_result_deal_id(mixed $row_result): int {
+  if (empty($row_result) || empty($row_result->_entity)) {
+    return 0;
+  }
+
+  $entity = $row_result->_entity;
+  if (!method_exists($entity, 'bundle') || $entity->bundle() !== 'deal') {
+    return 0;
+  }
+
+  return (int) $entity->id();
+}
+
+/**
+ * Attempts to extract a deal id from rendered card markup.
+ */
+function spotdeals_minimal_extract_deal_id_from_markup(string $markup): int {
+  $patterns = [
+    '/node\/(\d+)/',
+    '/\/deals\/(\d+)/',
+    '/data-history-node-id="(\d+)"/',
+    '/data-node-id="(\d+)"/',
+  ];
+
+  foreach ($patterns as $pattern) {
+    if (preg_match($pattern, $markup, $matches)) {
+      return (int) $matches[1];
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * Injects review summaries into a full rows markup string.
+ *
+ * This is needed for the normal /deals page where Views passes one rendered
+ * markup string instead of an array of per-row render arrays.
+ */
+function spotdeals_minimal_inject_review_summaries_into_rows_markup(string $rows_markup, ViewExecutable $view, array $summary_map): string {
+  if ($rows_markup === '' || str_contains($rows_markup, 'spotdeals-review-summary')) {
+    return $rows_markup;
+  }
+
+  $deal_ids_in_order = [];
+  foreach ($view->result as $row_result) {
+    $deal_id = spotdeals_minimal_extract_result_deal_id($row_result);
+    if ($deal_id > 0) {
+      $deal_ids_in_order[] = $deal_id;
+    }
+  }
+
+  if (empty($deal_ids_in_order)) {
+    return $rows_markup;
+  }
+
+  $index = 0;
+
+  $updated = preg_replace_callback(
+    '/(<h3\b[^>]*class="[^"]*\bdeal-title\b[^"]*"[^>]*>.*?<\/h3>)/is',
+    function (array $matches) use (&$index, $deal_ids_in_order, $summary_map) {
+      $replacement = $matches[1];
+      $deal_id = $deal_ids_in_order[$index] ?? 0;
+      $index++;
+
+      if ($deal_id > 0 && !empty($summary_map[$deal_id])) {
+        $replacement .= $summary_map[$deal_id];
+      }
+
+      return $replacement;
+    },
+    $rows_markup
+  );
+
+  return is_string($updated) ? $updated : $rows_markup;
+}
+
+/**
+ * Injects the review summary into one rendered row/card.
+ *
+ * @param mixed $row_output
+ *   Row markup or renderable row content.
+ * @param string $summary_html
+ *   Already-rendered summary HTML.
+ *
+ * @return mixed
+ *   Updated row output.
+ */
+function spotdeals_minimal_inject_review_summary(mixed $row_output, string $summary_html): mixed {
+  if (is_array($row_output)) {
+    if (isset($row_output['#markup']) && (is_string($row_output['#markup']) || $row_output['#markup'] instanceof MarkupInterface)) {
+      $row_output['#markup'] = spotdeals_minimal_inject_review_summary_into_markup((string) $row_output['#markup'], $summary_html);
+      return $row_output;
+    }
+
+    foreach ($row_output as $key => $value) {
+      if (is_array($value)) {
+        $row_output[$key] = spotdeals_minimal_inject_review_summary($value, $summary_html);
+      }
+      elseif ($key === '#markup' && (is_string($value) || $value instanceof MarkupInterface)) {
+        $row_output[$key] = spotdeals_minimal_inject_review_summary_into_markup((string) $value, $summary_html);
+      }
+    }
+
+    return $row_output;
+  }
+
+  if (is_string($row_output) || $row_output instanceof MarkupInterface) {
+    return spotdeals_minimal_inject_review_summary_into_markup((string) $row_output, $summary_html);
+  }
+
+  return $row_output;
+}
+
+/**
+ * Injects summary markup immediately after the deal title.
+ */
+function spotdeals_minimal_inject_review_summary_into_markup(string $markup, string $summary_html): string {
+  if ($markup === '' || str_contains($markup, 'spotdeals-review-summary')) {
+    return $markup;
+  }
+
+  $patterns = [
+    '/(<h3\b[^>]*class="[^"]*\bdeal-title\b[^"]*"[^>]*>.*?<\/h3>)/is',
+    '/(<h3\b[^>]*>.*?<\/h3>)/is',
+  ];
+
+  foreach ($patterns as $pattern) {
+    $updated = preg_replace($pattern, '$1' . $summary_html, $markup, 1, $count);
+    if (!empty($count) && is_string($updated)) {
+      return $updated;
+    }
+  }
+
+  return $markup . $summary_html;
 }
