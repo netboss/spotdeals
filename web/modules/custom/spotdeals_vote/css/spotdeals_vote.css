@@ -41,7 +41,11 @@
   color: #334155;
 }
 
-.spotdeals-vote__group-count,
+.spotdeals-vote__group-count {
+  color: #0f766e;
+  font-weight: 600;
+}
+
 .spotdeals-vote__count {
   color: #64748b;
 }
