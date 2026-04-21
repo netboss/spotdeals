@@ -1,0 +1,17 @@
+services:
+  spotdeals_vote.storage:
+    class: Drupal\spotdeals_vote\VoteStorage
+    arguments: ['@database']
+
+  spotdeals_vote.aggregate_storage:
+    class: Drupal\spotdeals_vote\VoteAggregateStorage
+    arguments: ['@database']
+
+  spotdeals_vote.manager:
+    class: Drupal\spotdeals_vote\VoteManager
+    arguments:
+      - '@current_user'
+      - '@entity_type.manager'
+      - '@spotdeals_vote.storage'
+      - '@spotdeals_vote.aggregate_storage'
+      - '@cache_tags.invalidator'

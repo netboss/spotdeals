@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Markup;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
 use Drupal\views\ViewExecutable;
@@ -642,6 +643,68 @@ function spotdeals_search_smart_location_preprocess_views_view_unformatted(array
   $fallback_broader_search = (bool) $request->attributes->get('spotdeals_search_smart_location.fallback_broader_search', FALSE);
 
   if (!$recommendation_mode && !$fallback_broader_search) {
+    $renderer = \Drupal::service('renderer');
+
+    foreach ($variables['rows'] as $delta => &$row) {
+      $result = $view->result[$delta] ?? NULL;
+      $deal = $result->_entity ?? NULL;
+      if (!$deal instanceof NodeInterface || $deal->bundle() !== 'deal') {
+        continue;
+      }
+
+      $venue = _spotdeals_search_smart_location_deal_venue($deal);
+      if (!$venue instanceof NodeInterface) {
+        continue;
+      }
+
+      $vote_build = _spotdeals_search_smart_location_build_vote_render($deal, $venue, TRUE);
+      if ($vote_build === []) {
+        continue;
+      }
+
+      $original_content = $row['content'] ?? NULL;
+      if ($original_content === NULL) {
+        continue;
+      }
+
+      $result_html = is_array($original_content)
+        ? (string) $renderer->renderRoot($original_content)
+        : (string) $original_content;
+
+      $vote_html = (string) $renderer->renderRoot($vote_build);
+
+      $count = 0;
+      $result_html = preg_replace(
+        '/(<div class="views-field views-field-title">.*?<\/div>)/s',
+        '$1' . $vote_html,
+        $result_html,
+        1,
+        $count
+      );
+
+      if ($count === 0) {
+        $result_html .= $vote_html;
+      }
+
+      $row['content'] = [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['spotdeals-result-card-with-vote'],
+        ],
+        '#cache' => [
+          'max-age' => 0,
+        ],
+        '#attached' => [
+          'library' => [
+            'spotdeals_vote/vote',
+          ],
+        ],
+        'result' => [
+          '#markup' => Markup::create($result_html),
+        ],
+      ];
+    }
+    unset($row);
     return;
   }
 
@@ -721,6 +784,7 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
   $directions_url = $venue instanceof NodeInterface
     ? _spotdeals_search_smart_location_build_directions_url($venue)
     : '';
+  $vote_build = _spotdeals_search_smart_location_build_vote_render($deal, $venue);
 
   $build = [
     '#type' => 'container',
@@ -732,6 +796,11 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
     ],
     '#cache' => [
       'max-age' => 0,
+    ],
+    '#attached' => [
+      'library' => [
+        'spotdeals_vote/vote',
+      ],
     ],
   ];
 
@@ -902,6 +971,10 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
     }
   }
 
+  if (!empty($vote_build)) {
+    $build['vote'] = $vote_build;
+  }
+
   if ($venue instanceof NodeInterface) {
     $build['venue_link'] = [
       '#type' => 'container',
@@ -923,19 +996,221 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
   }
 
   \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION recommendation mode built uncached direct recommendation view-like render: deal_nid="@nid" venue_nid="@venue_nid" venue_label="@venue" cta_present="@cta" directions_present="@directions"',
+    'SMART LOCATION recommendation mode built uncached direct recommendation view-like render: deal_nid="@nid" venue_nid="@venue_nid" venue_label="@venue" cta_present="@cta" directions_present="@directions" vote_present="@vote"',
     [
       '@nid' => (string) $deal_nid,
       '@venue_nid' => $venue instanceof NodeInterface ? (string) $venue->id() : '',
       '@venue' => $venue_label,
       '@cta' => !empty($cta) ? '1' : '0',
       '@directions' => $directions_url !== '' ? '1' : '0',
+      '@vote' => !empty($vote_build) ? '1' : '0',
     ]
   );
 
   return $build;
 }
 
+/**
+ * Builds vote markup for deal voting.
+ *
+ * @return array<string,mixed>
+ *   Vote render array.
+ */
+function _spotdeals_search_smart_location_build_vote_render(NodeInterface $deal, ?NodeInterface $venue = NULL, bool $compact = FALSE): array {
+  if ($deal->bundle() !== 'deal') {
+    return [];
+  }
+
+  $venue_nid = $venue instanceof NodeInterface ? (int) $venue->id() : 0;
+  if ($venue_nid <= 0 || !\Drupal::moduleHandler()->moduleExists('spotdeals_vote')) {
+    return [];
+  }
+
+  $current_user = \Drupal::currentUser();
+  $vote_manager = \Drupal::service('spotdeals_vote.manager');
+  $vote_state = $vote_manager->getDealVoteState((int) $deal->id(), (int) $current_user->id());
+
+  $classes = ['spotdeals-vote'];
+  $classes[] = $compact ? 'spotdeals-vote--compact' : 'spotdeals-vote--full';
+
+  $build = [
+    '#type' => 'container',
+    '#attributes' => [
+      'class' => ['views-field', 'views-field-spotdeals-vote'],
+    ],
+    '#attached' => [
+      'library' => [
+        'spotdeals_vote/vote',
+      ],
+    ],
+    'content' => [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['field-content'],
+      ],
+      'vote' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => $classes,
+          'data-spotdeals-vote' => '1',
+          'data-deal-nid' => (string) $deal->id(),
+          'data-venue-nid' => (string) $venue_nid,
+          'data-authenticated' => $current_user->isAuthenticated() ? '1' : '0',
+          'data-login-url' => Url::fromRoute('user.login', [], ['query' => ['destination' => $deal->toUrl()->toString()]])->toString(),
+          'data-current-worth-it' => isset($vote_state['user_vote']['worth_it']) && $vote_state['user_vote']['worth_it'] !== NULL ? (string) $vote_state['user_vote']['worth_it'] : '',
+          'data-current-would-go-again' => isset($vote_state['user_vote']['would_go_again']) && $vote_state['user_vote']['would_go_again'] !== NULL ? (string) $vote_state['user_vote']['would_go_again'] : '',
+        ],
+      ],
+    ],
+  ];
+
+  $build['content']['vote']['worth_it_group'] = _spotdeals_search_smart_location_build_vote_group(
+    'worth_it',
+    (int) $deal->id(),
+    $venue_nid,
+    $vote_state,
+    (string) t('Was it worth it?'),
+  );
+
+  if (!$compact) {
+    $build['content']['vote']['would_go_again_group'] = _spotdeals_search_smart_location_build_vote_group(
+      'would_go_again',
+      (int) $deal->id(),
+      $venue_nid,
+      $vote_state,
+      (string) t('Would you go again?'),
+    );
+
+    $build['content']['vote']['summary'] = _spotdeals_search_smart_location_build_vote_summary($vote_state['aggregate'] ?? []);
+  }
+
+  $build['content']['vote']['message'] = [
+    '#type' => 'html_tag',
+    '#tag' => 'div',
+    '#attributes' => [
+      'class' => ['spotdeals-vote__message'],
+      'aria-live' => 'polite',
+    ],
+    '#value' => '',
+  ];
+
+  return $build;
+}
+
+/**
+ * Builds a yes/no vote group.
+ *
+ * @param array<string,mixed> $vote_state
+ *   Vote state data.
+ *
+ * @return array<string,mixed>
+ *   Render array.
+ */
+function _spotdeals_search_smart_location_build_vote_group(string $field_name, int $deal_nid, int $venue_nid, array $vote_state, string $label): array {
+  $current_value = $vote_state['user_vote'][$field_name] ?? NULL;
+  $aggregate = $vote_state['aggregate'] ?? [];
+  $metric_vote_count = $field_name === 'worth_it'
+    ? (int) ($aggregate['worth_it_yes'] ?? 0) + (int) ($aggregate['worth_it_no'] ?? 0)
+    : (int) ($aggregate['would_go_again_yes'] ?? 0) + (int) ($aggregate['would_go_again_no'] ?? 0);
+
+  $build = [
+    '#type' => 'container',
+    '#attributes' => [
+      'class' => ['spotdeals-vote__group'],
+      'data-vote-group' => $field_name,
+    ],
+  ];
+
+  $build['label'] = [
+    '#type' => 'html_tag',
+    '#tag' => 'div',
+    '#attributes' => [
+      'class' => ['spotdeals-vote__label'],
+    ],
+    '#value' => $label,
+  ];
+
+  $build['buttons'] = [
+    '#type' => 'container',
+    '#attributes' => [
+      'class' => ['spotdeals-vote__buttons'],
+      'role' => 'group',
+      'aria-label' => $label,
+    ],
+  ];
+
+  foreach ([1 => t('Yes'), 0 => t('No')] as $value => $button_label) {
+    $classes = ['spotdeals-vote__button'];
+    if ($current_value !== NULL && (int) $current_value === (int) $value) {
+      $classes[] = 'is-selected';
+    }
+
+    $build['buttons']['button_' . $value] = [
+      '#type' => 'html_tag',
+      '#tag' => 'button',
+      '#attributes' => [
+        'type' => 'button',
+        'class' => $classes,
+        'data-vote-field' => $field_name,
+        'data-vote-value' => (string) $value,
+        'data-deal-nid' => (string) $deal_nid,
+        'data-venue-nid' => (string) $venue_nid,
+        'aria-pressed' => ($current_value !== NULL && (int) $current_value === (int) $value) ? 'true' : 'false',
+      ],
+      '#value' => (string) $button_label,
+    ];
+  }
+
+  $build['count'] = [
+    '#type' => 'html_tag',
+    '#tag' => 'div',
+    '#attributes' => [
+      'class' => ['spotdeals-vote__group-count'],
+      'data-vote-group-count' => $field_name,
+    ],
+    '#value' => (string) t('@count vote@plural', [
+      '@count' => $metric_vote_count,
+      '@plural' => $metric_vote_count === 1 ? '' : 's',
+    ]),
+  ];
+
+  return $build;
+}
+
+/**
+ * Builds the aggregate vote summary.
+ *
+ * @param array<string,mixed> $aggregate
+ *   Aggregate data.
+ *
+ * @return array<string,mixed>
+ *   Render array.
+ */
+function _spotdeals_search_smart_location_build_vote_summary(array $aggregate): array {
+  $total_voters = (int) ($aggregate['total_voters'] ?? 0);
+
+  $build = [
+    '#type' => 'container',
+    '#attributes' => [
+      'class' => ['spotdeals-vote__summary'],
+    ],
+  ];
+
+  $build['count'] = [
+    '#type' => 'html_tag',
+    '#tag' => 'div',
+    '#attributes' => [
+      'class' => ['spotdeals-vote__count'],
+      'data-vote-summary' => 'count',
+    ],
+    '#value' => (string) t('@count vote@plural', [
+      '@count' => $total_voters,
+      '@plural' => $total_voters === 1 ? '' : 's',
+    ]),
+  ];
+
+  return $build;
+}
 
 /**
  * Returns the preferred CTA for the recommendation card.
@@ -2453,4 +2728,30 @@ function _spotdeals_search_smart_location_commit_search_insight(ViewExecutable $
       ['@message' => $e->getMessage()]
     );
   }
+}
+
+/**
+ * Adds vote UI to deal pages.
+ */
+function spotdeals_search_smart_location_entity_view_alter(array &$build, \Drupal\Core\Entity\EntityInterface $entity, \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display): void {
+  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'deal') {
+    return;
+  }
+
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if (!in_array($route_name, ['entity.node.canonical', 'entity.node.preview'], TRUE)) {
+    return;
+  }
+
+  $venue = _spotdeals_search_smart_location_deal_venue($entity);
+  if (!$venue instanceof NodeInterface) {
+    return;
+  }
+
+  $build['spotdeals_vote'] = _spotdeals_search_smart_location_build_vote_render($entity, $venue, FALSE);
+  if ($build['spotdeals_vote'] === []) {
+    return;
+  }
+
+  $build['spotdeals_vote']['#weight'] = -999;
 }
