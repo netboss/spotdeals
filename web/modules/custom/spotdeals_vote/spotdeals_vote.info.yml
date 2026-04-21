@@ -1,0 +1,8 @@
+name: SpotDeals Vote
+type: module
+description: 'Lightweight voting for deals using custom tables.'
+package: SpotDeals
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - drupal:user

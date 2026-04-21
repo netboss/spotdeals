@@ -15,6 +15,7 @@ dependencies:
     - node
     - search
     - shortcut
+    - spotdeals_vote
     - system
 _core:
   default_config_hash: hcfESiA8tr3D1muRk2KF7tbcun16ZJlG1R5SzKGed6g
@@ -32,6 +33,7 @@ permissions:
   - 'post comments'
   - 'search content'
   - 'skip comment approval'
+  - 'submit spotdeals votes'
   - 'use text format basic_html'
   - 'use text format webform_default'
   - 'view media'

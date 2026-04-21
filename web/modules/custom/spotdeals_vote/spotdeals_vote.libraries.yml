@@ -1,0 +1,9 @@
+vote:
+  css:
+    theme:
+      css/spotdeals_vote.css: {}
+  js:
+    js/spotdeals_vote.js: {}
+  dependencies:
+    - core/drupal
+    - core/once

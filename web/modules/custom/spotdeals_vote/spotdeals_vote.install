@@ -1,0 +1,172 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * Install file for the SpotDeals vote module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function spotdeals_vote_schema(): array {
+  $schema['spotdeals_vote'] = [
+    'description' => 'Stores one current vote state per user per deal.',
+    'fields' => [
+      'id' => [
+        'description' => 'Primary key.',
+        'type' => 'serial',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ],
+      'uid' => [
+        'description' => 'The user ID.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ],
+      'deal_nid' => [
+        'description' => 'The deal node ID.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ],
+      'venue_nid' => [
+        'description' => 'The venue node ID.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ],
+      'worth_it' => [
+        'description' => 'Worth it vote. 1=yes, 0=no, NULL=not set.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+      ],
+      'would_go_again' => [
+        'description' => 'Would go again vote. 1=yes, 0=no, NULL=not set.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => FALSE,
+      ],
+      'created' => [
+        'description' => 'Created timestamp.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ],
+      'changed' => [
+        'description' => 'Changed timestamp.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ],
+      'source' => [
+        'description' => 'Optional source label such as recommendation_card.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => FALSE,
+      ],
+      'vote_schema_version' => [
+        'description' => 'Schema version of the vote row.',
+        'type' => 'int',
+        'size' => 'small',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 1,
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'uniq_user_deal' => ['uid', 'deal_nid'],
+    ],
+    'indexes' => [
+      'idx_deal_nid' => ['deal_nid'],
+      'idx_venue_nid' => ['venue_nid'],
+      'idx_uid' => ['uid'],
+    ],
+  ];
+
+  $schema['spotdeals_vote_aggregate'] = [
+    'description' => 'Stores precomputed vote aggregates per deal.',
+    'fields' => [
+      'deal_nid' => [
+        'description' => 'The deal node ID.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ],
+      'venue_nid' => [
+        'description' => 'The venue node ID.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ],
+      'worth_it_yes' => [
+        'description' => 'Number of yes votes for worth_it.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+      ],
+      'worth_it_no' => [
+        'description' => 'Number of no votes for worth_it.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+      ],
+      'would_go_again_yes' => [
+        'description' => 'Number of yes votes for would_go_again.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+      ],
+      'would_go_again_no' => [
+        'description' => 'Number of no votes for would_go_again.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+      ],
+      'total_voters' => [
+        'description' => 'Total distinct voters with at least one vote recorded.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+      ],
+      'worth_it_percent' => [
+        'description' => 'Percent of worth_it yes votes.',
+        'type' => 'numeric',
+        'precision' => 5,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'would_go_again_percent' => [
+        'description' => 'Percent of would_go_again yes votes.',
+        'type' => 'numeric',
+        'precision' => 5,
+        'scale' => 2,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'changed' => [
+        'description' => 'Changed timestamp.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ],
+    ],
+    'primary key' => ['deal_nid'],
+    'indexes' => [
+      'idx_venue_nid' => ['venue_nid'],
+      'idx_worth_it_percent' => ['worth_it_percent'],
+    ],
+  ];
+
+  return $schema;
+}
