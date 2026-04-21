@@ -1080,8 +1080,6 @@ function _spotdeals_search_smart_location_build_vote_render(NodeInterface $deal,
       $vote_state,
       (string) t('Would you go again?'),
     );
-
-    $build['content']['vote']['summary'] = _spotdeals_search_smart_location_build_vote_summary($vote_state['aggregate'] ?? []);
   }
 
   $build['content']['vote']['message'] = [
@@ -1109,9 +1107,22 @@ function _spotdeals_search_smart_location_build_vote_render(NodeInterface $deal,
 function _spotdeals_search_smart_location_build_vote_group(string $field_name, int $deal_nid, int $venue_nid, array $vote_state, string $label): array {
   $current_value = $vote_state['user_vote'][$field_name] ?? NULL;
   $aggregate = $vote_state['aggregate'] ?? [];
-  $metric_vote_count = $field_name === 'worth_it'
-    ? (int) ($aggregate['worth_it_yes'] ?? 0) + (int) ($aggregate['worth_it_no'] ?? 0)
-    : (int) ($aggregate['would_go_again_yes'] ?? 0) + (int) ($aggregate['would_go_again_no'] ?? 0);
+
+  if ($field_name === 'worth_it') {
+    $yes_count = (int) ($aggregate['worth_it_yes'] ?? 0);
+    $no_count = (int) ($aggregate['worth_it_no'] ?? 0);
+  }
+  else {
+    $yes_count = (int) ($aggregate['would_go_again_yes'] ?? 0);
+    $no_count = (int) ($aggregate['would_go_again_no'] ?? 0);
+  }
+
+  $total_count = $yes_count + $no_count;
+  $metric_label = $total_count > 0
+    ? (string) t('@percent% 👍', [
+      '@percent' => (string) round(($yes_count / $total_count) * 100),
+    ])
+    : (string) t('No votes');
 
   $build = [
     '#type' => 'container',
@@ -1168,10 +1179,7 @@ function _spotdeals_search_smart_location_build_vote_group(string $field_name, i
       'class' => ['spotdeals-vote__group-count'],
       'data-vote-group-count' => $field_name,
     ],
-    '#value' => (string) t('@count vote@plural', [
-      '@count' => $metric_vote_count,
-      '@plural' => $metric_vote_count === 1 ? '' : 's',
-    ]),
+    '#value' => $metric_label,
   ];
 
   return $build;
