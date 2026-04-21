@@ -1070,6 +1070,7 @@ function _spotdeals_search_smart_location_build_vote_render(NodeInterface $deal,
     $venue_nid,
     $vote_state,
     (string) t('Was it worth it?'),
+    (string) t('Worth it?'),
   );
 
   if (!$compact) {
@@ -1079,6 +1080,7 @@ function _spotdeals_search_smart_location_build_vote_render(NodeInterface $deal,
       $venue_nid,
       $vote_state,
       (string) t('Would you go again?'),
+      (string) t('Go again?'),
     );
   }
 
@@ -1104,7 +1106,7 @@ function _spotdeals_search_smart_location_build_vote_render(NodeInterface $deal,
  * @return array<string,mixed>
  *   Render array.
  */
-function _spotdeals_search_smart_location_build_vote_group(string $field_name, int $deal_nid, int $venue_nid, array $vote_state, string $label): array {
+function _spotdeals_search_smart_location_build_vote_group(string $field_name, int $deal_nid, int $venue_nid, array $vote_state, string $label, ?string $mobile_label = NULL): array {
   $current_value = $vote_state['user_vote'][$field_name] ?? NULL;
   $aggregate = $vote_state['aggregate'] ?? [];
 
@@ -1132,13 +1134,31 @@ function _spotdeals_search_smart_location_build_vote_group(string $field_name, i
     ],
   ];
 
+  $mobile_label = $mobile_label !== NULL && $mobile_label !== ''
+    ? $mobile_label
+    : $label;
+
   $build['label'] = [
-    '#type' => 'html_tag',
-    '#tag' => 'div',
+    '#type' => 'container',
     '#attributes' => [
       'class' => ['spotdeals-vote__label'],
     ],
-    '#value' => $label,
+    'desktop' => [
+      '#type' => 'html_tag',
+      '#tag' => 'span',
+      '#attributes' => [
+        'class' => ['spotdeals-vote__label-text', 'spotdeals-vote__label-text--desktop'],
+      ],
+      '#value' => $label,
+    ],
+    'mobile' => [
+      '#type' => 'html_tag',
+      '#tag' => 'span',
+      '#attributes' => [
+        'class' => ['spotdeals-vote__label-text', 'spotdeals-vote__label-text--mobile'],
+      ],
+      '#value' => $mobile_label,
+    ],
   ];
 
   $build['buttons'] = [
