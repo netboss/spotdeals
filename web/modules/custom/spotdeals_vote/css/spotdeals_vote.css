@@ -209,12 +209,14 @@
 
 /* Mobile */
 @media (max-width: 640px) {
-
-  .node__content .spotdeals-vote__group,
-  .spotdeals-direct-recommendation .spotdeals-vote__group,
-  .spotdeals-result-card-with-vote .spotdeals-vote__group {
+  .spotdeals-direct-recommendation .spotdeals-vote__group {
     grid-template-columns: 1fr;
     row-gap: 6px;
+  }
+
+  .node__content .spotdeals-vote__group,
+  .spotdeals-result-card-with-vote .spotdeals-vote__group {
+    grid-template-columns: minmax(75px, 105px) auto auto;
   }
 
   .spotdeals-vote__buttons {
