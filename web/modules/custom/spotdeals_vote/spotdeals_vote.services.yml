@@ -13,4 +13,4 @@ services:
   spotdeals_vote.manager:
     class: Drupal\spotdeals_vote\VoteManager
     arguments:
-      - '@spotdeals_vote_deal.manager'
+      - '@service_container'
