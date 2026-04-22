@@ -91,8 +91,8 @@ final class DealVoteRenderBuilder {
         (int) $deal->id(),
         $venueNid,
         $voteState,
-        'Would you go again?',
-        'Go again?',
+        'Would you go back?',
+        'Go back?',
       );
     }
 

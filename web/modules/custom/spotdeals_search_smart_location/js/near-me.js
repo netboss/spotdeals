@@ -13,6 +13,8 @@
   ];
 
   const RETRY_LOADING_MIN_MS = 650;
+  const SCROLL_STORAGE_KEY = 'spotdealsScrollToResults';
+  const SCROLL_QUERY_PARAM = 'scroll_results';
 
   function ensureHidden(form, name) {
     let input = form.querySelector(`input[name="${name}"]`);
@@ -114,6 +116,7 @@
     });
 
     setHiddenValue(form, 'recommendation_action', '');
+    setHiddenValue(form, SCROLL_QUERY_PARAM, '');
     form.dataset.recommendationActive = '0';
 
     delete form.dataset.spotdealsNearMeResolved;
@@ -176,6 +179,124 @@
     form.dataset.spotdealsLastSubmittedKeywords = normalizeSearchValue(
       searchInput ? searchInput.value : ''
     );
+  }
+
+  function getResultsWrapper(form) {
+    const view = getRecommendationView(form);
+    if (!view) {
+      return null;
+    }
+
+    return view.querySelector('.spotdeals-finder__results');
+  }
+
+  function getScrollTarget(form) {
+    return getResultsWrapper(form);
+  }
+
+  function setScrollToResultsPending(form) {
+    try {
+      sessionStorage.setItem(SCROLL_STORAGE_KEY, '1');
+    }
+    catch (e) {
+      // Ignore storage failures.
+    }
+
+    if (form) {
+      setHiddenValue(form, SCROLL_QUERY_PARAM, '1');
+    }
+  }
+
+  function clearScrollFlagFromUrl() {
+    try {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has(SCROLL_QUERY_PARAM)) {
+        return;
+      }
+
+      url.searchParams.delete(SCROLL_QUERY_PARAM);
+      window.history.replaceState({}, '', url.toString());
+    }
+    catch (e) {
+      // Ignore history/url failures.
+    }
+  }
+
+  function clearScrollToResultsPending(form) {
+    try {
+      sessionStorage.removeItem(SCROLL_STORAGE_KEY);
+    }
+    catch (e) {
+      // Ignore storage failures.
+    }
+
+    if (form) {
+      setHiddenValue(form, SCROLL_QUERY_PARAM, '');
+    }
+
+    clearScrollFlagFromUrl();
+  }
+
+  function shouldScrollToResultsOnLoad() {
+    let storagePending = false;
+
+    try {
+      storagePending = sessionStorage.getItem(SCROLL_STORAGE_KEY) === '1';
+    }
+    catch (e) {
+      storagePending = false;
+    }
+
+    try {
+      const url = new URL(window.location.href);
+      return storagePending || url.searchParams.get(SCROLL_QUERY_PARAM) === '1';
+    }
+    catch (e) {
+      return storagePending;
+    }
+  }
+
+  function scrollToResults(form) {
+    const target = getScrollTarget(form);
+    if (!target) {
+      clearScrollToResultsPending(form);
+      return;
+    }
+
+    const offset = 16;
+    const rect = target.getBoundingClientRect();
+    const top = window.pageYOffset + rect.top - offset;
+
+    window.setTimeout(function () {
+      window.scrollTo({
+        top: Math.max(0, top),
+        behavior: 'smooth'
+      });
+      clearScrollToResultsPending(form);
+    }, 60);
+  }
+
+  function maybeScrollToResultsOnLoad(form, attempt) {
+    const currentAttempt = typeof attempt === 'number' ? attempt : 0;
+
+    if (!shouldScrollToResultsOnLoad()) {
+      return;
+    }
+
+    const target = getScrollTarget(form);
+    if (target) {
+      scrollToResults(form);
+      return;
+    }
+
+    if (currentAttempt >= 20) {
+      clearScrollToResultsPending(form);
+      return;
+    }
+
+    window.setTimeout(function () {
+      maybeScrollToResultsOnLoad(form, currentAttempt + 1);
+    }, 75);
   }
 
   function submitPreparedForm(form, submitter) {
@@ -317,15 +438,6 @@
     event.stopPropagation();
     event.stopImmediatePropagation();
     searchInput.blur();
-  }
-
-  function getResultsWrapper(form) {
-    const view = getRecommendationView(form);
-    if (!view) {
-      return null;
-    }
-
-    return view.querySelector('.spotdeals-finder__results');
   }
 
   function buildRetryAjaxUrl() {
@@ -498,6 +610,7 @@
 
     updatePrimarySubmitLabel(form);
     clearRetryLoadingState(form);
+    scrollToResults(form);
   }
 
   function submitPreparedRetryAjax(form, submitter) {
@@ -565,9 +678,11 @@
         }
 
         ensureHidden(form, 'recommendation_action');
+        ensureHidden(form, SCROLL_QUERY_PARAM);
         ensureLastSubmittedKeywords(form, searchInput);
         syncSearchInputUi(form, searchInput);
         updatePrimarySubmitLabel(form);
+        maybeScrollToResultsOnLoad(form);
 
         let lastClickedSubmitter = null;
 
@@ -624,6 +739,7 @@
 
           if (isResetButton(button)) {
             clearFreshSearchState(form);
+            clearScrollToResultsPending(form);
             form.dataset.spotdealsLastSubmittedKeywords = '';
             stripActionQuery(form);
             syncSearchInputUi(form, searchInput);
@@ -643,6 +759,7 @@
 
           if (isResetButton(submitter)) {
             clearFreshSearchState(form);
+            clearScrollToResultsPending(form);
             form.dataset.spotdealsLastSubmittedKeywords = '';
             syncSearchInputUi(form, currentSearchInput);
             updatePrimarySubmitLabel(form);
@@ -661,6 +778,7 @@
 
           if (rawValue === '' && !recommendationMode) {
             clearNearMeOnlyState(form);
+            setScrollToResultsPending(form);
             setHiddenValue(form, 'recommendation_action', '');
             rememberSubmittedKeywords(form, currentSearchInput);
             updatePrimarySubmitLabel(form);
@@ -706,6 +824,9 @@
 
           if (useRetryAjax) {
             showRetryLoadingState(form);
+          }
+          else {
+            setScrollToResultsPending(form);
           }
 
           const finish = function () {
