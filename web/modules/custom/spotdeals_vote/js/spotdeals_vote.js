@@ -5,6 +5,53 @@
     return element.closest('[data-spotdeals-vote]');
   }
 
+  function getVoteScope(wrapper) {
+    return wrapper.getAttribute('data-vote-scope') || '';
+  }
+
+  function getEndpoint(wrapper) {
+    return wrapper.getAttribute('data-vote-endpoint') || '/spotdeals/vote/deal';
+  }
+
+  function formatCompactCount(count) {
+    const numericCount = parseInt(count || 0, 10);
+
+    if (Number.isNaN(numericCount) || numericCount <= 0) {
+      return '0';
+    }
+
+    if (numericCount < 1000) {
+      return String(numericCount);
+    }
+
+    if (numericCount < 10000) {
+      let formatted = (numericCount / 1000).toFixed(1);
+      formatted = formatted.replace(/\.0$/, '');
+      return `${formatted}K`;
+    }
+
+    if (numericCount < 1000000) {
+      return `${Math.round(numericCount / 1000)}K`;
+    }
+
+    let formatted = (numericCount / 1000000).toFixed(1);
+    formatted = formatted.replace(/\.0$/, '');
+    return `${formatted}M`;
+  }
+
+  function buildMetricLabel(yesCount, noCount) {
+    const yes = parseInt(yesCount || 0, 10);
+    const no = parseInt(noCount || 0, 10);
+    const total = yes + no;
+
+    if (total <= 0) {
+      return 'No votes';
+    }
+
+    const percent = Math.round((yes / total) * 100);
+    return `(${formatCompactCount(total)}) ${percent}% 👍`;
+  }
+
   function setMessage(wrapper, message, isError) {
     const messageEl = wrapper.querySelector('.spotdeals-vote__message');
     if (!messageEl) {
@@ -35,8 +82,10 @@
   }
 
   function updateSummary(wrapper, aggregate) {
-    const worthItVotes = parseInt(aggregate.worth_it_yes || 0, 10) + parseInt(aggregate.worth_it_no || 0, 10);
-    const wouldGoAgainVotes = parseInt(aggregate.would_go_again_yes || 0, 10) + parseInt(aggregate.would_go_again_no || 0, 10);
+    const worthItYes = parseInt(aggregate.worth_it_yes || 0, 10);
+    const worthItNo = parseInt(aggregate.worth_it_no || 0, 10);
+    const wouldGoAgainYes = parseInt(aggregate.would_go_again_yes || 0, 10);
+    const wouldGoAgainNo = parseInt(aggregate.would_go_again_no || 0, 10);
     const totalVoters = parseInt(aggregate.total_voters || 0, 10);
 
     const worthItCount = wrapper.querySelector('[data-vote-group-count="worth_it"]');
@@ -44,20 +93,24 @@
     const count = wrapper.querySelector('[data-vote-summary="count"]');
 
     if (worthItCount) {
-      worthItCount.textContent = `${worthItVotes} vote${worthItVotes === 1 ? '' : 's'}`;
+      worthItCount.textContent = buildMetricLabel(worthItYes, worthItNo);
     }
 
     if (wouldGoAgainCount) {
-      wouldGoAgainCount.textContent = `${wouldGoAgainVotes} vote${wouldGoAgainVotes === 1 ? '' : 's'}`;
+      wouldGoAgainCount.textContent = buildMetricLabel(wouldGoAgainYes, wouldGoAgainNo);
     }
 
     if (count) {
-      count.textContent = `${totalVoters} vote${totalVoters === 1 ? '' : 's'}`;
+      count.textContent = totalVoters > 0 ? `(${formatCompactCount(totalVoters)})` : 'No votes';
     }
   }
 
-  function syncWrappers(dealNid, payload) {
-    document.querySelectorAll(`[data-spotdeals-vote][data-deal-nid="${dealNid}"]`).forEach(function (wrapper) {
+  function syncWrappers(scope, payload) {
+    if (!scope) {
+      return;
+    }
+
+    document.querySelectorAll(`[data-spotdeals-vote][data-vote-scope="${scope}"]`).forEach(function (wrapper) {
       const userVote = payload.user_vote || {};
 
       wrapper.setAttribute(
@@ -95,7 +148,7 @@
       venue_nid: parseInt(button.getAttribute('data-venue-nid') || wrapper.getAttribute('data-venue-nid') || '0', 10),
       field: button.getAttribute('data-vote-field') || '',
       value: parseInt(button.getAttribute('data-vote-value') || '', 10),
-      source: 'recommendation_card'
+      source: wrapper.getAttribute('data-vote-source') || 'recommendation_card'
     };
 
     if (!payload.deal_nid || !payload.venue_nid || !payload.field || Number.isNaN(payload.value)) {
@@ -106,7 +159,7 @@
     setPending(wrapper, true);
     setMessage(wrapper, '', false);
 
-    fetch('/spotdeals/vote', {
+    fetch(getEndpoint(wrapper), {
       method: 'POST',
       credentials: 'same-origin',
       headers: {
@@ -126,7 +179,7 @@
           throw new Error(result.data && result.data.message ? result.data.message : 'Unable to save vote.');
         }
 
-        syncWrappers(String(payload.deal_nid), result.data);
+        syncWrappers(getVoteScope(wrapper), result.data);
       })
       .catch(function (error) {
         setPending(wrapper, false);

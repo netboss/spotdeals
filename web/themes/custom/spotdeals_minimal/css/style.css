@@ -702,3 +702,23 @@ h1.page-title {
     gap: var(--sp2);
   }
 }
+
+@media (max-width: 640px) {
+  .view.view-deals_search_solr,
+  .spotdeals-finder,
+  .spotdeals-finder__intro,
+  .spotdeals-finder__filters,
+  .spotdeals-finder__results {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .spotdeals-finder__intro,
+  .spotdeals-finder__filters,
+  .spotdeals-finder__results {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}

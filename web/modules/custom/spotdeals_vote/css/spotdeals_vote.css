@@ -115,7 +115,7 @@
   font-size: 0.78rem;
 }
 
-/* Recommended card: same boxed style as deal page */
+/* Recommended card */
 .spotdeals-direct-recommendation .views-field.views-field-spotdeals-vote {
   margin: 16px 0 20px;
 }
@@ -221,22 +221,77 @@
     display: inline;
   }
 
+  .spotdeals-vote__buttons {
+    flex-wrap: nowrap;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .spotdeals-vote__group-count {
+    min-width: 0;
+  }
+
+  .spotdeals-vote__button {
+    min-width: 40px;
+    padding: 4px 8px;
+    font-size: 0.78rem;
+  }
+
+  /* Deal page mobile fix */
+  .node__content .spotdeals-vote {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 16px 14px;
+  }
+
+  .node__content .spotdeals-vote__group {
+    grid-template-columns: 84px minmax(0, auto) minmax(0, 1fr);
+    column-gap: 8px;
+    row-gap: 6px;
+  }
+
+  .node__content .spotdeals-vote__label {
+    width: 100%;
+  }
+
+  .node__content .spotdeals-vote__group-count {
+    white-space: nowrap;
+    justify-self: end;
+    font-size: 0.78rem;
+  }
+
+  /* Recommended card mobile */
+  .spotdeals-direct-recommendation .spotdeals-vote {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 16px 14px;
+  }
+
   .spotdeals-direct-recommendation .spotdeals-vote__group {
-    grid-template-columns: minmax(88px, 110px) auto auto;
+    grid-template-columns: 84px minmax(0, auto) minmax(0, 1fr);
+    column-gap: 8px;
     row-gap: 4px;
   }
 
-  .node__content .spotdeals-vote__group,
+  .spotdeals-direct-recommendation .spotdeals-vote__label {
+    width: 100%;
+  }
+
+  .spotdeals-direct-recommendation .spotdeals-vote__group-count {
+    white-space: nowrap;
+    justify-self: end;
+    font-size: 0.78rem;
+  }
+
+  /* Search results mobile */
   .spotdeals-result-card-with-vote .spotdeals-vote__group {
     grid-template-columns: minmax(88px, 110px) auto auto;
   }
 
-  .spotdeals-vote__buttons {
-    flex-wrap: nowrap;
-  }
-
-  .node__content .spotdeals-vote__group-count,
-  .spotdeals-direct-recommendation .spotdeals-vote__group-count,
   .spotdeals-result-card-with-vote .spotdeals-vote__group-count {
     white-space: nowrap;
   }

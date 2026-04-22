@@ -1,0 +1,16 @@
+services:
+  spotdeals_vote_deal.manager:
+    class: Drupal\spotdeals_vote_deal\DealVoteManager
+    arguments:
+      - '@current_user'
+      - '@entity_type.manager'
+      - '@spotdeals_vote.storage'
+      - '@spotdeals_vote.aggregate_storage'
+      - '@cache_tags.invalidator'
+      - '@spotdeals_vote.fields'
+
+  spotdeals_vote_deal.render_builder:
+    class: Drupal\spotdeals_vote_deal\DealVoteRenderBuilder
+    arguments:
+      - '@current_user'
+      - '@spotdeals_vote_deal.manager'
