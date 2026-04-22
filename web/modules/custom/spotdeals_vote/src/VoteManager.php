@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\spotdeals_vote;
 
+use Psr\Container\ContainerInterface;
 use Drupal\spotdeals_vote_deal\DealVoteManager;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Legacy compatibility wrapper around the deal vote manager.
@@ -16,17 +16,8 @@ final class VoteManager {
    * Constructs the legacy vote manager.
    */
   public function __construct(
-    private readonly DealVoteManager $dealVoteManager,
+    private readonly ContainerInterface $container,
   ) {}
-
-  /**
-   * Creates the wrapper from the container.
-   */
-  public static function create(ContainerInterface $container): self {
-    return new self(
-      $container->get('spotdeals_vote_deal.manager'),
-    );
-  }
 
   /**
    * Returns current aggregate and optionally current user vote state.
@@ -35,7 +26,7 @@ final class VoteManager {
    *   Vote state array.
    */
   public function getDealVoteState(int $dealNid, int $uid = 0): array {
-    return $this->dealVoteManager->getDealVoteState($dealNid, $uid);
+    return $this->getDealVoteManager()->getDealVoteState($dealNid, $uid);
   }
 
   /**
@@ -45,7 +36,23 @@ final class VoteManager {
    *   Normalized response payload.
    */
   public function submitVote(int $uid, int $dealNid, int $venueNid, string $fieldName, int $value, ?string $source = NULL): array {
-    return $this->dealVoteManager->submitVote($uid, $dealNid, $venueNid, $fieldName, $value, $source);
+    return $this->getDealVoteManager()->submitVote($uid, $dealNid, $venueNid, $fieldName, $value, $source);
+  }
+
+  /**
+   * Returns the deal vote manager service.
+   */
+  private function getDealVoteManager(): DealVoteManager {
+    if (!$this->container->has('spotdeals_vote_deal.manager')) {
+      throw new \RuntimeException('The spotdeals_vote_deal module must be enabled.');
+    }
+
+    $service = $this->container->get('spotdeals_vote_deal.manager');
+    if (!$service instanceof DealVoteManager) {
+      throw new \RuntimeException('The spotdeals_vote_deal.manager service is invalid.');
+    }
+
+    return $service;
   }
 
 }
