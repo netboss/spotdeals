@@ -1,0 +1,9 @@
+name: SpotDeals Vote Deal
+type: module
+description: 'Deal-specific vote handling built on the shared SpotDeals vote foundation.'
+package: SpotDeals
+core_version_requirement: ^10 || ^11
+dependencies:
+  - spotdeals_vote:spotdeals_vote
+  - drupal:node
+  - drupal:user

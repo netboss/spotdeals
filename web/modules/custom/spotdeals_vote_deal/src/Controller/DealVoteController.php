@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Drupal\spotdeals_vote\Controller;
+namespace Drupal\spotdeals_vote_deal\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\spotdeals_vote_deal\DealVoteManager;
@@ -11,9 +11,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Legacy proxy controller for deal vote submissions.
+ * Handles deal vote submissions.
  */
-final class VoteController extends ControllerBase {
+final class DealVoteController extends ControllerBase {
 
   /**
    * Constructs the controller.
@@ -32,7 +32,7 @@ final class VoteController extends ControllerBase {
   }
 
   /**
-   * Submits a vote through the deal vote manager.
+   * Submits a deal vote.
    */
   public function submit(Request $request): JsonResponse {
     $payload = json_decode($request->getContent(), TRUE);
@@ -59,7 +59,7 @@ final class VoteController extends ControllerBase {
       ], 400);
     }
     catch (\Throwable $exception) {
-      \Drupal::logger('spotdeals_vote')->error(
+      \Drupal::logger('spotdeals_vote_deal')->error(
         'Vote submission failed for deal "@deal": @message',
         [
           '@deal' => (string) ($payload['deal_nid'] ?? 0),

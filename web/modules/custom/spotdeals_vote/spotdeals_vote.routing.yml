@@ -1,4 +1,4 @@
-spotdeals_vote.submit:
+spotdeals_vote.submit_legacy:
   path: '/spotdeals/vote'
   defaults:
     _controller: '\Drupal\spotdeals_vote\Controller\VoteController::submit'

@@ -1,0 +1,8 @@
+spotdeals_vote_deal.submit:
+  path: '/spotdeals/vote/deal'
+  defaults:
+    _controller: '\Drupal\spotdeals_vote_deal\Controller\DealVoteController::submit'
+  methods: [POST]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+    _permission: 'submit spotdeals votes'

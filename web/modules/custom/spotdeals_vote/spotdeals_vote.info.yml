@@ -1,6 +1,6 @@
 name: SpotDeals Vote
 type: module
-description: 'Lightweight voting for deals using custom tables.'
+description: 'Shared voting foundation for SpotDeals vote types.'
 package: SpotDeals
 core_version_requirement: ^10 || ^11
 dependencies:
