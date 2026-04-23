@@ -1,0 +1,15 @@
+uuid: ab15b5d6-cb16-4b81-b16b-baffd9ca406e
+langcode: en
+status: true
+dependencies: {  }
+name: deal_card_desktop
+label: 'Deal card desktop'
+effects:
+  6275fd39-4fc3-4b8b-9590-9965f763961f:
+    uuid: 6275fd39-4fc3-4b8b-9590-9965f763961f
+    id: image_scale_and_crop
+    weight: 1
+    data:
+      width: 400
+      height: 300
+      anchor: center-center

@@ -1,0 +1,15 @@
+uuid: dd7d16e4-509d-43f5-9ca6-8e4cf71baf5c
+langcode: en
+status: true
+dependencies: {  }
+name: deal_card_mobile
+label: 'Deal card mobile'
+effects:
+  b7f758a5-5a40-4eb0-b080-0b419b3cefc0:
+    uuid: b7f758a5-5a40-4eb0-b080-0b419b3cefc0
+    id: image_scale_and_crop
+    weight: 1
+    data:
+      width: 800
+      height: 450
+      anchor: center-center
