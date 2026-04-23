@@ -323,12 +323,15 @@
   align-items: center;
 }
 
+.spotdeals-vote__group-count .is-positive,
 .spotdeals-venue-vote-summary--compact.is-positive {
   color: #0f766e;
   /* green */
 }
 
+.spotdeals-vote__group-count .is-negative,
 .spotdeals-venue-vote-summary--compact.is-negative {
   color: #dc2626;
   /* red */
 }
+
