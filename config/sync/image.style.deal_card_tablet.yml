@@ -1,0 +1,15 @@
+uuid: 853adf6e-59cb-462c-856a-756c3f370ee1
+langcode: en
+status: true
+dependencies: {  }
+name: deal_card_tablet
+label: 'Deal card tablet'
+effects:
+  43c6bb0d-2e69-4ed0-a9b4-f3c2e9fc6f21:
+    uuid: 43c6bb0d-2e69-4ed0-a9b4-f3c2e9fc6f21
+    id: image_scale_and_crop
+    weight: 1
+    data:
+      width: 600
+      height: 400
+      anchor: center-center
