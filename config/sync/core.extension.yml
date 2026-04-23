@@ -73,6 +73,7 @@ module:
   spotdeals_seo_landing: 0
   spotdeals_vote: 0
   spotdeals_vote_deal: 0
+  spotdeals_vote_venue: 0
   system: 0
   tagify: 0
   taxonomy: 0
