@@ -80,7 +80,10 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
     ? ''
     : (string) $request->query->get('recommendation_cuisines', '');
 
-  $form['#attributes']['data-recommendation-active'] = _spotdeals_search_smart_location_has_current_recommendation() ? '1' : '0';
+  $has_visible_recommendation = !$is_reset_request
+    && _spotdeals_search_smart_location_has_visible_recommendation_request();
+
+  $form['#attributes']['data-recommendation-active'] = $has_visible_recommendation ? '1' : '0';
 
   $form['help_me_choose'] = [
     '#type' => 'checkbox',
@@ -111,21 +114,45 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
 
     if (isset($form['actions']['submit'])) {
       $form['actions']['submit']['#weight'] = 0;
-      $form['actions']['submit']['#value'] = _spotdeals_search_smart_location_has_current_recommendation() ? t('Try again') : t('Find deals');
+      $form['actions']['submit']['#value'] = $has_visible_recommendation ? t('Try again') : t('Find deals');
     }
 
     if (isset($form['actions']['reset'])) {
       $form['actions']['reset']['#weight'] = 1;
+      $form['actions']['reset']['#attributes']['class'] = array_values(array_unique(array_merge(
+        $form['actions']['reset']['#attributes']['class'] ?? [],
+        ['button', 'button--secondary', 'js-form-submit', 'form-submit']
+      )));
+    }
+    elseif ($has_visible_recommendation) {
+      $form['actions']['reset'] = [
+        '#type' => 'link',
+        '#title' => t('Reset'),
+        '#url' => Url::fromRoute('<current>'),
+        '#attributes' => [
+          'class' => [
+            'button',
+            'button--secondary',
+            'js-form-submit',
+            'form-submit',
+          ],
+        ],
+        '#weight' => 1,
+      ];
     }
   }
 
   if (isset($form['submit'])) {
     $form['submit']['#weight'] = 110;
-    $form['submit']['#value'] = _spotdeals_search_smart_location_has_current_recommendation() ? t('Try again') : t('Find deals');
+    $form['submit']['#value'] = $has_visible_recommendation ? t('Try again') : t('Find deals');
   }
 
   if (isset($form['reset'])) {
     $form['reset']['#weight'] = 111;
+    $form['reset']['#attributes']['class'] = array_values(array_unique(array_merge(
+      $form['reset']['#attributes']['class'] ?? [],
+      ['button', 'button--secondary', 'js-form-submit', 'form-submit']
+    )));
   }
 
   if ($is_reset_request) {
@@ -146,54 +173,8 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
     $form['search_origin_mode']['#value'] = '';
     $form['search_clean']['#value'] = '';
   }
-
-  $raw = $request->query->get('search_raw');
-
-  if (!is_string($raw) || trim($raw) === '') {
-    $raw = $request->attributes->get('spotdeals_search_smart_location.raw_query');
-  }
-
-  if (!is_string($raw) || trim($raw) === '') {
-    $raw = $request->query->get('search_deals');
-  }
-
-  if (!is_string($raw) || trim($raw) === '') {
-    $raw = $request->query->get('search_api_fulltext');
-  }
-
-  if (!$is_reset_request && is_string($raw) && trim($raw) !== '') {
-    if (isset($form['search_deals'])) {
-      $form['search_deals']['#default_value'] = $raw;
-      $form['search_deals']['#attributes']['value'] = $raw;
-    }
-
-    if (isset($form['search_api_fulltext'])) {
-      $form['search_api_fulltext']['#default_value'] = $raw;
-      $form['search_api_fulltext']['#attributes']['value'] = $raw;
-    }
-
-    $form['search_raw'] = [
-      '#type' => 'hidden',
-      '#value' => $raw,
-    ];
-  }
-  else {
-    $form['search_raw'] = [
-      '#type' => 'hidden',
-      '#value' => '',
-    ];
-  }
-
-  if (isset($form['postal_code_exact'])) {
-    $form['postal_code_exact']['#type'] = 'hidden';
-    $form['postal_code_exact']['#title_display'] = 'invisible';
-  }
-
-  if (isset($form['locality_exact'])) {
-    $form['locality_exact']['#type'] = 'hidden';
-    $form['locality_exact']['#title_display'] = 'invisible';
-  }
 }
+
 
 /**
  * Implements hook_views_pre_view().
@@ -551,6 +532,18 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
     return;
   }
 
+  // Do not alter the admin Views preview render path.
+  if (\Drupal::service('router.admin_context')->isAdminRoute()) {
+    return;
+  }
+
+  // Keep the vote library available on the Deals Finder page itself.
+  // Recommendation AJAX returns rendered HTML inside JSON, so attached
+  // libraries from the inner recommendation render do not get applied after
+  // injection. Loading the library here preserves the direct recommendation
+  // vote styling and behavior without changing any other render paths.
+  $view->element['#attached']['library'][] = 'spotdeals_vote/vote';
+
   $request = \Drupal::request();
   $recommendation_mode = (bool) $request->attributes->get('spotdeals_search_smart_location.recommendation_mode', FALSE);
   $fallback_broader_search = (bool) $request->attributes->get('spotdeals_search_smart_location.fallback_broader_search', FALSE);
@@ -635,6 +628,11 @@ function spotdeals_search_smart_location_preprocess_views_view_unformatted(array
 
   $view = $variables['view'];
   if ($view->id() !== 'deals_search_solr' || $view->current_display !== 'page_1') {
+    return;
+  }
+
+  // Do not run front-end row rewriting during the admin Views preview.
+  if (\Drupal::service('router.admin_context')->isAdminRoute()) {
     return;
   }
 
@@ -785,6 +783,7 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
     ? _spotdeals_search_smart_location_build_directions_url($venue)
     : '';
   $vote_build = _spotdeals_search_smart_location_build_vote_render($deal, $venue);
+  $venue_vote_summary_build = _spotdeals_search_smart_location_build_venue_vote_summary_render($venue);
 
   $build = [
     '#type' => 'container',
@@ -823,6 +822,13 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
         ],
       ],
     ];
+
+    if (!empty($venue_vote_summary_build)) {
+      $build['venue_title']['content']['summary_separator'] = [
+        '#plain_text' => ' ',
+      ];
+      $build['venue_title']['content']['summary'] = $venue_vote_summary_build;
+    }
   }
 
   if ($venue_location !== '' || $directions_url !== '') {
@@ -1024,6 +1030,70 @@ function _spotdeals_search_smart_location_build_vote_render(NodeInterface $deal,
   /** @var \Drupal\spotdeals_vote_deal\DealVoteRenderBuilder $render_builder */
   $render_builder = \Drupal::service('spotdeals_vote_deal.render_builder');
   return $render_builder->build($deal, $venue, $compact);
+}
+
+
+/**
+ * Builds compact venue vote summary markup for recommendation titles.
+ *
+ * @return array<string,mixed>
+ *   Render array.
+ */
+function _spotdeals_search_smart_location_build_venue_vote_summary_render($venue_reference) {
+  if (!\Drupal::moduleHandler()->moduleExists('spotdeals_vote_venue')) {
+    return [];
+  }
+
+  $venue_id = 0;
+  if ($venue_reference instanceof NodeInterface) {
+    $venue_id = (int) $venue_reference->id();
+  }
+  elseif (is_numeric($venue_reference)) {
+    $venue_id = (int) $venue_reference;
+  }
+
+  if ($venue_id <= 0) {
+    return [];
+  }
+
+  $storage = \Drupal::service('spotdeals_vote_venue.aggregate_storage');
+  $aggregate = $storage->loadVenueAggregate($venue_id);
+
+  if (!$aggregate) {
+    return [];
+  }
+
+  $yes = (int) ($aggregate['worth_it_yes'] ?? 0);
+  $no = (int) ($aggregate['worth_it_no'] ?? 0);
+  $total = $yes + $no;
+
+  if ($total <= 0) {
+    return [
+      '#markup' => '',
+    ];
+  }
+
+  $percent = round(($yes / $total) * 100);
+  $sentiment_class = '';
+  if ($percent >= 50) {
+    $sentiment_class = 'is-positive';
+  }
+  else {
+    $sentiment_class = 'is-negative';
+  }
+  $emoji = $percent >= 50 ? '👍' : '👎';
+
+  $markup = sprintf(
+    '<span class="spotdeals-venue-vote-summary spotdeals-venue-vote-summary--compact %s">(%d) %d%% %s</span>',
+    $sentiment_class,
+    $total,
+    $percent,
+    $emoji
+  );
+
+  return [
+    '#markup' => $markup,
+  ];
 }
 
 /**
@@ -1860,6 +1930,49 @@ function _spotdeals_search_smart_location_has_current_recommendation(): bool {
   $current = \Drupal::request()->getSession()->get('spotdeals_search_smart_location.current_recommendation', []);
   return is_array($current) && !empty($current['deal_nid']) && !empty($current['venue_nid']);
 }
+
+/**
+ * Returns TRUE when the current request is visibly showing a recommendation.
+ */
+function _spotdeals_search_smart_location_has_visible_recommendation_request(): bool {
+  $request = \Drupal::request();
+
+  if (!_spotdeals_search_smart_location_is_recommendation_mode($request->query->all())) {
+    return FALSE;
+  }
+
+  if (!_spotdeals_search_smart_location_has_current_recommendation()) {
+    return FALSE;
+  }
+
+  $action = strtolower(trim((string) $request->query->get('recommendation_action', '')));
+  if ($action === 'reset') {
+    return FALSE;
+  }
+
+  $query = $request->query;
+  foreach (['search_deals', 'search_api_fulltext', 'search_raw', 'search_clean', 'recommendation_cuisines'] as $key) {
+    if (!$query->has($key)) {
+      continue;
+    }
+
+    $value = $query->get($key);
+    if (is_string($value) && trim($value) !== '') {
+      return TRUE;
+    }
+  }
+
+  $origin_mode = trim((string) $query->get('search_origin_mode', ''));
+  $origin_lat = $query->get('origin_lat');
+  $origin_lon = $query->get('origin_lon');
+
+  if ($origin_mode !== '' && is_numeric($origin_lat) && is_numeric($origin_lon)) {
+    return TRUE;
+  }
+
+  return $action === 'retry';
+}
+
 
 /**
  * Clears recommendation-session state.

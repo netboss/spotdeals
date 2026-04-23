@@ -1,0 +1,24 @@
+services:
+  spotdeals_vote_venue.storage:
+    class: Drupal\spotdeals_vote_venue\VenueVoteStorage
+    arguments: ['@database']
+
+  spotdeals_vote_venue.aggregate_storage:
+    class: Drupal\spotdeals_vote_venue\VenueVoteAggregateStorage
+    arguments: ['@database']
+
+  spotdeals_vote_venue.manager:
+    class: Drupal\spotdeals_vote_venue\VenueVoteManager
+    arguments:
+      - '@current_user'
+      - '@entity_type.manager'
+      - '@spotdeals_vote_venue.storage'
+      - '@spotdeals_vote_venue.aggregate_storage'
+      - '@cache_tags.invalidator'
+      - '@spotdeals_vote.fields'
+
+  spotdeals_vote_venue.render_builder:
+    class: Drupal\spotdeals_vote_venue\VenueVoteRenderBuilder
+    arguments:
+      - '@current_user'
+      - '@spotdeals_vote_venue.manager'

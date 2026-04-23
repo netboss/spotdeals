@@ -13,6 +13,12 @@
     return wrapper.getAttribute('data-vote-endpoint') || '/spotdeals/vote/deal';
   }
 
+  function isDealVote(wrapper) {
+    const scope = getVoteScope(wrapper);
+    const endpoint = getEndpoint(wrapper);
+    return scope.indexOf('deal:') === 0 || endpoint.indexOf('/spotdeals/vote/deal') !== -1;
+  }
+
   function formatCompactCount(count) {
     const numericCount = parseInt(count || 0, 10);
 
@@ -143,15 +149,19 @@
       return;
     }
 
+    const dealVote = isDealVote(wrapper);
     const payload = {
-      deal_nid: parseInt(button.getAttribute('data-deal-nid') || wrapper.getAttribute('data-deal-nid') || '0', 10),
       venue_nid: parseInt(button.getAttribute('data-venue-nid') || wrapper.getAttribute('data-venue-nid') || '0', 10),
       field: button.getAttribute('data-vote-field') || '',
       value: parseInt(button.getAttribute('data-vote-value') || '', 10),
       source: wrapper.getAttribute('data-vote-source') || 'recommendation_card'
     };
 
-    if (!payload.deal_nid || !payload.venue_nid || !payload.field || Number.isNaN(payload.value)) {
+    if (dealVote) {
+      payload.deal_nid = parseInt(button.getAttribute('data-deal-nid') || wrapper.getAttribute('data-deal-nid') || '0', 10);
+    }
+
+    if (!payload.venue_nid || !payload.field || Number.isNaN(payload.value) || (dealVote && !payload.deal_nid)) {
       setMessage(wrapper, 'Vote data is incomplete.', true);
       return;
     }

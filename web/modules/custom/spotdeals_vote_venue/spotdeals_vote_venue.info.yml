@@ -1,0 +1,8 @@
+name: SpotDeals Venue Vote
+type: module
+description: Provides venue voting for venue node pages.
+package: SpotDeals
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - spotdeals_vote:spotdeals_vote

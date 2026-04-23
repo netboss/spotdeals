@@ -53,8 +53,6 @@ function spotdeals_minimal_views_pre_render(ViewExecutable $view) {
     'has_results' => !empty($view->result),
   ];
 
-  // Replace the full view render array for HTMX requests with a clean,
-  // render-safe theme array. Do not assign render arrays to #children.
   $view->element = [
     '#theme' => 'spotdeals_results_only',
     '#data' => $data,
