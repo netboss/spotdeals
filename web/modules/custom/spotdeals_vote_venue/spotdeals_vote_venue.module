@@ -1,0 +1,119 @@
+<?php
+
+use Drupal\Component\Render\MarkupInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Render\Markup;
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_preprocess_views_view_fields().
+ */
+function spotdeals_vote_venue_preprocess_views_view_fields(array &$variables) {
+  $view = $variables['view'];
+
+  if ($view->id() !== 'deals_search_solr') {
+    return;
+  }
+
+  $row = $variables['row'];
+
+  if (empty($row->_entity) || !$row->_entity instanceof NodeInterface) {
+    return;
+  }
+
+  $deal = $row->_entity;
+
+  if (!$deal->hasField('field_venue') || $deal->get('field_venue')->isEmpty()) {
+    return;
+  }
+
+  $venue = $deal->get('field_venue')->entity;
+  if (!$venue instanceof NodeInterface) {
+    return;
+  }
+
+  /** @var \Drupal\spotdeals_vote_venue\VenueVoteAggregateStorage $storage */
+  $storage = \Drupal::service('spotdeals_vote_venue.aggregate_storage');
+  $aggregate = $storage->loadVenueAggregate((int) $venue->id());
+
+  if (empty($aggregate) || empty($aggregate['total_voters'])) {
+    return;
+  }
+
+  $worth_it_percent = (int) ($aggregate['worth_it_percent'] ?? 0);
+  $total_voters = (int) ($aggregate['total_voters'] ?? 0);
+  $sentiment_class = $worth_it_percent >= 50 ? 'is-positive' : 'is-negative';
+  $emoji = $worth_it_percent >= 50 ? '👍' : '👎';
+
+  $summary_markup = sprintf(
+    '<span class="spotdeals-venue-vote-summary spotdeals-venue-vote-summary--compact %s">(%d) %d%% %s</span>',
+    $sentiment_class,
+    $total_voters,
+    $worth_it_percent,
+    $emoji
+  );
+
+  foreach ($variables['fields'] as &$field) {
+    if (!isset($field->content)) {
+      continue;
+    }
+
+    $field_content = $field->content;
+    if ($field_content instanceof MarkupInterface) {
+      $field_content = (string) $field_content;
+    }
+
+    if (!is_string($field_content) || $field_content === '') {
+      continue;
+    }
+
+    if (strpos($field_content, 'class="venue-title"') === FALSE) {
+      continue;
+    }
+
+    if (strpos($field_content, 'spotdeals-venue-vote-summary--compact') !== FALSE) {
+      continue;
+    }
+
+    if (strpos($field_content, '</h2>') !== FALSE) {
+      $field_content = preg_replace(
+        '/<\/h2>/',
+        ' ' . $summary_markup . '</h2>',
+        $field_content,
+        1
+      );
+    }
+    else {
+      $field_content .= ' ' . $summary_markup;
+    }
+
+    $field->content = Markup::create($field_content);
+    break;
+  }
+}
+
+/**
+ * Implements hook_entity_view_alter().
+ */
+function spotdeals_vote_venue_entity_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display): void {
+  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'venue') {
+    return;
+  }
+
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if (!in_array($route_name, ['entity.node.canonical', 'entity.node.preview'], TRUE)) {
+    return;
+  }
+
+  /** @var \Drupal\spotdeals_vote_venue\VenueVoteRenderBuilder $render_builder */
+  $render_builder = \Drupal::service('spotdeals_vote_venue.render_builder');
+  $vote_build = $render_builder->build($entity, FALSE);
+
+  if ($vote_build === []) {
+    return;
+  }
+
+  $vote_build['#weight'] = -999;
+  $build['spotdeals_vote_venue'] = $vote_build;
+}

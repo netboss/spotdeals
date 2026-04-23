@@ -722,3 +722,7 @@ h1.page-title {
     margin-right: 0;
   }
 }
+
+.venue-title {
+  font-size: 33px;
+}

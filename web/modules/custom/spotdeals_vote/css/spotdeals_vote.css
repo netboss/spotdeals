@@ -296,3 +296,39 @@
     white-space: nowrap;
   }
 }
+
+/* Compact venue vote summary next to title */
+.spotdeals-venue-vote-summary--compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6b7280;
+  /* subtle gray */
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Slight emphasis on percentage */
+.spotdeals-venue-vote-summary--compact strong {
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Emoji alignment tweak */
+.spotdeals-venue-vote-summary--compact span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.spotdeals-venue-vote-summary--compact.is-positive {
+  color: #0f766e;
+  /* green */
+}
+
+.spotdeals-venue-vote-summary--compact.is-negative {
+  color: #dc2626;
+  /* red */
+}

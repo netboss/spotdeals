@@ -2,42 +2,42 @@
 
 declare(strict_types=1);
 
-namespace Drupal\spotdeals_vote_deal;
+namespace Drupal\spotdeals_vote_venue;
 
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
 
 /**
- * Builds the deal vote render array.
+ * Builds the venue vote render array.
  */
-final class DealVoteRenderBuilder {
+final class VenueVoteRenderBuilder {
 
   /**
    * Constructs the render builder.
    */
   public function __construct(
     private readonly AccountProxyInterface $currentUser,
-    private readonly DealVoteManager $voteManager,
+    private readonly VenueVoteManager $voteManager,
   ) {}
 
   /**
-   * Builds deal voting markup.
+   * Builds venue voting markup.
    *
    * @return array<string,mixed>
    *   Render array.
    */
-  public function build(NodeInterface $deal, ?NodeInterface $venue = NULL, bool $compact = FALSE): array {
-    if ($deal->bundle() !== 'deal') {
+  public function build(NodeInterface $venue, bool $compact = FALSE): array {
+    if ($venue->bundle() !== 'venue') {
       return [];
     }
 
-    $venueNid = $venue instanceof NodeInterface ? (int) $venue->id() : 0;
+    $venueNid = (int) $venue->id();
     if ($venueNid <= 0) {
       return [];
     }
 
-    $voteState = $this->voteManager->getDealVoteState((int) $deal->id(), (int) $this->currentUser->id());
+    $voteState = $this->voteManager->getVenueVoteState($venueNid, (int) $this->currentUser->id());
 
     $classes = ['spotdeals-vote'];
     $classes[] = $compact ? 'spotdeals-vote--compact' : 'spotdeals-vote--full';
@@ -62,37 +62,44 @@ final class DealVoteRenderBuilder {
           '#attributes' => [
             'class' => $classes,
             'data-spotdeals-vote' => '1',
-            'data-vote-scope' => 'deal:' . $deal->id(),
-            'data-vote-endpoint' => Url::fromRoute('spotdeals_vote_deal.submit')->toString(),
-            'data-vote-source' => 'recommendation_card',
-            'data-deal-nid' => (string) $deal->id(),
+            'data-vote-scope' => 'venue:' . $venueNid,
+            'data-vote-endpoint' => Url::fromRoute('spotdeals_vote_venue.submit')->toString(),
+            'data-vote-source' => 'venue_page',
             'data-venue-nid' => (string) $venueNid,
             'data-authenticated' => $this->currentUser->isAuthenticated() ? '1' : '0',
-            'data-login-url' => Url::fromRoute('user.login', [], ['query' => ['destination' => $deal->toUrl()->toString()]])->toString(),
+            'data-login-url' => Url::fromRoute('user.login', [], ['query' => ['destination' => $venue->toUrl()->toString()]])->toString(),
             'data-current-worth-it' => isset($voteState['user_vote']['worth_it']) && $voteState['user_vote']['worth_it'] !== NULL ? (string) $voteState['user_vote']['worth_it'] : '',
             'data-current-would-go-again' => isset($voteState['user_vote']['would_go_again']) && $voteState['user_vote']['would_go_again'] !== NULL ? (string) $voteState['user_vote']['would_go_again'] : '',
           ],
+        ],
+      ],
+      '#cache' => [
+        'tags' => [
+          'node:' . $venueNid,
+          'spotdeals_vote_venue:' . $venueNid,
+        ],
+        'contexts' => [
+          'user',
+          'route',
         ],
       ],
     ];
 
     $build['content']['vote']['worth_it_group'] = $this->buildVoteGroup(
       'worth_it',
-      (int) $deal->id(),
       $venueNid,
       $voteState,
-      'Was it worth it?',
-      'Worth it?',
+      'Worth visiting?',
+      'Worth it?'
     );
 
     if (!$compact) {
       $build['content']['vote']['would_go_again_group'] = $this->buildVoteGroup(
         'would_go_again',
-        (int) $deal->id(),
         $venueNid,
         $voteState,
         'Would you go back?',
-        'Go back?',
+        'Go back?'
       );
     }
 
@@ -118,7 +125,7 @@ final class DealVoteRenderBuilder {
    * @return array<string,mixed>
    *   Render array.
    */
-  private function buildVoteGroup(string $fieldName, int $dealNid, int $venueNid, array $voteState, string $label, ?string $mobileLabel = NULL): array {
+  private function buildVoteGroup(string $fieldName, int $venueNid, array $voteState, string $label, ?string $mobileLabel = NULL): array {
     $currentValue = $voteState['user_vote'][$fieldName] ?? NULL;
     $aggregate = $voteState['aggregate'] ?? [];
 
@@ -192,7 +199,6 @@ final class DealVoteRenderBuilder {
           'class' => $classes,
           'data-vote-field' => $fieldName,
           'data-vote-value' => (string) $value,
-          'data-deal-nid' => (string) $dealNid,
           'data-venue-nid' => (string) $venueNid,
           'aria-pressed' => ($currentValue !== NULL && (int) $currentValue === (int) $value) ? 'true' : 'false',
         ],
