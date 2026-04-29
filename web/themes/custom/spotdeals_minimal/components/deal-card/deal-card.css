@@ -274,6 +274,7 @@
 
 .spotdeals-deal-card__deal-category {
   margin-bottom: 0.45rem;
+  text-transform: capitalize;
 }
 
 .spotdeals-deal-card__deal-title {
