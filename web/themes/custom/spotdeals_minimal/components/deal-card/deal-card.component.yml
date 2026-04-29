@@ -1,0 +1,59 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/11.x/core/modules/sdc/src/metadata.schema.json
+name: Deal card
+status: stable
+description: Reusable SpotDeals search result card for venue/deal listings.
+props:
+  type: object
+  properties:
+    variant:
+      type: string
+      title: Variant
+      description: Optional visual variant for the card.
+      enum:
+        - default
+        - recommended
+    image:
+      type: ['string', 'null']
+      title: Image
+      description: Rendered image markup for the card media area.
+    venue_title:
+      type: ['string', 'null']
+      title: Venue title
+    venue_meta:
+      type: ['string', 'null']
+      title: Venue meta
+      description: Location and related venue metadata.
+    cuisine:
+      type: ['string', 'null']
+      title: Cuisine
+    deal_category:
+      type: ['string', 'null']
+      title: Deal category
+    offer:
+      type: ['string', 'null']
+      title: Offer text
+    schedule:
+      type: ['string', 'null']
+      title: Schedule
+    claim_link:
+      type: ['string', 'null']
+      title: Claim link
+    vote_summary:
+      type: ['string', 'null']
+      title: Vote summary
+slots:
+  media:
+    title: Media
+    description: Optional media slot override.
+  header:
+    title: Header
+    description: Optional header slot override.
+  deal:
+    title: Deal
+    description: Optional deal details slot override.
+  votes:
+    title: Votes
+    description: Optional vote summary slot override.
+  actions:
+    title: Actions
+    description: Optional actions slot override.

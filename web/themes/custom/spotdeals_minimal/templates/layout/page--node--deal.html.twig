@@ -1,0 +1,135 @@
+{#
+/**
+ * @file
+ * SpotDeals Minimal page layout.
+ *
+ * Keeps Olivero's original header markup/data selectors so the sticky/header
+ * behaviors continue to work, while preserving the SpotDeals three-column main
+ * content shell used by the Deals redesign work.
+ */
+#}
+{% set has_sidebar_left = page.sidebar_left ? true : false %}
+{% set has_sidebar_right = (page.sidebar or spotdeals_deal_sidebar_venue) ? true : false %}
+{% set main_classes = [
+  'spotdeals-page-main',
+  has_sidebar_left ? 'spotdeals-page-main--has-left-sidebar',
+  has_sidebar_right ? 'spotdeals-page-main--has-right-sidebar',
+] %}
+
+<div id="page-wrapper" class="page-wrapper">
+  <div id="page">
+
+    {% if page.header or page.primary_menu or page.secondary_menu %}
+      <header id="header" class="site-header" data-drupal-selector="site-header">
+
+        {# Gets fixed by Olivero JavaScript at wide widths. #}
+        <div class="site-header__fixable" data-drupal-selector="site-header-fixable">
+          <div class="site-header__initial">
+            <button class="sticky-header-toggle" data-drupal-selector="sticky-header-toggle" role="switch" aria-controls="site-header__inner" aria-label="{{ 'Sticky header'|t }}" aria-checked="false">
+              <span class="sticky-header-toggle__icon">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+            </button>
+          </div>
+
+          {# Needs to extend full width so box shadow will also extend. #}
+          <div id="site-header__inner" class="site-header__inner" data-drupal-selector="site-header-inner">
+            <div class="container site-header__inner__container">
+
+              {{ page.header }}
+
+              {% if page.primary_menu or page.secondary_menu %}
+                <div class="mobile-buttons" data-drupal-selector="mobile-buttons">
+                  <button class="mobile-nav-button" data-drupal-selector="mobile-nav-button" aria-label="{{ 'Main Menu'|t }}" aria-controls="header-nav" aria-expanded="false">
+                    <span class="mobile-nav-button__label">{{ 'Menu'|t }}</span>
+                    <span class="mobile-nav-button__icon"></span>
+                  </button>
+                </div>
+
+                <div id="header-nav" class="header-nav" data-drupal-selector="header-nav">
+                  {{ page.primary_menu }}
+                  {{ page.secondary_menu }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </header>
+    {% endif %}
+
+    <div id="main-wrapper" class="layout-main-wrapper layout-container">
+      <div id="main" class="layout-main">
+        <div class="main-content">
+          <a id="main-content" tabindex="-1"></a>
+          <div class="main-content__container container">
+
+            {{ page.hero }}
+
+            {% if page.highlighted %}
+              <div class="highlighted spotdeals-highlighted">
+                {{ page.highlighted }}
+              </div>
+            {% endif %}
+
+            {% if page.breadcrumb %}
+              <div class="breadcrumb spotdeals-breadcrumb">
+                {{ page.breadcrumb }}
+              </div>
+            {% endif %}
+
+            <div{{ attributes.addClass(main_classes) }}>
+              {% if page.sidebar_left %}
+                <aside class="spotdeals-sidebar-left" role="complementary" aria-label="{{ 'Search and filters'|t }}">
+                  {{ page.sidebar_left }}
+                </aside>
+              {% endif %}
+
+              <main class="spotdeals-main-content">
+                {{ page.content_above }}
+                {{ page.content }}
+                {{ page.content_below }}
+              </main>
+
+              {% if page.sidebar or spotdeals_deal_sidebar_venue %}
+                <aside class="region region--sidebar layout-sidebar-second spotdeals-sidebar-right" role="complementary" aria-label="{{ 'Deal venue'|t }}">
+                  {% if spotdeals_deal_sidebar_venue %}
+                    <div class="spotdeals-deal-sidebar-venue">
+                      {{ spotdeals_deal_sidebar_venue }}
+                      {% if spotdeals_deal_sidebar_claim %}
+                        <div class="spotdeals-deal-sidebar-claim">
+                          {{ spotdeals_deal_sidebar_claim }}
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+
+                  {% if page.sidebar %}
+                    {{ page.sidebar }}
+                  {% endif %}
+                </aside>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="social-bar">
+          {{ page.social }}
+        </div>
+      </div>
+    </div>
+
+    {% if page.footer_top or page.footer_bottom %}
+      <footer class="site-footer">
+        <div class="site-footer__inner container">
+          {{ page.footer_top }}
+          {{ page.footer_bottom }}
+        </div>
+      </footer>
+    {% endif %}
+
+    <div class="overlay" data-drupal-selector="overlay"></div>
+
+  </div>
+</div>

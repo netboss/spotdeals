@@ -1,0 +1,11 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/11.x/core/modules/sdc/src/metadata.schema.json
+name: Vote summary
+status: stable
+description: Reusable two-column vote summary for SpotDeals cards.
+props:
+  type: object
+  properties:
+    items:
+      type: array
+      title: Vote items
+      description: List of vote metrics, each with label, percent, and count.

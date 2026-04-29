@@ -82,7 +82,7 @@ final class DealVoteRenderBuilder {
       (int) $deal->id(),
       $venueNid,
       $voteState,
-      'Was it worth it?',
+      'Worth it?',
       'Worth it?',
     );
 
@@ -92,7 +92,7 @@ final class DealVoteRenderBuilder {
         (int) $deal->id(),
         $venueNid,
         $voteState,
-        'Would you go back?',
+        'Go back?',
         'Go back?',
       );
     }

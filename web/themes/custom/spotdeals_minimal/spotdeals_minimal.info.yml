@@ -17,6 +17,7 @@ regions:
   breadcrumb: Breadcrumb
   social: Social Bar
   content_above: Content Above
+  sidebar_left: Sidebar left
   content: Content
   sidebar: Sidebar
   content_below: Content Below

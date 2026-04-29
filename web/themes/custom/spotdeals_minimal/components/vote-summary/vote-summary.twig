@@ -1,0 +1,29 @@
+{#
+/**
+ * @file
+ * SpotDeals vote summary component.
+ */
+#}
+{% set items = items|default([]) %}
+{% set component_attributes = attributes|default(create_attribute()) %}
+
+{% if items %}
+  <div{{ component_attributes.addClass('spotdeals-vote-summary') }}>
+    {% for item in items %}
+      <div class="spotdeals-vote-summary__item">
+        {% if item.label %}
+          <div class="spotdeals-vote-summary__label">{{ item.label }}</div>
+        {% endif %}
+        {% if item.percent %}
+          <div class="spotdeals-vote-summary__value">
+            <span class="spotdeals-vote-summary__icon" aria-hidden="true">👍</span>
+            <span class="spotdeals-vote-summary__percent">{{ item.percent }}</span>
+          </div>
+        {% endif %}
+        {% if item.count %}
+          <div class="spotdeals-vote-summary__count">{{ item.count }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

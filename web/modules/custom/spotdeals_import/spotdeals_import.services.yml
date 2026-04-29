@@ -1,0 +1,12 @@
+services:
+  spotdeals_import.preserve_edited_imported_nodes_subscriber:
+    class: Drupal\spotdeals_import\EventSubscriber\PreserveEditedImportedNodesSubscriber
+    arguments:
+      - '@entity_type.manager'
+      - '@logger.channel.spotdeals_import'
+    tags:
+      - { name: event_subscriber }
+
+  logger.channel.spotdeals_import:
+    parent: logger.channel_base
+    arguments: ['spotdeals_import']
