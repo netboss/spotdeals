@@ -1,0 +1,53 @@
+{#
+/**
+ * @file
+ * Field row override for the Deals Search (Solr) view.
+ *
+ * This template composes the rendered Views fields into the reusable
+ * spotdeals_minimal:deal-card SDC. The view still owns the data source;
+ * this template only changes presentation.
+ */
+#}
+{% set venue_vote_summary %}
+  {% for key, field in fields %}
+    {% set key_lower = key|lower %}
+    {% if 'venue' in key_lower and ('vote' in key_lower or 'worth' in key_lower or 'review' in key_lower or 'visit' in key_lower) %}
+      {{ field.content }}
+    {% endif %}
+  {% endfor %}
+{% endset %}
+
+{% set deal_vote_summary %}
+  {% for key, field in fields %}
+    {% set key_lower = key|lower %}
+    {% if 'deal' in key_lower and ('vote' in key_lower or 'worth' in key_lower or 'review' in key_lower) %}
+      {{ field.content }}
+    {% endif %}
+  {% endfor %}
+{% endset %}
+
+{% set fallback_vote_summary %}
+  {% if venue_vote_summary|trim is empty and deal_vote_summary|trim is empty %}
+    {% for key, field in fields %}
+      {% set key_lower = key|lower %}
+      {% if 'vote' in key_lower or 'worth' in key_lower or 'review' in key_lower %}
+        {{ field.content }}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endset %}
+
+{{ include('spotdeals_minimal:deal-card', {
+  variant: 'default',
+  image: spotdeals_deal_card_image|default(''),
+  venue_title: fields.title_1.content|default(''),
+  venue_meta: fields.field_address.content|default(''),
+  cuisine: fields.name_2.content|default(''),
+  deal_title: fields.title.content|default(''),
+  deal_category: fields.name_1.content|default(''),
+  offer: fields.field_price_offer_text.content|default(''),
+  schedule: fields.field_start_time.content|default(''),
+  claim_link: fields.nid.content|default(''),
+  venue_vote_summary: spotdeals_venue_vote_summary|default(venue_vote_summary|trim is not empty ? venue_vote_summary|trim : fallback_vote_summary|trim),
+  deal_vote_summary: spotdeals_deal_vote_summary|default(deal_vote_summary|trim)
+}, with_context = false) }}

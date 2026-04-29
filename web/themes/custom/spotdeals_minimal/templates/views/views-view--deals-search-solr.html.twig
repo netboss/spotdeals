@@ -73,11 +73,11 @@
     {% endif %}
 
     {% if spotdeals_direct_recommendation %}
-      <div class="view-content" data-result-count="1">
+      <div class="view-content spotdeals-finder__cards" data-result-count="1">
         {{ spotdeals_direct_recommendation }}
       </div>
     {% elseif rows %}
-      <div class="view-content" data-result-count="{{ spotdeals_result_count }}">
+      <div class="view-content spotdeals-finder__cards" data-result-count="{{ spotdeals_result_count }}">
         {{ rows }}
       </div>
     {% elseif empty %}

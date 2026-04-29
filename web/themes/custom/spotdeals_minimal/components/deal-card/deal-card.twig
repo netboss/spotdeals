@@ -1,0 +1,160 @@
+{#
+/**
+ * @file
+ * SpotDeals deal card component.
+ */
+#}
+{% set variant = variant|default('default') %}
+{% set card_classes = [
+  'spotdeals-deal-card',
+  variant ? 'spotdeals-deal-card--' ~ variant,
+  image ? 'spotdeals-deal-card--has-image' : 'spotdeals-deal-card--no-image'
+] %}
+{% set component_attributes = attributes|default(create_attribute()) %}
+{% set resolved_venue_vote_summary = venue_vote_summary|default(vote_summary|default('')) %}
+{% set primary_cuisine = cuisine|default('')|striptags|split(',')|first|trim %}
+{% set cuisine_slug = primary_cuisine|replace({
+  '&amp;': 'and',
+  '&': 'and',
+  '/': '-',
+  '+': '-',
+  ' ': '-'
+})|lower %}
+
+<article{{ component_attributes.addClass(card_classes) }}>
+  {% block media %}
+    <div class="spotdeals-deal-card__media">
+      {% if image %}
+        {{ image }}
+      {% else %}
+        <div class="spotdeals-deal-card__image-placeholder spotdeals-deal-card__image--{{ cuisine_slug ?: 'default' }}" aria-hidden="true"></div>
+      {% endif %}
+    </div>
+  {% endblock %}
+
+  {% if deal_category %}
+    <div class="spotdeals-deal-card__mobile-badge" aria-hidden="true">
+      {{ deal_category }}
+    </div>
+  {% endif %}
+
+  <div class="spotdeals-deal-card__content">
+    <div class="spotdeals-deal-card__main">
+      {% block header %}
+        {% if venue_title %}
+          <div class="spotdeals-deal-card__venue-title venue-title">
+            {{ venue_title }}
+          </div>
+        {% endif %}
+
+        {% if venue_meta %}
+          <div class="spotdeals-deal-card__venue-meta">
+            <span class="spotdeals-deal-card__meta-icon" aria-hidden="true"></span>
+            {{ venue_meta }}
+          </div>
+        {% endif %}
+
+        {% if cuisine %}
+          <div class="spotdeals-deal-card__cuisine">
+            <span>{{ cuisine }}</span>
+          </div>
+        {% endif %}
+      {% endblock %}
+
+      {% block venue_votes %}
+        <div class="spotdeals-deal-card__venue-votes" data-spotdeals-card-venue-votes>
+          {% if resolved_venue_vote_summary %}
+            {{ resolved_venue_vote_summary }}
+          {% endif %}
+        </div>
+      {% endblock %}
+    </div>
+
+    <div class="spotdeals-deal-card__mobile-summary-panel">
+      <div class="spotdeals-deal-card__mobile-deal-summary">
+        {% if deal_category %}
+          <div class="spotdeals-deal-card__mobile-deal-category">
+            {{ deal_category }}
+          </div>
+        {% endif %}
+
+        {% if offer %}
+          <div class="spotdeals-deal-card__mobile-offer">
+            {{ offer }}
+          </div>
+        {% elseif deal_title %}
+          <div class="spotdeals-deal-card__mobile-offer">
+            {{ deal_title }}
+          </div>
+        {% endif %}
+
+        {% if schedule %}
+          <div class="spotdeals-deal-card__mobile-schedule">
+            <span class="spotdeals-deal-card__schedule-icon" aria-hidden="true">◷</span>
+            {{ schedule }}
+          </div>
+        {% endif %}
+      </div>
+
+      {% if resolved_venue_vote_summary %}
+        <div class="spotdeals-deal-card__mobile-votes" data-spotdeals-card-mobile-venue-votes></div>
+      {% endif %}
+    </div>
+
+    {% if claim_link %}
+      <div class="spotdeals-deal-card__mobile-actions">
+        <span class="spotdeals-deal-card__claim-icon" aria-hidden="true"></span>
+        {{ claim_link }}
+      </div>
+    {% endif %}
+
+    <div class="spotdeals-deal-card__deal-panel">
+      {% block deal %}
+        {% if deal_category or deal_title or offer or schedule %}
+          <div class="spotdeals-deal-card__deal">
+            {% if deal_category %}
+              <div class="spotdeals-deal-card__deal-category">
+                {{ deal_category }}
+              </div>
+            {% endif %}
+
+            {% if deal_title %}
+              <div class="spotdeals-deal-card__deal-title views-field views-field-title">
+                {{ deal_title }}
+              </div>
+            {% else %}
+              <div class="spotdeals-deal-card__vote-anchor views-field views-field-title"></div>
+            {% endif %}
+
+            {% if offer %}
+              <div class="spotdeals-deal-card__offer">
+                {{ offer }}
+              </div>
+            {% endif %}
+
+            {% if schedule %}
+              <div class="spotdeals-deal-card__schedule">
+                <span class="spotdeals-deal-card__schedule-icon" aria-hidden="true">◷</span>
+                {{ schedule }}
+              </div>
+            {% endif %}
+
+            {% if claim_link %}
+              <div class="spotdeals-deal-card__actions">
+                {{ claim_link }}
+              </div>
+            {% endif %}
+
+            {% block deal_votes %}
+              <div class="spotdeals-deal-card__deal-votes" data-spotdeals-card-deal-votes>
+                {% if deal_vote_summary|default('') %}
+                  {{ deal_vote_summary }}
+                {% endif %}
+              </div>
+            {% endblock %}
+          </div>
+        {% endif %}
+      {% endblock %}
+    </div>
+  </div>
+</article>

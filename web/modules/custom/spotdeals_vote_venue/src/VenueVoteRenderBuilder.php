@@ -6,6 +6,7 @@ namespace Drupal\spotdeals_vote_venue;
 
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
+use Drupal\Core\Render\Markup;
 use Drupal\node\NodeInterface;
 
 /**
@@ -89,7 +90,7 @@ final class VenueVoteRenderBuilder {
       'worth_it',
       $venueNid,
       $voteState,
-      'Worth visiting?',
+      'Worth it?',
       'Worth it?'
     );
 
@@ -98,7 +99,7 @@ final class VenueVoteRenderBuilder {
         'would_go_again',
         $venueNid,
         $voteState,
-        'Would you go back?',
+        'Go back?',
         'Go back?'
       );
     }
@@ -252,15 +253,23 @@ final class VenueVoteRenderBuilder {
     }
 
     $percent = (string) round(($yesCount / $totalCount) * 100);
-    $icon = $yesCount >= ($totalCount - $yesCount) ? '👍' : '👎';
+    $is_positive = $yesCount >= ($totalCount - $yesCount);
+    $icon = $is_positive ? '👍' : '👎';
+    $sentiment_class = $is_positive ? 'is-positive' : 'is-negative';
 
     return [
       'has_votes' => TRUE,
-      'count_label' => '(' . $this->formatCompactCount($totalCount) . ')',
-      'percent_label' => (string) t('@percent% @icon', [
-        '@percent' => $percent,
-        '@icon' => $icon,
-      ]),
+      'count_label' => Markup::create(sprintf(
+        '<span class="%s">(%s)</span>',
+        $sentiment_class,
+        $this->formatCompactCount($totalCount)
+      )),
+      'percent_label' => Markup::create(sprintf(
+        '<span class="%s">%s%% %s</span>',
+        $sentiment_class,
+        $percent,
+        $icon
+      )),
     ];
   }
 

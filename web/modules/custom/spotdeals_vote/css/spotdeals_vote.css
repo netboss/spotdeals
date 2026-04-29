@@ -176,11 +176,13 @@
   background: transparent;
 }
 
+/*
 .spotdeals-result-card-with-vote .spotdeals-vote__group+.spotdeals-vote__group,
 .spotdeals-result-card-with-vote .spotdeals-vote__summary,
 .spotdeals-result-card-with-vote .spotdeals-vote__message {
   display: none;
 }
+*/
 
 .spotdeals-result-card-with-vote .spotdeals-vote__group {
   display: grid;
@@ -192,8 +194,9 @@
 }
 
 .spotdeals-result-card-with-vote .spotdeals-vote__label {
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   font-weight: 600;
+  line-height: 1.2;
 }
 
 .spotdeals-result-card-with-vote .spotdeals-vote__buttons {
@@ -213,6 +216,15 @@
 
 /* Mobile */
 @media (max-width: 640px) {
+  .spotdeals-deal-card__mobile-votes .spotdeals-vote__buttons {
+    display: none;
+  }
+
+  .spotdeals-result-card-with-vote .spotdeals-vote__group {
+    display: block;
+    margin-top: 0;
+  }
+
   .spotdeals-vote__label-text--desktop {
     display: none;
   }
@@ -324,13 +336,15 @@
 }
 
 .spotdeals-vote__group-count .is-positive,
-.spotdeals-venue-vote-summary--compact.is-positive {
+.spotdeals-venue-vote-summary--compact.is-positive,
+.spotdeals-vote__group-count.is-positive {
   color: #0f766e;
   /* green */
 }
 
 .spotdeals-vote__group-count .is-negative,
-.spotdeals-venue-vote-summary--compact.is-negative {
+.spotdeals-venue-vote-summary--compact.is-negative,
+.spotdeals-vote__group-count.is-negative {
   color: #dc2626;
   /* red */
 }

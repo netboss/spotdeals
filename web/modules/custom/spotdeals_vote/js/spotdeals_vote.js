@@ -51,11 +51,36 @@
     const total = yes + no;
 
     if (total <= 0) {
-      return 'No votes';
+      return {
+        hasVotes: false,
+        html: 'No votes'
+      };
     }
 
     const percent = Math.round((yes / total) * 100);
-    return `(${formatCompactCount(total)}) ${percent}% 👍`;
+    const isPositive = yes >= no;
+    const sentimentClass = isPositive ? 'is-positive' : 'is-negative';
+    const icon = isPositive ? '👍' : '👎';
+
+    return {
+      hasVotes: true,
+      html: `<span class="${sentimentClass}">(${formatCompactCount(total)})</span> <span class="${sentimentClass}">${percent}% ${icon}</span>`
+    };
+  }
+
+  function updateGroupCount(group, metric) {
+    if (!group || !metric) {
+      return;
+    }
+
+    group.classList.remove('is-positive', 'is-negative');
+
+    if (!metric.hasVotes) {
+      group.textContent = metric.html;
+      return;
+    }
+
+    group.innerHTML = metric.html;
   }
 
   function setMessage(wrapper, message, isError) {
@@ -98,13 +123,8 @@
     const wouldGoAgainCount = wrapper.querySelector('[data-vote-group-count="would_go_again"]');
     const count = wrapper.querySelector('[data-vote-summary="count"]');
 
-    if (worthItCount) {
-      worthItCount.textContent = buildMetricLabel(worthItYes, worthItNo);
-    }
-
-    if (wouldGoAgainCount) {
-      wouldGoAgainCount.textContent = buildMetricLabel(wouldGoAgainYes, wouldGoAgainNo);
-    }
+    updateGroupCount(worthItCount, buildMetricLabel(worthItYes, worthItNo));
+    updateGroupCount(wouldGoAgainCount, buildMetricLabel(wouldGoAgainYes, wouldGoAgainNo));
 
     if (count) {
       count.textContent = totalVoters > 0 ? `(${formatCompactCount(totalVoters)})` : 'No votes';

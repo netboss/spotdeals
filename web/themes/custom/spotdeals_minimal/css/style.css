@@ -726,3 +726,2487 @@ h1.page-title {
 .venue-title {
   font-size: 33px;
 }
+
+/* SD-088 redesign workbench: make the Deals Finder results area closer to the new card layout. */
+.view-id-deals_search_solr.view-display-id-page_1 {
+  width: min(100%, var(--spotdeals-content-max-width));
+  margin-inline: auto;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder {
+  width: 100%;
+  max-width: none;
+  margin-inline: auto;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .view-content,
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .view-empty,
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .attachment-after,
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .attachment-before,
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .pager {
+  margin-top: 1rem;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .view-header {
+  color: var(--spotdeals-text);
+  font-size: 1rem;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__cards {
+  display: block;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters {
+  border-color: var(--spotdeals-border);
+  border-radius: 0.65rem;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+}
+
+@media (min-width: 1024px) {
+  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder {
+    gap: 1.4rem;
+  }
+}
+
+/* SD-088 desktop mock-up alignment pass. */
+.path-frontpage h1.page-title,
+.path-deals h1.page-title {
+  display: none;
+}
+
+.path-frontpage .layout-main-wrapper,
+.path-deals .layout-main-wrapper {
+  background: #fff;
+}
+
+@media (min-width: 1024px) {
+  .path-frontpage .main-content__container,
+  .path-deals .main-content__container {
+    width: 100%;
+    max-width: none;
+    display: block;
+    margin-inline: auto;
+    padding-inline: 0;
+  }
+
+  .path-frontpage .main-content,
+  .path-deals .main-content {
+    min-width: 0;
+  }
+
+  .path-frontpage .layout-sidebar-second,
+  .path-deals .layout-sidebar-second,
+  .path-frontpage .region--sidebar,
+  .path-deals .region--sidebar {
+    min-width: 0;
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 {
+  width: 100%;
+  max-width: none;
+  margin-block: 26px 48px;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  display: grid;
+  gap: 24px;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__intro {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder {
+    grid-template-columns: 310px minmax(0, 1fr);
+    grid-template-areas: "filters results";
+    gap: 34px;
+  }
+
+  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters {
+    grid-area: filters;
+  }
+
+  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results {
+    grid-area: results;
+  }
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters {
+  align-self: start;
+  border: 1px solid #e1e6ee;
+  border-radius: 0.65rem;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  padding: 1.35rem;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before {
+  content: "Filters";
+  display: block;
+  margin-bottom: 1.15rem;
+  color: var(--spotdeals-accent-dark);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters input[type="text"],
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters input[type="search"],
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters select {
+  min-height: 2.6rem;
+  border-color: #dfe5ee;
+  border-radius: 0.45rem;
+  font-size: 0.95rem;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .view-header {
+  min-height: 42px;
+  margin: 0 0 14px;
+  color: #2f3744;
+  font-size: 1rem;
+  line-height: 2.6;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .view-content,
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .view-empty,
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .attachment-after,
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .attachment-before,
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .pager {
+  margin-top: 0;
+}
+
+.path-frontpage .layout-sidebar-second .block,
+.path-deals .layout-sidebar-second .block,
+.path-frontpage .region--sidebar .block,
+.path-deals .region--sidebar .block {
+  border: 1px solid #e1e6ee;
+  border-radius: 0.55rem;
+  background: #f7f9fc;
+  box-shadow: none;
+  padding: 1.25rem 1rem;
+}
+
+.path-frontpage .layout-sidebar-second .block h2,
+.path-deals .layout-sidebar-second .block h2,
+.path-frontpage .region--sidebar .block h2,
+.path-deals .region--sidebar .block h2 {
+  margin: 0 0 1.15rem;
+  padding: 0;
+  color: #4a5568;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.path-frontpage .layout-sidebar-second .block a,
+.path-deals .layout-sidebar-second .block a,
+.path-frontpage .region--sidebar .block a,
+.path-deals .region--sidebar .block a {
+  color: var(--spotdeals-accent-dark);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  text-decoration: none;
+}
+
+.path-frontpage .layout-sidebar-second .block a:hover,
+.path-deals .layout-sidebar-second .block a:hover,
+.path-frontpage .region--sidebar .block a:hover,
+.path-deals .region--sidebar .block a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 1023px) {
+  .view-id-deals_search_solr.view-display-id-page_1 {
+    margin-block: 1rem 2rem;
+  }
+
+  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters {
+    order: 1;
+  }
+
+  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results {
+    order: 2;
+  }
+}
+
+/* SD-088 v4: restore the real search widget and keep this pass focused on card/layout polish.
+ * The current production UX still relies on the simple exposed search form; we should not
+ * move it into a future left filter sidebar until those filters exist.
+ */
+.view-id-deals_search_solr.view-display-id-page_1 > form {
+  display: block;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto 1rem;
+  padding: 1.25rem;
+  border: 1px solid #d9e0ea;
+  border-radius: 0.5rem;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.035);
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 > form .form-item,
+.view-id-deals_search_solr.view-display-id-page_1 > form .js-form-item {
+  margin-top: 0;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 > form input[type="text"],
+.view-id-deals_search_solr.view-display-id-page_1 > form input[type="search"] {
+  width: 100%;
+  min-height: 2.65rem;
+  border: 1px solid #d9e0ea;
+  border-radius: 0.35rem;
+  font-size: 1rem;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 > form .form-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 > form input[type="submit"] {
+  border: 0;
+  border-radius: 0.35rem;
+  background: var(--spotdeals-accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 > form input[type="reset"],
+.view-id-deals_search_solr.view-display-id-page_1 > form .button:not(.button--primary) {
+  border: 1px solid #d9e0ea;
+  border-radius: 0.35rem;
+  background: #fff;
+  color: #111827;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "intro"
+    "filters"
+    "results";
+  gap: 1rem;
+  max-width: none;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__intro {
+  display: block;
+  grid-area: intro;
+  max-width: 760px;
+  margin-inline: auto;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  text-align: left;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters {
+  grid-area: filters;
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters:empty {
+  display: none;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before {
+  content: none;
+}
+
+.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results {
+  grid-area: results;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "intro"
+      "filters"
+      "results";
+    gap: 1rem;
+  }
+
+  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters,
+  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results {
+    grid-area: auto;
+  }
+
+  .path-frontpage .main-content__container,
+  .path-deals .main-content__container {
+    display: block;
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* SD-088 v5: first-class left sidebar region and three-column page shell. */
+.spotdeals-layout-container {
+  min-height: 100vh;
+}
+
+.spotdeals-site-header__inner,
+.spotdeals-page-main,
+.spotdeals-content-above,
+.spotdeals-content-below,
+.spotdeals-site-footer__top,
+.spotdeals-site-footer__bottom {
+  width: min(100% - 2rem, 1400px);
+  margin-inline: auto;
+}
+
+.spotdeals-site-header {
+  background: #fff;
+  border-bottom: 1px solid #d8dee8;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.spotdeals-site-header__inner {
+  display: grid;
+  grid-template-columns: minmax(260px, 420px) minmax(0, 1fr);
+  align-items: stretch;
+  min-height: 104px;
+}
+
+.spotdeals-site-header__branding {
+  display: flex;
+  align-items: center;
+  background: var(--spotdeals-accent);
+  padding: 1.25rem 2rem;
+  color: #fff;
+}
+
+.spotdeals-site-header__branding a,
+.spotdeals-site-header__branding .site-branding__name,
+.spotdeals-site-header__branding .site-branding__slogan {
+  color: #fff;
+}
+
+.spotdeals-site-header__branding .site-branding__name,
+.spotdeals-site-header__branding .site-branding__name a {
+  font-size: clamp(1.85rem, 2.4vw, 2.45rem);
+  font-weight: 800;
+  line-height: 1.05;
+  text-decoration: none;
+}
+
+.spotdeals-site-header__branding .site-branding__slogan {
+  margin-top: 0.35rem;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.spotdeals-site-header__navigation {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1.25rem;
+  padding-inline: 2rem;
+}
+
+.spotdeals-page-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  padding-block: 2rem 3rem;
+}
+
+.spotdeals-page-main--has-left-sidebar.spotdeals-page-main--has-right-sidebar {
+  grid-template-columns: 300px minmax(0, 1fr) 230px;
+  align-items: start;
+}
+
+.spotdeals-page-main--has-left-sidebar:not(.spotdeals-page-main--has-right-sidebar) {
+  grid-template-columns: 300px minmax(0, 1fr);
+  align-items: start;
+}
+
+.spotdeals-page-main--has-right-sidebar:not(.spotdeals-page-main--has-left-sidebar) {
+  grid-template-columns: minmax(0, 1fr) 230px;
+  align-items: start;
+}
+
+.spotdeals-sidebar-left,
+.spotdeals-sidebar-right {
+  min-width: 0;
+}
+
+.spotdeals-sidebar-left > .block,
+.spotdeals-sidebar-right > .block,
+.spotdeals-sidebar-left .views-exposed-form,
+.spotdeals-sidebar-left form {
+  background: #fff;
+  border: 1px solid var(--spotdeals-border);
+  border-radius: 0.65rem;
+  box-shadow: var(--spotdeals-shadow-soft);
+}
+
+.spotdeals-sidebar-left > .block,
+.spotdeals-sidebar-right > .block {
+  padding: 1.25rem;
+}
+
+.spotdeals-sidebar-left form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.spotdeals-sidebar-left .form-item,
+.spotdeals-sidebar-left .js-form-item {
+  margin-block: 0;
+}
+
+.spotdeals-sidebar-left input[type="text"],
+.spotdeals-sidebar-left input[type="search"],
+.spotdeals-sidebar-left input[type="number"],
+.spotdeals-sidebar-left select,
+.spotdeals-sidebar-left textarea {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid #cfd7e3;
+  border-radius: 0.4rem;
+  padding: 0.65rem 0.75rem;
+  background: #fff;
+}
+
+.spotdeals-sidebar-left .form-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.spotdeals-sidebar-left input[type="submit"],
+.spotdeals-sidebar-left .button--primary {
+  background: var(--spotdeals-accent);
+  border-color: var(--spotdeals-accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.spotdeals-sidebar-left input[type="reset"],
+.spotdeals-sidebar-left .button:not(.button--primary) {
+  background: #fff;
+  border: 1px solid var(--spotdeals-border);
+  color: var(--spotdeals-text);
+}
+
+.spotdeals-main-content {
+  min-width: 0;
+}
+
+.spotdeals-main-content .view-id-deals_search_solr {
+  margin-block: 0;
+}
+
+.spotdeals-main-content .spotdeals-finder {
+  max-width: none;
+  width: 100%;
+}
+
+.spotdeals-main-content .spotdeals-finder__results {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.spotdeals-sidebar-right .block-spotdeals-search-insights,
+.spotdeals-sidebar-right .block {
+  background: #f7f9fc;
+}
+
+@media (max-width: 1100px) {
+  .spotdeals-page-main--has-left-sidebar.spotdeals-page-main--has-right-sidebar,
+  .spotdeals-page-main--has-left-sidebar:not(.spotdeals-page-main--has-right-sidebar),
+  .spotdeals-page-main--has-right-sidebar:not(.spotdeals-page-main--has-left-sidebar) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .spotdeals-sidebar-left,
+  .spotdeals-sidebar-right {
+    order: 2;
+  }
+
+  .spotdeals-main-content {
+    order: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .spotdeals-site-header__inner {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .spotdeals-site-header__branding,
+  .spotdeals-site-header__navigation {
+    padding-inline: 1rem;
+  }
+
+  .spotdeals-site-header__navigation {
+    justify-content: flex-start;
+    min-height: 3.5rem;
+    overflow-x: auto;
+  }
+
+  .spotdeals-page-main {
+    width: min(100% - 1rem, 100%);
+    gap: 1rem;
+    padding-block: 1rem 2rem;
+  }
+}
+
+/* SD-088 v6: stabilize the new left/content/right page grid.
+ * The previous pass allowed Olivero/page-width and earlier Deals Finder rules to
+ * fight each other, which pushed the left search block and results out of their
+ * intended columns. These rules explicitly assign each region to a grid area and
+ * keep the three-column shell active on desktop-sized viewports.
+ */
+.spotdeals-page-main {
+  display: grid;
+  width: min(calc(100% - 2rem), 1360px);
+  margin-inline: auto;
+  padding-block: 2rem 3.5rem;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.spotdeals-page-main--has-left-sidebar.spotdeals-page-main--has-right-sidebar {
+  grid-template-columns: 250px minmax(0, 1fr) 210px;
+  grid-template-areas: "left main right";
+}
+
+.spotdeals-page-main--has-left-sidebar:not(.spotdeals-page-main--has-right-sidebar) {
+  grid-template-columns: 250px minmax(0, 1fr);
+  grid-template-areas: "left main";
+}
+
+.spotdeals-page-main--has-right-sidebar:not(.spotdeals-page-main--has-left-sidebar) {
+  grid-template-columns: minmax(0, 1fr) 210px;
+  grid-template-areas: "main right";
+}
+
+.spotdeals-sidebar-left {
+  grid-area: left;
+  width: 100%;
+  max-width: none;
+}
+
+.spotdeals-main-content {
+  grid-area: main;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.spotdeals-sidebar-right {
+  grid-area: right;
+  width: 100%;
+  max-width: none;
+}
+
+.spotdeals-sidebar-left > .block,
+.spotdeals-sidebar-left form,
+.spotdeals-sidebar-right > .block {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.spotdeals-main-content .view-id-deals_search_solr,
+.spotdeals-main-content .spotdeals-finder,
+.spotdeals-main-content .spotdeals-finder__results,
+.spotdeals-main-content .spotdeals-finder__results .view-content {
+  width: 100%;
+  max-width: none;
+}
+
+.spotdeals-main-content .spotdeals-finder {
+  margin: 0;
+}
+
+.spotdeals-main-content .spotdeals-finder__intro {
+  display: none;
+}
+
+.spotdeals-sidebar-right .block,
+.spotdeals-sidebar-right .block-spotdeals-search-insights {
+  padding: 1.35rem 1.25rem;
+  border: 1px solid var(--spotdeals-border);
+  border-radius: 0.55rem;
+  box-shadow: none;
+}
+
+@media (min-width: 1300px) {
+  .spotdeals-page-main {
+    width: min(calc(100% - 3rem), 1500px);
+    gap: 2rem;
+  }
+
+  .spotdeals-page-main--has-left-sidebar.spotdeals-page-main--has-right-sidebar {
+    grid-template-columns: 300px minmax(0, 1fr) 230px;
+  }
+
+  .spotdeals-page-main--has-left-sidebar:not(.spotdeals-page-main--has-right-sidebar) {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+
+  .spotdeals-page-main--has-right-sidebar:not(.spotdeals-page-main--has-left-sidebar) {
+    grid-template-columns: minmax(0, 1fr) 230px;
+  }
+}
+
+@media (max-width: 900px) {
+  .spotdeals-page-main--has-left-sidebar.spotdeals-page-main--has-right-sidebar,
+  .spotdeals-page-main--has-left-sidebar:not(.spotdeals-page-main--has-right-sidebar),
+  .spotdeals-page-main--has-right-sidebar:not(.spotdeals-page-main--has-left-sidebar) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "main"
+      "left"
+      "right";
+  }
+
+  .spotdeals-page-main {
+    width: min(calc(100% - 1rem), 100%);
+    gap: 1rem;
+    padding-block: 1rem 2rem;
+  }
+}
+
+/* SD-088 v7: place the existing exposed search widget in the left column of
+ * the Deals view instead of stacking it above the results. This keeps the
+ * current simple search UX while matching the desktop mock-up structure:
+ * search/filter panel | result cards | popular searches.
+ */
+.view-id-deals_search_solr.view-display-id-page_1 > form {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .path-frontpage .spotdeals-page-main,
+  .path-deals .spotdeals-page-main {
+    width: min(calc(100% - 3rem), 1500px);
+    grid-template-columns: minmax(0, 1fr) 230px;
+    grid-template-areas: "main right";
+    gap: 32px;
+  }
+
+  .path-frontpage .spotdeals-page-main--has-left-sidebar.spotdeals-page-main--has-right-sidebar,
+  .path-deals .spotdeals-page-main--has-left-sidebar.spotdeals-page-main--has-right-sidebar {
+    grid-template-columns: 300px minmax(0, 1fr) 230px;
+    grid-template-areas: "left main right";
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder,
+  .path-deals .spotdeals-main-content .spotdeals-finder,
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder {
+    display: grid;
+    grid-template-columns: 310px minmax(0, 1fr);
+    grid-template-areas: "filters results";
+    gap: 34px;
+    align-items: start;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters {
+    grid-area: filters;
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 1.35rem;
+    border: 1px solid #e1e6ee;
+    border-radius: 0.65rem;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+    position: sticky;
+    top: 20px;
+  }
+
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before {
+    content: "Filters";
+    display: block;
+    margin-bottom: 1.15rem;
+    color: var(--spotdeals-accent-dark);
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters form,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters form {
+    display: grid;
+    gap: 1rem;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results {
+    grid-area: results;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__intro,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__intro {
+    display: none;
+  }
+
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .view-header,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .view-header {
+    min-height: 42px;
+    margin: 0 0 14px;
+    color: #2f3744;
+    font-size: 1rem;
+    line-height: 2.6;
+  }
+}
+
+@media (max-width: 1023px) {
+  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "filters"
+      "results";
+    gap: 1rem;
+  }
+
+  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters {
+    grid-area: filters;
+    max-width: none;
+    margin-inline: 0;
+  }
+
+  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results {
+    grid-area: results;
+  }
+}
+
+/* SD-088 v8: use the real page regions for the desktop 3-column layout.
+ * Once the search widget is placed in sidebar_left, the exposed form inside the
+ * Deals view must no longer reserve a second internal filter column. That was
+ * squeezing the result cards and making card text stack vertically.
+ */
+@media (min-width: 1024px) {
+  .path-frontpage .spotdeals-page-main--has-left-sidebar.spotdeals-page-main--has-right-sidebar,
+  .path-deals .spotdeals-page-main--has-left-sidebar.spotdeals-page-main--has-right-sidebar {
+    grid-template-columns: 300px minmax(760px, 1fr) 230px;
+    grid-template-areas: "left main right";
+    gap: 34px;
+    align-items: start;
+  }
+
+  .path-frontpage .spotdeals-page-main--has-left-sidebar .spotdeals-main-content .spotdeals-finder,
+  .path-deals .spotdeals-page-main--has-left-sidebar .spotdeals-main-content .spotdeals-finder {
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  .path-frontpage .spotdeals-page-main--has-left-sidebar .spotdeals-main-content .spotdeals-finder__filters,
+  .path-deals .spotdeals-page-main--has-left-sidebar .spotdeals-main-content .spotdeals-finder__filters {
+    display: none;
+  }
+
+  .path-frontpage .spotdeals-page-main--has-left-sidebar .spotdeals-main-content .spotdeals-finder__results,
+  .path-deals .spotdeals-page-main--has-left-sidebar .spotdeals-main-content .spotdeals-finder__results,
+  .path-frontpage .spotdeals-page-main--has-left-sidebar .spotdeals-main-content .spotdeals-finder__cards,
+  .path-deals .spotdeals-page-main--has-left-sidebar .spotdeals-main-content .spotdeals-finder__cards {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__results .view-header,
+  .path-deals .spotdeals-main-content .spotdeals-finder__results .view-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 42px;
+    margin: 0 0 14px;
+    color: #2f3744;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+}
+
+/* Keep the result card wide enough to preserve the mock-up proportions. */
+@media screen and (min-width: 1024px) {
+  .spotdeals-main-content .spotdeals-deal-card {
+    grid-template-columns: 245px minmax(0, 1fr);
+    min-height: 238px;
+  }
+
+  .spotdeals-main-content .spotdeals-deal-card__content {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    grid-template-areas:
+      "main deal"
+      "votes deal"
+      "actions deal";
+    column-gap: 1.45rem;
+    padding: 1.05rem 1rem 1.05rem 1.35rem;
+  }
+
+  .spotdeals-main-content .spotdeals-deal-card__media {
+    margin: 1rem 0 1rem 1rem;
+    border-radius: 0.65rem;
+  }
+
+  .spotdeals-main-content .spotdeals-deal-card__venue-title h2,
+  .spotdeals-main-content .spotdeals-deal-card__venue-title h3,
+  .spotdeals-main-content .spotdeals-deal-card__venue-title a {
+    white-space: normal;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+}
+
+/* SD-088 v9: scoped Deals page stabilization.
+ * Keep the new 3-column shell, but stop the Deals result cards from being
+ * compressed by the sidebars/header experiments. These rules intentionally
+ * scope to the Deals/front page so other Olivero pages are not affected.
+ */
+@media (min-width: 1024px) {
+  .path-frontpage .spotdeals-site-header__inner,
+  .path-deals .spotdeals-site-header__inner {
+    width: min(calc(100% - 2rem), 1400px);
+    margin-inline: auto;
+    grid-template-columns: 360px minmax(0, 1fr);
+  }
+
+  .path-frontpage .spotdeals-page-main,
+  .path-deals .spotdeals-page-main {
+    width: min(calc(100% - 2rem), 1400px);
+    grid-template-columns: 250px minmax(0, 1fr) 205px;
+    grid-template-areas: "left main right";
+    gap: 24px;
+    align-items: start;
+    padding-block: 2rem 3rem;
+  }
+
+  .path-frontpage .spotdeals-sidebar-left,
+  .path-deals .spotdeals-sidebar-left {
+    grid-area: left;
+  }
+
+  .path-frontpage .spotdeals-main-content,
+  .path-deals .spotdeals-main-content {
+    grid-area: main;
+    min-width: 0;
+  }
+
+  .path-frontpage .spotdeals-sidebar-right,
+  .path-deals .spotdeals-sidebar-right {
+    grid-area: right;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder,
+  .path-deals .spotdeals-main-content .spotdeals-finder,
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__results,
+  .path-deals .spotdeals-main-content .spotdeals-finder__results,
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__cards,
+  .path-deals .spotdeals-main-content .spotdeals-finder__cards {
+    display: block;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__filters,
+  .path-deals .spotdeals-main-content .spotdeals-finder__filters,
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__intro,
+  .path-deals .spotdeals-main-content .spotdeals-finder__intro {
+    display: none;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card {
+    width: 100%;
+    max-width: none;
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    min-height: 205px;
+    margin: 0 0 1rem;
+    overflow: hidden;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__media,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__media {
+    margin: 1rem 0 1rem 1rem;
+    width: auto;
+    min-width: 0;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__media img,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__media img,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__image-placeholder,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__image-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 173px;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__content,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__content {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) 210px;
+    grid-template-areas:
+      "main deal"
+      "votes deal"
+      "actions deal";
+    column-gap: 1rem;
+    row-gap: 0.65rem;
+    min-width: 0;
+    padding: 1rem;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__main,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__main {
+    grid-area: main;
+    min-width: 0;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__deal-panel,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__deal-panel {
+    grid-area: deal;
+    min-width: 0;
+    padding-left: 1rem;
+    border-left: 1px solid #e3e7ee;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__votes,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__votes,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card .views-field-spotdeals-vote,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card .views-field-spotdeals-vote {
+    grid-area: votes;
+    min-width: 0;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__actions,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__actions {
+    grid-area: actions;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title *,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title * {
+    max-width: 100%;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title h2,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title h2,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title h3,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title h3,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title a,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title a {
+    font-size: clamp(1.2rem, 1.35vw, 1.55rem);
+    line-height: 1.12;
+  }
+}
+
+@media (min-width: 1380px) {
+  .path-frontpage .spotdeals-page-main,
+  .path-deals .spotdeals-page-main {
+    width: min(calc(100% - 3rem), 1500px);
+    grid-template-columns: 300px minmax(0, 1fr) 230px;
+    gap: 32px;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card {
+    grid-template-columns: 236px minmax(0, 1fr);
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__content,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__content {
+    grid-template-columns: minmax(0, 1fr) 250px;
+    column-gap: 1.25rem;
+    padding: 1rem 1rem 1rem 1.25rem;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title h2,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title h2,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title h3,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title h3,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title a,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title a {
+    font-size: clamp(1.35rem, 1.7vw, 1.75rem);
+  }
+}
+
+/* SD-088 v11: recover the Deals page layout from the page-level sidebar experiment.
+ * Source of truth: v9. This pass keeps the existing SDC deal cards, but treats
+ * the Deals view itself as the left-filter + center-results layout. That is much
+ * safer than relying on a new page-level left sidebar while the theme still has
+ * Olivero/right-sidebar assumptions.
+ */
+@media (min-width: 1024px) {
+  .path-frontpage .spotdeals-page-main,
+  .path-deals .spotdeals-page-main {
+    display: grid;
+    width: min(calc(100% - 3rem), 1500px);
+    margin-inline: auto;
+    grid-template-columns: minmax(0, 1fr) 230px;
+    grid-template-areas: "main right";
+    gap: 32px;
+    align-items: start;
+    padding-block: 2rem 3.5rem;
+  }
+
+  .path-frontpage .spotdeals-sidebar-left,
+  .path-deals .spotdeals-sidebar-left {
+    display: none;
+  }
+
+  .path-frontpage .spotdeals-main-content,
+  .path-deals .spotdeals-main-content {
+    grid-area: main;
+    min-width: 0;
+    width: 100%;
+    max-width: none;
+  }
+
+  .path-frontpage .spotdeals-sidebar-right,
+  .path-deals .spotdeals-sidebar-right {
+    grid-area: right;
+    width: 100%;
+    max-width: none;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder,
+  .path-deals .spotdeals-main-content .spotdeals-finder {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-areas: "filters results";
+    gap: 32px;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    align-items: start;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__intro,
+  .path-deals .spotdeals-main-content .spotdeals-finder__intro {
+    display: none;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__filters,
+  .path-deals .spotdeals-main-content .spotdeals-finder__filters {
+    display: block;
+    grid-area: filters;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 1.25rem;
+    background: #fff;
+    border: 1px solid var(--spotdeals-border);
+    border-radius: 0.65rem;
+    box-shadow: var(--spotdeals-shadow-soft);
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__results,
+  .path-deals .spotdeals-main-content .spotdeals-finder__results {
+    display: block;
+    grid-area: results;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__cards,
+  .path-deals .spotdeals-main-content .spotdeals-finder__cards,
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__results .view-content,
+  .path-deals .spotdeals-main-content .spotdeals-finder__results .view-content {
+    display: block;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  .path-frontpage .spotdeals-main-content .view-id-deals_search_solr > form,
+  .path-deals .spotdeals-main-content .view-id-deals_search_solr > form {
+    display: none;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0 0 1rem;
+  }
+
+  .path-frontpage .spotdeals-sidebar-right .block,
+  .path-deals .spotdeals-sidebar-right .block,
+  .path-frontpage .spotdeals-sidebar-right .block-spotdeals-search-insights,
+  .path-deals .spotdeals-sidebar-right .block-spotdeals-search-insights {
+    width: 100%;
+    margin: 0;
+    padding: 1.35rem 1.25rem;
+    background: #f7f9fc;
+    border: 1px solid var(--spotdeals-border);
+    border-radius: 0.55rem;
+    box-shadow: none;
+  }
+}
+
+@media (min-width: 1380px) {
+  .path-frontpage .spotdeals-main-content .spotdeals-finder,
+  .path-deals .spotdeals-main-content .spotdeals-finder {
+    grid-template-columns: 320px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1023px) {
+  .path-frontpage .spotdeals-page-main,
+  .path-deals .spotdeals-page-main {
+    display: block;
+    width: min(calc(100% - 1rem), 100%);
+    margin-inline: auto;
+    padding-block: 1rem 2rem;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder,
+  .path-deals .spotdeals-main-content .spotdeals-finder {
+    display: grid;
+    gap: 1rem;
+    width: 100%;
+    max-width: none;
+  }
+}
+
+/* SD-088 v15: widen the Deals workspace while preserving the restored header.
+ * Source of truth: v14. Keep these overrides scoped to the front/deals page and
+ * only to the main content area so Olivero's header animation remains intact.
+ */
+@media (min-width: 1024px) {
+  .path-frontpage #main-wrapper.layout-container,
+  .path-deals #main-wrapper.layout-container,
+  .path-frontpage #main.layout-main,
+  .path-deals #main.layout-main,
+  .path-frontpage .main-content,
+  .path-deals .main-content {
+    width: 100%;
+    max-width: none;
+  }
+
+  .path-frontpage .spotdeals-page-main,
+  .path-deals .spotdeals-page-main {
+    display: grid;
+    width: min(calc(100vw - 56px), 1540px);
+    max-width: none;
+    margin-inline: auto;
+    grid-template-columns: minmax(0, 1fr) 230px;
+    grid-template-areas: "main right";
+    gap: 32px;
+    align-items: start;
+    padding-block: 32px 56px;
+  }
+
+  .path-frontpage .spotdeals-main-content,
+  .path-deals .spotdeals-main-content {
+    grid-area: main;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .path-frontpage .spotdeals-sidebar-right,
+  .path-deals .spotdeals-sidebar-right {
+    grid-area: right;
+    width: 230px;
+    max-width: 230px;
+    min-width: 0;
+    position: sticky;
+    top: 20px;
+    margin-block-start: var(--sp3);
+  }
+
+  .path-frontpage .spotdeals-main-content .view-id-deals_search_solr,
+  .path-deals .spotdeals-main-content .view-id-deals_search_solr,
+  .path-frontpage .spotdeals-main-content .spotdeals-finder,
+  .path-deals .spotdeals-main-content .spotdeals-finder {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder,
+  .path-deals .spotdeals-main-content .spotdeals-finder {
+    display: grid;
+    grid-template-columns: 300px minmax(720px, 1fr);
+    grid-template-areas: "filters results";
+    gap: 32px;
+    align-items: start;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__filters,
+  .path-deals .spotdeals-main-content .spotdeals-finder__filters {
+    grid-area: filters;
+    width: 300px;
+    max-width: 300px;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__results,
+  .path-deals .spotdeals-main-content .spotdeals-finder__results {
+    grid-area: results;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__cards,
+  .path-deals .spotdeals-main-content .spotdeals-finder__cards,
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__cards > .views-row,
+  .path-deals .spotdeals-main-content .spotdeals-finder__cards > .views-row {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card {
+    display: grid;
+    grid-template-columns: 236px minmax(0, 1fr);
+    width: 100%;
+    min-width: 0;
+    min-height: 224px;
+    margin: 0 0 16px;
+    border-radius: 10px;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__media,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__media {
+    margin: 16px 0 16px 16px;
+    border-radius: 8px;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__media img,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__media img,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__image,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__image,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__image-placeholder,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__image-placeholder {
+    width: 100%;
+    height: 192px;
+    min-height: 192px;
+    aspect-ratio: auto;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__content,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 250px;
+    grid-template-areas:
+      "main deal"
+      "votes deal"
+      "actions deal";
+    column-gap: 12px;
+    row-gap: 12px;
+    min-width: 0;
+    padding: 18px 16px 18px 22px;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__deal-panel,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__deal-panel {
+    padding-left: 22px;
+    border-left: 1px solid #e3e7ee;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title *,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title * {
+    max-width: 100%;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title h2,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title h2,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title h3,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title h3,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-title a,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-title a {
+    font-size: 1.65rem;
+    line-height: 1.1;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__venue-meta,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__venue-meta {
+    font-size: 0.79rem;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__deal-category,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__deal-category,
+  .path-frontpage .spotdeals-main-content .spotdeals-deal-card__deal-category a,
+  .path-deals .spotdeals-main-content .spotdeals-deal-card__deal-category a {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1460px) {
+  .path-frontpage .spotdeals-page-main,
+  .path-deals .spotdeals-page-main {
+    width: min(calc(100vw - 64px), 1580px);
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 160px;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder,
+  .path-deals .spotdeals-main-content .spotdeals-finder {
+    grid-template-columns: 310px minmax(800px, 1fr);
+    gap: 20px;
+  }
+}
+
+/* ================================
+   Venue location icon (replace dot)
+================================ */
+
+.spotdeals-deal-card__venue-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+/* Remove the dot if present */
+.spotdeals-deal-card__venue-meta .dot {
+  display: none;
+}
+
+/* Add map pin icon */
+.spotdeals-deal-card__venue-meta::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  background-color: #6b7280;
+
+  /* SVG mask for map pin */
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z'/></svg>") no-repeat center / contain;
+
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='black' d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z'/></svg>") no-repeat center / contain;
+
+  margin-right: 0;
+}
+
+/* SD-088 v31 mobile recovery: restore mobile Deals layout after desktop redesign. */
+@media (max-width: 1023px) {
+  .path-frontpage #main-wrapper.layout-container,
+  .path-deals #main-wrapper.layout-container,
+  .path-frontpage #main.layout-main,
+  .path-deals #main.layout-main,
+  .path-frontpage .main-content,
+  .path-deals .main-content,
+  .path-frontpage .main-content__container,
+  .path-deals .main-content__container {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+
+  .path-frontpage .spotdeals-page-main,
+  .path-deals .spotdeals-page-main {
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 1rem 0.95rem 5.5rem;
+  }
+
+  .path-frontpage .spotdeals-sidebar-left,
+  .path-deals .spotdeals-sidebar-left,
+  .path-frontpage .spotdeals-sidebar-right,
+  .path-deals .spotdeals-sidebar-right {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+
+  .path-frontpage .spotdeals-main-content,
+  .path-deals .spotdeals-main-content,
+  .path-frontpage .spotdeals-main-content .view-id-deals_search_solr,
+  .path-deals .spotdeals-main-content .view-id-deals_search_solr,
+  .path-frontpage .spotdeals-main-content .spotdeals-finder,
+  .path-deals .spotdeals-main-content .spotdeals-finder,
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__results,
+  .path-deals .spotdeals-main-content .spotdeals-finder__results,
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__cards,
+  .path-deals .spotdeals-main-content .spotdeals-finder__cards,
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__cards > .views-row,
+  .path-deals .spotdeals-main-content .spotdeals-finder__cards > .views-row {
+    display: block;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin-inline: 0;
+  }
+
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 > form,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 > form {
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin: 0 0 1rem;
+    padding: 1rem;
+    border: 1px solid #e1e6ee;
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder,
+  .path-deals .spotdeals-main-content .spotdeals-finder {
+    gap: 0;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__filters,
+  .path-deals .spotdeals-main-content .spotdeals-finder__filters {
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin: 0 0 1rem;
+    padding: 1rem;
+    border: 1px solid #e1e6ee;
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__filters:empty,
+  .path-deals .spotdeals-main-content .spotdeals-finder__filters:empty {
+    display: none;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__results,
+  .path-deals .spotdeals-main-content .spotdeals-finder__results {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .path-frontpage .spotdeals-main-content .spotdeals-finder__results .view-header,
+  .path-deals .spotdeals-main-content .spotdeals-finder__results .view-header {
+    margin: 0 0 1rem;
+    color: #2f3744;
+    font-size: 1.15rem;
+    line-height: 1.4;
+  }
+
+  .path-frontpage .spotdeals-sidebar-right,
+  .path-deals .spotdeals-sidebar-right {
+    display: none;
+  }
+}
+
+/* SD-089 mobile-safe recovery: keep the existing search UI visible on mobile and
+ * avoid the desktop three-column shell squeezing the Deals page. Scoped to
+ * front/deals pages and mobile only.
+ */
+@media (max-width: 767px) {
+  .path-frontpage .main-content__container,
+  .path-deals .main-content__container {
+    width: 100%;
+    max-width: none;
+    padding-inline: 0;
+  }
+
+  .path-frontpage .spotdeals-page-main,
+  .path-deals .spotdeals-page-main {
+    display: block;
+    width: 100%;
+    max-width: none;
+    padding: 1rem 0.75rem 2rem;
+    margin: 0;
+  }
+
+  .path-frontpage .spotdeals-sidebar-left,
+  .path-deals .spotdeals-sidebar-left,
+  .path-frontpage .spotdeals-main-content,
+  .path-deals .spotdeals-main-content {
+    display: block;
+    width: 100%;
+    max-width: none;
+  }
+
+  .path-frontpage .spotdeals-sidebar-left,
+  .path-deals .spotdeals-sidebar-left {
+    margin-bottom: 1rem;
+  }
+
+  .path-frontpage .spotdeals-sidebar-right,
+  .path-deals .spotdeals-sidebar-right {
+    display: none;
+  }
+
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1,
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder,
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results,
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__cards,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__cards {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+  }
+
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder {
+    display: block;
+  }
+
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 > form,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 > form,
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters {
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin: 0 0 1rem;
+  }
+
+  .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before,
+  .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before {
+    content: none;
+  }
+
+  .path-frontpage .spotdeals-finder__results .view-header,
+  .path-deals .spotdeals-finder__results .view-header {
+    margin: 0 0 1rem;
+    color: #2f3744;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+}
+
+.node__venue-content--address {
+  margin-block: 1rem;
+}
+
+.node__venue-content--venue-type {
+  margin-block: 1rem;
+}
+
+.node__venue-content--image-body-wrapper {
+  display: flex;
+  border-radius: 1rem;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
+  padding: 1rem;
+  margin-block: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  @media (min-width: 1023px) {
+    flex-wrap: nowrap;
+  }
+
+  .field--name-field-image {
+    margin-top: 1rem;
+    margin-inline: 0;
+  }
+
+  .text-content {
+    padding-block: 0.5rem;
+  }
+
+  img {
+    border-radius: 1rem;
+  }
+}
+
+/* =========================
+   Venue Page Redesign
+========================= */
+
+.spotdeals-venue {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.spotdeals-venue__title {
+  font-size: clamp(2rem, 3vw, 2.6rem);
+  margin-bottom: 1.5rem;
+}
+
+.spotdeals-venue__hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .spotdeals-venue__hero {
+    grid-template-columns: 1.2fr 1fr;
+    align-items: start;
+  }
+}
+
+.spotdeals-venue__hero-media img {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.spotdeals-venue__hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.spotdeals-venue__votes {
+  margin-top: 1rem;
+}
+
+.spotdeals-venue__body.card {
+  background: #fff;
+  border: 1px solid var(--spotdeals-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--spotdeals-shadow-soft);
+}
+
+
+/* =========================
+   Deal Page Redesign
+========================= */
+
+.spotdeals-deal {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.spotdeals-deal__title {
+  font-size: clamp(2rem, 3vw, 2.4rem);
+  margin-bottom: 1.5rem;
+}
+
+.spotdeals-deal__hero {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .spotdeals-deal__hero {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.spotdeals-deal__media img {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.spotdeals-deal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.spotdeals-deal__meta {
+  font-size: 0.9rem;
+  color: var(--spotdeals-text-soft);
+}
+
+.spotdeals-deal__description {
+  line-height: 1.6;
+}
+
+.spotdeals-deal__actions {
+  margin-top: auto;
+}
+
+/* ========================================================================
+   SD-090 Venue + Deal node page CSS-only recovery/redesign
+   Scope: full node pages only. No Twig assumptions, no field reordering.
+   ======================================================================== */
+
+.page-node-type-venue .spotdeals-main-content,
+.page-node-type-deal .spotdeals-main-content {
+  min-width: 0;
+}
+
+.page-node-type-venue .spotdeals-page-main,
+.page-node-type-deal .spotdeals-page-main {
+  align-items: start;
+}
+
+.page-node-type-venue .page-title,
+.page-node-type-deal .page-title {
+  max-width: 760px;
+  margin-block: 2.25rem 2rem;
+  color: #0f1720;
+  font-size: clamp(2.35rem, 4vw, 4rem);
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+}
+
+.page-node-type-venue .node--type-venue,
+.page-node-type-deal .node--type-deal {
+  max-width: 760px;
+  margin: 0;
+}
+
+.page-node-type-venue .node--type-venue > header,
+.page-node-type-deal .node--type-deal > header {
+  display: none;
+}
+
+.page-node-type-venue .node__content,
+.page-node-type-deal .node__content {
+  display: grid;
+  gap: 1.35rem;
+  max-width: 760px;
+}
+
+.page-node-type-venue .node__content > .links,
+.page-node-type-deal .node__content > .links,
+.page-node-type-venue .node__content > .field--name-field-active,
+.page-node-type-deal .node__content > .field--name-field-active,
+.page-node-type-venue .node__content > .field--name-field-recurring,
+.page-node-type-deal .node__content > .field--name-field-recurring,
+.page-node-type-venue .node__content > .field--name-field-featured,
+.page-node-type-deal .node__content > .field--name-field-featured {
+  display: none;
+}
+
+.page-node-type-venue .views-field-spotdeals-vote,
+.page-node-type-deal .views-field-spotdeals-vote {
+  max-width: 520px;
+  margin: 0;
+}
+
+.page-node-type-venue .spotdeals-vote--full,
+.page-node-type-deal .spotdeals-vote--full {
+  border: 1px solid #dfe6ef;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.035);
+  padding: 1rem 1.25rem;
+}
+
+.page-node-type-venue .spotdeals-vote__group,
+.page-node-type-deal .spotdeals-vote__group {
+  grid-template-columns: minmax(92px, 1fr) auto minmax(92px, auto);
+  gap: 0.75rem;
+}
+
+.page-node-type-venue .spotdeals-vote__label,
+.page-node-type-deal .spotdeals-vote__label,
+.page-node-type-venue .spotdeals-vote__group-count,
+.page-node-type-deal .spotdeals-vote__group-count {
+  font-size: 0.86rem;
+}
+
+.page-node-type-venue .spotdeals-vote__button,
+.page-node-type-deal .spotdeals-vote__button {
+  min-height: 1.75rem;
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.page-node-type-venue .claim-this-listing-link,
+.page-node-type-deal .claim-this-listing-link {
+  width: fit-content;
+  color: var(--spotdeals-accent-dark);
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.page-node-type-venue .node__venue-content--image-body-wrapper {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.92fr) minmax(0, 1fr);
+  gap: 1.7rem;
+  align-items: start;
+  margin: 0;
+  padding: 1rem;
+  overflow: hidden;
+  border: 1px solid #e3e8f0;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+}
+
+.page-node-type-venue .node__venue-content--image-body-wrapper .field--name-field-image,
+.page-node-type-venue .node__venue-content--image-body-wrapper .wide-content.field--name-field-image {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.page-node-type-venue .node__venue-content--image-body-wrapper img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  max-height: 345px;
+  border-radius: 0.8rem;
+  object-fit: cover;
+}
+
+.page-node-type-venue .node__venue-content--image-body-wrapper .field--name-body {
+  min-width: 0;
+  padding: 0.35rem 0.25rem;
+  color: #253041;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.page-node-type-venue .node__venue-content--image-body-wrapper .field--name-body::before {
+  content: "About this venue";
+  display: block;
+  margin: 0 0 0.75rem;
+  color: #0f1720;
+  font-family: var(--font-sans, inherit);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.page-node-type-venue .node__venue-content--image-body-wrapper .field--name-body p:first-child,
+.page-node-type-deal .node__content .field p:first-child {
+  margin-top: 0;
+}
+
+.page-node-type-venue .node__venue-content--image-body-wrapper .field--name-body p:last-child,
+.page-node-type-deal .node__content .field p:last-child {
+  margin-bottom: 0;
+}
+
+.page-node-type-deal .node__content {
+  grid-template-columns: minmax(0, 1fr) 250px;
+  grid-template-areas:
+    "vote venue"
+    "category venue"
+    "price venue"
+    "day venue"
+    "time venue"
+    "body venue"
+    "cta venue";
+  column-gap: 2rem;
+  row-gap: 0.9rem;
+  align-items: start;
+  padding: 1.35rem;
+  border: 1px solid #e3e8f0;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.07);
+}
+
+.page-node-type-deal .views-field-spotdeals-vote {
+  grid-area: vote;
+}
+
+.page-node-type-deal .field--name-field-deal-category {
+  grid-area: category;
+}
+
+.page-node-type-deal .field--name-field-price-offer-text {
+  grid-area: price;
+}
+
+.page-node-type-deal .field--name-field-day-of-week {
+  grid-area: day;
+}
+
+.page-node-type-deal .field--name-field-start-time {
+  grid-area: time;
+}
+
+.page-node-type-deal .field--name-body {
+  grid-area: body;
+}
+
+.page-node-type-deal .field--name-field-venue {
+  grid-area: venue;
+  align-self: stretch;
+  padding: 0;
+  text-align: center;
+  background: linear-gradient(180deg, #f4fbeb 0%, #edf7df 100%);
+  margin-bottom: 0;
+}
+
+.page-node-type-deal .field--name-field-cta {
+  grid-area: cta;
+}
+
+.page-node-type-deal .node__content > .field {
+  margin: 0;
+}
+
+.page-node-type-deal .node__content > .field > .field__label {
+  margin: 0 0 0.25rem;
+  color: #0f1720;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.page-node-type-deal .node__content > .field > .field__item,
+.page-node-type-deal .node__content > .field > .field__items {
+  color: #253041;
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.page-node-type-deal .field--name-field-deal-category .field__label {
+  display: none;
+}
+
+.page-node-type-deal .field--name-field-deal-category .field__item a {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 1.65rem;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  background: #dff2c2;
+  color: var(--spotdeals-accent-dark);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.page-node-type-deal .field--name-field-price-offer-text .field__label {
+  display: none;
+}
+
+.page-node-type-deal .field--name-field-price-offer-text .field__item {
+  color: #0f1720;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.page-node-type-deal .field--name-field-venue .field__label {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.page-node-type-deal .field--name-field-venue .field__label::before {
+  content: "Deal at this venue";
+}
+
+.page-node-type-deal .field--name-field-venue .field__label {
+  font-size: 0;
+}
+
+.page-node-type-deal .field--name-field-venue .field__label::before {
+  font-size: 1rem;
+}
+
+.page-node-type-deal .field--name-field-venue .field__item a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.65rem;
+  padding: 0.72rem 1.35rem;
+  border-radius: 0.45rem;
+  background: var(--spotdeals-accent);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-decoration: none;
+  box-shadow: 0 10px 20px rgba(141, 182, 31, 0.22);
+}
+
+.page-node-type-deal .field--name-field-venue .field__item a:hover,
+.page-node-type-deal .field--name-field-venue .field__item a:focus {
+  background: var(--spotdeals-accent-dark);
+  color: #fff;
+}
+
+.page-node-type-deal .field--name-body {
+  padding-top: 0.5rem;
+  color: #253041;
+  line-height: 1.7;
+}
+
+.page-node-type-venue .spotdeals-sidebar-right .block,
+.page-node-type-deal .spotdeals-sidebar-right .block,
+.page-node-type-venue .layout-sidebar-second .block,
+.page-node-type-deal .layout-sidebar-second .block {
+  border: 1px solid #dce3ec;
+  border-radius: 0.8rem;
+  background: #f7f9fc;
+  box-shadow: none;
+}
+
+.page-node-type-venue .spotdeals-sidebar-right,
+.page-node-type-deal .spotdeals-sidebar-right {
+  margin-block-start: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .page-node-type-venue .spotdeals-page-main,
+  .page-node-type-deal .spotdeals-page-main {
+    width: min(calc(100vw - 4rem), 1180px);
+    grid-template-columns: minmax(0, 760px) 250px;
+    gap: 3.5rem;
+  }
+
+  .page-node-type-venue .spotdeals-sidebar-right,
+  .page-node-type-deal .spotdeals-sidebar-right {
+    position: sticky;
+    top: 2rem;
+  }
+}
+
+@media (min-width: 1180px) {
+  .page-node-type-venue .spotdeals-page-main,
+  .page-node-type-deal .spotdeals-page-main {
+    gap: 4.5rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .page-node-type-venue .page-title,
+  .page-node-type-deal .page-title {
+    margin-block: 1rem 1.25rem;
+    font-size: clamp(2rem, 10vw, 3rem);
+  }
+
+  .page-node-type-venue .node--type-venue,
+  .page-node-type-deal .node--type-deal,
+  .page-node-type-venue .node__content,
+  .page-node-type-deal .node__content {
+    max-width: none;
+  }
+
+  .page-node-type-venue .node__venue-content--image-body-wrapper {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0.85rem;
+  }
+
+  .page-node-type-venue .node__venue-content--image-body-wrapper img {
+    max-height: none;
+  }
+
+  .page-node-type-deal .node__content {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "vote"
+      "category"
+      "price"
+      "day"
+      "time"
+      "body"
+      "venue"
+      "cta";
+    padding: 1rem;
+  }
+
+  .page-node-type-venue .views-field-spotdeals-vote,
+  .page-node-type-deal .views-field-spotdeals-vote {
+    max-width: none;
+  }
+
+  .page-node-type-venue .spotdeals-vote__group,
+  .page-node-type-deal .spotdeals-vote__group {
+    grid-template-columns: minmax(74px, 1fr) auto minmax(72px, auto);
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .page-node-type-venue .node__content,
+  .page-node-type-deal .node__content {
+    gap: 1rem;
+  }
+
+  .page-node-type-venue .spotdeals-vote--full,
+  .page-node-type-deal .spotdeals-vote--full {
+    padding: 0.85rem;
+  }
+
+  .page-node-type-venue .spotdeals-vote__group,
+  .page-node-type-deal .spotdeals-vote__group {
+    grid-template-columns: 1fr auto;
+  }
+
+  .page-node-type-venue .spotdeals-vote__group-count,
+  .page-node-type-deal .spotdeals-vote__group-count {
+    grid-column: 1 / -1;
+    justify-self: start;
+    padding-left: 0;
+  }
+}
+
+/* Deal page real sidebar layout */
+.spotdeals-deal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 2rem;
+}
+
+.region--sidebar {
+  align-self: start;
+}
+
+.deal-sidebar-venue {
+  position: sticky;
+  top: 2rem;
+}
+
+/* ========================================================================
+   SD-093 Deal page sidebar + card correction
+   Keeps the real sidebar placement, restores the sidebar claim as real field
+   output, and makes the main deal card closer to the mock-up.
+   ======================================================================== */
+
+@media (min-width: 1024px) {
+  .page-node-type-deal .spotdeals-page-main {
+    width: min(calc(100vw - 4rem), 1040px);
+    grid-template-columns: minmax(0, 620px) 240px;
+    gap: 4.25rem;
+    align-items: start;
+  }
+
+  .page-node-type-deal .spotdeals-sidebar-right {
+    margin-block-start: 8.25rem;
+  }
+}
+
+.page-node-type-deal .page-title {
+  max-width: 620px;
+  margin-block: 2rem 1.8rem;
+  font-size: clamp(2.65rem, 4.2vw, 4.05rem);
+  line-height: 1.03;
+}
+
+.page-node-type-deal .node--type-deal,
+.page-node-type-deal .node__content {
+  max-width: 620px;
+}
+
+.page-node-type-deal .node__content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "image"
+    "vote"
+    "category"
+    "price"
+    "day"
+    "time"
+    "body";
+  gap: 0.72rem;
+  padding: 1.35rem;
+  border: 1px solid #e3e8f0;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.07);
+}
+
+@media (min-width: 760px) {
+  .page-node-type-deal .node__content:has(.field--name-field-image) {
+    grid-template-columns: 220px minmax(0, 1fr);
+    grid-template-areas:
+      "image vote"
+      "image category"
+      "image price"
+      "image day"
+      "image time"
+      "image body";
+    column-gap: 1.35rem;
+    row-gap: 0.55rem;
+    align-items: start;
+  }
+}
+
+.page-node-type-deal .field--name-field-image {
+  grid-area: image;
+  margin: 0;
+}
+
+.page-node-type-deal .field--name-field-image .field__label {
+  display: none;
+}
+
+.page-node-type-deal .field--name-field-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 0.85rem;
+}
+
+.page-node-type-deal .views-field-spotdeals-vote {
+  grid-area: vote;
+  max-width: none;
+  margin: 0;
+}
+
+.page-node-type-deal .spotdeals-vote--full {
+  padding: 0.85rem 1rem;
+  border-radius: 0.7rem;
+  box-shadow: none;
+}
+
+.page-node-type-deal .spotdeals-vote__group {
+  grid-template-columns: minmax(72px, 1fr) auto minmax(74px, auto);
+  gap: 0.5rem;
+}
+
+.page-node-type-deal .spotdeals-vote__label,
+.page-node-type-deal .spotdeals-vote__group-count {
+  font-size: 0.82rem;
+}
+
+.page-node-type-deal .spotdeals-vote__button {
+  min-height: 1.55rem;
+  padding: 0.18rem 0.66rem;
+  font-size: 0.74rem;
+}
+
+.page-node-type-deal .field--name-field-deal-category {
+  grid-area: category;
+  margin-top: 0.3rem;
+}
+
+.page-node-type-deal .field--name-field-price-offer-text {
+  grid-area: price;
+}
+
+.page-node-type-deal .field--name-field-day-of-week {
+  grid-area: day;
+}
+
+.page-node-type-deal .field--name-field-start-time {
+  grid-area: time;
+}
+
+.page-node-type-deal .field--name-body {
+  grid-area: body;
+}
+
+.page-node-type-deal .field--name-field-price-offer-text .field__item {
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.page-node-type-deal .spotdeals-deal-sidebar-venue {
+  padding: 1.35rem 1rem;
+  border: 1px solid #d8e6c1;
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, #f6fbef 0%, #edf7df 100%);
+  box-shadow: 0 18px 34px rgba(141, 182, 31, 0.12);
+}
+
+.page-node-type-deal .spotdeals-deal-sidebar-venue .field--name-field-venue .field__label::before {
+  content: "Deal at this venue";
+  font-size: 0.98rem;
+}
+
+.page-node-type-deal .spotdeals-deal-sidebar-venue .field--name-field-venue .field__item a {
+  min-height: 2.55rem;
+  padding: 0.68rem 0.95rem;
+  border-radius: 0.45rem;
+  font-size: 0.86rem;
+}
+
+.page-node-type-deal .spotdeals-deal-sidebar-claim {
+  display: block;
+  margin-top: 0.9rem;
+  text-align: center;
+}
+
+.page-node-type-deal .spotdeals-deal-sidebar-claim .field--name-field-cta,
+.page-node-type-deal .spotdeals-deal-sidebar-claim .field__item {
+  display: block;
+  margin: 0;
+}
+
+.page-node-type-deal .spotdeals-deal-sidebar-claim a {
+  display: inline-flex;
+  color: var(--spotdeals-accent-dark);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+@media (max-width: 900px) {
+  .page-node-type-deal .spotdeals-sidebar-right {
+    margin-block-start: 1rem;
+  }
+
+  .page-node-type-deal .node__content {
+    padding: 1rem;
+  }
+
+  .page-node-type-deal .field--name-field-image img {
+    aspect-ratio: 4 / 3;
+  }
+}
+
+/* =========================================
+   SD-095 FIX: Deal page image containment
+   ========================================= */
+
+.page-node-type-deal .node__content {
+  overflow: hidden;
+}
+
+/* Ensure image stays inside its grid cell */
+.page-node-type-deal .field--name-field-image {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.page-node-type-deal .field--name-field-image img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  /* override the 1:1 causing distortion */
+  object-fit: cover;
+  display: block;
+}
+
+/* Fix grid overflow when image exists */
+@media (min-width: 760px) {
+  .page-node-type-deal .node__content:has(.field--name-field-image) {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+/* Prevent any rogue wide wrappers from breaking layout */
+.page-node-type-deal .node__content * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* SD-096 FIX: Give deal page image + content card more room */
+@media (min-width: 1024px) {
+  .page-node-type-deal .spotdeals-page-main {
+    width: min(calc(100vw - 4rem), 1180px);
+    grid-template-columns: minmax(0, 760px) 240px;
+    gap: 4rem;
+  }
+
+  .page-node-type-deal .node--type-deal,
+  .page-node-type-deal .node__content,
+  .page-node-type-deal .page-title {
+    max-width: 760px;
+  }
+}
+
+@media (min-width: 760px) {
+  .page-node-type-deal .node__content:has(.field--name-field-image) {
+    grid-template-columns: 240px minmax(320px, 1fr);
+    column-gap: 1.5rem;
+  }
+}
+
+.page-node-type-deal .views-field-spotdeals-vote {
+  min-width: 0;
+}
+
+.page-node-type-deal .spotdeals-vote--full {
+  width: 100%;
+  min-width: 0;
+}
+
+.page-node-type-deal .field--name-field-image img {
+  aspect-ratio: 4 / 3;
+}
+
+/* SD-097 FIX: Deal page card layout image/info first, voting below */
+@media (min-width: 760px) {
+  .page-node-type-deal .node__content:has(.field--name-field-image) {
+    grid-template-columns: 240px minmax(0, 1fr);
+    grid-template-areas:
+      "image category"
+      "image price"
+      "image day"
+      "image time"
+      "image body"
+      "vote vote";
+    column-gap: 1.5rem;
+    row-gap: 0.65rem;
+  }
+
+  .page-node-type-deal .views-field-spotdeals-vote {
+    margin-top: 0.75rem;
+  }
+}

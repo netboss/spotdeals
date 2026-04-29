@@ -1,7 +1,65 @@
 <?php
 
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Url;
+use Drupal\node\NodeInterface;
 use Drupal\views\ViewExecutable;
 
+
+/**
+ * Implements hook_theme_suggestions_page_alter().
+ */
+function spotdeals_minimal_theme_suggestions_page_alter(array &$suggestions, array $variables): void {
+  $node = \Drupal::routeMatch()->getParameter('node');
+
+  if ($node instanceof NodeInterface && $node->bundle() === 'deal') {
+    $suggestions[] = 'page__node__deal';
+  }
+}
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function spotdeals_minimal_preprocess_page(array &$variables): void {
+  $node = \Drupal::routeMatch()->getParameter('node');
+
+  if (!$node instanceof NodeInterface || $node->bundle() !== 'deal') {
+    return;
+  }
+
+  if (!$node->hasField('field_venue') || $node->get('field_venue')->isEmpty()) {
+    return;
+  }
+
+  $venue = $node->get('field_venue')->entity;
+
+  $variables['spotdeals_deal_sidebar_venue'] = $node->get('field_venue')->view([
+    'label' => 'above',
+    'type' => 'entity_reference_label',
+    'settings' => [
+      'link' => TRUE,
+    ],
+  ]);
+
+  // The "Claim this listing" link is not stored in field_cta on these deal
+  // pages. It is generated from the referenced venue, matching the existing
+  // Views output pattern: /form/claim-venue-listing?venue_node_id=...&venue_title=...
+  if ($venue instanceof NodeInterface) {
+    $variables['spotdeals_deal_sidebar_claim'] = [
+      '#type' => 'link',
+      '#title' => t('Claim this listing'),
+      '#url' => Url::fromUserInput('/form/claim-venue-listing', [
+        'query' => [
+          'venue_node_id' => $venue->id(),
+          'venue_title' => $venue->label(),
+        ],
+      ]),
+      '#attributes' => [
+        'class' => ['claim-this-listing-link'],
+      ],
+    ];
+  }
+}
 /**
  * Implements hook_preprocess_views_view().
  */
@@ -17,6 +75,170 @@ function spotdeals_minimal_preprocess_views_view(array &$variables) {
   }
 
   $variables['spotdeals_result_count'] = is_array($view->result) ? count($view->result) : 0;
+}
+
+/**
+ * Implements hook_preprocess_views_view_fields().
+ */
+function spotdeals_minimal_preprocess_views_view_fields(array &$variables): void {
+  if (empty($variables['view']) || !$variables['view'] instanceof ViewExecutable) {
+    return;
+  }
+
+  $view = $variables['view'];
+  if ($view->id() !== 'deals_search_solr' || $view->current_display !== 'page_1') {
+    return;
+  }
+
+  $deal = _spotdeals_minimal_get_deal_node_from_view_row($variables['row'] ?? NULL);
+  if (!$deal instanceof NodeInterface) {
+    return;
+  }
+  if ($deal->bundle() !== 'deal') {
+    return;
+  }
+
+  $venue = NULL;
+  if ($deal->hasField('field_venue') && !$deal->get('field_venue')->isEmpty()) {
+    $referenced_venue = $deal->get('field_venue')->entity;
+    if ($referenced_venue instanceof NodeInterface) {
+      $venue = $referenced_venue;
+    }
+  }
+
+  $image = _spotdeals_minimal_build_deal_card_image($deal, $venue);
+  if (!empty($image)) {
+    $variables['spotdeals_deal_card_image'] = $image;
+  }
+
+  // The Deals Search view can expose a compact venue vote field, and that
+  // compact render only contains the "worth_it" metric. Build the venue
+  // and deal vote render arrays directly from their real render builders so
+  // the card always receives both summary metrics. The JavaScript then
+  // converts these full widgets into display-only summaries inside the card.
+  if ($venue instanceof NodeInterface && \Drupal::hasService('spotdeals_vote_venue.render_builder')) {
+    $variables['spotdeals_venue_vote_summary'] = \Drupal::service('spotdeals_vote_venue.render_builder')->build($venue, FALSE);
+  }
+
+  if ($venue instanceof NodeInterface && \Drupal::hasService('spotdeals_vote_deal.render_builder')) {
+    $variables['spotdeals_deal_vote_summary'] = \Drupal::service('spotdeals_vote_deal.render_builder')->build($deal, $venue, FALSE);
+  }
+}
+
+/**
+ * Extracts the deal node from a Views row, including Search API rows.
+ *
+ * Search API result rows do not always expose the entity on $row->_entity.
+ * The redesigned card depends on the real deal node so the image and the
+ * venue/deal vote render builders can be attached consistently.
+ */
+function _spotdeals_minimal_get_deal_node_from_view_row(mixed $row): ?NodeInterface {
+  if (!is_object($row)) {
+    return NULL;
+  }
+
+  $candidates = [];
+
+  if (isset($row->_entity)) {
+    $candidates[] = $row->_entity;
+  }
+
+  if (isset($row->_object)) {
+    $candidates[] = $row->_object;
+  }
+
+  if (isset($row->_item) && is_object($row->_item)) {
+    $candidates[] = $row->_item;
+
+    if (method_exists($row->_item, 'getOriginalObject')) {
+      $candidates[] = $row->_item->getOriginalObject();
+    }
+  }
+
+  foreach ($candidates as $candidate) {
+    $node = _spotdeals_minimal_extract_node_from_candidate($candidate);
+    if ($node instanceof NodeInterface && $node->bundle() === 'deal') {
+      return $node;
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Extracts a node entity from common Views/Search API candidate objects.
+ */
+function _spotdeals_minimal_extract_node_from_candidate(mixed $candidate): ?NodeInterface {
+  if ($candidate instanceof NodeInterface) {
+    return $candidate;
+  }
+
+  if ($candidate instanceof EntityInterface && $candidate instanceof NodeInterface) {
+    return $candidate;
+  }
+
+  if (!is_object($candidate)) {
+    return NULL;
+  }
+
+  if (method_exists($candidate, 'getValue')) {
+    $value = $candidate->getValue();
+    if ($value instanceof NodeInterface) {
+      return $value;
+    }
+  }
+
+  if (method_exists($candidate, 'getEntity')) {
+    $entity = $candidate->getEntity();
+    if ($entity instanceof NodeInterface) {
+      return $entity;
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Builds the preferred image render array for a deal search result card.
+ *
+ * Selection order:
+ * - Deal field_image.
+ * - Referenced venue field_image.
+ * - Empty array when neither exists.
+ */
+function _spotdeals_minimal_build_deal_card_image(NodeInterface $deal, ?NodeInterface $venue = NULL): array {
+  $image_entity = $deal;
+
+  if (!$deal->hasField('field_image') || $deal->get('field_image')->isEmpty()) {
+    $image_entity = $venue;
+  }
+
+  if (!$image_entity instanceof NodeInterface || !$image_entity->hasField('field_image') || $image_entity->get('field_image')->isEmpty()) {
+    return [];
+  }
+
+  $image_item = $image_entity->get('field_image')->first();
+  if ($image_item === NULL || empty($image_item->entity)) {
+    return [];
+  }
+
+  $file = $image_item->entity;
+  $alt = trim((string) ($image_item->alt ?? ''));
+  if ($alt === '') {
+    $alt = $image_entity->label();
+  }
+
+  return [
+    '#theme' => 'image_style',
+    '#style_name' => 'deal_card_mobile',
+    '#uri' => $file->getFileUri(),
+    '#alt' => $alt,
+    '#title' => trim((string) ($image_item->title ?? '')),
+    '#attributes' => [
+      'loading' => 'lazy',
+      'class' => ['spotdeals-deal-card__image'],
+    ],
+  ];
 }
 
 /**

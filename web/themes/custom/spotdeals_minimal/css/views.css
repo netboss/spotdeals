@@ -44,7 +44,12 @@ h3 {
 
 @media screen and (min-width: 992px) {
   .form-actions .button {
-    flex: 0;
-    margin-block: var(--sp1);
+    flex: auto;
+    margin-block: 0;
   }
+}
+
+.js-pager__items.pager {
+  display: flex;
+  justify-content: center;
 }

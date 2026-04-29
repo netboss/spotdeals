@@ -641,68 +641,13 @@ function spotdeals_search_smart_location_preprocess_views_view_unformatted(array
   $fallback_broader_search = (bool) $request->attributes->get('spotdeals_search_smart_location.fallback_broader_search', FALSE);
 
   if (!$recommendation_mode && !$fallback_broader_search) {
-    $renderer = \Drupal::service('renderer');
-
-    foreach ($variables['rows'] as $delta => &$row) {
-      $result = $view->result[$delta] ?? NULL;
-      $deal = $result->_entity ?? NULL;
-      if (!$deal instanceof NodeInterface || $deal->bundle() !== 'deal') {
-        continue;
-      }
-
-      $venue = _spotdeals_search_smart_location_deal_venue($deal);
-      if (!$venue instanceof NodeInterface) {
-        continue;
-      }
-
-      $vote_build = _spotdeals_search_smart_location_build_vote_render($deal, $venue, TRUE);
-      if ($vote_build === []) {
-        continue;
-      }
-
-      $original_content = $row['content'] ?? NULL;
-      if ($original_content === NULL) {
-        continue;
-      }
-
-      $result_html = is_array($original_content)
-        ? (string) $renderer->renderRoot($original_content)
-        : (string) $original_content;
-
-      $vote_html = (string) $renderer->renderRoot($vote_build);
-
-      $count = 0;
-      $result_html = preg_replace(
-        '/(<div class="views-field views-field-title">.*?<\/div>)/s',
-        '$1' . $vote_html,
-        $result_html,
-        1,
-        $count
-      );
-
-      if ($count === 0) {
-        $result_html .= $vote_html;
-      }
-
-      $row['content'] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['spotdeals-result-card-with-vote'],
-        ],
-        '#cache' => [
-          'max-age' => 0,
-        ],
-        '#attached' => [
-          'library' => [
-            'spotdeals_vote/vote',
-          ],
-        ],
-        'result' => [
-          '#markup' => Markup::create($result_html),
-        ],
-      ];
-    }
-    unset($row);
+    // The redesigned v31 theme builds the full interactive venue and deal vote
+    // widgets inside the deal-card component via spotdeals_minimal_preprocess_views_view_fields().
+    //
+    // The legacy row rewrite below used to inject a compact deal vote widget into
+    // the rendered row HTML after the title. In the v31 card layout that injected
+    // markup appears as a stray vote row between cards, so normal search results
+    // must leave the row content untouched here.
     return;
   }
 
