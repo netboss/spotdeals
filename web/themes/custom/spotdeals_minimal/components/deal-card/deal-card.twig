@@ -114,7 +114,7 @@
           <div class="spotdeals-deal-card__deal">
             {% if deal_category %}
               <div class="spotdeals-deal-card__deal-category">
-                {{ deal_category }}
+                {{ deal_category|replace({'_': ' '})|capitalize|striptags|trim }}
               </div>
             {% endif %}
 

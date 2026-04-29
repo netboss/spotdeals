@@ -231,14 +231,14 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   $excluded_venue_nids = _spotdeals_search_smart_location_get_recommendation_exclusions();
   $request->attributes->set('spotdeals_search_smart_location.excluded_venue_nids', $excluded_venue_nids);
 
-  \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION recommendation request state: action="@action" excluded="@excluded" current="@current"',
-    [
-      '@action' => $recommendation_action,
-      '@excluded' => json_encode($excluded_venue_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-      '@current' => json_encode(\Drupal::request()->getSession()->get('spotdeals_search_smart_location.current_recommendation', []), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-    ]
-  );
+  //\Drupal::logger('spotdeals_search_smart_location')->notice(
+  //  'SMART LOCATION recommendation request state: action="@action" excluded="@excluded" current="@current"',
+  //  [
+  //    '@action' => $recommendation_action,
+  //    '@excluded' => json_encode($excluded_venue_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+  //    '@current' => json_encode(\Drupal::request()->getSession()->get('spotdeals_search_smart_location.current_recommendation', []), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+  //  ]
+  //);
 
   if ($raw === '' && !$recommendation_mode) {
     return;
@@ -318,13 +318,13 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
       );
       _spotdeals_search_smart_location_store_current_recommendation($recommended_nids);
 
-      \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION recommendation service result from browser origin: excluded="@excluded" recommended="@recommended"',
-        [
-          '@excluded' => json_encode($excluded_venue_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-          '@recommended' => json_encode($recommended_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-        ]
-      );
+      //\Drupal::logger('spotdeals_search_smart_location')->notice(
+      //  'SMART LOCATION recommendation service result from browser origin: excluded="@excluded" recommended="@recommended"',
+      //  [
+      //    '@excluded' => json_encode($excluded_venue_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+      //    '@recommended' => json_encode($recommended_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+      //  ]
+      //);
     }
 
     $request->attributes->set('spotdeals_search_smart_location.fallback_broader_search', FALSE);
@@ -348,19 +348,19 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
         $request->attributes->set('spotdeals_search_smart_location.zip', '');
         $request->attributes->set('spotdeals_search_smart_location.ranked_deal_nids', []);
 
-        \Drupal::logger('spotdeals_search_smart_location')->notice(
-          'SMART LOCATION broadened browser near-me keyword search before View execution: view="@view" display="@display" raw="@raw" keywords="@keywords" nearest_city="@city" origin_lat="@lat" origin_lon="@lon" local_ranked_count="0" broader_ranked_count="@broader"',
-          [
-            '@view' => $view->id(),
-            '@display' => $display_id,
-            '@raw' => $raw,
-            '@keywords' => $keywords,
-            '@city' => $nearest_city ?? '',
-            '@lat' => (string) $origin_lat,
-            '@lon' => (string) $origin_lon,
-            '@broader' => (string) count($broader_ranked_nids),
-          ]
-        );
+        //\Drupal::logger('spotdeals_search_smart_location')->notice(
+        //  'SMART LOCATION broadened browser near-me keyword search before View execution: view="@view" display="@display" raw="@raw" keywords="@keywords" nearest_city="@city" origin_lat="@lat" origin_lon="@lon" local_ranked_count="0" broader_ranked_count="@broader"',
+        //  [
+        //    '@view' => $view->id(),
+        //    '@display' => $display_id,
+        //    '@raw' => $raw,
+        //    '@keywords' => $keywords,
+        //    '@city' => $nearest_city ?? '',
+        //    '@lat' => (string) $origin_lat,
+        //    '@lon' => (string) $origin_lon,
+        //    '@broader' => (string) count($broader_ranked_nids),
+        //  ]
+        //);
       }
     }
 
@@ -379,22 +379,22 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
       $input['search_api_fulltext'] = $solr_keywords;
     }
 
-    \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION default near-me applied from browser origin: view="@view" display="@display" raw="@raw" keywords="@keywords" solr_keywords="@solr_keywords" recommendation_mode="@recommendation_mode" recommended_count="@recommended" nearest_city="@city" origin_lat="@lat" origin_lon="@lon" ranked_count="@ranked" city_filter="off"',
-      [
-        '@view' => $view->id(),
-        '@display' => $display_id,
-        '@raw' => $raw,
-        '@keywords' => $keywords,
-        '@solr_keywords' => $solr_keywords,
-        '@recommendation_mode' => $recommendation_mode ? '1' : '0',
-        '@recommended' => (string) count($recommended_nids),
-        '@city' => $nearest_city ?? '',
-        '@lat' => (string) $origin_lat,
-        '@lon' => (string) $origin_lon,
-        '@ranked' => (string) count($ranked_nids),
-      ]
-    );
+    //\Drupal::logger('spotdeals_search_smart_location')->notice(
+    //  'SMART LOCATION default near-me applied from browser origin: view="@view" display="@display" raw="@raw" keywords="@keywords" solr_keywords="@solr_keywords" recommendation_mode="@recommendation_mode" recommended_count="@recommended" nearest_city="@city" origin_lat="@lat" origin_lon="@lon" ranked_count="@ranked" city_filter="off"',
+    //  [
+    //    '@view' => $view->id(),
+    //    '@display' => $display_id,
+    //    '@raw' => $raw,
+    //    '@keywords' => $keywords,
+    //    '@solr_keywords' => $solr_keywords,
+    //    '@recommendation_mode' => $recommendation_mode ? '1' : '0',
+    //    '@recommended' => (string) count($recommended_nids),
+    //    '@city' => $nearest_city ?? '',
+    //    '@lat' => (string) $origin_lat,
+    //    '@lon' => (string) $origin_lon,
+    //    '@ranked' => (string) count($ranked_nids),
+    //  ]
+    //);
 
     $view->setExposedInput($input);
     return;
@@ -405,15 +405,15 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   $request->attributes->set('spotdeals_search_smart_location.zip', '');
 
   if (empty($parsed['zip']) && empty($parsed['city'])) {
-    \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION no explicit location found and no browser origin available: view="@view" display="@display" raw="@raw" recommendation_mode="@recommendation_mode"',
-      [
-        '@view' => $view->id(),
-        '@display' => $display_id,
-        '@raw' => $raw,
-        '@recommendation_mode' => $recommendation_mode ? '1' : '0',
-      ]
-    );
+    //\Drupal::logger('spotdeals_search_smart_location')->notice(
+    //  'SMART LOCATION no explicit location found and no browser origin available: view="@view" display="@display" raw="@raw" recommendation_mode="@recommendation_mode"',
+    //  [
+    //    '@view' => $view->id(),
+    //    '@display' => $display_id,
+    //    '@raw' => $raw,
+    //    '@recommendation_mode' => $recommendation_mode ? '1' : '0',
+    //  ]
+    //);
     return;
   }
 
@@ -472,33 +472,33 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
       );
       _spotdeals_search_smart_location_store_current_recommendation($recommended_nids);
 
-      \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION recommendation service result from resolved origin: excluded="@excluded" recommended="@recommended"',
-        [
-          '@excluded' => json_encode($excluded_venue_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-          '@recommended' => json_encode($recommended_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-        ]
-      );
+      //\Drupal::logger('spotdeals_search_smart_location')->notice(
+      //  'SMART LOCATION recommendation service result from resolved origin: excluded="@excluded" recommended="@recommended"',
+      //  [
+      //    '@excluded' => json_encode($excluded_venue_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+      //    '@recommended' => json_encode($recommended_nids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+      //  ]
+      //);
     }
   }
 
   $view->setExposedInput($input);
 
-  \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION applied explicit location override: view="@view" display="@display" raw="@raw" keywords="@keywords" zip="@zip" city="@city" exact_city="@exact_city" origin_lat="@origin_lat" origin_lon="@origin_lon" search_param="@search_param"',
-    [
-      '@view' => $view->id(),
-      '@display' => $display_id,
-      '@raw' => $raw,
-      '@keywords' => $parsed['keywords'] ?? '',
-      '@zip' => $parsed['zip'] ?? '',
-      '@city' => $parsed['city'] ?? '',
-      '@exact_city' => $exact_city,
-      '@origin_lat' => $origin['lat'] ?? '',
-      '@origin_lon' => $origin['lon'] ?? '',
-      '@search_param' => $search_param,
-    ]
-  );
+  //\Drupal::logger('spotdeals_search_smart_location')->notice(
+  //  'SMART LOCATION applied explicit location override: view="@view" display="@display" raw="@raw" keywords="@keywords" zip="@zip" city="@city" exact_city="@exact_city" origin_lat="@origin_lat" origin_lon="@origin_lon" search_param="@search_param"',
+  //  [
+  //    '@view' => $view->id(),
+  //    '@display' => $display_id,
+  //    '@raw' => $raw,
+  //    '@keywords' => $parsed['keywords'] ?? '',
+  //    '@zip' => $parsed['zip'] ?? '',
+  //    '@city' => $parsed['city'] ?? '',
+  //    '@exact_city' => $exact_city,
+  //    '@origin_lat' => $origin['lat'] ?? '',
+  //    '@origin_lon' => $origin['lon'] ?? '',
+  //    '@search_param' => $search_param,
+  //  ]
+  //);
 }
 
 /**
@@ -596,26 +596,26 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
     'spotdeals_search_smart_location_hide_recommendation_pager_summary',
   ];
 
-  if ($has_recommendation) {
-    \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION recommendation mode prepared direct recommendation render at preprocess_views_view: deal_nid="@nid"',
-      [
-        '@nid' => (string) $direct_recommendation_deal_nid,
-      ]
-    );
-  }
-  else {
-    \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION recommendation mode had no direct recommendation render available at preprocess_views_view.'
-    );
-  }
+  //if ($has_recommendation) {
+    //\Drupal::logger('spotdeals_search_smart_location')->notice(
+    //  'SMART LOCATION recommendation mode prepared direct recommendation render at preprocess_views_view: deal_nid="@nid"',
+    //  [
+    //    '@nid' => (string) $direct_recommendation_deal_nid,
+    //  ]
+    //);
+  //}
+  //else {
+    //\Drupal::logger('spotdeals_search_smart_location')->notice(
+    //  'SMART LOCATION recommendation mode had no direct recommendation render available at preprocess_views_view.'
+    //);
+  //}
 
-  \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION recommendation mode adjusted pager summary at preprocess_views_view: forced_count="@count" summary_hidden="1"',
-    [
-      '@count' => $has_recommendation ? '1' : '0',
-    ]
-  );
+  //\Drupal::logger('spotdeals_search_smart_location')->notice(
+  //  'SMART LOCATION recommendation mode adjusted pager summary at preprocess_views_view: forced_count="@count" summary_hidden="1"',
+  //  [
+  //    '@count' => $has_recommendation ? '1' : '0',
+  //  ]
+  //);
 }
 
 /**
@@ -664,13 +664,13 @@ function spotdeals_search_smart_location_preprocess_views_view_unformatted(array
   $before_count = is_array($variables['rows'] ?? NULL) ? count($variables['rows']) : 0;
   $variables['rows'] = [];
 
-  \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION recommendation mode bypassed rendered view rows because direct recommendation rendering is active: before="@before" deal_nid="@nid"',
-    [
-      '@before' => (string) $before_count,
-      '@nid' => (string) $direct_recommendation_deal_nid,
-    ]
-  );
+  //\Drupal::logger('spotdeals_search_smart_location')->notice(
+  //  'SMART LOCATION recommendation mode bypassed rendered view rows because direct recommendation rendering is active: before="@before" deal_nid="@nid"',
+  //  [
+  //    '@before' => (string) $before_count,
+  //    '@nid' => (string) $direct_recommendation_deal_nid,
+  //  ]
+  //);
 }
 
 /**
@@ -703,7 +703,7 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
   }
 
   $deal = \Drupal::entityTypeManager()->getStorage('node')->load($deal_nid);
-  if (!$deal instanceof NodeInterface) {
+  if (!$deal instanceof NodeInterface || $deal->bundle() !== 'deal') {
     return [];
   }
 
@@ -712,23 +712,91 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
   $venue_location = $venue instanceof NodeInterface
     ? _spotdeals_search_smart_location_format_direct_recommendation_location($venue)
     : '';
-  $deal_label = $deal->label();
-  $summary = _spotdeals_search_smart_location_extract_direct_recommendation_text($deal, [
-    'body',
-    'field_description',
-    'field_deal_description',
-    'field_offer_description',
-    'field_details',
-    'field_special_description',
-  ]);
-  $meta_values = _spotdeals_search_smart_location_collect_direct_recommendation_meta($deal, 3);
-  $cta = _spotdeals_search_smart_location_get_preferred_cta($deal, $venue);
-  $deal_category = _spotdeals_search_smart_location_get_deal_category_label($deal);
   $directions_url = $venue instanceof NodeInterface
     ? _spotdeals_search_smart_location_build_directions_url($venue)
     : '';
-  $vote_build = _spotdeals_search_smart_location_build_vote_render($deal, $venue);
-  $venue_vote_summary_build = _spotdeals_search_smart_location_build_venue_vote_summary_render($venue);
+
+  $venue_title = [];
+  if ($venue instanceof NodeInterface) {
+    $venue_title = [
+      '#type' => 'html_tag',
+      '#tag' => 'h2',
+      '#attributes' => [
+        'class' => ['venue-title'],
+      ],
+      'link' => [
+        '#type' => 'link',
+        '#title' => $venue_label,
+        '#url' => $venue->toUrl(),
+      ],
+    ];
+  }
+
+  $venue_meta = _spotdeals_search_smart_location_build_direct_recommendation_venue_meta_render($venue_location, $directions_url);
+
+  $deal_title = [
+    '#type' => 'html_tag',
+    '#tag' => 'h3',
+    '#attributes' => [
+      'class' => ['deal-title'],
+    ],
+    'link' => [
+      '#type' => 'link',
+      '#title' => $deal->label(),
+      '#url' => $deal->toUrl(),
+    ],
+  ];
+
+  $offer = _spotdeals_search_smart_location_get_direct_recommendation_field_text($deal, 'field_price_offer_text');
+  $offer = _spotdeals_search_smart_location_filter_direct_recommendation_text($offer);
+  if ($offer === '') {
+    $offer = _spotdeals_search_smart_location_extract_direct_recommendation_text($deal, [
+      'field_offer_description',
+      'field_deal_description',
+      'body',
+      'field_description',
+      'field_details',
+      'field_special_description',
+    ]);
+  }
+
+  $schedule = _spotdeals_search_smart_location_build_direct_recommendation_schedule_text($deal);
+  $deal_category = _spotdeals_search_smart_location_get_deal_category_label($deal);
+  $cuisine = $venue instanceof NodeInterface
+    ? _spotdeals_search_smart_location_collect_node_term_labels_comma_separated($venue, 'field_cuisine')
+    : '';
+  $cta = _spotdeals_search_smart_location_get_preferred_cta($deal, $venue);
+
+  $claim_link = [];
+  if (!empty($cta)) {
+    $claim_link = [
+      '#type' => 'link',
+      '#title' => $cta['title'],
+      '#url' => Url::fromUri($cta['uri']),
+      '#options' => [
+        'attributes' => [
+          'class' => ['field--name-field-cta'],
+          'target' => '_blank',
+          'rel' => 'noopener noreferrer',
+        ],
+      ],
+    ];
+  }
+  elseif ($venue instanceof NodeInterface) {
+    $claim_link = [
+      '#type' => 'link',
+      '#title' => t('View venue'),
+      '#url' => $venue->toUrl(),
+    ];
+  }
+
+  $image = _spotdeals_search_smart_location_build_direct_recommendation_card_image($deal, $venue);
+  $venue_vote_summary = $venue instanceof NodeInterface && \Drupal::hasService('spotdeals_vote_venue.render_builder')
+    ? \Drupal::service('spotdeals_vote_venue.render_builder')->build($venue, FALSE)
+    : [];
+  $deal_vote_summary = $venue instanceof NodeInterface && \Drupal::hasService('spotdeals_vote_deal.render_builder')
+    ? \Drupal::service('spotdeals_vote_deal.render_builder')->build($deal, $venue, FALSE)
+    : [];
 
   $build = [
     '#type' => 'container',
@@ -738,228 +806,183 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
         'spotdeals-direct-recommendation',
       ],
     ],
+    'card' => [
+      '#type' => 'inline_template',
+      '#template' => "{{ include('spotdeals_minimal:deal-card', { variant: 'default', image: image, venue_title: venue_title, venue_meta: venue_meta, cuisine: cuisine, deal_title: deal_title, deal_category: deal_category, offer: offer, schedule: schedule, claim_link: claim_link, venue_vote_summary: venue_vote_summary, deal_vote_summary: deal_vote_summary }, with_context = false) }}",
+      '#context' => [
+        'image' => $image,
+        'venue_title' => $venue_title,
+        'venue_meta' => $venue_meta,
+        'cuisine' => $cuisine,
+        'deal_title' => $deal_title,
+        'deal_category' => $deal_category,
+        'offer' => $offer,
+        'schedule' => $schedule,
+        'claim_link' => $claim_link,
+        'venue_vote_summary' => $venue_vote_summary,
+        'deal_vote_summary' => $deal_vote_summary,
+      ],
+    ],
     '#cache' => [
       'max-age' => 0,
     ],
     '#attached' => [
       'library' => [
+        'spotdeals_minimal/deal-card',
         'spotdeals_vote/vote',
       ],
     ],
   ];
 
-  if ($venue instanceof NodeInterface) {
-    $build['venue_title'] = [
-      '#type' => 'container',
-      '#attributes' => [
-        'class' => ['views-field', 'views-field-title'],
-      ],
-      'content' => [
-        '#type' => 'html_tag',
-        '#tag' => 'h2',
-        '#attributes' => [
-          'class' => ['venue-title'],
-        ],
-        'link' => [
-          '#type' => 'link',
-          '#title' => $venue_label,
-          '#url' => $venue->toUrl(),
-        ],
-      ],
-    ];
+  //\Drupal::logger('spotdeals_search_smart_location')->notice(
+  //  'SMART LOCATION recommendation mode built deal-card component render: deal_nid="@nid" venue_nid="@venue_nid" venue_label="@venue" image_present="@image" cuisine="@cuisine" vote_present="@vote"',
+  //  [
+  //    '@nid' => (string) $deal_nid,
+  //    '@venue_nid' => $venue instanceof NodeInterface ? (string) $venue->id() : '',
+  //    '@venue' => $venue_label,
+  //    '@image' => !empty($image) ? '1' : '0',
+  //    '@cuisine' => $cuisine,
+  //    '@vote' => (!empty($venue_vote_summary) || !empty($deal_vote_summary)) ? '1' : '0',
+  //  ]
+  //);
 
-    if (!empty($venue_vote_summary_build)) {
-      $build['venue_title']['content']['summary_separator'] = [
-        '#plain_text' => ' ',
-      ];
-      $build['venue_title']['content']['summary'] = $venue_vote_summary_build;
-    }
+  return $build;
+}
+
+
+/**
+ * Builds the venue meta render array for the direct recommendation card.
+ *
+ * @return array<string,mixed>
+ *   Render array.
+ */
+function _spotdeals_search_smart_location_build_direct_recommendation_venue_meta_render(string $venue_location, string $directions_url): array {
+  if ($venue_location === '' && $directions_url === '') {
+    return [];
   }
 
-  if ($venue_location !== '' || $directions_url !== '') {
-    $build['venue_location'] = [
-      '#type' => 'container',
-      '#attributes' => [
-        'class' => ['views-field', 'views-field-field-address-locality'],
-      ],
-      'content' => [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['field-content'],
-        ],
-      ],
-    ];
-
-    if ($venue_location !== '') {
-      $build['venue_location']['content']['location'] = [
-        '#plain_text' => $venue_location,
-      ];
-    }
-
-    if ($directions_url !== '') {
-      if ($venue_location !== '') {
-        $build['venue_location']['content']['separator'] = [
-          '#plain_text' => ' - ',
-        ];
-      }
-
-      $build['venue_location']['content']['directions'] = [
-        '#type' => 'link',
-        '#title' => t('Get directions'),
-        '#url' => Url::fromUri($directions_url),
-        '#options' => [
-          'attributes' => [
-            'class' => [
-              'field--name-field-directions',
-              'spotdeals-directions-link',
-            ],
-            'target' => '_blank',
-            'rel' => 'noopener noreferrer',
-          ],
-        ],
-      ];
-    }
-  }
-
-  $build['deal_title'] = [
+  $build = [
     '#type' => 'container',
-    '#attributes' => [
-      'class' => ['views-field', 'views-field-title-1'],
-    ],
-    'content' => [
-      '#type' => 'html_tag',
-      '#tag' => 'h3',
-      '#attributes' => [
-        'class' => ['deal-title'],
-      ],
-      'link' => [
-        '#type' => 'link',
-        '#title' => $deal_label,
-        '#url' => $deal->toUrl(),
-      ],
-    ],
   ];
 
-  if ($summary !== '') {
-    $build['summary'] = [
-      '#type' => 'container',
-      '#attributes' => [
-        'class' => ['views-field', 'views-field-body'],
-      ],
-      'content' => [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['field-content'],
-        ],
-        '#plain_text' => $summary,
-      ],
+  if ($venue_location !== '') {
+    $build['location'] = [
+      '#plain_text' => $venue_location,
     ];
   }
 
-  if ($deal_category !== '' || !empty($cta)) {
-    $build['cta_row'] = [
-      '#type' => 'container',
-      '#attributes' => [
-        'class' => ['views-field', 'views-field-nothing'],
-      ],
-      'content' => [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['field-content'],
-        ],
-      ],
-    ];
-
-    if ($deal_category !== '') {
-      $build['cta_row']['content']['deal_category'] = [
-        '#plain_text' => $deal_category,
-      ];
-    }
-
-    if ($deal_category !== '' && !empty($cta)) {
-      $build['cta_row']['content']['separator'] = [
+  if ($directions_url !== '') {
+    if ($venue_location !== '') {
+      $build['separator'] = [
         '#plain_text' => ' - ',
       ];
     }
 
-    if (!empty($cta)) {
-      $build['cta_row']['content']['cta'] = [
-        '#type' => 'html_tag',
-        '#tag' => 'span',
-        '#attributes' => [
-          'class' => ['field--name-field-cta'],
-        ],
-        'link' => [
-          '#type' => 'link',
-          '#title' => $cta['title'],
-          '#url' => Url::fromUri($cta['uri']),
-          '#options' => [
-            'attributes' => [
-              'target' => '_blank',
-              'rel' => 'noopener noreferrer',
-            ],
+    $build['directions'] = [
+      '#type' => 'link',
+      '#title' => t('Get directions'),
+      '#url' => Url::fromUri($directions_url),
+      '#options' => [
+        'attributes' => [
+          'class' => [
+            'field--name-field-directions',
+            'spotdeals-directions-link',
           ],
-        ],
-      ];
-    }
-  }
-
-  if (!empty($meta_values)) {
-    foreach ($meta_values as $delta => $value) {
-      $build['meta_' . $delta] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['views-field', 'views-field-nothing'],
-        ],
-        'content' => [
-          '#type' => 'container',
-          '#attributes' => [
-            'class' => ['field-content'],
-          ],
-          '#plain_text' => $value,
-        ],
-      ];
-    }
-  }
-
-  if (!empty($vote_build)) {
-    $build['vote'] = $vote_build;
-  }
-
-  if ($venue instanceof NodeInterface) {
-    $build['venue_link'] = [
-      '#type' => 'container',
-      '#attributes' => [
-        'class' => ['views-field', 'views-field-view-node'],
-      ],
-      'content' => [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['field-content'],
-        ],
-        'link' => [
-          '#type' => 'link',
-          '#title' => t('View venue'),
-          '#url' => $venue->toUrl(),
+          'target' => '_blank',
+          'rel' => 'noopener noreferrer',
         ],
       ],
     ];
   }
 
-  \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION recommendation mode built uncached direct recommendation view-like render: deal_nid="@nid" venue_nid="@venue_nid" venue_label="@venue" cta_present="@cta" directions_present="@directions" vote_present="@vote"',
-    [
-      '@nid' => (string) $deal_nid,
-      '@venue_nid' => $venue instanceof NodeInterface ? (string) $venue->id() : '',
-      '@venue' => $venue_label,
-      '@cta' => !empty($cta) ? '1' : '0',
-      '@directions' => $directions_url !== '' ? '1' : '0',
-      '@vote' => !empty($vote_build) ? '1' : '0',
-    ]
-  );
-
   return $build;
 }
+
+/**
+ * Builds the preferred image render array for a direct recommendation card.
+ *
+ * @return array<string,mixed>
+ *   Render array.
+ */
+function _spotdeals_search_smart_location_build_direct_recommendation_card_image(NodeInterface $deal, ?NodeInterface $venue = NULL): array {
+  $image_entity = $deal;
+
+  if (!$deal->hasField('field_image') || $deal->get('field_image')->isEmpty()) {
+    $image_entity = $venue;
+  }
+
+  if (!$image_entity instanceof NodeInterface || !$image_entity->hasField('field_image') || $image_entity->get('field_image')->isEmpty()) {
+    return [];
+  }
+
+  $image_item = $image_entity->get('field_image')->first();
+  if ($image_item === NULL || empty($image_item->entity)) {
+    return [];
+  }
+
+  $file = $image_item->entity;
+  $alt = trim((string) ($image_item->alt ?? ''));
+  if ($alt === '') {
+    $alt = $image_entity->label();
+  }
+
+  return [
+    '#theme' => 'image_style',
+    '#style_name' => 'deal_card_mobile',
+    '#uri' => $file->getFileUri(),
+    '#alt' => $alt,
+    '#title' => trim((string) ($image_item->title ?? '')),
+    '#attributes' => [
+      'loading' => 'lazy',
+      'class' => ['spotdeals-deal-card__image'],
+    ],
+  ];
+}
+
+/**
+ * Builds the schedule text shown in the deal card component.
+ */
+function _spotdeals_search_smart_location_build_direct_recommendation_schedule_text(NodeInterface $deal): string {
+  $parts = [];
+
+  foreach (['field_day_of_week', 'field_start_time', 'field_end_time'] as $field_name) {
+    $value = _spotdeals_search_smart_location_get_direct_recommendation_field_text($deal, $field_name);
+    $value = _spotdeals_search_smart_location_filter_direct_recommendation_text($value);
+    if ($value !== '' && !in_array($value, $parts, TRUE)) {
+      $parts[] = $value;
+    }
+  }
+
+  if (empty($parts)) {
+    return '';
+  }
+
+  if (count($parts) === 3) {
+    return $parts[0] . ' ' . $parts[1] . '–' . $parts[2];
+  }
+
+  return implode(' ', $parts);
+}
+
+/**
+ * Collects referenced term labels from a node field as comma-separated text.
+ */
+function _spotdeals_search_smart_location_collect_node_term_labels_comma_separated(NodeInterface $node, string $field_name): string {
+  if (!$node->hasField($field_name) || $node->get($field_name)->isEmpty()) {
+    return '';
+  }
+
+  $labels = [];
+  foreach ($node->get($field_name)->referencedEntities() as $entity) {
+    $label = trim((string) $entity->label());
+    if ($label !== '') {
+      $labels[] = $label;
+    }
+  }
+
+  return implode(', ', $labels);
+}
+
 
 /**
  * Builds vote markup for deal voting.
@@ -1451,9 +1474,9 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
     !is_numeric($origin['lat']) ||
     !is_numeric($origin['lon'])
   ) {
-    \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION pre_render near-me distance sort skipped: missing origin.'
-    );
+    //\Drupal::logger('spotdeals_search_smart_location')->notice(
+    //  'SMART LOCATION pre_render near-me distance sort skipped: missing origin.'
+    //);
     return;
   }
 
@@ -1512,16 +1535,16 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
     _spotdeals_search_smart_location_reorder_rendered_fields($view, []);
     _spotdeals_search_smart_location_sync_filtered_pager($view);
 
-    \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION pre_render near-me distance sort removed all rows: before="@before" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius"',
-      [
-        '@before' => (string) $before_count,
-        '@missing' => (string) $missing_coords,
-        '@outside' => (string) $outside_radius,
-        '@not_ranked' => (string) $not_ranked,
-        '@radius' => (string) $radius_km,
-      ]
-    );
+    //\Drupal::logger('spotdeals_search_smart_location')->notice(
+    //  'SMART LOCATION pre_render near-me distance sort removed all rows: before="@before" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius"',
+    //  [
+    //    '@before' => (string) $before_count,
+    //    '@missing' => (string) $missing_coords,
+    //    '@outside' => (string) $outside_radius,
+    //    '@not_ranked' => (string) $not_ranked,
+    //    '@radius' => (string) $radius_km,
+    //  ]
+    //);
     return;
   }
 
@@ -1565,20 +1588,20 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
     ];
   }
 
-  \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION pre_render applied hard near-me radius filter and strict distance sort: before="@before" after="@after" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius" ranked_count="@ranked" nearest_city="@nearest_city" rows="@rows"',
-    [
-      '@before' => (string) $before_count,
-      '@after' => (string) count($view->result),
-      '@missing' => (string) $missing_coords,
-      '@outside' => (string) $outside_radius,
-      '@not_ranked' => (string) $not_ranked,
-      '@radius' => (string) $radius_km,
-      '@ranked' => is_array($ranked_nids) ? (string) count($ranked_nids) : '0',
-      '@nearest_city' => $nearest_city,
-      '@rows' => json_encode($debug_rows, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-    ]
-  );
+  //\Drupal::logger('spotdeals_search_smart_location')->notice(
+  //  'SMART LOCATION pre_render applied hard near-me radius filter and strict distance sort: before="@before" after="@after" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius" ranked_count="@ranked" nearest_city="@nearest_city" rows="@rows"',
+  //  [
+  //    '@before' => (string) $before_count,
+  //    '@after' => (string) count($view->result),
+  //    '@missing' => (string) $missing_coords,
+  //    '@outside' => (string) $outside_radius,
+  //    '@not_ranked' => (string) $not_ranked,
+  //    '@radius' => (string) $radius_km,
+  //    '@ranked' => is_array($ranked_nids) ? (string) count($ranked_nids) : '0',
+  //    '@nearest_city' => $nearest_city,
+  //    '@rows' => json_encode($debug_rows, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+  //  ]
+  //);
 }
 
 /**
@@ -1656,15 +1679,15 @@ function _spotdeals_search_smart_location_apply_city_distance_sort(ViewExecutabl
     ];
   }
 
-  \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION pre_render applied exact city distance sort: before="@before" after="@after" city="@city" rows="@rows"',
-    [
-      '@before' => (string) $before_count,
-      '@after' => (string) count($view->result),
-      '@city' => $exact_city,
-      '@rows' => json_encode($debug_rows, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-    ]
-  );
+  //\Drupal::logger('spotdeals_search_smart_location')->notice(
+  //  'SMART LOCATION pre_render applied exact city distance sort: before="@before" after="@after" city="@city" rows="@rows"',
+  //  [
+  //    '@before' => (string) $before_count,
+  //    '@after' => (string) count($view->result),
+  //    '@city' => $exact_city,
+  //    '@rows' => json_encode($debug_rows, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+  //  ]
+  //);
 }
 
 /**
@@ -1740,13 +1763,13 @@ function _spotdeals_search_smart_location_reorder_rendered_fields(ViewExecutable
     return;
   }
 
-  \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION skipped rendered_fields rewrite due to incomplete mapping: expected="@expected" matched="@matched"',
-    [
-      '@expected' => (string) count($rows),
-      '@matched' => (string) $matched_count,
-    ]
-  );
+  //\Drupal::logger('spotdeals_search_smart_location')->notice(
+  //  'SMART LOCATION skipped rendered_fields rewrite due to incomplete mapping: expected="@expected" matched="@matched"',
+  //  [
+  //    '@expected' => (string) count($rows),
+  //    '@matched' => (string) $matched_count,
+  //  ]
+  //);
 }
 
 /**
@@ -1966,13 +1989,13 @@ function _spotdeals_search_smart_location_store_current_recommendation(array $re
     'venue_nid' => $venue_nid,
   ]);
 
-  \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION stored current recommendation in session: deal_nid="@deal" venue_nid="@venue"',
-    [
-      '@deal' => (string) $deal->id(),
-      '@venue' => (string) $venue_nid,
-    ]
-  );
+  //\Drupal::logger('spotdeals_search_smart_location')->notice(
+  //  'SMART LOCATION stored current recommendation in session: deal_nid="@deal" venue_nid="@venue"',
+  //  [
+  //    '@deal' => (string) $deal->id(),
+  //    '@venue' => (string) $venue_nid,
+  //  ]
+  //);
 }
 
 /**
@@ -2003,13 +2026,13 @@ function _spotdeals_search_smart_location_apply_recommendation_action_to_session
 
   $session->set('spotdeals_search_smart_location.excluded_venue_nids', [$venue_nid]);
 
-  \Drupal::logger('spotdeals_search_smart_location')->notice(
-    'SMART LOCATION applied retry exclusion in session: excluded_venue_nids="@excluded" from_current="@current"',
-    [
-      '@excluded' => json_encode([$venue_nid], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-      '@current' => json_encode($current, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-    ]
-  );
+  //\Drupal::logger('spotdeals_search_smart_location')->notice(
+  //  'SMART LOCATION applied retry exclusion in session: excluded_venue_nids="@excluded" from_current="@current"',
+  //  [
+  //    '@excluded' => json_encode([$venue_nid], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+  //    '@current' => json_encode($current, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+  //  ]
+  //);
 }
 
 /**
