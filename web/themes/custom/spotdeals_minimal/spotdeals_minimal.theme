@@ -286,6 +286,33 @@ function spotdeals_minimal_views_pre_render(ViewExecutable $view) {
   ];
 }
 
+
+/**
+ * Implements hook_form_alter().
+ */
+function spotdeals_minimal_form_alter(array &$form, \Drupal\Core\Form\FormStateInterface $form_state, string $form_id): void {
+  if ($form_id !== 'user_register_form') {
+    return;
+  }
+
+  // Keep the public registration form focused on only the fields users should
+  // fill in themselves. Subscription/billing fields are managed internally and
+  // should not be exposed during account creation.
+  $hidden_registration_elements = [
+    'contact',
+    'field_stripe_customer_id',
+    'field_stripe_subscription_id',
+    'field_plan_status',
+    'field_plan_renew_at',
+  ];
+
+  foreach ($hidden_registration_elements as $element_key) {
+    if (isset($form[$element_key])) {
+      $form[$element_key]['#access'] = FALSE;
+    }
+  }
+}
+
 /**
  * Implements hook_theme().
  */

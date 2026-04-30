@@ -3210,3 +3210,162 @@ h1.page-title {
     margin-top: 0.75rem;
   }
 }
+
+
+/* SD-098 FIX: Keep user account pages readable and centered. */
+.path-user .spotdeals-page-main {
+  display: block;
+  width: min(calc(100vw - 2rem), 920px);
+  margin-inline: auto;
+  padding-block: 3rem 4rem;
+}
+
+.path-user .spotdeals-main-content {
+  width: 100%;
+  max-width: 920px;
+  margin-inline: auto;
+}
+
+.path-user .page-title,
+.path-user h1 {
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+
+.path-user .profile,
+.path-user .user-form,
+.path-user .user-register-form,
+.path-user .user-login-form,
+.path-user .user-pass,
+.path-user .block-system-main-block > form {
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.path-user .profile {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.path-user .profile .field,
+.path-user .profile .field__item,
+.path-user .profile .field__label {
+  max-width: 100%;
+}
+
+.path-user .profile .field--name-user-picture img {
+  display: block;
+  width: min(100%, 180px);
+  height: auto;
+  border-radius: 999px;
+}
+
+.path-user .block-local-tasks-block {
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.path-user .tabs {
+  margin-bottom: 2rem;
+}
+
+.path-user .form-item,
+.path-user .js-form-item {
+  max-width: 100%;
+}
+
+.path-user input:not([type='checkbox']):not([type='radio']):not([type='submit']):not([type='button']),
+.path-user select,
+.path-user textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.path-user input[type='file'] {
+  width: auto;
+}
+
+.path-user .field--name-field-stripe-customer-id,
+.path-user .field--name-field-stripe-subscription-id,
+.path-user .field--name-field-plan-status,
+.path-user .field--name-field-plan-renew-at {
+  display: none;
+}
+
+/* SD-099 FIX: Keep login/register tabs expanded on mobile user pages. */
+@media (max-width: 759px) {
+  .path-user .block-local-tasks-block,
+  .path-user .block-local-tasks-block nav,
+  .path-user .block-local-tasks-block .tabs-wrapper {
+    height: auto;
+    overflow: visible;
+  }
+
+  .path-user .block-local-tasks-block .tabs,
+  .path-user .block-local-tasks-block .tabs.primary,
+  .path-user .block-local-tasks-block .tabs--primary,
+  .path-user .block-local-tasks-block ul.tabs {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    visibility: visible;
+  }
+
+  .path-user .block-local-tasks-block .tabs > li,
+  .path-user .block-local-tasks-block .tabs__tab,
+  .path-user .block-local-tasks-block .tabs__item,
+  .path-user .block-local-tasks-block .tabs li {
+    display: block;
+    width: 100%;
+    height: auto;
+    opacity: 1;
+    overflow: visible;
+    position: static;
+    transform: none;
+    visibility: visible;
+  }
+
+  .path-user .block-local-tasks-block .tabs a,
+  .path-user .block-local-tasks-block .tabs__link {
+    display: block;
+    width: 100%;
+  }
+
+  .path-user .block-local-tasks-block .tabs__trigger,
+  .path-user .block-local-tasks-block .tabs__toggle,
+  .path-user .block-local-tasks-block .tabs__dropdown-trigger,
+  .path-user .block-local-tasks-block .tabs-toggle,
+  .path-user .block-local-tasks-block .trigger,
+  .path-user .block-local-tasks-block button[aria-expanded],
+  .path-user .block-local-tasks-block button[aria-controls] {
+    display: none;
+  }
+
+  .path-user .block-local-tasks-block [hidden] {
+    display: block;
+  }
+}
+
+/* SD-100 FIX: Vertically center mobile login/register tab labels. */
+@media (max-width: 759px) {
+  .path-user .block-local-tasks-block .tabs a,
+  .path-user .block-local-tasks-block .tabs__link,
+  .path-user .block-local-tasks-block .tabs li > a {
+    align-items: center;
+    box-sizing: border-box;
+    display: flex;
+    line-height: 1.2;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
