@@ -34,7 +34,7 @@
 
   {% if deal_category %}
     <div class="spotdeals-deal-card__mobile-badge" aria-hidden="true">
-      {{ deal_category }}
+      {{ deal_category|replace({'_': ' '})|capitalize|striptags|trim }}
     </div>
   {% endif %}
 
@@ -74,7 +74,7 @@
       <div class="spotdeals-deal-card__mobile-deal-summary">
         {% if deal_category %}
           <div class="spotdeals-deal-card__mobile-deal-category">
-            {{ deal_category }}
+            {{ deal_category|replace({'_': ' '})|capitalize|striptags|trim }}
           </div>
         {% endif %}
 
