@@ -405,12 +405,20 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   $request->attributes->set('spotdeals_search_smart_location.zip', '');
 
   if (empty($parsed['zip']) && empty($parsed['city'])) {
+    $keywords = $recommendation_mode && $effective_recommendation_keywords !== ''
+      ? $effective_recommendation_keywords
+      : ($clean !== '' ? $clean : trim((string) ($parsed['keywords'] ?? $raw)));
+    $keywords = _spotdeals_search_smart_location_normalize_keywords($keywords);
+
+    _spotdeals_search_smart_location_prepare_search_insight($raw, $keywords, $recommendation_mode);
+
     //\Drupal::logger('spotdeals_search_smart_location')->notice(
-    //  'SMART LOCATION no explicit location found and no browser origin available: view="@view" display="@display" raw="@raw" recommendation_mode="@recommendation_mode"',
+    //  'SMART LOCATION no explicit location found and no browser origin available: view="@view" display="@display" raw="@raw" keywords="@keywords" recommendation_mode="@recommendation_mode"',
     //  [
     //    '@view' => $view->id(),
     //    '@display' => $display_id,
     //    '@raw' => $raw,
+    //    '@keywords' => $keywords,
     //    '@recommendation_mode' => $recommendation_mode ? '1' : '0',
     //  ]
     //);
