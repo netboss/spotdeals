@@ -59,6 +59,12 @@
             <span>{{ cuisine }}</span>
           </div>
         {% endif %}
+
+        {% if cta %}
+          <div class="spotdeals-deal-card__cta">
+            <span>{{ cta }}</span>
+          </div>
+        {% endif %}
       {% endblock %}
 
       {% block venue_votes %}

@@ -277,6 +277,10 @@
   text-transform: capitalize;
 }
 
+.spotdeals-deal-card__cta {
+  margin-top: 1rem;
+}
+
 .spotdeals-deal-card__deal-title {
   margin-bottom: 0.35rem;
   color: var(--deal-card-text);
@@ -671,7 +675,7 @@
   font-size: 0.8rem;
   line-height: 1.25;
 }
-border-left: 1px solid #dfe4ea;
+
 .spotdeals-deal-card__deal-votes .spotdeals-vote-summary__value {
   justify-content: flex-start;
   gap: 0.35rem;
