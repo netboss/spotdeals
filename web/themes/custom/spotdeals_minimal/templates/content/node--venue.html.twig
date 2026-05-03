@@ -45,7 +45,12 @@
   </header>
 
   <div{{ content_attributes.addClass('node__content', layout) }}>
-    {{ content|without('comment', 'field_image', 'body', 'field_address', 'field_venue_type') }}
+    {# The Menu and View Menu are duplicates; remove field_cta if it contains "View Menu" #}
+    {% if 'View Menu' in content.field_cta[0]['#title'] %}
+      {{ content|without('comment', 'field_image', 'body', 'field_address', 'field_venue_type', 'field_cta') }}
+    {% else %}
+      {{ content|without('comment', 'field_image', 'body', 'field_address', 'field_venue_type') }}
+    {% endif %}
     {% if content.field_image[0] or content.body[0] %}
       <div class="node__venue-content--image-body-wrapper">
         {{ content.field_image }}
