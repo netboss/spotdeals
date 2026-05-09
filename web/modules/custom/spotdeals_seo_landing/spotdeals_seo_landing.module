@@ -44,7 +44,27 @@ function spotdeals_seo_landing_views_pre_execute(ViewExecutable $view): void {
  * Resolves a city slug like "port-orange" to the stored locality label.
  */
 function _spotdeals_seo_landing_resolve_city_label(string $city_slug): ?string {
+  static $resolved = [];
+
   $normalized_target = _spotdeals_seo_landing_normalize_for_comparison($city_slug);
+  if (array_key_exists($normalized_target, $resolved)) {
+    return $resolved[$normalized_target];
+  }
+
+  $candidate = _spotdeals_seo_landing_slug_to_likely_label($city_slug);
+
+  $query = Database::getConnection()->select('node__field_address', 'fa');
+  $query->addField('fa', 'field_address_locality');
+  $query->isNotNull('fa.field_address_locality');
+  $query->condition('fa.field_address_locality', '', '<>');
+  $query->condition('fa.field_address_locality', $candidate);
+  $query->range(0, 1);
+
+  $exact = $query->execute()->fetchField();
+  if (is_string($exact) && trim($exact) !== '') {
+    $resolved[$normalized_target] = trim($exact);
+    return $resolved[$normalized_target];
+  }
 
   $query = Database::getConnection()->select('node__field_address', 'fa');
   $query->addField('fa', 'field_address_locality');
@@ -53,19 +73,29 @@ function _spotdeals_seo_landing_resolve_city_label(string $city_slug): ?string {
   $query->distinct();
   $query->orderBy('fa.field_address_locality', 'ASC');
 
-  $localities = $query->execute()->fetchCol();
-
-  foreach ($localities as $locality) {
+  foreach ($query->execute()->fetchCol() as $locality) {
     if (!is_string($locality)) {
       continue;
     }
 
     if (_spotdeals_seo_landing_normalize_for_comparison($locality) === $normalized_target) {
-      return trim($locality);
+      $resolved[$normalized_target] = trim($locality);
+      return $resolved[$normalized_target];
     }
   }
 
+  $resolved[$normalized_target] = NULL;
   return NULL;
+}
+
+/**
+ * Converts a slug to a likely stored label.
+ */
+function _spotdeals_seo_landing_slug_to_likely_label(string $slug): string {
+  $label = str_replace(['-', '_'], ' ', trim($slug));
+  $label = preg_replace('/\s+/u', ' ', $label) ?? $label;
+
+  return mb_convert_case(trim($label), MB_CASE_TITLE, 'UTF-8');
 }
 
 /**
