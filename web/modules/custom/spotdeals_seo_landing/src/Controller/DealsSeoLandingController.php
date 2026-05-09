@@ -8,7 +8,6 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Url;
-use Drupal\taxonomy\TermInterface;
 use Drupal\views\ViewExecutable;
 use Drupal\views\Views;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -42,6 +41,20 @@ final class DealsSeoLandingController extends ControllerBase {
    * Deal category vocabulary machine name.
    */
   private const DEAL_CATEGORY_VOCABULARY = 'deal_category';
+
+  /**
+   * Resolved city labels keyed by normalized slug.
+   *
+   * @var array<string, string|null>
+   */
+  private static array $resolvedCityLabels = [];
+
+  /**
+   * Resolved deal category labels keyed by normalized slug.
+   *
+   * @var array<string, string|null>
+   */
+  private static array $resolvedDealCategoryLabels = [];
 
   /**
    * Database connection.
@@ -92,10 +105,7 @@ final class DealsSeoLandingController extends ControllerBase {
    * Title callback for /deals/{city}.
    */
   public function cityTitle(string $city): string {
-    $city_label = $this->resolveCityLabel($city);
-    if ($city_label === NULL) {
-      throw new NotFoundHttpException();
-    }
+    $city_label = $this->resolveCityLabel($city) ?? $this->slugToLikelyLabel($city);
 
     return sprintf('Deals in %s', $city_label);
   }
@@ -104,12 +114,8 @@ final class DealsSeoLandingController extends ControllerBase {
    * Title callback for /deals/{city}/{category}.
    */
   public function cityCategoryTitle(string $city, string $category): string {
-    $city_label = $this->resolveCityLabel($city);
-    $category_label = $this->resolveDealCategoryLabel($category);
-
-    if ($city_label === NULL || $category_label === NULL) {
-      throw new NotFoundHttpException();
-    }
+    $city_label = $this->resolveCityLabel($city) ?? $this->slugToLikelyLabel($city);
+    $category_label = $this->resolveDealCategoryLabel($category) ?? $this->slugToLikelyLabel($category);
 
     return sprintf('%s in %s', $category_label, $city_label);
   }
@@ -203,13 +209,13 @@ final class DealsSeoLandingController extends ControllerBase {
       '#cache' => [
         'contexts' => [
           'url.path',
-          'url.query_args',
         ],
         'tags' => [
           'config:views.view.' . self::DEALS_VIEW_ID,
           'taxonomy_term_list',
           'node_list',
         ],
+        'max-age' => 3600,
       ],
       '#attached' => [
         'html_head' => [
@@ -267,10 +273,10 @@ final class DealsSeoLandingController extends ControllerBase {
   }
 
   /**
-   * Builds a view display with arguments and executes it explicitly.
+   * Builds a view display with arguments without executing it twice.
    *
    * @return array{build: array, has_results: bool}
-   *   The rendered build and whether the executed view returned rows.
+   *   The rendered build and whether the view could be built.
    */
   private function buildViewDisplay(
     string $viewId,
@@ -290,13 +296,6 @@ final class DealsSeoLandingController extends ControllerBase {
       ];
     }
 
-    $view->setDisplay($displayId);
-    $view->setArguments($arguments);
-    $view->preExecute($arguments);
-    $view->execute();
-
-    $has_results = !empty($view->result);
-
     $build = $view->buildRenderable($displayId, $arguments, FALSE);
     if (!is_array($build)) {
       if ($throwOnMissing) {
@@ -309,9 +308,11 @@ final class DealsSeoLandingController extends ControllerBase {
       ];
     }
 
+    $build['#cache']['max-age'] = $build['#cache']['max-age'] ?? 3600;
+
     return [
       'build' => $build,
-      'has_results' => $has_results,
+      'has_results' => TRUE,
     ];
   }
 
@@ -321,6 +322,25 @@ final class DealsSeoLandingController extends ControllerBase {
   private function resolveCityLabel(string $citySlug): ?string {
     $target = $this->normalizeForComparison($citySlug);
 
+    if (array_key_exists($target, self::$resolvedCityLabels)) {
+      return self::$resolvedCityLabels[$target];
+    }
+
+    $candidate = $this->slugToLikelyLabel($citySlug);
+
+    $query = $this->seoLandingDatabase->select('node__field_address', 'fa');
+    $query->addField('fa', 'field_address_locality');
+    $query->isNotNull('fa.field_address_locality');
+    $query->condition('fa.field_address_locality', '', '<>');
+    $query->condition('fa.field_address_locality', $candidate);
+    $query->range(0, 1);
+
+    $exact = $query->execute()->fetchField();
+    if (is_string($exact) && trim($exact) !== '') {
+      self::$resolvedCityLabels[$target] = trim($exact);
+      return self::$resolvedCityLabels[$target];
+    }
+
     $query = $this->seoLandingDatabase->select('node__field_address', 'fa');
     $query->addField('fa', 'field_address_locality');
     $query->isNotNull('fa.field_address_locality');
@@ -328,18 +348,18 @@ final class DealsSeoLandingController extends ControllerBase {
     $query->distinct();
     $query->orderBy('fa.field_address_locality', 'ASC');
 
-    $localities = $query->execute()->fetchCol();
-
-    foreach ($localities as $locality) {
+    foreach ($query->execute()->fetchCol() as $locality) {
       if (!is_string($locality)) {
         continue;
       }
 
       if ($this->normalizeForComparison($locality) === $target) {
-        return trim($locality);
+        self::$resolvedCityLabels[$target] = trim($locality);
+        return self::$resolvedCityLabels[$target];
       }
     }
 
+    self::$resolvedCityLabels[$target] = NULL;
     return NULL;
   }
 
@@ -348,33 +368,61 @@ final class DealsSeoLandingController extends ControllerBase {
    */
   private function resolveDealCategoryLabel(string $categorySlug): ?string {
     $target = $this->normalizeForComparison($categorySlug);
+    $compact_target = $this->compactNormalizeForComparison($categorySlug);
 
-    $term_storage = $this->seoLandingEntityTypeManager->getStorage('taxonomy_term');
-    $term_ids = $term_storage->getQuery()
-      ->accessCheck(FALSE)
-      ->condition('vid', self::DEAL_CATEGORY_VOCABULARY)
-      ->sort('name', 'ASC')
-      ->execute();
-
-    if (empty($term_ids)) {
-      return NULL;
+    if (array_key_exists($target, self::$resolvedDealCategoryLabels)) {
+      return self::$resolvedDealCategoryLabels[$target];
     }
 
-    /** @var \Drupal\taxonomy\TermInterface[] $terms */
-    $terms = $term_storage->loadMultiple($term_ids);
+    $candidate = $this->slugToLikelyLabel($categorySlug);
 
-    foreach ($terms as $term) {
-      if (!$term instanceof TermInterface) {
+    $query = $this->seoLandingEntityTypeManager->getStorage('taxonomy_term')->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('vid', self::DEAL_CATEGORY_VOCABULARY)
+      ->condition('name', $candidate)
+      ->range(0, 1);
+
+    $term_ids = $query->execute();
+    if (!empty($term_ids)) {
+      $term_id = reset($term_ids);
+      $term = $this->seoLandingEntityTypeManager->getStorage('taxonomy_term')->load($term_id);
+      if ($term !== NULL) {
+        self::$resolvedDealCategoryLabels[$target] = $term->label();
+        return self::$resolvedDealCategoryLabels[$target];
+      }
+    }
+
+    $query = $this->seoLandingDatabase->select('taxonomy_term_field_data', 'tfd');
+    $query->addField('tfd', 'name');
+    $query->condition('tfd.vid', self::DEAL_CATEGORY_VOCABULARY);
+    $query->orderBy('tfd.name', 'ASC');
+
+    foreach ($query->execute()->fetchCol() as $name) {
+      if (!is_string($name)) {
         continue;
       }
 
-      $name = $term->label();
-      if ($this->normalizeForComparison($name) === $target) {
-        return $name;
+      if (
+        $this->normalizeForComparison($name) === $target ||
+        $this->compactNormalizeForComparison($name) === $compact_target
+      ) {
+        self::$resolvedDealCategoryLabels[$target] = $name;
+        return self::$resolvedDealCategoryLabels[$target];
       }
     }
 
+    self::$resolvedDealCategoryLabels[$target] = NULL;
     return NULL;
+  }
+
+  /**
+   * Converts a slug to a likely stored label.
+   */
+  private function slugToLikelyLabel(string $slug): string {
+    $label = str_replace(['-', '_'], ' ', trim($slug));
+    $label = preg_replace('/\s+/u', ' ', $label) ?? $label;
+
+    return mb_convert_case(trim($label), MB_CASE_TITLE, 'UTF-8');
   }
 
   /**
@@ -388,6 +436,13 @@ final class DealsSeoLandingController extends ControllerBase {
     $value = preg_replace('/\s+/u', ' ', $value) ?? '';
 
     return trim($value);
+  }
+
+  /**
+   * Normalizes a slug or label without spaces for loose comparisons.
+   */
+  private function compactNormalizeForComparison(string $value): string {
+    return str_replace(' ', '', $this->normalizeForComparison($value));
   }
 
 }
