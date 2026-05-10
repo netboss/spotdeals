@@ -48,7 +48,7 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
   }
 
   /**
-   * Applies a hard Solr geofilt for browser near-me searches.
+   * Applies a hard Solr geofilt for explicit-location and browser near-me searches.
    */
   public function preQuery(PreQueryEvent $event): void {
     $query = $event->getSearchApiQuery();
@@ -75,12 +75,24 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
     $origin_lon = $request->query->get('origin_lon');
     $parsed_origin = $request->attributes->get('spotdeals_search_smart_location.origin');
     $is_browser_near_me = (bool) $request->attributes->get('spotdeals_search_smart_location.browser_near_me', FALSE);
+    $is_explicit_location = (bool) $request->attributes->get('spotdeals_search_smart_location.explicit_location', FALSE);
 
     $lat = NULL;
     $lon = NULL;
     $source = NULL;
 
-    if ($origin_mode === 'browser' && is_numeric($origin_lat) && is_numeric($origin_lon)) {
+    if (
+      $is_explicit_location &&
+      is_array($parsed_origin) &&
+      isset($parsed_origin['lat'], $parsed_origin['lon']) &&
+      is_numeric($parsed_origin['lat']) &&
+      is_numeric($parsed_origin['lon'])
+    ) {
+      $lat = (float) $parsed_origin['lat'];
+      $lon = (float) $parsed_origin['lon'];
+      $source = 'explicit_location';
+    }
+    elseif ($origin_mode === 'browser' && is_numeric($origin_lat) && is_numeric($origin_lon)) {
       $lat = (float) $origin_lat;
       $lon = (float) $origin_lon;
       $source = 'browser';
@@ -103,9 +115,9 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
       return;
     }
 
-    if (!$is_browser_near_me) {
+    if (!$is_browser_near_me && !$is_explicit_location) {
       \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION subscriber skipped geofilt at PRE_QUERY: source="@source" near_me="0" recommendation_mode="@recommendation_mode" lat="@lat" lon="@lon"',
+        'SMART LOCATION subscriber skipped geofilt at PRE_QUERY: source="@source" near_me="0" explicit_location="0" recommendation_mode="@recommendation_mode" lat="@lat" lon="@lon"',
         [
           '@source' => $source ?? '',
           '@recommendation_mode' => $recommendation_mode ? '1' : '0',
@@ -128,7 +140,7 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
       $query->addCondition('nid', $value, $operator);
 
       \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION subscriber constrained browser near-me query to ranked deal IDs at PRE_QUERY: nids_count="@count" operator="@operator"',
+        'SMART LOCATION subscriber constrained location query to ranked deal IDs at PRE_QUERY: nids_count="@count" operator="@operator"',
         [
           '@count' => (string) count($ranked_nids),
           '@operator' => $operator,
@@ -176,9 +188,12 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
     $solarium_query->addSort('score', 'desc');
 
     \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION subscriber applied PRE_QUERY geofilt and forced Solr distance sort: source="@source" near_me="1" recommendation_mode="0" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq" sort="@sort" ranked_constraint_count="@ranked_count"',
+      'SMART LOCATION subscriber applied PRE_QUERY geofilt and forced Solr distance sort: source="@source" near_me="@near_me" explicit_location="@explicit_location" recommendation_mode="@recommendation_mode" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq" sort="@sort" ranked_constraint_count="@ranked_count"',
       [
         '@source' => $source ?? '',
+        '@near_me' => $is_browser_near_me ? '1' : '0',
+        '@explicit_location' => $is_explicit_location ? '1' : '0',
+        '@recommendation_mode' => $recommendation_mode ? '1' : '0',
         '@lat' => (string) $lat,
         '@lon' => (string) $lon,
         '@radius' => (string) self::DEFAULT_RADIUS_KM,

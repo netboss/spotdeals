@@ -57,6 +57,23 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
 
   $request = \Drupal::request();
 
+  $display_search_value = trim((string) $request->query->get('search_raw', ''));
+  if ($display_search_value === '') {
+    $display_search_value = trim((string) $request->query->get('search_deals', ''));
+  }
+  if ($display_search_value === '') {
+    $display_search_value = trim((string) $request->query->get('search_api_fulltext', ''));
+  }
+
+  if ($display_search_value !== '') {
+    foreach (['search_deals', 'search_api_fulltext'] as $search_field_name) {
+      if (isset($form[$search_field_name]) && is_array($form[$search_field_name])) {
+        $form[$search_field_name]['#default_value'] = $display_search_value;
+        $form[$search_field_name]['#attributes']['value'] = $display_search_value;
+      }
+    }
+  }
+
   $form['recommendation_action'] = [
     '#type' => 'hidden',
     '#value' => (string) $request->query->get('recommendation_action', ''),
@@ -401,6 +418,7 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   }
 
   $request->attributes->set('spotdeals_search_smart_location.browser_near_me', FALSE);
+  $request->attributes->set('spotdeals_search_smart_location.explicit_location', FALSE);
   $request->attributes->set('spotdeals_search_smart_location.city', '');
   $request->attributes->set('spotdeals_search_smart_location.zip', '');
 
@@ -460,8 +478,21 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   }
 
   $origin = _spotdeals_search_smart_location_resolve_origin_from_venues($parsed);
+
   if ($origin) {
     $request->attributes->set('spotdeals_search_smart_location.origin', $origin);
+    $request->attributes->set('spotdeals_search_smart_location.explicit_location', TRUE);
+
+    $location_keywords = $recommendation_mode && $effective_recommendation_keywords !== ''
+      ? $effective_recommendation_keywords
+      : trim((string) ($parsed['keywords'] ?? ''));
+    $location_keywords = _spotdeals_search_smart_location_expand_keywords($location_keywords);
+
+    if (!$recommendation_mode) {
+      $ranked_nids = \Drupal::service('spotdeals_search_smart_location.near_me_ranker')
+        ->rankDealNids((float) $origin['lat'], (float) $origin['lon'], $location_keywords);
+      $request->attributes->set('spotdeals_search_smart_location.ranked_deal_nids', $ranked_nids);
+    }
 
     if ($recommendation_mode) {
       $recommended_nids = \Drupal::service('spotdeals_search_smart_location.recommendation_service')
@@ -1446,6 +1477,7 @@ function _spotdeals_search_smart_location_collect_node_term_labels(NodeInterface
 function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $view): void {
   $request = \Drupal::request();
   $is_browser_near_me = (bool) $request->attributes->get('spotdeals_search_smart_location.browser_near_me', FALSE);
+  $is_explicit_location = (bool) $request->attributes->get('spotdeals_search_smart_location.explicit_location', FALSE);
   $origin = $request->attributes->get('spotdeals_search_smart_location.origin');
   $ranked_nids = $request->attributes->get('spotdeals_search_smart_location.ranked_deal_nids');
   $exact_city = (string) $request->attributes->get('spotdeals_search_smart_location.city', '');
@@ -1459,7 +1491,7 @@ function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $vie
     return;
   }
 
-  if ($is_browser_near_me) {
+  if ($is_browser_near_me || $is_explicit_location) {
     _spotdeals_search_smart_location_apply_near_me_order($view, $origin, $ranked_nids, $exact_city);
     return;
   }
@@ -2249,6 +2281,7 @@ function _spotdeals_search_smart_location_resolve_origin_from_venues(array $pars
   }
 
   $nids = $query->execute();
+
   if (empty($nids)) {
     return NULL;
   }
