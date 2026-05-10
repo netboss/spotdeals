@@ -42,6 +42,33 @@
     return value.replace(/\bnear\s+me\b/ig, ' ').replace(/\s+/g, ' ').trim();
   }
 
+  function extractExplicitLocation(value) {
+    const rawValue = value || '';
+    const zipMatch = rawValue.match(/\b(\d{5})(?:-\d{4})?\b/);
+
+    if (zipMatch) {
+      return {
+        type: 'zip',
+        value: zipMatch[1],
+        raw: zipMatch[0]
+      };
+    }
+
+    return null;
+  }
+
+  function hasExplicitLocation(value) {
+    return !!extractExplicitLocation(value);
+  }
+
+  function removeExplicitLocationFromSearch(value, explicitLocation) {
+    if (!explicitLocation || !explicitLocation.raw) {
+      return cleanNearMe(value || '');
+    }
+
+    return cleanNearMe((value || '').replace(explicitLocation.raw, ' '));
+  }
+
   function helpMeChooseEnabled(form) {
     const checkbox = form.querySelector('input[name="help_me_choose"]');
     return !!(checkbox && checkbox.checked);
@@ -129,6 +156,8 @@
     setHiddenValue(form, 'search_origin_mode', '');
     setHiddenValue(form, 'origin_lat', '');
     setHiddenValue(form, 'origin_lon', '');
+    setHiddenValue(form, 'postal_code_exact', '');
+    setHiddenValue(form, 'locality_exact', '');
 
     delete form.dataset.spotdealsNearMeResolved;
     delete form.dataset.spotdealsNearMePending;
@@ -679,6 +708,13 @@
 
         ensureHidden(form, 'recommendation_action');
         ensureHidden(form, SCROLL_QUERY_PARAM);
+        ensureHidden(form, 'search_raw');
+        ensureHidden(form, 'search_clean');
+        ensureHidden(form, 'search_origin_mode');
+        ensureHidden(form, 'origin_lat');
+        ensureHidden(form, 'origin_lon');
+        ensureHidden(form, 'postal_code_exact');
+        ensureHidden(form, 'locality_exact');
         ensureLastSubmittedKeywords(form, searchInput);
         syncSearchInputUi(form, searchInput);
         updatePrimarySubmitLabel(form);
@@ -794,6 +830,30 @@
           }
 
           const useRetryAjax = shouldUseRetryAjax(form);
+          const explicitLocation = extractExplicitLocation(rawValue);
+          const explicitLocationSearch = !!explicitLocation;
+
+          if (explicitLocationSearch && !useRetryAjax) {
+            delete form.dataset.spotdealsNearMeResolved;
+            delete form.dataset.spotdealsNearMePending;
+            delete form.dataset.spotdealsRetryLoadingStartedAt;
+
+            setHiddenValue(form, 'search_raw', rawValue);
+            setHiddenValue(form, 'search_clean', removeExplicitLocationFromSearch(rawValue, explicitLocation));
+            setHiddenValue(form, 'search_origin_mode', explicitLocation.type);
+            setHiddenValue(form, 'origin_lat', '');
+            setHiddenValue(form, 'origin_lon', '');
+            setHiddenValue(form, 'postal_code_exact', explicitLocation.type === 'zip' ? explicitLocation.value : '');
+            setHiddenValue(form, 'locality_exact', explicitLocation.type === 'city' ? explicitLocation.value : '');
+            setHiddenValue(form, 'recommendation_action', '');
+
+            form.dataset.recommendationActive = '0';
+
+            setScrollToResultsPending(form);
+            rememberSubmittedKeywords(form, currentSearchInput);
+            updatePrimarySubmitLabel(form);
+            return;
+          }
 
           if (form.dataset.spotdealsNearMeResolved === '1' && !useRetryAjax) {
             delete form.dataset.spotdealsNearMeResolved;
@@ -821,6 +881,8 @@
           setHiddenValue(form, 'search_clean', cleanNearMe(rawValue));
           setHiddenValue(form, 'origin_lat', '');
           setHiddenValue(form, 'origin_lon', '');
+          setHiddenValue(form, 'postal_code_exact', '');
+          setHiddenValue(form, 'locality_exact', '');
 
           if (useRetryAjax) {
             showRetryLoadingState(form);
