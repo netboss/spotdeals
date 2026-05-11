@@ -1716,7 +1716,7 @@ display:
           exclude: false
           alter:
             alter_text: true
-            text: '{{ name_1 }}{% if field_cta %} - <span class="field--name-field-cta">{{ field_cta }}</span>{% endif %}'
+            text: "{{ name_1|replace({'_': ' '})|capitalize|striptags|trim }}{% if field_cta %} - <span class=\"field--name-field-cta\">{{ field_cta }}</span>{% endif %}"
             make_link: false
             path: ''
             absolute: false
