@@ -18,3 +18,12 @@ services:
     arguments:
       - '@spotdeals_search_smart_location.near_me_ranker'
       - '@entity_type.manager'
+
+  spotdeals_search_smart_location.deal_activity_logger:
+    class: Drupal\spotdeals_search_smart_location\Service\DealActivityLogger
+    arguments:
+      - '@database'
+      - '@datetime.time'
+      - '@current_user'
+      - '@entity_type.manager'
+      - '@cache.default'

@@ -5,3 +5,11 @@ spotdeals_search_smart_location.recommendation_ajax:
   methods: [POST]
   requirements:
     _access: 'TRUE'
+
+spotdeals_search_smart_location.activity_log:
+  path: '/spotdeals-search-smart-location/activity/log'
+  defaults:
+    _controller: '\Drupal\spotdeals_search_smart_location\Controller\DealActivityController::log'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'

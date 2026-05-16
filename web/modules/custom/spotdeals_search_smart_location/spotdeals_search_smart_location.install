@@ -1,0 +1,95 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * Install file for SpotDeals Search Smart Location.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function spotdeals_search_smart_location_schema(): array {
+  $schema['spotdeals_search_smart_location_activity'] = [
+    'description' => 'Stores recent deal activity signals used for Trending Near You.',
+    'fields' => [
+      'id' => [
+        'description' => 'Primary ID.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'deal_nid' => [
+        'description' => 'The deal node ID.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'venue_nid' => [
+        'description' => 'The related venue node ID, when available.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'uid' => [
+        'description' => 'The user ID, or 0 for anonymous visitors.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'anon_hash' => [
+        'description' => 'Short anonymous visitor hash used only for rough de-duplication.',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'action' => [
+        'description' => 'Activity action: view or click.',
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => TRUE,
+        'default' => 'view',
+      ],
+      'source' => [
+        'description' => 'Optional source label such as deal_page, search_result, or cta.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'created' => [
+        'description' => 'Unix timestamp when the activity was logged.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'deal_created' => ['deal_nid', 'created'],
+      'venue_created' => ['venue_nid', 'created'],
+      'action_created' => ['action', 'created'],
+      'created' => ['created'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Adds the activity table for Trending Near You.
+ */
+function spotdeals_search_smart_location_update_8001(): void {
+  $schema = \Drupal::database()->schema();
+  if ($schema->tableExists('spotdeals_search_smart_location_activity')) {
+    return;
+  }
+
+  $module_schema = spotdeals_search_smart_location_schema();
+  $schema->createTable('spotdeals_search_smart_location_activity', $module_schema['spotdeals_search_smart_location_activity']);
+}

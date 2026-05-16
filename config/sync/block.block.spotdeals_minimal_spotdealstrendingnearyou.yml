@@ -1,0 +1,25 @@
+uuid: bd7778b1-4a33-4c00-be38-786b16efd434
+langcode: en
+status: true
+dependencies:
+  module:
+    - spotdeals_search_smart_location
+    - system
+  theme:
+    - spotdeals_minimal
+id: spotdeals_minimal_spotdealstrendingnearyou
+theme: spotdeals_minimal
+region: sidebar
+weight: 0
+provider: null
+plugin: spotdeals_search_smart_location_trending_near_you
+settings:
+  id: spotdeals_search_smart_location_trending_near_you
+  label: 'Trending near you'
+  label_display: '0'
+  provider: spotdeals_search_smart_location
+visibility:
+  request_path:
+    id: request_path
+    negate: false
+    pages: '/deals/*'

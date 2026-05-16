@@ -10,3 +10,11 @@ recommendation_note:
   css:
     theme:
       css/recommendation-note.css: {}
+
+deal_activity:
+  js:
+    js/deal_activity.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/once
