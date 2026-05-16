@@ -4,17 +4,8 @@
   padding: 1rem;
   border: 1px solid #dbe3ea;
   border-radius: 4px;
-  background: #f3f6f9;
   box-sizing: border-box;
-}
-
-#block-spotdeals-minimal-spotdealspopularsearches .block-title,
-.block-spotdeals-search-insights-most-searched .block-title {
-  margin: 0 0 0.875rem;
-  font-size: 0.875rem;
-  line-height: 1.3;
-  font-weight: 700;
-  color: #5f6b7a;
+  margin-bottom: 1.25rem;
 }
 
 #block-spotdeals-minimal-spotdealspopularsearches .block-content,
@@ -26,13 +17,6 @@
 #block-spotdeals-minimal-spotdealspopularsearches .spotdeals-popular-searches,
 .block-spotdeals-search-insights-most-searched .spotdeals-popular-searches {
   margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-#block-spotdeals-minimal-spotdealspopularsearches .spotdeals-popular-searches li,
-.block-spotdeals-search-insights-most-searched .spotdeals-popular-searches li {
-  margin: 0 0 0.5rem;
   padding: 0;
   list-style: none;
 }
