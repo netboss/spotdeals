@@ -2684,6 +2684,14 @@ function spotdeals_search_smart_location_entity_view_alter(array &$build, \Drupa
     return;
   }
 
+  $build['#attached']['library'][] = 'spotdeals_search_smart_location/deal_activity';
+  $build['#attached']['drupalSettings']['spotdealsSearchSmartLocationActivity'] = [
+    'endpoint' => Url::fromRoute('spotdeals_search_smart_location.activity_log')->toString(),
+    'dealNid' => (int) $entity->id(),
+    'venueNid' => (int) $venue->id(),
+    'source' => 'deal_page',
+  ];
+
   $build['spotdeals_vote'] = _spotdeals_search_smart_location_build_vote_render($entity, $venue, FALSE);
   if ($build['spotdeals_vote'] === []) {
     return;
