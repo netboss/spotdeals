@@ -97,7 +97,8 @@ final class RecommendationAjaxController extends ControllerBase {
     $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', $recommendedDealNids);
     $request->attributes->set('spotdeals_search_smart_location.recommendation_nearby_message_added', FALSE);
 
-    $viewHtml = $this->renderer->renderRoot($this->buildAjaxViewRenderArray($directRecommendationDealNid));
+    $viewBuild = $this->buildAjaxViewRenderArray($directRecommendationDealNid);
+    $viewHtml = $this->renderer->renderRoot($viewBuild);
 
     \Drupal::logger('spotdeals_search_smart_location')->notice(
       'SMART LOCATION recommendation AJAX response built: action="@action" deal_nid="@deal" excluded="@excluded" recommended="@recommended"',
