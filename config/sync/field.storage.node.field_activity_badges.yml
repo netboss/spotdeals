@@ -1,0 +1,20 @@
+uuid: 3b9af5df-ed16-422d-9f7c-9ba459064374
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - taxonomy
+id: node.field_activity_badges
+field_name: field_activity_badges
+entity_type: node
+type: entity_reference
+settings:
+  target_type: taxonomy_term
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false
