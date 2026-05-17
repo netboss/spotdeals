@@ -1785,6 +1785,15 @@ h1.page-title {
   }
 }
 
+.block-spotdeals-search-insights,
+.block-spotdeals-search-smart-location-trending-near-you {
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+}
+
 /* SD-088 v11: recover the Deals page layout from the page-level sidebar experiment.
  * Source of truth: v9. This pass keeps the existing SDC deal cards, but treats
  * the Deals view itself as the left-filter + center-results layout. That is much
@@ -1915,12 +1924,6 @@ h1.page-title {
     border-radius: var(--spotdeals-radius);
     box-sizing: border-box;
     margin-bottom: 1.25rem;
-
-    ul {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
   }
 }
 
@@ -2276,11 +2279,6 @@ h1.page-title {
     font-size: 1.15rem;
     line-height: 1.4;
   }
-
-  .path-frontpage .spotdeals-sidebar-right,
-  .path-deals .spotdeals-sidebar-right {
-    display: none;
-  }
 }
 
 /* SD-089 mobile-safe recovery: keep the existing search UI visible on mobile and
@@ -2316,11 +2314,6 @@ h1.page-title {
   .path-frontpage .spotdeals-sidebar-left,
   .path-deals .spotdeals-sidebar-left {
     margin-bottom: 1rem;
-  }
-
-  .path-frontpage .spotdeals-sidebar-right,
-  .path-deals .spotdeals-sidebar-right {
-    display: none;
   }
 
   .path-frontpage .view-id-deals_search_solr.view-display-id-page_1,
@@ -3426,4 +3419,93 @@ h1.page-title {
   background: #fff7e8;
   border-color: #f2d5a5;
   color: #8a5a13;
+}
+
+/* SD-100 mobile discovery blocks below the search filters. */
+@media (max-width: 1023px) {
+  .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks,
+  .path-deals .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks {
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin: 0 0 1rem;
+    padding: 0;
+    position: static;
+    top: auto;
+  }
+
+  .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block,
+  .path-deals .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block,
+  .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block-spotdeals-search-insights,
+  .path-deals .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block-spotdeals-search-insights,
+  .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block-spotdeals-search-smart-location-trending-near-you,
+  .path-deals .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block-spotdeals-search-smart-location-trending-near-you {
+    width: 100%;
+    margin: 0 0 0.75rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > h1,
+  .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > h2,
+  .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > h3,
+  .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > h4,
+  .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > h5,
+  .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > h6,
+  .path-deals .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > h1,
+  .path-deals .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > h2,
+  .path-deals .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > h3,
+  .path-deals .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > h4,
+  .path-deals .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > h5,
+  .path-deals .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > h6,
+  .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > .block-title,
+  .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > .block__title,
+  .path-deals .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > .block-title,
+  .path-deals .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks .block > .block__title {
+    display: none;
+  }
+
+  .spotdeals-mobile-discovery-accordion {
+    width: 100%;
+    border: 1px solid #e1e6ee;
+    border-radius: var(--spotdeals-radius);
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+    overflow: hidden;
+  }
+
+  .spotdeals-mobile-discovery-accordion__summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 0.95rem 1rem;
+    color: var(--spotdeals-accent-dark);
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.25;
+  }
+
+  .spotdeals-mobile-discovery-accordion__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .spotdeals-mobile-discovery-accordion__summary::after {
+    content: "+";
+    float: right;
+    color: var(--spotdeals-text-soft);
+    font-weight: 800;
+  }
+
+  .spotdeals-mobile-discovery-accordion[open] .spotdeals-mobile-discovery-accordion__summary::after {
+    content: "−";
+  }
+
+  .spotdeals-mobile-discovery-accordion__content {
+    padding: 0 1rem 1rem;
+  }
+
+  .spotdeals-mobile-discovery-accordion__content ul {
+    margin: 0;
+  }
 }
