@@ -78,17 +78,26 @@ final class TrendingNearYouBlock extends BlockBase implements ContainerFactoryPl
     // Request one extra row so excluding the current deal does not reduce the
     // visible list size when enough nearby trending rows are available.
     $trending = $this->dealActivityLogger->getTrendingDeals($originLat, $originLon, 7, 14, self::DEFAULT_RADIUS_KM);
-    if ($currentDealNid > 0) {
-      $trending = array_values(array_filter($trending, static function (array $row) use ($currentDealNid): bool {
-        return (int) ($row['deal_nid'] ?? 0) !== $currentDealNid;
-      }));
-      $trending = array_slice($trending, 0, 6);
+    $trending = $this->excludeCurrentDeal($trending, $currentDealNid);
+    $isLocalTrending = $originLat !== NULL && $originLon !== NULL && $trending !== [];
+
+    // If the searched/nearby area has no activity yet, keep the block useful but
+    // label it honestly as global trending instead of local trending.
+    if ($trending === [] && ($originLat !== NULL || $originLon !== NULL)) {
+      $originLat = NULL;
+      $originLon = NULL;
+      $trending = $this->dealActivityLogger->getTrendingDeals(NULL, NULL, 7, 14, self::DEFAULT_RADIUS_KM);
+      $trending = $this->excludeCurrentDeal($trending, $currentDealNid);
+      $isLocalTrending = FALSE;
     }
+
+    $blockTitle = $isLocalTrending ? $this->t('Trending Near You') : $this->t('Trending Deals');
+
     if ($trending === []) {
       return [
         '#cache' => [
           'max-age' => self::CACHE_MAX_AGE,
-          'contexts' => ['route', 'url.query_args:origin_lat', 'url.query_args:origin_lon'],
+          'contexts' => $this->getCacheContexts(),
         ],
       ];
     }
@@ -117,14 +126,14 @@ final class TrendingNearYouBlock extends BlockBase implements ContainerFactoryPl
       return [
         '#cache' => [
           'max-age' => self::CACHE_MAX_AGE,
-          'contexts' => ['route', 'url.query_args:origin_lat', 'url.query_args:origin_lon'],
+          'contexts' => $this->getCacheContexts(),
         ],
       ];
     }
 
     return [
       'title' => [
-        '#markup' => '<h2 class="block-title">' . $this->t('Trending Near You') . '</h2>',
+        '#markup' => '<h2 class="block-title">' . $blockTitle . '</h2>',
       ],
       'items' => [
         '#theme' => 'item_list',
@@ -135,7 +144,7 @@ final class TrendingNearYouBlock extends BlockBase implements ContainerFactoryPl
       ],
       '#cache' => [
         'max-age' => self::CACHE_MAX_AGE,
-        'contexts' => ['route', 'url.query_args:origin_lat', 'url.query_args:origin_lon'],
+        'contexts' => $this->getCacheContexts(),
       ],
     ];
   }
@@ -160,6 +169,49 @@ final class TrendingNearYouBlock extends BlockBase implements ContainerFactoryPl
   }
 
   /**
+   * Removes the current deal from trending rows and limits visible results.
+   *
+   * @param array<int, array<string, mixed>> $trending
+   *   Trending rows.
+   * @param int $currentDealNid
+   *   Current deal node ID.
+   *
+   * @return array<int, array<string, mixed>>
+   *   Filtered rows.
+   */
+  private function excludeCurrentDeal(array $trending, int $currentDealNid): array {
+    if ($currentDealNid > 0) {
+      $trending = array_values(array_filter($trending, static function (array $row) use ($currentDealNid): bool {
+        return (int) ($row['deal_nid'] ?? 0) !== $currentDealNid;
+      }));
+    }
+
+    return array_slice($trending, 0, 6);
+  }
+
+  /**
+   * Cache contexts used by location/search-sensitive block output.
+   *
+   * @return string[]
+   *   Cache context IDs.
+   */
+  public function getCacheContexts(): array {
+    return [
+      'route',
+      'url.path',
+      'url.query_args:search_deals',
+      'url.query_args:search_api_fulltext',
+      'url.query_args:search_clean',
+      'url.query_args:search_raw',
+      'url.query_args:postal_code_exact',
+      'url.query_args:locality_exact',
+      'url.query_args:origin_lat',
+      'url.query_args:origin_lon',
+      'url.query_args:search_origin_mode',
+    ];
+  }
+
+  /**
    * Resolves the best available local origin for the block.
    *
    * Query-string origin wins. When unavailable, use the current deal/venue page
@@ -172,6 +224,11 @@ final class TrendingNearYouBlock extends BlockBase implements ContainerFactoryPl
   private function resolveOrigin(): array {
     $request = $this->requestStack->getCurrentRequest();
     if ($request !== NULL) {
+      $explicitOrigin = $this->resolveExplicitSearchOrigin();
+      if ($explicitOrigin !== []) {
+        return $explicitOrigin;
+      }
+
       $lat = $request->query->get('origin_lat');
       $lon = $request->query->get('origin_lon');
       if (is_numeric($lat) && is_numeric($lon)) {
@@ -200,6 +257,126 @@ final class TrendingNearYouBlock extends BlockBase implements ContainerFactoryPl
     }
 
     return [];
+  }
+
+  /**
+   * Resolves a typed city/ZIP search origin before browser coordinates.
+   *
+   * @return array{lat:float,lon:float}|array{}
+   *   Coordinates or an empty array.
+   */
+  private function resolveExplicitSearchOrigin(): array {
+    $request = $this->requestStack->getCurrentRequest();
+    if ($request === NULL) {
+      return [];
+    }
+
+    $explicitZip = trim((string) $request->query->get('postal_code_exact', ''));
+    $explicitCity = trim((string) $request->query->get('locality_exact', ''));
+
+    if ($explicitZip !== '' || $explicitCity !== '') {
+      $parsed = [
+        'zip' => $explicitZip,
+        'city' => $this->normalizeCityQueryValue($explicitCity),
+      ];
+      $origin = $this->resolveParsedOrigin($parsed);
+      if ($origin !== []) {
+        return $origin;
+      }
+    }
+
+    $rawSearch = $this->firstNonEmptyQueryValue([
+      'search_clean',
+      'search_deals',
+      'search_api_fulltext',
+      'search_raw',
+    ]);
+
+    if ($rawSearch === '') {
+      return [];
+    }
+
+    $parsed = $this->parseSearchLocation($rawSearch);
+    if (($parsed['zip'] ?? '') === '' && ($parsed['city'] ?? '') === '') {
+      return [];
+    }
+
+    return $this->resolveParsedOrigin($parsed);
+  }
+
+  /**
+   * Returns the first non-empty query-string value from a list of keys.
+   *
+   * @param string[] $keys
+   *   Query-string keys.
+   */
+  private function firstNonEmptyQueryValue(array $keys): string {
+    $request = $this->requestStack->getCurrentRequest();
+    if ($request === NULL) {
+      return '';
+    }
+
+    foreach ($keys as $key) {
+      $value = trim((string) $request->query->get($key, ''));
+      if ($value !== '') {
+        return $value;
+      }
+    }
+
+    return '';
+  }
+
+  /**
+   * Parses city/ZIP intent from a search phrase.
+   *
+   * @return array{keywords:string,zip:?string,city:?string}
+   *   Parsed search parts.
+   */
+  private function parseSearchLocation(string $search): array {
+    if (function_exists('\_spotdeals_search_smart_location_parse')) {
+      return \_spotdeals_search_smart_location_parse($search);
+    }
+
+    $normalized = strtolower(trim($search));
+    $normalized = preg_replace('/\s+/', ' ', $normalized ?? '') ?? '';
+
+    $zip = NULL;
+    if (preg_match('/\b(\d{5})(?:-\d{4})?\b/', $normalized, $matches)) {
+      $zip = $matches[1];
+    }
+
+    return [
+      'keywords' => $normalized,
+      'zip' => $zip,
+      'city' => NULL,
+    ];
+  }
+
+  /**
+   * Resolves parsed city/ZIP to coordinates.
+   *
+   * @param array<string, mixed> $parsed
+   *   Parsed search parts.
+   *
+   * @return array{lat:float,lon:float}|array{}
+   *   Coordinates or an empty array.
+   */
+  private function resolveParsedOrigin(array $parsed): array {
+    if (function_exists('\_spotdeals_search_smart_location_resolve_origin_from_venues')) {
+      return \_spotdeals_search_smart_location_resolve_origin_from_venues($parsed) ?? [];
+    }
+
+    return [];
+  }
+
+  /**
+   * Normalizes an exact city query value into the parser's city slug form.
+   */
+  private function normalizeCityQueryValue(string $city): string {
+    $city = strtolower(trim($city));
+    $city = preg_replace('/[^a-z0-9\s]+/', ' ', $city) ?? '';
+    $city = preg_replace('/\s+/', ' ', $city) ?? '';
+    return trim($city);
   }
 
   /**
