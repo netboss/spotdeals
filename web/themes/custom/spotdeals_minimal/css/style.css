@@ -693,7 +693,7 @@ h1.page-title {
   .region--sidebar {
     align-self: start;
     position: sticky;
-    top: calc(1.5rem + 40px);
+    /*top: calc(1.5rem + 40px);*/
   }
 }
 
