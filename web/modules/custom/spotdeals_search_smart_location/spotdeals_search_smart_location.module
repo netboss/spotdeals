@@ -2699,3 +2699,39 @@ function spotdeals_search_smart_location_entity_view_alter(array &$build, \Drupa
 
   $build['spotdeals_vote']['#weight'] = -999;
 }
+
+/**
+ * Implements hook_cron().
+ */
+function spotdeals_search_smart_location_cron(): void {
+  $state = \Drupal::state();
+  $now = \Drupal::time()->getRequestTime();
+  $last_run = (int) $state->get('spotdeals_search_smart_location.activity_badges_last_run', 0);
+
+  // Keep badge assignment lightweight when cron runs frequently.
+  if (($now - $last_run) < 1800) {
+    return;
+  }
+
+  if (!\Drupal::hasService('spotdeals_search_smart_location.deal_activity_badge_assigner')) {
+    return;
+  }
+
+  try {
+    $summary = \Drupal::service('spotdeals_search_smart_location.deal_activity_badge_assigner')->refresh();
+    $state->set('spotdeals_search_smart_location.activity_badges_last_run', $now);
+
+    if (!empty($summary['missing_terms'])) {
+      \Drupal::logger('spotdeals_search_smart_location')->warning(
+        'SMART LOCATION activity badge refresh skipped because activity terms are missing: @terms',
+        ['@terms' => implode(', ', $summary['missing_terms'])]
+      );
+    }
+  }
+  catch (\Throwable $e) {
+    \Drupal::logger('spotdeals_search_smart_location')->warning(
+      'SMART LOCATION activity badge refresh failed: @message',
+      ['@message' => $e->getMessage()]
+    );
+  }
+}

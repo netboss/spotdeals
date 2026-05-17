@@ -27,3 +27,12 @@ services:
       - '@current_user'
       - '@entity_type.manager'
       - '@cache.default'
+
+  spotdeals_search_smart_location.deal_activity_badge_assigner:
+    class: Drupal\spotdeals_search_smart_location\Service\DealActivityBadgeAssigner
+    arguments:
+      - '@database'
+      - '@entity_type.manager'
+      - '@datetime.time'
+      - '@cache_tags.invalidator'
+      - '@spotdeals_search_smart_location.deal_activity_logger'
