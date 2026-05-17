@@ -38,6 +38,10 @@ props:
     claim_link:
       type: ['string', 'null']
       title: Claim link
+    activity_badges:
+      type: array
+      title: Activity badges
+      description: Computed activity badge labels and slugs.
     vote_summary:
       type: ['string', 'null']
       title: Vote summary

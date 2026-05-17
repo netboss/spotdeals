@@ -47,6 +47,16 @@
           </div>
         {% endif %}
 
+        {% if activity_badges|default([]) %}
+          <div class="spotdeals-deal-card__activity-badges" aria-label="Deal activity">
+            {% for badge in activity_badges|slice(0, 2) %}
+              <span class="spotdeals-deal-card__activity-badge spotdeals-deal-card__activity-badge--{{ badge.slug|default('activity')|e('html_attr') }}">
+                {{ badge.label }}
+              </span>
+            {% endfor %}
+          </div>
+        {% endif %}
+
         {% if venue_meta %}
           <div class="spotdeals-deal-card__venue-meta">
             <span class="spotdeals-deal-card__meta-icon" aria-hidden="true"></span>

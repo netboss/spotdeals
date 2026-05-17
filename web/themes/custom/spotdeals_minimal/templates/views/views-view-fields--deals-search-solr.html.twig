@@ -48,6 +48,7 @@
   offer: fields.field_price_offer_text.content|default(''),
   schedule: fields.field_start_time.content|default(''),
   cta: fields.name_1.content|default(''),
+  activity_badges: spotdeals_activity_badges|default([]),
   claim_link: fields.nid.content|default(''),
   venue_vote_summary: spotdeals_venue_vote_summary|default(venue_vote_summary|trim is not empty ? venue_vote_summary|trim : fallback_vote_summary|trim),
   deal_vote_summary: spotdeals_deal_vote_summary|default(deal_vote_summary|trim)

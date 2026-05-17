@@ -123,6 +123,11 @@ function spotdeals_minimal_preprocess_views_view_fields(array &$variables): void
   if ($venue instanceof NodeInterface && \Drupal::hasService('spotdeals_vote_deal.render_builder')) {
     $variables['spotdeals_deal_vote_summary'] = \Drupal::service('spotdeals_vote_deal.render_builder')->build($deal, $venue, FALSE);
   }
+
+  $activity_badges = _spotdeals_minimal_build_activity_badges($deal);
+  if ($activity_badges !== []) {
+    $variables['spotdeals_activity_badges'] = $activity_badges;
+  }
 }
 
 /**
@@ -196,6 +201,46 @@ function _spotdeals_minimal_extract_node_from_candidate(mixed $candidate): ?Node
   }
 
   return NULL;
+}
+
+
+/**
+ * Builds activity badge data for deal cards.
+ *
+ * @return array<int,array{label:string,slug:string}>
+ *   Activity badges in field order.
+ */
+function _spotdeals_minimal_build_activity_badges(NodeInterface $deal): array {
+  if (!$deal->hasField('field_activity_badges') || $deal->get('field_activity_badges')->isEmpty()) {
+    return [];
+  }
+
+  $badges = [];
+  foreach ($deal->get('field_activity_badges')->referencedEntities() as $term) {
+    if (!$term instanceof EntityInterface) {
+      continue;
+    }
+
+    $label = trim((string) $term->label());
+    if ($label === '') {
+      continue;
+    }
+
+    $slug = strtolower($label);
+    $slug = preg_replace('/[^a-z0-9]+/', '-', $slug) ?? '';
+    $slug = trim($slug, '-');
+
+    $badges[] = [
+      'label' => $label,
+      'slug' => $slug !== '' ? $slug : 'activity',
+    ];
+
+    if (count($badges) >= 2) {
+      break;
+    }
+  }
+
+  return $badges;
 }
 
 /**
