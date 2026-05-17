@@ -5,6 +5,7 @@ dependencies:
   config:
     - field.field.node.deal.body
     - field.field.node.deal.field_active
+    - field.field.node.deal.field_activity_badges
     - field.field.node.deal.field_cta
     - field.field.node.deal.field_day_of_week
     - field.field.node.deal.field_deal_category
@@ -31,7 +32,7 @@ content:
     label: hidden
     settings: {  }
     third_party_settings: {  }
-    weight: 0
+    weight: 1
     region: content
   field_active:
     type: boolean
@@ -41,7 +42,7 @@ content:
       format_custom_false: ''
       format_custom_true: ''
     third_party_settings: {  }
-    weight: 107
+    weight: 9
     region: content
   field_cta:
     type: link
@@ -53,7 +54,7 @@ content:
       rel: '0'
       target: _blank
     third_party_settings: {  }
-    weight: 7
+    weight: 2
     region: content
   field_day_of_week:
     type: entity_reference_label
@@ -61,7 +62,7 @@ content:
     settings:
       link: true
     third_party_settings: {  }
-    weight: 103
+    weight: 5
     region: content
   field_deal_category:
     type: entity_reference_label
@@ -69,7 +70,7 @@ content:
     settings:
       link: true
     third_party_settings: {  }
-    weight: 102
+    weight: 4
     region: content
   field_image:
     type: image
@@ -80,7 +81,7 @@ content:
       image_loading:
         attribute: eager
     third_party_settings: {  }
-    weight: -1
+    weight: 0
     region: content
   field_price_offer_text:
     type: string
@@ -88,7 +89,7 @@ content:
     settings:
       link_to_entity: false
     third_party_settings: {  }
-    weight: 105
+    weight: 7
     region: content
   field_recurring:
     type: boolean
@@ -98,7 +99,7 @@ content:
       format_custom_false: ''
       format_custom_true: ''
     third_party_settings: {  }
-    weight: 108
+    weight: 10
     region: content
   field_source_url:
     type: link
@@ -110,7 +111,7 @@ content:
       rel: '0'
       target: _blank
     third_party_settings: {  }
-    weight: 106
+    weight: 8
     region: content
   field_start_time:
     type: string
@@ -118,7 +119,7 @@ content:
     settings:
       link_to_entity: false
     third_party_settings: {  }
-    weight: 104
+    weight: 6
     region: content
   field_venue:
     type: entity_reference_label
@@ -126,13 +127,14 @@ content:
     settings:
       link: true
     third_party_settings: {  }
-    weight: 109
+    weight: 11
     region: content
   links:
     settings: {  }
     third_party_settings: {  }
-    weight: 100
+    weight: 3
     region: content
 hidden:
+  field_activity_badges: true
   langcode: true
   search_api_excerpt: true
