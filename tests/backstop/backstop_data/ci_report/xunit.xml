@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="4" failures="0" errors="0" skipped="0">
+  <testsuite name="BackstopJS" tests="4" failures="0" errors="0" skipped="0">
+    <testcase classname="document" name=" ›› Homepage"/>
+    <testcase classname="document" name=" ›› Homepage"/>
+    <testcase classname="document" name=" ›› Deals Page"/>
+    <testcase classname="document" name=" ›› Deals Page"/>
+  </testsuite>
+</testsuites>

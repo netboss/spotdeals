@@ -1,0 +1,22 @@
+{
+  "name": "backstop",
+  "version": "1.0.0",
+  "description": "SpotDeals visual regression testing",
+  "main": "index.js",
+  "scripts": {
+    "reference": "backstop reference",
+    "test": "backstop test && ./open-report-firefox.sh",
+    "approve": "backstop approve"
+  },
+  "keywords": [
+    "backstopjs",
+    "visual-regression",
+    "drupal",
+    "spotdeals"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "backstopjs": "^6.3.25"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "id": "spotdeals",
+  "viewports": [
+    {
+      "label": "desktop",
+      "width": 1440,
+      "height": 1200
+    },
+    {
+      "label": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "onAfterScript": "openReport.js",
+  "scenarios": [
+    {
+      "label": "Homepage",
+      "url": "https://spotdeals.ddev.site/",
+      "delay": 1000,
+      "misMatchThreshold": 0.1
+    },
+    {
+      "label": "Deals Page",
+      "url": "https://spotdeals.ddev.site/deals",
+      "delay": 1000,
+      "misMatchThreshold": 0.1
+    },
+    {
+      "label": "Search Results Tacos",
+      "url": "https://spotdeals.ddev.site/?search_deals=tacos&origin_lat=29.0258944&origin_lon=-80.9598976&search_origin_mode=browser&search_clean=tacos&recommendation_action=&recommendation_cuisines=&search_raw=tacos&postal_code_exact=&locality_exact=&page=",
+      "delay": 1500,
+      "misMatchThreshold": 0.1
+    },
+    {
+      "label": "Help Me Choose Tacos",
+      "url": "https://spotdeals.ddev.site/?search_deals=tacos&origin_lat=29.0210003&origin_lon=-80.9772204&search_origin_mode=browser&search_clean=tacos&recommendation_action=&help_me_choose=1&recommendation_cuisines=&search_raw=tacos&postal_code_exact=&locality_exact=&page=",
+      "delay": 1500,
+      "misMatchThreshold": 0.1
+    },
+    {
+      "label": "Venue Clancys Cantina",
+      "url": "https://spotdeals.ddev.site/venue/new-smyrna-beach/clancys-cantina",
+      "delay": 1000,
+      "misMatchThreshold": 0.1
+    },
+    {
+      "label": "Deal Margarita Monday",
+      "url": "https://spotdeals.ddev.site/deals/new-smyrna-beach/drink-special/margarita-monday",
+      "delay": 1000,
+      "misMatchThreshold": 0.1
+    },
+    {
+      "label": "About Us",
+      "url": "https://spotdeals.ddev.site/about-us",
+      "delay": 1000,
+      "misMatchThreshold": 0.1
+    },
+    {
+      "label": "Contact",
+      "url": "https://spotdeals.ddev.site/contact",
+      "delay": 1000,
+      "misMatchThreshold": 0.1
+    },
+    {
+      "label": "Privacy Policy",
+      "url": "https://spotdeals.ddev.site/privacy-policy",
+      "delay": 1000,
+      "misMatchThreshold": 0.1
+    }
+  ],
+  "paths": {
+    "bitmaps_reference": "backstop_data/bitmaps_reference",
+    "bitmaps_test": "backstop_data/bitmaps_test",
+    "engine_scripts": "backstop_data/engine_scripts",
+    "html_report": "backstop_data/html_report",
+    "ci_report": "backstop_data/ci_report"
+  },
+  "report": ["CI"],
+  "engine": "playwright",
+  "engineOptions": {
+    "browser": "chromium",
+    "headless": true
+  },
+  "asyncCaptureLimit": 5,
+  "asyncCompareLimit": 50,
+  "debug": false,
+  "debugWindow": false
+}
