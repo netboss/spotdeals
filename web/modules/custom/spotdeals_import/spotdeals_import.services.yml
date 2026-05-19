@@ -4,6 +4,7 @@ services:
     arguments:
       - '@entity_type.manager'
       - '@logger.channel.spotdeals_import'
+      - '@database'
     tags:
       - { name: event_subscriber }
 
