@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "reference": "backstop reference",
-    "test": "backstop test && ./open-report-firefox.sh",
+    "test": "backstop test; ./open-report-firefox.sh",
     "approve": "backstop approve"
   },
   "keywords": [

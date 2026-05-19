@@ -1,9 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites tests="4" failures="0" errors="0" skipped="0">
-  <testsuite name="BackstopJS" tests="4" failures="0" errors="0" skipped="0">
+<testsuites tests="18" failures="0" errors="0" skipped="0">
+  <testsuite name="BackstopJS" tests="18" failures="0" errors="0" skipped="0">
     <testcase classname="document" name=" ›› Homepage"/>
     <testcase classname="document" name=" ›› Homepage"/>
     <testcase classname="document" name=" ›› Deals Page"/>
     <testcase classname="document" name=" ›› Deals Page"/>
+    <testcase classname="document" name=" ›› Search Results Tacos"/>
+    <testcase classname="document" name=" ›› Search Results Tacos"/>
+    <testcase classname="document" name=" ›› Help Me Choose Tacos"/>
+    <testcase classname="document" name=" ›› Help Me Choose Tacos"/>
+    <testcase classname="document" name=" ›› Venue Clancys Cantina"/>
+    <testcase classname="document" name=" ›› Venue Clancys Cantina"/>
+    <testcase classname="document" name=" ›› Deal Margarita Monday"/>
+    <testcase classname="document" name=" ›› Deal Margarita Monday"/>
+    <testcase classname="document" name=" ›› About Us"/>
+    <testcase classname="document" name=" ›› About Us"/>
+    <testcase classname="document" name=" ›› Contact"/>
+    <testcase classname="document" name=" ›› Contact"/>
+    <testcase classname="document" name=" ›› Privacy Policy"/>
+    <testcase classname="document" name=" ›› Privacy Policy"/>
   </testsuite>
 </testsuites>
