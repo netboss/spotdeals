@@ -202,7 +202,7 @@ h1.page-title {
   background: var(--spotdeals-accent);
   border-color: var(--spotdeals-accent);
   color: #fff;
-  box-shadow: 0 8px 18px rgba(141, 182, 31, 0.22);
+  box-shadow: var(--spotdeals-shadow-soft);
   min-width: 140px;
   font-size: 1rem;
   letter-spacing: 0.01em;
@@ -693,7 +693,6 @@ h1.page-title {
   .region--sidebar {
     align-self: start;
     position: sticky;
-    /*top: calc(1.5rem + 40px);*/
   }
 }
 
@@ -725,60 +724,6 @@ h1.page-title {
 
 .venue-title {
   font-size: 33px;
-}
-
-/* SD-088 redesign workbench: make the Deals Finder results area closer to the new card layout. */
-.view-id-deals_search_solr.view-display-id-page_1 {
-  width: min(100%, var(--spotdeals-content-max-width));
-  margin-inline: auto;
-}
-
-.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder {
-  width: 100%;
-  max-width: none;
-  margin-inline: auto;
-}
-
-.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  padding: 0;
-}
-
-.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .view-content,
-.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .view-empty,
-.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .attachment-after,
-.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .attachment-before,
-.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .pager {
-  margin-top: 1rem;
-}
-
-.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__results .view-header {
-  color: var(--spotdeals-text);
-  font-size: 1rem;
-}
-
-.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__cards {
-  display: block;
-}
-
-.view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters {
-  border-color: var(--spotdeals-border);
-  border-radius: var(--spotdeals-radius);
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
-}
-
-@media (min-width: 1024px) {
-  .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder {
-    gap: 1.4rem;
-  }
-}
-
-/* SD-088 desktop mock-up alignment pass. */
-.path-frontpage h1.page-title,
-.path-deals h1.page-title {
-  display: none;
 }
 
 .path-frontpage .layout-main-wrapper,
@@ -951,59 +896,6 @@ h1.page-title {
   }
 }
 
-/* SD-088 v4: restore the real search widget and keep this pass focused on card/layout polish.
- * The current production UX still relies on the simple exposed search form; we should not
- * move it into a future left filter sidebar until those filters exist.
- */
-.view-id-deals_search_solr.view-display-id-page_1 > form {
-  display: block;
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto 1rem;
-  padding: 1.25rem;
-  border: 1px solid #d9e0ea;
-  border-radius: var(--spotdeals-radius);
-  background: #fff;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.035);
-}
-
-.view-id-deals_search_solr.view-display-id-page_1 > form .form-item,
-.view-id-deals_search_solr.view-display-id-page_1 > form .js-form-item {
-  margin-top: 0;
-}
-
-.view-id-deals_search_solr.view-display-id-page_1 > form input[type="text"],
-.view-id-deals_search_solr.view-display-id-page_1 > form input[type="search"] {
-  width: 100%;
-  min-height: 2.65rem;
-  border: 1px solid #d9e0ea;
-  border-radius: var(--spotdeals-radius);
-  font-size: 1rem;
-}
-
-.view-id-deals_search_solr.view-display-id-page_1 > form .form-actions {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  margin-top: 1rem;
-}
-
-.view-id-deals_search_solr.view-display-id-page_1 > form input[type="submit"] {
-  border: 0;
-  border-radius: var(--spotdeals-radius);
-  background: var(--spotdeals-accent);
-  color: #fff;
-  font-weight: 700;
-}
-
-.view-id-deals_search_solr.view-display-id-page_1 > form input[type="reset"],
-.view-id-deals_search_solr.view-display-id-page_1 > form .button:not(.button--primary) {
-  border: 1px solid #d9e0ea;
-  border-radius: var(--spotdeals-radius);
-  background: #fff;
-  color: #111827;
-}
-
 .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1068,6 +960,7 @@ h1.page-title {
     max-width: none;
   }
 }
+
 
 /* SD-088 v5: first-class left sidebar region and three-column page shell. */
 .spotdeals-layout-container {
@@ -1601,6 +1494,7 @@ h1.page-title {
   }
 }
 
+
 /* SD-088 v9: scoped Deals page stabilization.
  * Keep the new 3-column shell, but stop the Deals result cards from being
  * compressed by the sidebars/header experiments. These rules intentionally
@@ -1850,20 +1744,6 @@ h1.page-title {
     display: none;
   }
 
-  .path-frontpage .spotdeals-main-content .spotdeals-finder__filters,
-  .path-deals .spotdeals-main-content .spotdeals-finder__filters {
-    display: block;
-    grid-area: filters;
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    padding: 1.25rem;
-    background: #fff;
-    border: 1px solid var(--spotdeals-border);
-    border-radius: var(--spotdeals-radius);
-    box-shadow: var(--spotdeals-shadow-soft);
-  }
-
   .path-frontpage .spotdeals-main-content .spotdeals-finder__results,
   .path-deals .spotdeals-main-content .spotdeals-finder__results {
     display: block;
@@ -1996,7 +1876,7 @@ h1.page-title {
     min-width: 0;
     position: sticky;
     top: 20px;
-    margin-block-start: var(--sp3);
+    margin-block-start: calc(var(--sp4) + 3.4rem);
   }
 
   .path-frontpage .spotdeals-main-content .view-id-deals_search_solr,
@@ -2016,13 +1896,6 @@ h1.page-title {
     grid-template-areas: "filters results";
     gap: 32px;
     align-items: start;
-  }
-
-  .path-frontpage .spotdeals-main-content .spotdeals-finder__filters,
-  .path-deals .spotdeals-main-content .spotdeals-finder__filters {
-    grid-area: filters;
-    width: 300px;
-    max-width: 300px;
   }
 
   .path-frontpage .spotdeals-main-content .spotdeals-finder__results,
@@ -2600,11 +2473,8 @@ h1.page-title {
   text-underline-offset: 0.12em;
 }
 
+.page-node-type-venue .node__venue-content--body-wrapper,
 .page-node-type-venue .node__venue-content--image-body-wrapper {
-  display: grid;
-  grid-template-columns: minmax(220px, 0.92fr) minmax(0, 1fr);
-  gap: 1.7rem;
-  align-items: start;
   margin: 0;
   padding: 1rem;
   overflow: hidden;
@@ -2612,6 +2482,17 @@ h1.page-title {
   border-radius: var(--spotdeals-radius);
   background: #fff;
   box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+}
+
+.page-node-type-venue .node__venue-content--image-body-wrapper {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.92fr) minmax(0, 1fr);
+  gap: 1.7rem;
+  align-items: start;
+}
+
+.page-node-type-venue .node__venue-content--body-wrapper {
+  display: block;
 }
 
 .page-node-type-venue .node__venue-content--image-body-wrapper .field--name-field-image,
@@ -2631,6 +2512,7 @@ h1.page-title {
   object-fit: cover;
 }
 
+.page-node-type-venue .node__venue-content--body-wrapper .field--name-body,
 .page-node-type-venue .node__venue-content--image-body-wrapper .field--name-body {
   min-width: 0;
   padding: 0.35rem 0.25rem;
@@ -2639,6 +2521,7 @@ h1.page-title {
   line-height: 1.75;
 }
 
+.page-node-type-venue .node__venue-content--body-wrapper .field--name-body::before,
 .page-node-type-venue .node__venue-content--image-body-wrapper .field--name-body::before {
   content: "About this venue";
   display: block;
@@ -2650,11 +2533,13 @@ h1.page-title {
   line-height: 1.2;
 }
 
+.page-node-type-venue .node__venue-content--body-wrapper .field--name-body p:first-child,
 .page-node-type-venue .node__venue-content--image-body-wrapper .field--name-body p:first-child,
 .page-node-type-deal .node__content .field p:first-child {
   margin-top: 0;
 }
 
+.page-node-type-venue .node__venue-content--body-wrapper .field--name-body p:last-child,
 .page-node-type-venue .node__venue-content--image-body-wrapper .field--name-body p:last-child,
 .page-node-type-deal .node__content .field p:last-child {
   margin-bottom: 0;

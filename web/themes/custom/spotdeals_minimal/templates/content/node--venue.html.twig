@@ -51,10 +51,19 @@
     {% else %}
       {{ content|without('comment', 'field_image', 'body', 'field_address', 'field_venue_type') }}
     {% endif %}
-    {% if content.field_image[0] or content.body[0] %}
-      <div class="node__venue-content--image-body-wrapper">
-        {{ content.field_image }}
-        {{ content.body }}
+    {% if content.field_image[0] %}
+      {% set haveImg = 'image-' %}
+    {% else %}
+      {% set haveImg = '' %}
+    {% endif %}
+    {% if content.body[0] or content.field_image[0] %}
+      <div class="node__venue-content--{{ haveImg }}body-wrapper">
+        {% if content.field_image[0] %}
+          {{ content.field_image }}
+        {% endif %}
+        {% if content.body[0] %}
+          {{ content.body }}
+        {% endif %}
       </div>
     {% endif %}
   </div>
