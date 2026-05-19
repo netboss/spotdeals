@@ -2,12 +2,15 @@
 
 namespace Drupal\spotdeals_import\EventSubscriber;
 
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\migrate\Event\MigrateEvents;
 use Drupal\migrate\Event\MigratePreRowSaveEvent;
+use Drupal\migrate\Event\MigrateRollbackEvent;
 use Drupal\migrate\Event\MigrateRowDeleteEvent;
 use Drupal\migrate\MigrateSkipRowException;
+use Drupal\migrate\Plugin\MigrateIdMapInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -29,6 +32,7 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
   public function __construct(
     private readonly EntityTypeManagerInterface $entityTypeManager,
     private readonly LoggerChannelInterface $logger,
+    private readonly Connection $database,
   ) {}
 
   /**
@@ -36,9 +40,64 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
    */
   public static function getSubscribedEvents(): array {
     return [
+      MigrateEvents::PRE_ROLLBACK => 'onPreRollback',
       MigrateEvents::PRE_ROW_SAVE => 'onPreRowSave',
       MigrateEvents::PRE_ROW_DELETE => 'onPreRowDelete',
     ];
+  }
+
+  /**
+   * Marks manually edited imported nodes as preserve before rollback begins.
+   */
+  public function onPreRollback(MigrateRollbackEvent $event): void {
+    $migration = $event->getMigration();
+    $migration_id = $migration->id();
+
+    if (!$this->isProtectedMigration($migration_id)) {
+      return;
+    }
+
+    $map_table = $this->getMapTableName($migration_id);
+
+    if (!$this->database->schema()->tableExists($map_table)) {
+      return;
+    }
+
+    $query = $this->database->select($map_table, 'map');
+    $query->fields('map');
+    $query->condition('map.destid1', NULL, 'IS NOT NULL');
+
+    $rows = $query->execute();
+
+    $preserved_count = 0;
+
+    foreach ($rows as $row) {
+      $nid = isset($row->destid1) && is_numeric($row->destid1) ? (int) $row->destid1 : NULL;
+
+      if (!$nid || !$this->isEditedProtectedNode($nid, $migration_id)) {
+        continue;
+      }
+
+      $this->database->update($map_table)
+        ->fields([
+          'rollback_action' => MigrateIdMapInterface::ROLLBACK_PRESERVE,
+        ])
+        ->condition('source_ids_hash', $row->source_ids_hash)
+        ->execute();
+
+      $preserved_count++;
+    }
+
+    if ($preserved_count > 0) {
+      $this->logger->notice(
+        'Marked @count manually edited @type migration rows as rollback preserve before rolling back @migration.',
+        [
+          '@count' => $preserved_count,
+          '@type' => self::PROTECTED_MIGRATIONS[$migration_id],
+          '@migration' => $migration_id,
+        ]
+      );
+    }
   }
 
   /**
@@ -79,7 +138,7 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
   }
 
   /**
-   * Skips rollback deletion for imported nodes edited after creation.
+   * Logs protected rollback rows without throwing.
    */
   public function onPreRowDelete(MigrateRowDeleteEvent $event): void {
     $migration = $event->getMigration();
@@ -95,15 +154,14 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
       return;
     }
 
-    $message = sprintf(
-      'Skipped rollback deletion for manually edited %s node %s from migration %s because changed timestamp differs from created timestamp.',
-      self::PROTECTED_MIGRATIONS[$migration_id],
-      $nid,
-      $migration_id
+    $this->logger->warning(
+      'Edited @type node @nid reached PRE_ROW_DELETE during @migration rollback. The row should have been marked rollback preserve before deletion.',
+      [
+        '@type' => self::PROTECTED_MIGRATIONS[$migration_id],
+        '@nid' => $nid,
+        '@migration' => $migration_id,
+      ]
     );
-
-    $this->logger->notice($message);
-    throw new MigrateSkipRowException($message, FALSE);
   }
 
   /**
@@ -111,6 +169,13 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
    */
   private function isProtectedMigration(string $migration_id): bool {
     return isset(self::PROTECTED_MIGRATIONS[$migration_id]);
+  }
+
+  /**
+   * Gets the migrate map table name for a migration ID.
+   */
+  private function getMapTableName(string $migration_id): string {
+    return 'migrate_map_' . $migration_id;
   }
 
   /**
