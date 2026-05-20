@@ -1409,6 +1409,7 @@
   background: #fff;
   justify-content: space-around;
   width: 100%;
+  flex-wrap: wrap;
 }
 
 .spotdeals-deal-card__venue-votes .spotdeals-vote__group,
@@ -1418,6 +1419,7 @@
   flex-direction: column;
   justify-content: space-around;
   width: 100%;
+  flex: 1 0 33%;
 }
 
 .spotdeals-deal-card__venue-votes .spotdeals-vote__group[data-vote-group="would_go_again"],
@@ -1469,6 +1471,7 @@
   color: var(--deal-card-green);
   font-size: 0.72rem;
   line-height: 1.2;
+  padding: 1rem 0 0;
 }
 
 .spotdeals-deal-card__deal-votes {
@@ -1521,6 +1524,7 @@
   .spotdeals-deal-card__deal-votes .spotdeals-vote__group {
     grid-template-columns: minmax(5.2rem, 1fr) auto minmax(3.8rem, auto);
     gap: 0.35rem;
+    flex: 1 0 50%;
   }
 
   .spotdeals-deal-card__venue-votes .spotdeals-vote__label-text--desktop,
