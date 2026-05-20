@@ -1,0 +1,22 @@
+_core:
+  default_config_hash: JqYNByWeXZGynyqoPRWQIjp3VcQhuoyq5WlM-7YzBvI
+smtp_on: true
+smtp_host: smtp.gmail.com
+smtp_hostbackup: ''
+smtp_port: '465'
+smtp_protocol: ssl
+smtp_autotls: false
+smtp_timeout: 30
+smtp_username: admin@spotdeals.app
+smtp_password: ''
+smtp_from: admin@spotdeals.app
+smtp_fromname: SpotDeals
+smtp_client_hostname: spotdeals.app
+smtp_client_helo: spotdeals.app
+smtp_allowhtml: true
+smtp_test_address: ''
+smtp_reroute_address: ''
+smtp_debugging: false
+smtp_debug_level: 1
+prev_mail_system: php_mail
+smtp_keepalive: false
