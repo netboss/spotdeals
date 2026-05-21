@@ -13,7 +13,6 @@ dependencies:
     - filter
     - media
     - node
-    - search
     - shortcut
     - spotdeals_vote
     - system
@@ -31,7 +30,6 @@ permissions:
   - 'create claim content'
   - 'delete own files'
   - 'post comments'
-  - 'search content'
   - 'skip comment approval'
   - 'submit spotdeals votes'
   - 'use text format basic_html'
