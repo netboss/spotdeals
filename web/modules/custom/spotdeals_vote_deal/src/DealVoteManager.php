@@ -37,6 +37,7 @@ final class DealVoteManager {
    */
   public function getDealVoteState(int $dealNid, int $uid = 0): array {
     $aggregate = $this->aggregateStorage->loadDealAggregate($dealNid);
+    $lastWorthItVoteChanged = $this->aggregateStorage->loadLastWorthItVoteChanged($dealNid);
     $userVote = [
       'worth_it' => NULL,
       'would_go_again' => NULL,
@@ -54,6 +55,7 @@ final class DealVoteManager {
       'deal_nid' => $dealNid,
       'aggregate' => $aggregate,
       'user_vote' => $userVote,
+      'last_worth_it_vote_changed' => $lastWorthItVoteChanged,
     ];
   }
 
@@ -106,6 +108,7 @@ final class DealVoteManager {
       'vote_scope' => 'deal:' . $dealNid,
       'user_vote' => $state['user_vote'],
       'aggregate' => $state['aggregate'],
+      'last_worth_it_vote_changed' => $state['last_worth_it_vote_changed'],
     ];
   }
 

@@ -93,6 +93,62 @@
     messageEl.classList.toggle('is-error', !!isError);
   }
 
+  function formatLastCheckedTimestamp(timestamp) {
+    const numericTimestamp = parseInt(timestamp || 0, 10);
+
+    if (Number.isNaN(numericTimestamp) || numericTimestamp <= 0) {
+      return '';
+    }
+
+    const date = new Date(numericTimestamp * 1000);
+
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    return new Intl.DateTimeFormat(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    }).format(date);
+  }
+
+  function updateLastChecked(wrapper, timestamp) {
+    const lastChecked = wrapper.querySelector('[data-vote-last-checked]');
+
+    if (!lastChecked) {
+      return;
+    }
+
+    const label = formatLastCheckedTimestamp(timestamp);
+
+    wrapper.setAttribute('data-last-worth-it-vote-changed', label ? String(timestamp) : '');
+    lastChecked.classList.toggle('is-empty', !label);
+
+    if (!label) {
+      lastChecked.textContent = '';
+      return;
+    }
+
+    const date = new Date(parseInt(timestamp, 10) * 1000);
+    lastChecked.innerHTML = '';
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'spotdeals-vote__last-checked-label';
+    labelEl.textContent = 'Last checked';
+
+    const timeEl = document.createElement('time');
+    timeEl.className = 'spotdeals-vote__last-checked-time';
+    timeEl.setAttribute('datetime', date.toISOString());
+    timeEl.textContent = label;
+
+    lastChecked.appendChild(labelEl);
+    lastChecked.appendChild(document.createTextNode(' '));
+    lastChecked.appendChild(timeEl);
+  }
+
   function setPending(wrapper, isPending) {
     wrapper.classList.toggle('is-pending', !!isPending);
     wrapper.querySelectorAll('.spotdeals-vote__button').forEach(function (button) {
@@ -150,6 +206,7 @@
 
       updateButtons(wrapper, userVote);
       updateSummary(wrapper, payload.aggregate || {});
+      updateLastChecked(wrapper, payload.last_worth_it_vote_changed || 0);
       setMessage(wrapper, 'Vote saved.', false);
       setPending(wrapper, false);
     });

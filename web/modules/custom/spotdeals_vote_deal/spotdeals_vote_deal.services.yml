@@ -14,3 +14,4 @@ services:
     arguments:
       - '@current_user'
       - '@spotdeals_vote_deal.manager'
+      - '@date.formatter'
