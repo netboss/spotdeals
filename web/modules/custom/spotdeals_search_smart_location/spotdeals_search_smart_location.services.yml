@@ -7,17 +7,25 @@ services:
   spotdeals_search_smart_location.near_me_result_extractor:
     class: Drupal\spotdeals_search_smart_location\NearMeResultExtractor
 
+  spotdeals_search_smart_location.freshness_scorer:
+    class: Drupal\spotdeals_search_smart_location\Service\DealFreshnessScorer
+    arguments:
+      - '@database'
+      - '@datetime.time'
+
   spotdeals_search_smart_location.near_me_ranker:
     class: Drupal\spotdeals_search_smart_location\NearMeRanker
     arguments:
       - '@entity_type.manager'
       - '@spotdeals_search_smart_location.near_me_result_extractor'
+      - '@spotdeals_search_smart_location.freshness_scorer'
 
   spotdeals_search_smart_location.recommendation_service:
     class: Drupal\spotdeals_search_smart_location\RecommendationService
     arguments:
       - '@spotdeals_search_smart_location.near_me_ranker'
       - '@entity_type.manager'
+      - '@spotdeals_search_smart_location.freshness_scorer'
 
   spotdeals_search_smart_location.deal_activity_logger:
     class: Drupal\spotdeals_search_smart_location\Service\DealActivityLogger

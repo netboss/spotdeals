@@ -6,6 +6,7 @@ namespace Drupal\spotdeals_search_smart_location;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node\NodeInterface;
+use Drupal\spotdeals_search_smart_location\Service\DealFreshnessScorer;
 
 /**
  * Builds a recommendation result on top of near-me ranking.
@@ -28,11 +29,27 @@ final class RecommendationService {
   private const RANDOM_TIE_LIMIT = 7;
 
   /**
+   * Candidate has at least one positive Worth it signal and no hard negative.
+   */
+  private const QUALITY_TIER_POSITIVE = 0;
+
+  /**
+   * Candidate has no Worth it signal yet.
+   */
+  private const QUALITY_TIER_UNRATED = 1;
+
+  /**
+   * Candidate has explicit negative Worth it feedback.
+   */
+  private const QUALITY_TIER_NEGATIVE = 2;
+
+  /**
    * Constructs a recommendation service.
    */
   public function __construct(
     private readonly NearMeRanker $nearMeRanker,
     private readonly EntityTypeManagerInterface $entityTypeManager,
+    private readonly DealFreshnessScorer $freshnessScorer,
   ) {}
 
   /**
@@ -68,6 +85,7 @@ final class RecommendationService {
     float $radiusKm = self::DEFAULT_RADIUS_KM,
     array $excludedCuisines = [],
     array $excludedVenueNids = [],
+    bool $allowRecycle = TRUE,
   ): array {
     $startedAt = microtime(TRUE);
 
@@ -220,7 +238,87 @@ final class RecommendationService {
     $setSizes = array_map(static fn(array $set): int => count($set), $candidateSets);
     $attemptSizesJson = json_encode($setSizes, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]';
 
+    $picked = $this->pickFromCandidateSets($candidateSets);
+    if ($picked !== NULL) {
+      $this->logTiming(sprintf(
+        'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="%d" top_tier_count="%d" picked_deal_nid="%d" picked_venue_nid="%d" recycled="0"',
+        $this->formatMs($startedAt),
+        count($cuisines),
+        count($excludedCuisines),
+        count($excludedVenueNids),
+        (string) $radiusKm,
+        count($candidateSets),
+        $attemptSizesJson,
+        (int) $picked['attempt_index'],
+        (int) $picked['top_tier_count'],
+        (int) $picked['candidate']['deal_nid'],
+        (int) $picked['candidate']['venue_nid'],
+      ));
+
+      return [(int) $picked['candidate']['deal_nid']];
+    }
+
+    // If every eligible candidate has already been shown in this
+    // recommendation session, recycle only after exhausting the unshown pool.
+    // This keeps Try again varied without letting the picker go blank in
+    // low-inventory areas.
+    if ($allowRecycle && !empty($excludedVenueNids)) {
+      $recycled = $this->recommendDealNids(
+        $originLat,
+        $originLon,
+        $cuisines,
+        $radiusKm,
+        $excludedCuisines,
+        [],
+        FALSE
+      );
+
+      if (!empty($recycled)) {
+        $this->logTiming(sprintf(
+          'SMART LOCATION recommendation recycled exhausted session pool: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" radius_km="%s" picked_deal_nid="%d"',
+          $this->formatMs($startedAt),
+          count($cuisines),
+          count($excludedCuisines),
+          count($excludedVenueNids),
+          (string) $radiusKm,
+          (int) $recycled[0],
+        ));
+
+        return $recycled;
+      }
+    }
+
+    $this->logTiming(sprintf(
+      'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="0" top_tier_count="0" picked_deal_nid="" picked_venue_nid=""',
+      $this->formatMs($startedAt),
+      count($cuisines),
+      count($excludedCuisines),
+      count($excludedVenueNids),
+      (string) $radiusKm,
+      count($candidateSets),
+      $attemptSizesJson,
+    ));
+
+    return [];
+  }
+
+
+  /**
+   * Picks the best eligible candidate from ordered candidate attempts.
+   *
+   * @param array<int,array<int,array<string,int|string|bool>>> $candidateSets
+   *   Candidate sets in attempt order.
+   *
+   * @return array{candidate:array<string,int|string|bool>,attempt_index:int,top_tier_count:int}|null
+   *   Picked candidate metadata, or NULL when no eligible candidate exists.
+   */
+  private function pickFromCandidateSets(array $candidateSets): ?array {
     foreach ($candidateSets as $attemptIndex => $candidates) {
+      if (empty($candidates)) {
+        continue;
+      }
+
+      $candidates = $this->filterRecommendationCandidatesByVoteQuality($candidates);
       if (empty($candidates)) {
         continue;
       }
@@ -231,6 +329,10 @@ final class RecommendationService {
       $topTier = array_values(array_filter(
         $candidates,
         static function (array $candidate) use ($top): bool {
+          if (($candidate['quality_tier'] ?? self::QUALITY_TIER_UNRATED) !== ($top['quality_tier'] ?? self::QUALITY_TIER_UNRATED)) {
+            return FALSE;
+          }
+
           if (($candidate['preference_mode'] ?? FALSE) !== ($top['preference_mode'] ?? FALSE)) {
             return FALSE;
           }
@@ -249,38 +351,15 @@ final class RecommendationService {
       }
 
       $topTier = array_slice($topTier, 0, self::RANDOM_TIE_LIMIT);
-      $picked = $topTier[array_rand($topTier)];
 
-      $this->logTiming(sprintf(
-        'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="%d" top_tier_count="%d" picked_deal_nid="%d" picked_venue_nid="%d"',
-        $this->formatMs($startedAt),
-        count($cuisines),
-        count($excludedCuisines),
-        count($excludedVenueNids),
-        (string) $radiusKm,
-        count($candidateSets),
-        $attemptSizesJson,
-        $attemptIndex + 1,
-        count($topTier),
-        (int) $picked['deal_nid'],
-        (int) $picked['venue_nid'],
-      ));
-
-      return [(int) $picked['deal_nid']];
+      return [
+        'candidate' => $topTier[array_rand($topTier)],
+        'attempt_index' => ((int) $attemptIndex) + 1,
+        'top_tier_count' => count($topTier),
+      ];
     }
 
-    $this->logTiming(sprintf(
-      'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="0" top_tier_count="0" picked_deal_nid="" picked_venue_nid=""',
-      $this->formatMs($startedAt),
-      count($cuisines),
-      count($excludedCuisines),
-      count($excludedVenueNids),
-      (string) $radiusKm,
-      count($candidateSets),
-      $attemptSizesJson,
-    ));
-
-    return [];
+    return NULL;
   }
 
   /**
@@ -331,7 +410,9 @@ final class RecommendationService {
     }
 
     $rankIndexMap = array_flip($candidateNids);
-    $bestByVenue = [];
+    $freshnessScores = $this->freshnessScorer->scoreDealNids($candidateNids);
+    $candidateRows = [];
+    $candidateVenueNids = [];
 
     foreach ($candidateNids as $dealNid) {
       $deal = $deals[$dealNid] ?? NULL;
@@ -354,12 +435,40 @@ final class RecommendationService {
         continue;
       }
 
+      $candidateRows[] = [
+        'deal' => $deal,
+        'venue' => $venue,
+        'venue_cuisine_tokens' => $venueCuisineTokens,
+        'rank_index' => (int) ($rankIndexMap[$dealNid] ?? PHP_INT_MAX),
+      ];
+      $candidateVenueNids[] = $venueNid;
+    }
+
+    if (empty($candidateRows)) {
+      return [];
+    }
+
+    $venueQualityScores = $this->freshnessScorer->scoreVenueNids($candidateVenueNids);
+    $bestByVenue = [];
+
+    foreach ($candidateRows as $row) {
+      $deal = $row['deal'];
+      $venue = $row['venue'];
+      if (!$deal instanceof NodeInterface || !$venue instanceof NodeInterface) {
+        continue;
+      }
+
+      $dealNid = (int) $deal->id();
+      $venueNid = (int) $venue->id();
+
       $candidate = $this->buildCandidate(
         $deal,
         $venue,
         $cuisines,
-        $venueCuisineTokens,
-        (int) ($rankIndexMap[$dealNid] ?? PHP_INT_MAX)
+        $row['venue_cuisine_tokens'],
+        (int) $row['rank_index'],
+        $freshnessScores[$dealNid] ?? [],
+        $venueQualityScores[$venueNid] ?? []
       );
       if ($candidate === NULL) {
         continue;
@@ -381,6 +490,11 @@ final class RecommendationService {
    * @param array<int,string> $venueCuisineTokens
    *   Normalized venue cuisine tokens.
    *
+   * @param array<string,int|float> $freshness
+   *   Freshness score data for the deal.
+   * @param array<string,int|float> $venueQuality
+   *   Vote quality score data for the venue.
+   *
    * @return array<string,int|string|bool>|null
    *   Candidate data or NULL.
    */
@@ -390,6 +504,8 @@ final class RecommendationService {
     array $cuisines,
     array $venueCuisineTokens,
     int $rankIndex,
+    array $freshness,
+    array $venueQuality,
   ): ?array {
     $dealTitle = $this->normalize((string) $deal->label());
     $dealBody = $this->normalize(
@@ -490,13 +606,27 @@ final class RecommendationService {
       }
     }
 
+    $freshnessScore = (int) ($freshness['score'] ?? 0);
+    $qualityTier = $this->candidateQualityTier($freshness, $venueQuality);
+
     $score += max(0, 60 - min($rankIndex, 60));
+    $score += $freshnessScore;
+
+    if ($qualityTier === self::QUALITY_TIER_POSITIVE) {
+      $score += 150;
+    }
+    elseif ($qualityTier === self::QUALITY_TIER_NEGATIVE) {
+      $score -= 500;
+    }
 
     return [
       'deal_nid' => (int) $deal->id(),
       'venue_nid' => (int) $venue->id(),
       'overlap_count' => $overlapCount,
       'score' => $score,
+      'freshness_score' => $freshnessScore,
+      'quality_tier' => $qualityTier,
+      'last_checked' => (int) ($freshness['last_checked'] ?? 0),
       'rank_index' => $rankIndex,
       'deal_title' => (string) $deal->label(),
       'venue_title' => (string) $venue->label(),
@@ -504,10 +634,85 @@ final class RecommendationService {
     ];
   }
 
+
+  /**
+   * Keeps recommendation results intuitive by vote quality.
+   *
+   * Positive deal/venue candidates always win when available. If no positive
+   * candidates exist, unrated candidates remain eligible. Explicitly negative
+   * candidates are not recommended because they undermine trust in the picker.
+   *
+   * @param array<int,array<string,int|string|bool>> $candidates
+   *   Recommendation candidates.
+   *
+   * @return array<int,array<string,int|string|bool>>
+   *   Filtered candidates.
+   */
+  private function filterRecommendationCandidatesByVoteQuality(array $candidates): array {
+    $positive = array_values(array_filter(
+      $candidates,
+      static fn(array $candidate): bool => (int) ($candidate['quality_tier'] ?? self::QUALITY_TIER_UNRATED) === self::QUALITY_TIER_POSITIVE
+    ));
+    if (!empty($positive)) {
+      return $positive;
+    }
+
+    return array_values(array_filter(
+      $candidates,
+      static fn(array $candidate): bool => (int) ($candidate['quality_tier'] ?? self::QUALITY_TIER_UNRATED) === self::QUALITY_TIER_UNRATED
+    ));
+  }
+
+  /**
+   * Calculates the candidate quality tier from deal and venue Worth it votes.
+   *
+   * @param array<string,int|float> $dealQuality
+   *   Deal score data.
+   * @param array<string,int|float> $venueQuality
+   *   Venue score data.
+   */
+  private function candidateQualityTier(array $dealQuality, array $venueQuality): int {
+    $dealTier = $this->voteQualityTier($dealQuality);
+    $venueTier = $this->voteQualityTier($venueQuality);
+
+    if ($dealTier === self::QUALITY_TIER_NEGATIVE || $venueTier === self::QUALITY_TIER_NEGATIVE) {
+      return self::QUALITY_TIER_NEGATIVE;
+    }
+
+    if ($dealTier === self::QUALITY_TIER_POSITIVE || $venueTier === self::QUALITY_TIER_POSITIVE) {
+      return self::QUALITY_TIER_POSITIVE;
+    }
+
+    return self::QUALITY_TIER_UNRATED;
+  }
+
+  /**
+   * Returns the quality tier for one vote aggregate row.
+   *
+   * @param array<string,int|float> $quality
+   *   Vote quality row.
+   */
+  private function voteQualityTier(array $quality): int {
+    $totalVoters = (int) ($quality['total_voters'] ?? 0);
+    $worthItPercent = (float) ($quality['worth_it_percent'] ?? 0.0);
+
+    if ($totalVoters <= 0) {
+      return self::QUALITY_TIER_UNRATED;
+    }
+
+    return $worthItPercent > 0.0 ? self::QUALITY_TIER_POSITIVE : self::QUALITY_TIER_NEGATIVE;
+  }
+
   /**
    * Compares two candidates.
    */
   private function compareCandidates(array $a, array $b): int {
+    $aQualityTier = (int) ($a['quality_tier'] ?? self::QUALITY_TIER_UNRATED);
+    $bQualityTier = (int) ($b['quality_tier'] ?? self::QUALITY_TIER_UNRATED);
+    if ($aQualityTier !== $bQualityTier) {
+      return $aQualityTier <=> $bQualityTier;
+    }
+
     if (($a['preference_mode'] ?? FALSE) !== ($b['preference_mode'] ?? FALSE)) {
       return !empty($a['preference_mode']) ? -1 : 1;
     }
