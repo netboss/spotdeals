@@ -8,6 +8,7 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\node\NodeInterface;
+use Drupal\spotdeals_search_smart_location\Service\DealFreshnessScorer;
 
 /**
  * Computes deterministic near-me ranking for deals.
@@ -56,6 +57,7 @@ final class NearMeRanker {
   public function __construct(
     private readonly EntityTypeManagerInterface $entityTypeManager,
     private readonly NearMeResultExtractor $resultExtractor,
+    private readonly DealFreshnessScorer $freshnessScorer,
   ) {}
 
   /**
@@ -108,25 +110,40 @@ final class NearMeRanker {
       return [];
     }
 
+    $candidateNids = array_values(array_unique(array_map(
+      static fn (array $candidate): int => (int) $candidate['nid'],
+      $candidates
+    )));
+    $freshnessScores = $this->freshnessScorer->scoreDealNids($candidateNids);
+
     $ranked = [];
     foreach ($candidates as $candidate) {
+      $nid = (int) $candidate['nid'];
+      $freshnessScore = (int) ($freshnessScores[$nid]['score'] ?? 0);
       $ranked[] = [
-        'nid' => (int) $candidate['nid'],
+        'nid' => $nid,
         'distance' => (float) $candidate['distance'],
-        'score' => $this->keywordScore($candidate, $keywords, $tokens),
+        'distance_bucket' => $this->distanceBucket((float) $candidate['distance']),
+        'score' => $this->keywordScore($candidate, $keywords, $tokens) + $freshnessScore,
+        'freshness_score' => $freshnessScore,
         'position' => (int) $candidate['position'],
       ];
     }
 
     usort($ranked, static function (array $a, array $b): int {
-      $distanceCompare = $a['distance'] <=> $b['distance'];
-      if ($distanceCompare !== 0) {
-        return $distanceCompare;
+      $bucketCompare = $a['distance_bucket'] <=> $b['distance_bucket'];
+      if ($bucketCompare !== 0) {
+        return $bucketCompare;
       }
 
       $scoreCompare = $b['score'] <=> $a['score'];
       if ($scoreCompare !== 0) {
         return $scoreCompare;
+      }
+
+      $distanceCompare = $a['distance'] <=> $b['distance'];
+      if ($distanceCompare !== 0) {
+        return $distanceCompare;
       }
 
       $positionCompare = $a['position'] <=> $b['position'];
@@ -140,7 +157,7 @@ final class NearMeRanker {
     $rankedNids = array_values(array_map(static fn(array $row): int => $row['nid'], $ranked));
 
     $this->logTiming(sprintf(
-      'SMART LOCATION near-me ranking timing: total_ms="%s" radius_km="%s" keywords="%s" tokens_count="%d" cache_hit="%s" candidate_count="%d" ranked_count="%d"',
+      'SMART LOCATION near-me ranking timing: total_ms="%s" radius_km="%s" keywords="%s" tokens_count="%d" cache_hit="%s" candidate_count="%d" ranked_count="%d" freshness_scored_count="%d"',
       $this->formatMs($startedAt),
       (string) $radiusKm,
       $keywords,
@@ -148,6 +165,7 @@ final class NearMeRanker {
       $cacheHit ? '1' : '0',
       count($candidates),
       count($rankedNids),
+      count($freshnessScores),
     ));
 
     return $rankedNids;
@@ -669,6 +687,16 @@ final class NearMeRanker {
     $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
     return $earthRadiusKm * $c;
+  }
+
+  /**
+   * Returns a conservative distance bucket used before secondary ranking.
+   *
+   * Deals still rank by proximity first, but comparable deals within about
+   * half a kilometer can now be ordered by text relevance and freshness.
+   */
+  private function distanceBucket(float $distanceKm): int {
+    return (int) floor(max(0.0, $distanceKm) * 2);
   }
 
   /**

@@ -1591,14 +1591,21 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
   usort($filtered, static function ($a, $b): int {
     $a_distance = $a->_spotdeals_distance_km ?? PHP_FLOAT_MAX;
     $b_distance = $b->_spotdeals_distance_km ?? PHP_FLOAT_MAX;
-    if ($a_distance !== $b_distance) {
-      return $a_distance <=> $b_distance;
+    $a_bucket = (int) floor(max(0.0, (float) $a_distance) * 2);
+    $b_bucket = (int) floor(max(0.0, (float) $b_distance) * 2);
+
+    if ($a_bucket !== $b_bucket) {
+      return $a_bucket <=> $b_bucket;
     }
 
     $a_rank = $a->_spotdeals_rank_index ?? PHP_INT_MAX;
     $b_rank = $b->_spotdeals_rank_index ?? PHP_INT_MAX;
     if ($a_rank !== $b_rank) {
       return $a_rank <=> $b_rank;
+    }
+
+    if ($a_distance !== $b_distance) {
+      return $a_distance <=> $b_distance;
     }
 
     $a_original = $a->_spotdeals_original_index ?? PHP_INT_MAX;
@@ -2028,14 +2035,6 @@ function _spotdeals_search_smart_location_store_current_recommendation(array $re
     'deal_nid' => (int) $deal->id(),
     'venue_nid' => $venue_nid,
   ]);
-
-  //\Drupal::logger('spotdeals_search_smart_location')->notice(
-  //  'SMART LOCATION stored current recommendation in session: deal_nid="@deal" venue_nid="@venue"',
-  //  [
-  //    '@deal' => (string) $deal->id(),
-  //    '@venue' => (string) $venue_nid,
-  //  ]
-  //);
 }
 
 /**
@@ -2050,29 +2049,24 @@ function _spotdeals_search_smart_location_apply_recommendation_action_to_session
   $current = $session->get('spotdeals_search_smart_location.current_recommendation', []);
 
   if (!is_array($current) || empty($current['venue_nid'])) {
-    $session->remove('spotdeals_search_smart_location.excluded_venue_nids');
     return;
   }
 
-  // Keep only the immediately previous venue excluded for the next
-  // recommendation attempt. This matches the product rule that the last
-  // recommended result must not repeat in the same session, while avoiding
-  // exhausting the pool after just a few retries.
   $venue_nid = (int) $current['venue_nid'];
   if ($venue_nid <= 0) {
-    $session->remove('spotdeals_search_smart_location.excluded_venue_nids');
     return;
   }
 
-  $session->set('spotdeals_search_smart_location.excluded_venue_nids', [$venue_nid]);
+  $excluded_venue_nids = $session->get('spotdeals_search_smart_location.excluded_venue_nids', []);
+  $excluded_venue_nids = array_values(array_unique(array_filter(
+    array_map('intval', is_array($excluded_venue_nids) ? $excluded_venue_nids : []),
+    static fn(int $nid): bool => $nid > 0
+  )));
 
-  //\Drupal::logger('spotdeals_search_smart_location')->notice(
-  //  'SMART LOCATION applied retry exclusion in session: excluded_venue_nids="@excluded" from_current="@current"',
-  //  [
-  //    '@excluded' => json_encode([$venue_nid], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-  //    '@current' => json_encode($current, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-  //  ]
-  //);
+  $excluded_venue_nids[] = $venue_nid;
+  $excluded_venue_nids = array_values(array_unique($excluded_venue_nids));
+
+  $session->set('spotdeals_search_smart_location.excluded_venue_nids', $excluded_venue_nids);
 }
 
 /**
