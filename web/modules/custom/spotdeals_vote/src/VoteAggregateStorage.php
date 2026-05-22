@@ -128,4 +128,21 @@ final class VoteAggregateStorage {
     ];
   }
 
+  /**
+   * Returns the latest timestamp for a Worth it vote on one deal.
+   */
+  public function loadLastWorthItVoteChanged(int $dealNid): int {
+    if ($dealNid <= 0) {
+      return 0;
+    }
+
+    $query = $this->database->select('spotdeals_vote', 'v')
+      ->condition('deal_nid', $dealNid)
+      ->isNotNull('worth_it');
+    $query->addExpression('MAX(changed)', 'last_worth_it_changed');
+    $timestamp = $query->execute()->fetchField();
+
+    return $timestamp !== FALSE && $timestamp !== NULL ? (int) $timestamp : 0;
+  }
+
 }

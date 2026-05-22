@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\spotdeals_vote_deal;
 
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Render\Markup;
@@ -20,6 +21,7 @@ final class DealVoteRenderBuilder {
   public function __construct(
     private readonly AccountProxyInterface $currentUser,
     private readonly DealVoteManager $voteManager,
+    private readonly DateFormatterInterface $dateFormatter,
   ) {}
 
   /**
@@ -72,6 +74,7 @@ final class DealVoteRenderBuilder {
             'data-login-url' => Url::fromRoute('user.login', [], ['query' => ['destination' => $deal->toUrl()->toString()]])->toString(),
             'data-current-worth-it' => isset($voteState['user_vote']['worth_it']) && $voteState['user_vote']['worth_it'] !== NULL ? (string) $voteState['user_vote']['worth_it'] : '',
             'data-current-would-go-again' => isset($voteState['user_vote']['would_go_again']) && $voteState['user_vote']['would_go_again'] !== NULL ? (string) $voteState['user_vote']['would_go_again'] : '',
+            'data-last-worth-it-vote-changed' => !empty($voteState['last_worth_it_vote_changed']) ? (string) $voteState['last_worth_it_vote_changed'] : '',
           ],
         ],
       ],
@@ -97,6 +100,8 @@ final class DealVoteRenderBuilder {
       );
     }
 
+    $build['content']['vote']['last_checked'] = $this->buildLastChecked((int) ($voteState['last_worth_it_vote_changed'] ?? 0));
+
     $build['content']['vote']['message'] = [
       '#type' => 'html_tag',
       '#tag' => 'div',
@@ -108,6 +113,58 @@ final class DealVoteRenderBuilder {
     ];
 
     return $build;
+  }
+
+
+  /**
+   * Builds the persistent last checked message from the latest Worth it vote.
+   *
+   * @return array<string,mixed>
+   *   Render array.
+   */
+  private function buildLastChecked(int $timestamp): array {
+    $build = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['spotdeals-vote__last-checked'],
+        'data-vote-last-checked' => '1',
+      ],
+    ];
+
+    if ($timestamp <= 0) {
+      $build['#attributes']['class'][] = 'is-empty';
+      return $build;
+    }
+
+    $label = $this->formatLastCheckedLabel($timestamp);
+
+    $build['label'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'span',
+      '#attributes' => [
+        'class' => ['spotdeals-vote__last-checked-label'],
+      ],
+      '#value' => (string) t('Last checked'),
+    ];
+
+    $build['time'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'time',
+      '#attributes' => [
+        'class' => ['spotdeals-vote__last-checked-time'],
+        'datetime' => $this->dateFormatter->format($timestamp, 'custom', 'c'),
+      ],
+      '#value' => $label,
+    ];
+
+    return $build;
+  }
+
+  /**
+   * Formats the last checked timestamp for display.
+   */
+  private function formatLastCheckedLabel(int $timestamp): string {
+    return $this->dateFormatter->format($timestamp, 'custom', 'M j, Y g:i A');
   }
 
   /**
