@@ -317,6 +317,29 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
 
     $request->attributes->set('spotdeals_search_smart_location.ranked_deal_nids', $ranked_nids);
 
+    if (_spotdeals_search_smart_location_should_log_search_debug($keywords)) {
+      \Drupal::logger('spotdeals_search_debug')->notice(
+        'pre_view browser near-me debug: view="@view" display="@display" raw="@raw" clean="@clean" parsed_keywords="@parsed_keywords" expanded_keywords="@keywords" search_param="@search_param" origin_mode="@origin_mode" origin_lat="@lat" origin_lon="@lon" nearest_city="@city" ranked_count="@ranked_count" ranked_sample="@ranked_sample" exposed_input_before="@input" query="@query"',
+        [
+          '@view' => $view->id(),
+          '@display' => $display_id,
+          '@raw' => $raw,
+          '@clean' => $clean,
+          '@parsed_keywords' => trim((string) ($parsed['keywords'] ?? '')),
+          '@keywords' => $keywords,
+          '@search_param' => $search_param,
+          '@origin_mode' => $origin_mode,
+          '@lat' => (string) $origin_lat,
+          '@lon' => (string) $origin_lon,
+          '@city' => $nearest_city ?? '',
+          '@ranked_count' => (string) count($ranked_nids),
+          '@ranked_sample' => implode(',', array_slice(array_map('strval', $ranked_nids), 0, 40)),
+          '@input' => json_encode($input, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+          '@query' => json_encode($request->query->all(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+        ]
+      );
+    }
+
     $recommended_nids = [];
     if ($recommendation_mode) {
       $recommended_nids = \Drupal::service('spotdeals_search_smart_location.recommendation_service')
@@ -1472,6 +1495,39 @@ function _spotdeals_search_smart_location_collect_node_term_labels(NodeInterface
 }
 
 /**
+ * Returns the active keyword text used for temporary search diagnostics.
+ */
+function _spotdeals_search_smart_location_current_debug_keywords(): string {
+  $request = \Drupal::request();
+  $context = $request->attributes->get('spotdeals_search_smart_location.browser_near_me_context');
+  if (is_array($context) && isset($context['keywords'])) {
+    return _spotdeals_search_smart_location_normalize_keywords((string) $context['keywords']);
+  }
+
+  foreach (['search_clean', 'search_raw', 'search_deals', 'search_api_fulltext'] as $query_key) {
+    $value = trim((string) $request->query->get($query_key, ''));
+    if ($value !== '') {
+      return _spotdeals_search_smart_location_normalize_keywords($value);
+    }
+  }
+
+  return '';
+}
+
+/**
+ * Returns TRUE when temporary search debugging should be logged.
+ */
+function _spotdeals_search_smart_location_should_log_search_debug(string $keywords): bool {
+  $request = \Drupal::request();
+  if ((string) $request->query->get('spotdeals_debug_search', '') === '1') {
+    return TRUE;
+  }
+
+  $keywords = _spotdeals_search_smart_location_normalize_keywords($keywords);
+  return $keywords !== '' && str_contains($keywords, 'happy hour');
+}
+
+/**
  * Applies deterministic location ordering to View results.
  */
 function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $view): void {
@@ -1589,6 +1645,23 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
   }
 
   usort($filtered, static function ($a, $b): int {
+    $a_rank = $a->_spotdeals_rank_index ?? PHP_INT_MAX;
+    $b_rank = $b->_spotdeals_rank_index ?? PHP_INT_MAX;
+    $a_is_ranked = $a_rank !== PHP_INT_MAX;
+    $b_is_ranked = $b_rank !== PHP_INT_MAX;
+
+    // Keyword-aware near-me searches already have an intent-aware ranked list.
+    // Keep those ranked matches ahead of unranked Solr rows. Do not remove rows
+    // here: filtering at pre-render time can desync Views rendered fields and
+    // create orphaned voting widgets.
+    if ($a_is_ranked !== $b_is_ranked) {
+      return $a_is_ranked ? -1 : 1;
+    }
+
+    if ($a_is_ranked && $a_rank !== $b_rank) {
+      return $a_rank <=> $b_rank;
+    }
+
     $a_distance = $a->_spotdeals_distance_km ?? PHP_FLOAT_MAX;
     $b_distance = $b->_spotdeals_distance_km ?? PHP_FLOAT_MAX;
     $a_bucket = (int) floor(max(0.0, (float) $a_distance) * 2);
@@ -1596,12 +1669,6 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
 
     if ($a_bucket !== $b_bucket) {
       return $a_bucket <=> $b_bucket;
-    }
-
-    $a_rank = $a->_spotdeals_rank_index ?? PHP_INT_MAX;
-    $b_rank = $b->_spotdeals_rank_index ?? PHP_INT_MAX;
-    if ($a_rank !== $b_rank) {
-      return $a_rank <=> $b_rank;
     }
 
     if ($a_distance !== $b_distance) {
@@ -1617,38 +1684,55 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
   _spotdeals_search_smart_location_reorder_rendered_fields($view, $view->result);
   _spotdeals_search_smart_location_sync_filtered_pager($view);
 
-  $debug_rows = [];
-  foreach (array_slice($view->result, 0, 10) as $position => $row) {
-    $deal = _spotdeals_search_smart_location_result_entity($row);
-    if (!$deal instanceof NodeInterface) {
-      continue;
+  $keywords = _spotdeals_search_smart_location_current_debug_keywords();
+  if (_spotdeals_search_smart_location_should_log_search_debug($keywords)) {
+    $debug_rows = [];
+    $ranked_count = is_array($ranked_nids) ? count($ranked_nids) : 0;
+
+    foreach (array_slice($view->result, 0, 25) as $position => $row) {
+      $deal = _spotdeals_search_smart_location_result_entity($row);
+      if (!$deal instanceof NodeInterface) {
+        continue;
+      }
+
+      $venue = _spotdeals_search_smart_location_deal_venue($deal);
+      $nid = (int) $deal->id();
+      $debug_rows[] = [
+        'final_position' => $position + 1,
+        'nid' => $nid,
+        'deal_title' => (string) $deal->label(),
+        'deal_category' => _spotdeals_search_smart_location_get_deal_category_label($deal),
+        'deal_body' => $deal->hasField('body') && !$deal->get('body')->isEmpty()
+          ? mb_substr(strip_tags((string) $deal->get('body')->value), 0, 180)
+          : '',
+        'venue_title' => $venue instanceof NodeInterface ? (string) $venue->label() : '',
+        'venue_city' => $venue instanceof NodeInterface ? _spotdeals_search_smart_location_node_locality($venue) : '',
+        'venue_cuisine' => $venue instanceof NodeInterface ? _spotdeals_search_smart_location_collect_node_term_labels($venue, 'field_cuisine') : '',
+        'venue_tags' => $venue instanceof NodeInterface ? _spotdeals_search_smart_location_collect_node_term_labels($venue, 'field_tags') : '',
+        'distance_km' => isset($row->_spotdeals_distance_km) ? round((float) $row->_spotdeals_distance_km, 3) : NULL,
+        'ranked' => isset($order_map[$nid]) ? 1 : 0,
+        'rank_index' => isset($order_map[$nid]) ? (int) $order_map[$nid] : NULL,
+        'original_view_index' => isset($row->_spotdeals_original_index) ? (int) $row->_spotdeals_original_index : NULL,
+        'nearest_city_match' => !empty($row->_spotdeals_nearest_city_match) ? 1 : 0,
+      ];
     }
 
-    $venue = _spotdeals_search_smart_location_deal_venue($deal);
-    $debug_rows[] = [
-      'position' => $position + 1,
-      'deal' => $deal->label(),
-      'venue' => $venue instanceof NodeInterface ? $venue->label() : '',
-      'city' => $venue instanceof NodeInterface ? _spotdeals_search_smart_location_node_locality($venue) : '',
-      'distance_km' => isset($row->_spotdeals_distance_km) ? round((float) $row->_spotdeals_distance_km, 3) : NULL,
-      'nearest_city_match' => !empty($row->_spotdeals_nearest_city_match) ? 1 : 0,
-    ];
+    \Drupal::logger('spotdeals_search_debug')->notice(
+      'pre_render near-me final order debug: keywords="@keywords" before="@before" after="@after" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius" ranked_count="@ranked" nearest_city="@nearest_city" final_rows="@rows"',
+      [
+        '@keywords' => $keywords,
+        '@before' => (string) $before_count,
+        '@after' => (string) count($view->result),
+        '@missing' => (string) $missing_coords,
+        '@outside' => (string) $outside_radius,
+        '@not_ranked' => (string) $not_ranked,
+        '@radius' => (string) $radius_km,
+        '@ranked' => (string) $ranked_count,
+        '@nearest_city' => $nearest_city,
+        '@rows' => json_encode($debug_rows, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+      ]
+    );
   }
-
-  //\Drupal::logger('spotdeals_search_smart_location')->notice(
-  //  'SMART LOCATION pre_render applied hard near-me radius filter and strict distance sort: before="@before" after="@after" missing_coords="@missing" outside_radius="@outside" not_ranked="@not_ranked" radius_km="@radius" ranked_count="@ranked" nearest_city="@nearest_city" rows="@rows"',
-  //  [
-  //    '@before' => (string) $before_count,
-  //    '@after' => (string) count($view->result),
-  //    '@missing' => (string) $missing_coords,
-  //    '@outside' => (string) $outside_radius,
-  //    '@not_ranked' => (string) $not_ranked,
-  //    '@radius' => (string) $radius_km,
-  //    '@ranked' => is_array($ranked_nids) ? (string) count($ranked_nids) : '0',
-  //    '@nearest_city' => $nearest_city,
-  //    '@rows' => json_encode($debug_rows, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-  //  ]
-  //);
 }
 
 /**
