@@ -337,12 +337,19 @@ final class RecommendationService {
             return FALSE;
           }
 
-          if (!empty($top['preference_mode'])) {
-            return $candidate['overlap_count'] === $top['overlap_count']
-              && $candidate['score'] >= ($top['score'] - 20);
+          if (!empty($top['preference_mode']) && $candidate['overlap_count'] !== $top['overlap_count']) {
+            return FALSE;
           }
 
-          return $candidate['score'] >= ($top['score'] - 25);
+          // Randomize only across the closest same-quality recommendations.
+          // The previous score-window randomization could jump from nearby New
+          // Smyrna Beach options to Port Orange/Daytona Beach options because
+          // votes/freshness made far candidates look equivalent. rank_index is
+          // produced by NearMeRanker and already includes the near-me ordering.
+          $candidateRank = (int) ($candidate['rank_index'] ?? PHP_INT_MAX);
+          $topRank = (int) ($top['rank_index'] ?? PHP_INT_MAX);
+
+          return $candidateRank <= ($topRank + 3);
         }
       ));
 
@@ -721,12 +728,15 @@ final class RecommendationService {
       return $b['overlap_count'] <=> $a['overlap_count'];
     }
 
-    if ($a['score'] !== $b['score']) {
-      return $b['score'] <=> $a['score'];
-    }
-
+    // For recommendation/"Try again", near-me order must beat freshness/score
+    // within the same quality and preference bucket. Otherwise highly scored
+    // farther venues can appear before closer New Smyrna Beach options.
     if ($a['rank_index'] !== $b['rank_index']) {
       return $a['rank_index'] <=> $b['rank_index'];
+    }
+
+    if ($a['score'] !== $b['score']) {
+      return $b['score'] <=> $a['score'];
     }
 
     return $a['deal_nid'] <=> $b['deal_nid'];
