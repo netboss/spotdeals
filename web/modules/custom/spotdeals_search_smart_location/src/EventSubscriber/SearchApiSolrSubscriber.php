@@ -76,6 +76,7 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
     $parsed_origin = $request->attributes->get('spotdeals_search_smart_location.origin');
     $is_browser_near_me = (bool) $request->attributes->get('spotdeals_search_smart_location.browser_near_me', FALSE);
     $is_explicit_location = (bool) $request->attributes->get('spotdeals_search_smart_location.explicit_location', FALSE);
+    $is_browser_origin_request = $origin_mode === 'browser' && is_numeric($origin_lat) && is_numeric($origin_lon);
 
     $lat = NULL;
     $lon = NULL;
@@ -115,9 +116,9 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
       return;
     }
 
-    if (!$is_browser_near_me && !$is_explicit_location) {
+    if (!$is_browser_near_me && !$is_explicit_location && !$is_browser_origin_request) {
       \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION subscriber skipped geofilt at PRE_QUERY: source="@source" near_me="0" explicit_location="0" recommendation_mode="@recommendation_mode" lat="@lat" lon="@lon"',
+        'SMART LOCATION subscriber skipped geofilt at PRE_QUERY: source="@source" near_me="0" explicit_location="0" browser_origin_request="0" recommendation_mode="@recommendation_mode" lat="@lat" lon="@lon"',
         [
           '@source' => $source ?? '',
           '@recommendation_mode' => $recommendation_mode ? '1' : '0',
@@ -177,21 +178,21 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
     $solarium_query->addParam('sfield', self::SOLR_GEO_FIELD);
     $solarium_query->addParam('pt', $pt);
 
-    if (method_exists($solarium_query, 'clearSorts')) {
-      $solarium_query->clearSorts();
-    }
-    elseif (method_exists($solarium_query, 'setSorts')) {
-      $solarium_query->setSorts([]);
-    }
-
-    $solarium_query->addSort('geodist()', 'asc');
-    $solarium_query->addSort('score', 'desc');
-
+    // Keep the hard geo filter, but do not force geodist() sorting here.
+    //
+    // Browser near-me searches already compute a keyword-aware ranked NID list
+    // in NearMeRanker. Forcing Solr to sort by geodist() after constraining to
+    // those NIDs makes nearby weak matches outrank stronger deal matches before
+    // Views/pre-render can apply the custom rank order.
+    //
+    // Leaving Search API/Solr's normal relevance order intact gives the View a
+    // more relevant page of candidates, while the pre-render layer still applies
+    // the deterministic NearMeRanker order among returned rows.
     \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION subscriber applied PRE_QUERY geofilt and forced Solr distance sort: source="@source" near_me="@near_me" explicit_location="@explicit_location" recommendation_mode="@recommendation_mode" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq" sort="@sort" ranked_constraint_count="@ranked_count"',
+      'SMART LOCATION subscriber applied PRE_QUERY geofilt without forced Solr distance sort: source="@source" near_me="@near_me" explicit_location="@explicit_location" recommendation_mode="@recommendation_mode" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq" sort="@sort" ranked_constraint_count="@ranked_count"',
       [
         '@source' => $source ?? '',
-        '@near_me' => $is_browser_near_me ? '1' : '0',
+        '@near_me' => ($is_browser_near_me || $is_browser_origin_request) ? '1' : '0',
         '@explicit_location' => $is_explicit_location ? '1' : '0',
         '@recommendation_mode' => $recommendation_mode ? '1' : '0',
         '@lat' => (string) $lat,
@@ -200,7 +201,7 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
         '@search_api_geo_field' => self::SEARCH_API_GEO_FIELD,
         '@solr_geo_field' => self::SOLR_GEO_FIELD,
         '@fq' => $geo_filter,
-        '@sort' => 'geodist() asc, score desc',
+        '@sort' => 'unchanged',
         '@ranked_count' => (string) count($ranked_nids),
       ]
     );

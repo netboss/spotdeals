@@ -118,27 +118,51 @@ final class NearMeRanker {
 
     $ranked = [];
     foreach ($candidates as $candidate) {
+      $keywordScore = $this->keywordScore($candidate, $keywords, $tokens);
+      if ($keywords !== '' && $keywordScore <= 0) {
+        continue;
+      }
+
       $nid = (int) $candidate['nid'];
       $freshnessScore = (int) ($freshnessScores[$nid]['score'] ?? 0);
+      $totalScore = $keywordScore + $freshnessScore;
       $ranked[] = [
         'nid' => $nid,
         'distance' => (float) $candidate['distance'],
         'distance_bucket' => $this->distanceBucket((float) $candidate['distance']),
-        'score' => $this->keywordScore($candidate, $keywords, $tokens) + $freshnessScore,
+        'score' => $totalScore,
+        'relevance_tier' => $this->relevanceTier($keywordScore),
         'freshness_score' => $freshnessScore,
         'position' => (int) $candidate['position'],
       ];
     }
 
-    usort($ranked, static function (array $a, array $b): int {
+    usort($ranked, static function (array $a, array $b) use ($keywords): int {
+      // Keyword searches should feel like search first, near-me second.
+      // Relevance tiers keep true deal-owned matches above cuisine/venue-only
+      // fallbacks, while still using distance to order similarly relevant rows.
+      if ($keywords !== '') {
+        $tierCompare = ($b['relevance_tier'] ?? 0) <=> ($a['relevance_tier'] ?? 0);
+        if ($tierCompare !== 0) {
+          return $tierCompare;
+        }
+
+        $scoreCompare = $b['score'] <=> $a['score'];
+        if ($scoreCompare !== 0) {
+          return $scoreCompare;
+        }
+      }
+
       $bucketCompare = $a['distance_bucket'] <=> $b['distance_bucket'];
       if ($bucketCompare !== 0) {
         return $bucketCompare;
       }
 
-      $scoreCompare = $b['score'] <=> $a['score'];
-      if ($scoreCompare !== 0) {
-        return $scoreCompare;
+      if ($keywords === '') {
+        $scoreCompare = $b['score'] <=> $a['score'];
+        if ($scoreCompare !== 0) {
+          return $scoreCompare;
+        }
       }
 
       $distanceCompare = $a['distance'] <=> $b['distance'];
@@ -550,25 +574,38 @@ final class NearMeRanker {
     $venueCuisine = (string) ($candidate['venue_cuisine'] ?? '');
     $venueTags = (string) ($candidate['venue_tags'] ?? '');
 
-    $score = 0;
+    // "Happy hour" is a deal-intent phrase. Keep it strict so venue tags like
+    // "bar food burgers grill happy hour wings" cannot qualify unrelated deals.
+    if ($keywords === 'happy hour') {
+      $score = 0;
+
+      if ($dealTitle !== '' && str_contains($dealTitle, 'happy hour')) {
+        $score += 300;
+      }
+      if ($body !== '' && str_contains($body, 'happy hour')) {
+        $score += 140;
+      }
+
+      foreach (['happy', 'hour'] as $token) {
+        if (str_contains($dealTitle, $token)) {
+          $score += 45;
+        }
+        if (str_contains($body, $token)) {
+          $score += 20;
+        }
+      }
+
+      return $score;
+    }
+
+    $dealScore = 0;
+    $venueScore = 0;
 
     if ($dealTitle !== '' && str_contains($dealTitle, $keywords)) {
-      $score += 120;
-    }
-    if ($venueTitle !== '' && str_contains($venueTitle, $keywords)) {
-      $score += 100;
-    }
-    if ($venueCuisine !== '' && str_contains($venueCuisine, $keywords)) {
-      $score += 90;
-    }
-    if ($venueTags !== '' && str_contains($venueTags, $keywords)) {
-      $score += 75;
+      $dealScore += 300;
     }
     if ($body !== '' && str_contains($body, $keywords)) {
-      $score += 60;
-    }
-    if ($venueDescription !== '' && str_contains($venueDescription, $keywords)) {
-      $score += 50;
+      $dealScore += 140;
     }
 
     foreach ($tokens as $token) {
@@ -576,27 +613,254 @@ final class NearMeRanker {
         continue;
       }
 
-      if (str_contains($dealTitle, $token)) {
-        $score += 20;
+      foreach ($this->tokenVariants($token) as $variant) {
+        if ($variant === '') {
+          continue;
+        }
+
+        if (str_contains($dealTitle, $variant)) {
+          $dealScore += $variant === $token ? 45 : 38;
+          break;
+        }
       }
-      if (str_contains($venueTitle, $token)) {
-        $score += 18;
-      }
-      if (str_contains($venueCuisine, $token)) {
-        $score += 16;
-      }
-      if (str_contains($venueTags, $token)) {
-        $score += 14;
-      }
-      if (str_contains($body, $token)) {
-        $score += 10;
-      }
-      if (str_contains($venueDescription, $token)) {
-        $score += 8;
+
+      foreach ($this->tokenVariants($token) as $variant) {
+        if ($variant === '') {
+          continue;
+        }
+
+        if (str_contains($body, $variant)) {
+          $dealScore += $variant === $token ? 25 : 20;
+          break;
+        }
       }
     }
 
-    return $score;
+    if ($venueTitle !== '' && str_contains($venueTitle, $keywords)) {
+      $venueScore += 45;
+    }
+    if ($venueCuisine !== '' && str_contains($venueCuisine, $keywords)) {
+      $venueScore += 70;
+    }
+    if ($venueTags !== '' && str_contains($venueTags, $keywords)) {
+      $venueScore += 45;
+    }
+    if ($venueDescription !== '' && str_contains($venueDescription, $keywords)) {
+      $venueScore += 20;
+    }
+
+    foreach ($tokens as $token) {
+      if ($token === '') {
+        continue;
+      }
+
+      foreach ($this->tokenVariants($token) as $variant) {
+        if ($variant === '') {
+          continue;
+        }
+
+        if (str_contains($venueTitle, $variant)) {
+          $venueScore += $variant === $token ? 10 : 8;
+          break;
+        }
+      }
+
+      foreach ($this->tokenVariants($token) as $variant) {
+        if ($variant === '') {
+          continue;
+        }
+
+        if (str_contains($venueCuisine, $variant)) {
+          $venueScore += $variant === $token ? 12 : 10;
+          break;
+        }
+      }
+
+      foreach ($this->tokenVariants($token) as $variant) {
+        if ($variant === '') {
+          continue;
+        }
+
+        if (str_contains($venueTags, $variant)) {
+          $venueScore += $variant === $token ? 8 : 6;
+          break;
+        }
+      }
+
+      foreach ($this->tokenVariants($token) as $variant) {
+        if ($variant === '') {
+          continue;
+        }
+
+        if (str_contains($venueDescription, $variant)) {
+          $venueScore += $variant === $token ? 4 : 3;
+          break;
+        }
+      }
+    }
+
+    $cuisineAliases = $this->cuisineIntentAliases($keywords, $tokens);
+    $isCuisineIntent = $cuisineAliases !== [];
+    $cuisineVenueScore = 0;
+
+    if ($isCuisineIntent) {
+      foreach ($cuisineAliases as $alias) {
+        if ($alias === '') {
+          continue;
+        }
+
+        if ($dealTitle !== '' && str_contains($dealTitle, $alias)) {
+          $dealScore += $alias === $keywords ? 60 : 35;
+        }
+        if ($body !== '' && str_contains($body, $alias)) {
+          $dealScore += $alias === $keywords ? 30 : 18;
+        }
+
+        if ($venueTitle !== '' && str_contains($venueTitle, $alias)) {
+          $cuisineVenueScore += $alias === $keywords ? 45 : 25;
+        }
+        if ($venueCuisine !== '' && str_contains($venueCuisine, $alias)) {
+          $cuisineVenueScore += $alias === $keywords ? 70 : 40;
+        }
+        if ($venueTags !== '' && str_contains($venueTags, $alias)) {
+          $cuisineVenueScore += $alias === $keywords ? 45 : 28;
+        }
+        if ($venueDescription !== '' && str_contains($venueDescription, $alias)) {
+          $cuisineVenueScore += $alias === $keywords ? 20 : 12;
+        }
+      }
+    }
+
+    // Deal-intent searches must match deal-owned text. Cuisine-intent searches
+    // are different: "mexican", "thai", "pizza", "burger", etc. should return
+    // active deals at matching venues, even when the individual deal title is
+    // generic. Deal-owned matches still receive a large lead so specific offers
+    // like "Taco Tuesday" rank above venue-only cuisine matches.
+    if ($dealScore <= 0) {
+      if (!$isCuisineIntent || ($venueScore + $cuisineVenueScore) <= 0) {
+        return 0;
+      }
+
+      return 100 + min($venueScore + $cuisineVenueScore, 140);
+    }
+
+    if ($isCuisineIntent) {
+      return 500 + $dealScore + min($venueScore + $cuisineVenueScore, 140);
+    }
+
+    return $dealScore + min($venueScore, 40);
+  }
+
+  /**
+   * Converts a keyword score into a coarse relevance tier for sorting.
+   *
+   * Tier 3: strong deal-owned/cuisine deal matches.
+   * Tier 2: strict deal-intent matches such as happy hour.
+   * Tier 1: cuisine/venue-only fallback matches.
+   */
+  private function relevanceTier(int $keywordScore): int {
+    if ($keywordScore >= 500) {
+      return 3;
+    }
+    if ($keywordScore >= 250) {
+      return 2;
+    }
+    if ($keywordScore > 0) {
+      return 1;
+    }
+
+    return 0;
+  }
+
+  /**
+   * Returns cuisine-intent aliases for searches where venue cuisine/tags may qualify a deal.
+   *
+   * @param array<int,string> $tokens
+   *   Query tokens.
+   *
+   * @return array<int,string>
+   *   Normalized cuisine aliases.
+   */
+  private function cuisineIntentAliases(string $keywords, array $tokens): array {
+    $map = [
+      'american' => ['american'],
+      'asian' => ['asian', 'thai', 'japanese', 'chinese', 'sushi', 'ramen', 'hibachi'],
+      'bbq' => ['bbq', 'barbecue', 'bar b q', 'bar-b-q'],
+      'barbecue' => ['barbecue', 'bbq', 'bar b q', 'bar-b-q'],
+      'burger' => ['burger', 'burgers'],
+      'burgers' => ['burgers', 'burger'],
+      'burrito' => ['burrito', 'burritos', 'mexican', 'tex mex', 'tex-mex'],
+      'burritos' => ['burritos', 'burrito', 'mexican', 'tex mex', 'tex-mex'],
+      'cafe' => ['cafe', 'coffee'],
+      'chinese' => ['chinese', 'asian'],
+      'coffee' => ['coffee', 'cafe'],
+      'deli' => ['deli', 'sandwich', 'sandwiches'],
+      'hibachi' => ['hibachi', 'japanese', 'asian'],
+      'italian' => ['italian', 'pizza', 'pasta'],
+      'japanese' => ['japanese', 'sushi', 'ramen', 'hibachi', 'asian'],
+      'mexican' => ['mexican', 'tex mex', 'tex-mex', 'taco', 'tacos', 'burrito', 'burritos', 'quesadilla', 'quesadillas', 'enchilada', 'enchiladas'],
+      'pasta' => ['pasta', 'italian'],
+      'pizza' => ['pizza', 'italian'],
+      'ramen' => ['ramen', 'japanese', 'asian'],
+      'sandwich' => ['sandwich', 'sandwiches', 'deli'],
+      'sandwiches' => ['sandwiches', 'sandwich', 'deli'],
+      'seafood' => ['seafood', 'oyster', 'oysters', 'raw bar'],
+      'sushi' => ['sushi', 'japanese', 'asian'],
+      'taco' => ['taco', 'tacos', 'mexican', 'tex mex', 'tex-mex'],
+      'tacos' => ['tacos', 'taco', 'mexican', 'tex mex', 'tex-mex'],
+      'thai' => ['thai', 'pad thai', 'thai curry', 'asian'],
+      'tex mex' => ['tex mex', 'tex-mex', 'mexican', 'taco', 'tacos'],
+      'tex-mex' => ['tex-mex', 'tex mex', 'mexican', 'taco', 'tacos'],
+      'wings' => ['wings', 'chicken'],
+    ];
+
+    $candidates = array_filter(array_merge([$keywords], $tokens));
+    $aliases = [];
+
+    foreach ($candidates as $candidate) {
+      $candidate = $this->normalize($candidate);
+      if (isset($map[$candidate])) {
+        $aliases = array_merge($aliases, $map[$candidate]);
+      }
+    }
+
+    return array_values(array_unique(array_map(
+      fn(string $alias): string => $this->normalize($alias),
+      $aliases
+    )));
+  }
+
+  /**
+   * Returns conservative singular/plural variants for a normalized token.
+   *
+   * This lets a user search for "tacos" and still match deal-owned text like
+   * "Taco Tuesday".
+   *
+   * @return array<int,string>
+   *   Token variants, ordered from strongest to weakest.
+   */
+  private function tokenVariants(string $token): array {
+    $token = trim($token);
+    if ($token === '') {
+      return [];
+    }
+
+    $variants = [$token];
+
+    if (str_ends_with($token, 'ies') && mb_strlen($token) > 3) {
+      $variants[] = mb_substr($token, 0, -3) . 'y';
+    }
+    elseif (str_ends_with($token, 'es') && mb_strlen($token) > 3) {
+      $variants[] = mb_substr($token, 0, -2);
+    }
+    elseif (str_ends_with($token, 's') && mb_strlen($token) > 3) {
+      $variants[] = mb_substr($token, 0, -1);
+    }
+    else {
+      $variants[] = $token . 's';
+    }
+
+    return array_values(array_unique(array_filter($variants)));
   }
 
   /**
