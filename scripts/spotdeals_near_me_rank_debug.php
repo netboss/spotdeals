@@ -84,81 +84,31 @@ foreach ($deals as $deal) {
   $venueDescription = spotdeals_rank_debug_normalize(spotdeals_rank_debug_field_value($venue, 'field_short_description'));
 
   [$dealScore, $dealReasons] = spotdeals_rank_debug_text_score($keywords, $tokens, [
-    'deal_title' => [$dealTitle, 300, 45],
-    'deal_category' => [$dealCategory, 220, 40],
-    'deal_body' => [$dealBody, 140, 25],
+    'deal_title' => [$dealTitle, 180, 45],
+    'deal_category' => [$dealCategory, 160, 40],
+    'deal_body' => [$dealBody, 90, 20],
   ]);
 
   [$venueScoreRaw, $venueReasons] = spotdeals_rank_debug_text_score($keywords, $tokens, [
     'venue_title' => [$venueTitle, 45, 10],
-    'venue_cuisine' => [$venueCuisine, 70, 12],
-    'venue_tags' => [$venueTags, 45, 8],
+    'venue_cuisine' => [$venueCuisine, 35, 8],
+    'venue_tags' => [$venueTags, 25, 6],
     'venue_description' => [$venueDescription, 20, 4],
   ]);
 
-  $cuisineAliases = spotdeals_rank_debug_cuisine_intent_aliases($keywords, $tokens);
-  $isCuisineIntent = $cuisineAliases !== [];
-  $cuisineVenueScore = 0;
-  $cuisineDealScore = 0;
-
-  if ($isCuisineIntent) {
-    foreach ($cuisineAliases as $alias) {
-      if ($alias === '') {
-        continue;
-      }
-
-      if ($dealTitle !== '' && str_contains($dealTitle, $alias)) {
-        $cuisineDealScore += $alias === $keywords ? 60 : 35;
-        $dealReasons[] = 'deal_title:' . $alias;
-      }
-      if ($dealCategory !== '' && str_contains($dealCategory, $alias)) {
-        $cuisineDealScore += $alias === $keywords ? 50 : 30;
-        $dealReasons[] = 'deal_category:' . $alias;
-      }
-      if ($dealBody !== '' && str_contains($dealBody, $alias)) {
-        $cuisineDealScore += $alias === $keywords ? 30 : 18;
-        $dealReasons[] = 'deal_body:' . $alias;
-      }
-
-      if ($venueTitle !== '' && str_contains($venueTitle, $alias)) {
-        $cuisineVenueScore += $alias === $keywords ? 45 : 25;
-        $venueReasons[] = 'venue_title:' . $alias;
-      }
-      if ($venueCuisine !== '' && str_contains($venueCuisine, $alias)) {
-        $cuisineVenueScore += $alias === $keywords ? 70 : 40;
-        $venueReasons[] = 'venue_cuisine:' . $alias;
-      }
-      if ($venueTags !== '' && str_contains($venueTags, $alias)) {
-        $cuisineVenueScore += $alias === $keywords ? 45 : 28;
-        $venueReasons[] = 'venue_tags:' . $alias;
-      }
-      if ($venueDescription !== '' && str_contains($venueDescription, $alias)) {
-        $cuisineVenueScore += $alias === $keywords ? 20 : 12;
-        $venueReasons[] = 'venue_description:' . $alias;
-      }
-    }
-  }
-
-  $dealScore += $cuisineDealScore;
+  // This is the candidate formula to inspect. Venue text can boost, but cannot
+  // make a keyword result relevant by itself. Nearby distance remains strong.
+  $venueScore = $dealScore > 0 ? min(40, $venueScoreRaw) : 0;
   $distanceScore = max(0, (int) round(120 - ($distance * 8)));
   $freshnessScore = (int) ($freshnessScores[(int) $deal->id()]['score'] ?? 0);
+  $totalScore = ($dealScore * 3) + $venueScore + $distanceScore + $freshnessScore;
 
   if ($keywords !== '' && $dealScore <= 0) {
-    if ($isCuisineIntent && ($venueScoreRaw + $cuisineVenueScore) > 0) {
-      $qualified = 'yes';
-      $venueScore = min(140, $venueScoreRaw + $cuisineVenueScore);
-      $totalScore = 100 + $venueScore + $distanceScore + $freshnessScore;
-    }
-    else {
-      $qualified = 'no';
-      $venueScore = 0;
-      $totalScore = $venueScoreRaw + $distanceScore + $freshnessScore;
-    }
+    $qualified = 'no';
+    $totalScore = $venueScoreRaw + $distanceScore + $freshnessScore;
   }
   else {
     $qualified = 'yes';
-    $venueScore = $isCuisineIntent ? min(140, $venueScoreRaw + $cuisineVenueScore) : min(40, $venueScoreRaw);
-    $totalScore = ($isCuisineIntent ? 500 : 0) + ($dealScore * 3) + $venueScore + $distanceScore + $freshnessScore;
   }
 
   $rows[] = [
@@ -182,16 +132,28 @@ foreach ($deals as $deal) {
 }
 
 usort($rows, static function (array $a, array $b): int {
-  // Show qualified deal-owned matches first, then total score, then distance.
+  // Mirror NearMeRanker keyword ordering: qualified matches first, then
+  // distance bucket, then score, then exact distance. This keeps the debug
+  // script honest when testing whether location is being preferred among
+  // similarly relevant results.
   if ($a['qualified'] !== $b['qualified']) {
     return $a['qualified'] === 'yes' ? -1 : 1;
   }
+
+  $aBucket = (int) floor(max(0.0, (float) $a['distance']) * 2);
+  $bBucket = (int) floor(max(0.0, (float) $b['distance']) * 2);
+  if ($aBucket !== $bBucket) {
+    return $aBucket <=> $bBucket;
+  }
+
   if ($a['total_score'] !== $b['total_score']) {
     return $b['total_score'] <=> $a['total_score'];
   }
+
   if (abs($a['distance'] - $b['distance']) > 0.0001) {
     return $a['distance'] <=> $b['distance'];
   }
+
   return $a['position'] <=> $b['position'];
 });
 
@@ -224,89 +186,47 @@ foreach (array_slice($rows, 0, $limit) as $index => $row) {
 function spotdeals_rank_debug_args(): array {
   global $extra, $argv;
 
-  // Drush php:script exposes user arguments differently across versions.
-  // Prefer the explicit values after "--" when present; otherwise remove
-  // Drush/internal tokens such as "php", "script", and the script path.
+  // Drush php:script argument handling is inconsistent across Drush versions.
+  // In this project, $extra may include Drush's own command words, e.g.
+  // ["php", "script", "scripts/spotdeals_near_me_rank_debug.php", "--", "happy hour", ...].
+  // Always prefer everything after the explicit "--" separator.
+  $sources = [];
   if (isset($extra) && is_array($extra) && $extra !== []) {
-    $values = array_values(array_map('strval', $extra));
-    $separator = array_search('--', $values, TRUE);
+    $sources[] = array_values($extra);
+  }
+  if (isset($argv) && is_array($argv) && $argv !== []) {
+    $sources[] = array_values($argv);
+  }
+
+  foreach ($sources as $source) {
+    $separator = array_search('--', $source, TRUE);
     if ($separator !== FALSE) {
-      return array_values(array_slice($values, $separator + 1));
-    }
-    return array_values(array_filter($values, static function (string $value): bool {
-      return $value !== '' && $value !== '--';
-    }));
-  }
-
-  $values = array_values(array_map('strval', $argv ?? []));
-  $separator = array_search('--', $values, TRUE);
-  if ($separator !== FALSE) {
-    return array_values(array_slice($values, $separator + 1));
-  }
-
-  $filtered = [];
-  foreach ($values as $value) {
-    $base = basename($value);
-    if ($value === '' || $value === '--') {
-      continue;
-    }
-    if (in_array($value, ['php', 'script', 'php:script'], TRUE)) {
-      continue;
-    }
-    if ($base === 'spotdeals_near_me_rank_debug.php') {
-      continue;
-    }
-    if (str_ends_with($value, '/spotdeals_near_me_rank_debug.php')) {
-      continue;
-    }
-    $filtered[] = $value;
-  }
-
-  return array_values($filtered);
-}
-
-function spotdeals_rank_debug_cuisine_intent_aliases(string $keywords, array $tokens): array {
-  $map = [
-    'american' => ['american'],
-    'asian' => ['asian', 'thai', 'japanese', 'chinese', 'sushi', 'ramen', 'hibachi'],
-    'bbq' => ['bbq', 'barbecue', 'bar b q', 'bar-b-q'],
-    'barbecue' => ['barbecue', 'bbq', 'bar b q', 'bar-b-q'],
-    'burger' => ['burger', 'burgers'],
-    'burgers' => ['burgers', 'burger'],
-    'burrito' => ['burrito', 'burritos', 'mexican', 'tex mex', 'tex-mex'],
-    'burritos' => ['burritos', 'burrito', 'mexican', 'tex mex', 'tex-mex'],
-    'cafe' => ['cafe', 'coffee'],
-    'chinese' => ['chinese', 'asian'],
-    'coffee' => ['coffee', 'cafe'],
-    'deli' => ['deli', 'sandwich', 'sandwiches'],
-    'hibachi' => ['hibachi', 'japanese', 'asian'],
-    'italian' => ['italian', 'pizza', 'pasta'],
-    'japanese' => ['japanese', 'sushi', 'ramen', 'hibachi', 'asian'],
-    'mexican' => ['mexican', 'tex mex', 'tex-mex', 'taco', 'tacos', 'burrito', 'burritos', 'quesadilla', 'quesadillas', 'enchilada', 'enchiladas'],
-    'pasta' => ['pasta', 'italian'],
-    'pizza' => ['pizza', 'italian'],
-    'ramen' => ['ramen', 'japanese', 'asian'],
-    'sandwich' => ['sandwich', 'sandwiches', 'deli'],
-    'sandwiches' => ['sandwiches', 'sandwich', 'deli'],
-    'seafood' => ['seafood', 'oyster', 'oysters', 'raw bar'],
-    'sushi' => ['sushi', 'japanese', 'asian'],
-    'taco' => ['taco', 'tacos', 'mexican', 'tex mex', 'tex-mex'],
-    'tacos' => ['tacos', 'taco', 'mexican', 'tex mex', 'tex-mex'],
-    'thai' => ['thai', 'pad thai', 'thai curry', 'asian'],
-    'tex mex' => ['tex mex', 'tex-mex', 'mexican', 'taco', 'tacos'],
-    'tex-mex' => ['tex-mex', 'tex mex', 'mexican', 'taco', 'tacos'],
-    'wings' => ['wings', 'chicken'],
-  ];
-
-  $aliases = [];
-  foreach (array_filter(array_merge([$keywords], $tokens)) as $candidate) {
-    $candidate = spotdeals_rank_debug_normalize((string) $candidate);
-    if (isset($map[$candidate])) {
-      $aliases = array_merge($aliases, $map[$candidate]);
+      return array_values(array_slice($source, $separator + 1));
     }
   }
 
-  return array_values(array_unique(array_map('spotdeals_rank_debug_normalize', $aliases)));
+  $args = $sources[0] ?? [];
+
+  // Fallback cleanup when Drush strips the "--" separator. Remove known
+  // command/script tokens from the front until the first real user argument.
+  while ($args !== []) {
+    $first = (string) $args[0];
+    $normalized = str_replace(':', ' ', mb_strtolower($first));
+
+    if (in_array($normalized, ['php', 'script', 'php script', 'php:script'], TRUE)) {
+      array_shift($args);
+      continue;
+    }
+
+    if (str_ends_with($first, '.php') || str_contains($first, 'spotdeals_near_me_rank_debug.php')) {
+      array_shift($args);
+      continue;
+    }
+
+    break;
+  }
+
+  return array_values($args);
 }
 
 function spotdeals_rank_debug_text_score(string $keywords, array $tokens, array $fields): array {
@@ -325,36 +245,13 @@ function spotdeals_rank_debug_text_score(string $keywords, array $tokens, array 
       $reasons[] = $fieldName . ':phrase';
     }
     foreach ($tokens as $token) {
-      if ($token === '') {
-        continue;
-      }
-      foreach (spotdeals_rank_debug_token_variants($token) as $variant) {
-        if ($variant !== '' && str_contains($text, $variant)) {
-          $score += $variant === $token ? $tokenWeight : max(1, (int) round($tokenWeight * 0.85));
-          $reasons[] = $fieldName . ':' . $variant;
-          break;
-        }
+      if ($token !== '' && str_contains($text, $token)) {
+        $score += $tokenWeight;
+        $reasons[] = $fieldName . ':' . $token;
       }
     }
   }
   return [$score, array_values(array_unique($reasons))];
-}
-
-function spotdeals_rank_debug_token_variants(string $token): array {
-  $token = trim($token);
-  if ($token === '') {
-    return [];
-  }
-
-  $variants = [$token];
-  if (mb_strlen($token) > 3 && str_ends_with($token, 's')) {
-    $variants[] = mb_substr($token, 0, -1);
-  }
-  elseif (mb_strlen($token) > 2 && !str_ends_with($token, 's')) {
-    $variants[] = $token . 's';
-  }
-
-  return array_values(array_unique($variants));
 }
 
 function spotdeals_rank_debug_tokens(string $value): array {

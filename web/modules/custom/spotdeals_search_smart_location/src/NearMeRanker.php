@@ -139,12 +139,19 @@ final class NearMeRanker {
 
     usort($ranked, static function (array $a, array $b) use ($keywords): int {
       // Keyword searches should feel like search first, near-me second.
-      // Relevance tiers keep true deal-owned matches above cuisine/venue-only
-      // fallbacks, while still using distance to order similarly relevant rows.
+      // Within the same relevance tier, prefer closer results before tiny
+      // score differences. This keeps true happy-hour/taco/etc. matches near
+      // the user ahead of farther matches that only have a small freshness or
+      // venue-tag boost.
       if ($keywords !== '') {
         $tierCompare = ($b['relevance_tier'] ?? 0) <=> ($a['relevance_tier'] ?? 0);
         if ($tierCompare !== 0) {
           return $tierCompare;
+        }
+
+        $bucketCompare = $a['distance_bucket'] <=> $b['distance_bucket'];
+        if ($bucketCompare !== 0) {
+          return $bucketCompare;
         }
 
         $scoreCompare = $b['score'] <=> $a['score'];
@@ -152,13 +159,12 @@ final class NearMeRanker {
           return $scoreCompare;
         }
       }
+      else {
+        $bucketCompare = $a['distance_bucket'] <=> $b['distance_bucket'];
+        if ($bucketCompare !== 0) {
+          return $bucketCompare;
+        }
 
-      $bucketCompare = $a['distance_bucket'] <=> $b['distance_bucket'];
-      if ($bucketCompare !== 0) {
-        return $bucketCompare;
-      }
-
-      if ($keywords === '') {
         $scoreCompare = $b['score'] <=> $a['score'];
         if ($scoreCompare !== 0) {
           return $scoreCompare;

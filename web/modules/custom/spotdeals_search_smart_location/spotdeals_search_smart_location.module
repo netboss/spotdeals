@@ -1524,7 +1524,7 @@ function _spotdeals_search_smart_location_should_log_search_debug(string $keywor
   }
 
   $keywords = _spotdeals_search_smart_location_normalize_keywords($keywords);
-  return $keywords !== '' && str_contains($keywords, 'happy hour');
+  return FALSE;
 }
 
 /**
@@ -1581,6 +1581,8 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
   $radius_km = 25.0;
   $before_count = count($view->result);
   $order_map = is_array($ranked_nids) ? array_flip(array_values($ranked_nids)) : [];
+  $active_keywords = _spotdeals_search_smart_location_current_debug_keywords();
+  $requires_rank_match = $active_keywords !== '' && is_array($ranked_nids);
   $filtered = [];
   $missing_coords = 0;
   $outside_radius = 0;
@@ -1612,8 +1614,9 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
     }
 
     $nid = (int) $deal->id();
-    if (!empty($order_map) && !isset($order_map[$nid])) {
+    if ($requires_rank_match && !isset($order_map[$nid])) {
       $not_ranked++;
+      continue;
     }
 
     $locality = _spotdeals_search_smart_location_node_locality($venue);
@@ -1645,23 +1648,6 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
   }
 
   usort($filtered, static function ($a, $b): int {
-    $a_rank = $a->_spotdeals_rank_index ?? PHP_INT_MAX;
-    $b_rank = $b->_spotdeals_rank_index ?? PHP_INT_MAX;
-    $a_is_ranked = $a_rank !== PHP_INT_MAX;
-    $b_is_ranked = $b_rank !== PHP_INT_MAX;
-
-    // Keyword-aware near-me searches already have an intent-aware ranked list.
-    // Keep those ranked matches ahead of unranked Solr rows. Do not remove rows
-    // here: filtering at pre-render time can desync Views rendered fields and
-    // create orphaned voting widgets.
-    if ($a_is_ranked !== $b_is_ranked) {
-      return $a_is_ranked ? -1 : 1;
-    }
-
-    if ($a_is_ranked && $a_rank !== $b_rank) {
-      return $a_rank <=> $b_rank;
-    }
-
     $a_distance = $a->_spotdeals_distance_km ?? PHP_FLOAT_MAX;
     $b_distance = $b->_spotdeals_distance_km ?? PHP_FLOAT_MAX;
     $a_bucket = (int) floor(max(0.0, (float) $a_distance) * 2);
@@ -1669,6 +1655,12 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
 
     if ($a_bucket !== $b_bucket) {
       return $a_bucket <=> $b_bucket;
+    }
+
+    $a_rank = $a->_spotdeals_rank_index ?? PHP_INT_MAX;
+    $b_rank = $b->_spotdeals_rank_index ?? PHP_INT_MAX;
+    if ($a_rank !== $b_rank) {
+      return $a_rank <=> $b_rank;
     }
 
     if ($a_distance !== $b_distance) {
@@ -1684,7 +1676,7 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
   _spotdeals_search_smart_location_reorder_rendered_fields($view, $view->result);
   _spotdeals_search_smart_location_sync_filtered_pager($view);
 
-  $keywords = _spotdeals_search_smart_location_current_debug_keywords();
+  $keywords = $active_keywords;
   if (_spotdeals_search_smart_location_should_log_search_debug($keywords)) {
     $debug_rows = [];
     $ranked_count = is_array($ranked_nids) ? count($ranked_nids) : 0;
@@ -1861,12 +1853,15 @@ function _spotdeals_search_smart_location_force_filter_value(ViewExecutable $vie
  * @param array<int,mixed> $rows
  */
 function _spotdeals_search_smart_location_reorder_rendered_fields(ViewExecutable $view, array $rows): void {
-  if (!isset($view->style_plugin->rendered_fields) || !is_array($view->style_plugin->rendered_fields)) {
+  if (empty($rows)) {
+    if (isset($view->style_plugin->rendered_fields) && is_array($view->style_plugin->rendered_fields)) {
+      $view->style_plugin->rendered_fields = [];
+    }
     return;
   }
 
-  if (empty($rows)) {
-    $view->style_plugin->rendered_fields = [];
+  if (!isset($view->style_plugin->rendered_fields) || !is_array($view->style_plugin->rendered_fields)) {
+    _spotdeals_search_smart_location_reset_result_row_indexes($rows);
     return;
   }
 
@@ -1875,7 +1870,8 @@ function _spotdeals_search_smart_location_reorder_rendered_fields(ViewExecutable
   $matched_count = 0;
 
   foreach ($rows as $new_index => $row) {
-    $old_index = $row->_spotdeals_original_index ?? NULL;
+    $old_index = $row->_spotdeals_original_index
+      ?? (property_exists($row, 'index') ? $row->index : NULL);
 
     if ($old_index !== NULL && array_key_exists($old_index, $existing_rendered_fields)) {
       $reordered_rendered_fields[$new_index] = $existing_rendered_fields[$old_index];
@@ -1891,8 +1887,11 @@ function _spotdeals_search_smart_location_reorder_rendered_fields(ViewExecutable
 
   if ($matched_count === count($rows) && !empty($reordered_rendered_fields)) {
     $view->style_plugin->rendered_fields = array_values($reordered_rendered_fields);
+    _spotdeals_search_smart_location_reset_result_row_indexes($rows);
     return;
   }
+
+  _spotdeals_search_smart_location_reset_result_row_indexes($rows);
 
   //\Drupal::logger('spotdeals_search_smart_location')->notice(
   //  'SMART LOCATION skipped rendered_fields rewrite due to incomplete mapping: expected="@expected" matched="@matched"',
@@ -1901,6 +1900,26 @@ function _spotdeals_search_smart_location_reorder_rendered_fields(ViewExecutable
   //    '@matched' => (string) $matched_count,
   //  ]
   //);
+}
+
+/**
+ * Resets Views result row indexes after custom sorting.
+ *
+ * Views field rendering uses ResultRow::index to look up cached rendered field
+ * output. If we reorder $view->result but leave the old indexes in place, the
+ * backend/debug order is correct but the frontend can display card fields from
+ * the previous Solr order. Reindexing the rows after rendered_fields are
+ * remapped keeps the row objects and rendered field arrays aligned.
+ *
+ * @param array<int,mixed> $rows
+ *   Sorted Views result rows.
+ */
+function _spotdeals_search_smart_location_reset_result_row_indexes(array $rows): void {
+  foreach ($rows as $index => $row) {
+    if (is_object($row) && property_exists($row, 'index')) {
+      $row->index = $index;
+    }
+  }
 }
 
 /**
