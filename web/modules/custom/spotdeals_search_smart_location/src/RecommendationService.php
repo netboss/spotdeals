@@ -96,6 +96,7 @@ final class RecommendationService {
       static fn(int $nid): bool => $nid > 0
     )));
 
+    $preferredLocalities = $this->localitiesForVenueNids($excludedVenueNids);
     $candidateSets = [];
 
     if (!empty($cuisines)) {
@@ -238,7 +239,7 @@ final class RecommendationService {
     $setSizes = array_map(static fn(array $set): int => count($set), $candidateSets);
     $attemptSizesJson = json_encode($setSizes, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]';
 
-    $picked = $this->pickFromCandidateSets($candidateSets);
+    $picked = $this->pickFromCandidateSets($candidateSets, $preferredLocalities);
     if ($picked !== NULL) {
       $this->logTiming(sprintf(
         'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="%d" top_tier_count="%d" picked_deal_nid="%d" picked_venue_nid="%d" recycled="0"',
@@ -306,13 +307,17 @@ final class RecommendationService {
   /**
    * Picks the best eligible candidate from ordered candidate attempts.
    *
-   * @param array<int,array<int,array<string,int|string|bool>>> $candidateSets
+   * @param array<int,array<int,array<string,int|float|string|bool>>> $candidateSets
    *   Candidate sets in attempt order.
+   * @param array<int,string> $preferredLocalities
+   *   Ordered normalized venue localities already shown in the current
+   *   recommendation session. Recommendations keep using the earliest locality
+   *   while candidates from that locality still exist, then expand outward.
    *
-   * @return array{candidate:array<string,int|string|bool>,attempt_index:int,top_tier_count:int}|null
+   * @return array{candidate:array<string,int|float|string|bool>,attempt_index:int,top_tier_count:int}|null
    *   Picked candidate metadata, or NULL when no eligible candidate exists.
    */
-  private function pickFromCandidateSets(array $candidateSets): ?array {
+  private function pickFromCandidateSets(array $candidateSets, array $preferredLocalities = []): ?array {
     foreach ($candidateSets as $attemptIndex => $candidates) {
       if (empty($candidates)) {
         continue;
@@ -324,6 +329,8 @@ final class RecommendationService {
       }
 
       usort($candidates, fn(array $a, array $b): int => $this->compareCandidates($a, $b));
+      $localityPreferenceOrder = $this->localityPreferenceOrder($candidates, $preferredLocalities);
+      $candidates = $this->preferLocalityCandidates($candidates, $localityPreferenceOrder);
 
       $top = $candidates[0];
       $topTier = array_values(array_filter(
@@ -382,7 +389,7 @@ final class RecommendationService {
    *   Optional normalized tokens used only for near-me ranking while keeping
    *   recommendation scoring relaxed.
    *
-   * @return array<int,array<string,int|string|bool>>
+   * @return array<int,array<string,int|float|string|bool>>
    *   Recommendation candidates keyed numerically.
    */
   private function buildCandidates(
@@ -475,7 +482,9 @@ final class RecommendationService {
         $row['venue_cuisine_tokens'],
         (int) $row['rank_index'],
         $freshnessScores[$dealNid] ?? [],
-        $venueQualityScores[$venueNid] ?? []
+        $venueQualityScores[$venueNid] ?? [],
+        $originLat,
+        $originLon
       );
       if ($candidate === NULL) {
         continue;
@@ -501,8 +510,12 @@ final class RecommendationService {
    *   Freshness score data for the deal.
    * @param array<string,int|float> $venueQuality
    *   Vote quality score data for the venue.
+   * @param float $originLat
+   *   Origin latitude.
+   * @param float $originLon
+   *   Origin longitude.
    *
-   * @return array<string,int|string|bool>|null
+   * @return array<string,int|float|string|bool>|null
    *   Candidate data or NULL.
    */
   private function buildCandidate(
@@ -513,6 +526,8 @@ final class RecommendationService {
     int $rankIndex,
     array $freshness,
     array $venueQuality,
+    float $originLat,
+    float $originLon,
   ): ?array {
     $dealTitle = $this->normalize((string) $deal->label());
     $dealBody = $this->normalize(
@@ -635,8 +650,10 @@ final class RecommendationService {
       'quality_tier' => $qualityTier,
       'last_checked' => (int) ($freshness['last_checked'] ?? 0),
       'rank_index' => $rankIndex,
+      'distance_km' => $this->venueDistanceKm($venue, $originLat, $originLon),
       'deal_title' => (string) $deal->label(),
       'venue_title' => (string) $venue->label(),
+      'venue_locality' => $this->venueLocality($venue),
       'preference_mode' => $preferenceMode,
     ];
   }
@@ -649,10 +666,10 @@ final class RecommendationService {
    * candidates exist, unrated candidates remain eligible. Explicitly negative
    * candidates are not recommended because they undermine trust in the picker.
    *
-   * @param array<int,array<string,int|string|bool>> $candidates
+   * @param array<int,array<string,int|float|string|bool>> $candidates
    *   Recommendation candidates.
    *
-   * @return array<int,array<string,int|string|bool>>
+   * @return array<int,array<string,int|float|string|bool>>
    *   Filtered candidates.
    */
   private function filterRecommendationCandidatesByVoteQuality(array $candidates): array {
@@ -747,6 +764,206 @@ final class RecommendationService {
    */
   private function isBetterCandidate(array $candidate, array $existing): bool {
     return $this->compareCandidates($candidate, $existing) < 0;
+  }
+
+  /**
+   * Returns the ordered localities the recommendation picker should exhaust.
+   *
+   * Previously shown localities are honored first. On the first pick, there is
+   * no session locality yet, so use the closest eligible candidate locality as
+   * the temporary anchor. This prevents optional cuisine preferences with broad
+   * tokens from jumping to Port Orange before closer New Smyrna Beach options
+   * have been tried.
+   *
+   * @param array<int,array<string,int|float|string|bool>> $candidates
+   *   Sorted candidate rows.
+   * @param array<int,string> $preferredLocalities
+   *   Ordered normalized localities to exhaust first.
+   *
+   * @return array<int,string>
+   *   Unique normalized localities in exhaustion order.
+   */
+  private function localityPreferenceOrder(array $candidates, array $preferredLocalities): array {
+    $preferredLocalities = array_values(array_unique(array_filter(
+      array_map('strval', $preferredLocalities),
+      static fn(string $locality): bool => $locality !== ''
+    )));
+
+    if (!empty($preferredLocalities)) {
+      return $preferredLocalities;
+    }
+
+    $nearestByLocality = [];
+    foreach ($candidates as $candidate) {
+      $locality = (string) ($candidate['venue_locality'] ?? '');
+      if ($locality === '') {
+        continue;
+      }
+
+      $distance = (float) ($candidate['distance_km'] ?? PHP_FLOAT_MAX);
+      if (!isset($nearestByLocality[$locality]) || $distance < $nearestByLocality[$locality]) {
+        $nearestByLocality[$locality] = $distance;
+      }
+    }
+
+    if (empty($nearestByLocality)) {
+      return [];
+    }
+
+    asort($nearestByLocality, SORT_NUMERIC);
+    return array_keys($nearestByLocality);
+  }
+
+  /**
+   * Restricts candidates to the earliest preferred locality when possible.
+   *
+   * This keeps recommendation retries neighborhood-first. For example, after a
+   * New Smyrna Beach recommendation, Try again continues cycling through New
+   * Smyrna Beach candidates before expanding to Port Orange or Daytona Beach.
+   *
+   * @param array<int,array<string,int|float|string|bool>> $candidates
+   *   Sorted candidate rows.
+   * @param array<int,string> $preferredLocalities
+   *   Ordered normalized localities to exhaust first.
+   *
+   * @return array<int,array<string,int|float|string|bool>>
+   *   Candidate rows, restricted to the first still-available locality when one
+   *   exists.
+   */
+  private function preferLocalityCandidates(array $candidates, array $preferredLocalities): array {
+    if (empty($candidates) || empty($preferredLocalities)) {
+      return $candidates;
+    }
+
+    foreach ($preferredLocalities as $preferredLocality) {
+      if ($preferredLocality === '') {
+        continue;
+      }
+
+      $localCandidates = array_values(array_filter(
+        $candidates,
+        static fn(array $candidate): bool => ($candidate['venue_locality'] ?? '') === $preferredLocality
+      ));
+
+      if (!empty($localCandidates)) {
+        return $localCandidates;
+      }
+    }
+
+    return $candidates;
+  }
+
+  /**
+   * Returns ordered normalized localities for venue node IDs.
+   *
+   * @param array<int,int> $venueNids
+   *   Venue node IDs, usually in recommendation session display order.
+   *
+   * @return array<int,string>
+   *   Unique normalized localities.
+   */
+  private function localitiesForVenueNids(array $venueNids): array {
+    $venueNids = array_values(array_unique(array_filter(
+      array_map('intval', $venueNids),
+      static fn(int $nid): bool => $nid > 0
+    )));
+
+    if (empty($venueNids)) {
+      return [];
+    }
+
+    $venues = $this->entityTypeManager->getStorage('node')->loadMultiple($venueNids);
+    $localities = [];
+
+    foreach ($venueNids as $venueNid) {
+      $venue = $venues[$venueNid] ?? NULL;
+      if (!$venue instanceof NodeInterface) {
+        continue;
+      }
+
+      $locality = $this->venueLocality($venue);
+      if ($locality !== '') {
+        $localities[] = $locality;
+      }
+    }
+
+    return array_values(array_unique($localities));
+  }
+
+  /**
+   * Returns the normalized locality/city for a venue.
+   */
+  private function venueLocality(NodeInterface $venue): string {
+    if (!$venue->hasField('field_address') || $venue->get('field_address')->isEmpty()) {
+      return '';
+    }
+
+    $address = $venue->get('field_address')->first();
+    if ($address === NULL) {
+      return '';
+    }
+
+    $locality = (string) ($address->get('locality')->getValue() ?? '');
+    return $this->normalize($locality);
+  }
+
+  /**
+   * Returns the distance from the origin to a venue in kilometers.
+   */
+  private function venueDistanceKm(NodeInterface $venue, float $originLat, float $originLon): float {
+    $coords = $this->venueCoords($venue);
+    if ($coords === NULL) {
+      return PHP_FLOAT_MAX;
+    }
+
+    return $this->haversineKm($originLat, $originLon, $coords[0], $coords[1]);
+  }
+
+  /**
+   * Extracts venue coordinates from supported venue fields.
+   *
+   * @return array{0:float,1:float}|null
+   *   Latitude and longitude, or NULL.
+   */
+  private function venueCoords(NodeInterface $venue): ?array {
+    if ($venue->hasField('field_coordinates') && !$venue->get('field_coordinates')->isEmpty()) {
+      $raw = trim((string) $venue->get('field_coordinates')->value);
+
+      if (preg_match('/POINT\s*\(\s*(-?[0-9.]+)\s+(-?[0-9.]+)\s*\)/i', $raw, $matches)) {
+        return [(float) $matches[2], (float) $matches[1]];
+      }
+    }
+
+    if (
+      $venue->hasField('field_latitude') &&
+      !$venue->get('field_latitude')->isEmpty() &&
+      $venue->hasField('field_longitude') &&
+      !$venue->get('field_longitude')->isEmpty()
+    ) {
+      $lat = $venue->get('field_latitude')->value;
+      $lon = $venue->get('field_longitude')->value;
+
+      if (is_numeric($lat) && is_numeric($lon)) {
+        return [(float) $lat, (float) $lon];
+      }
+    }
+
+    return NULL;
+  }
+
+  /**
+   * Returns the haversine distance between two coordinates in kilometers.
+   */
+  private function haversineKm(float $lat1, float $lon1, float $lat2, float $lon2): float {
+    $earthRadiusKm = 6371.0;
+    $latDelta = deg2rad($lat2 - $lat1);
+    $lonDelta = deg2rad($lon2 - $lon1);
+
+    $a = sin($latDelta / 2) ** 2
+      + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($lonDelta / 2) ** 2;
+    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+    return $earthRadiusKm * $c;
   }
 
   /**
