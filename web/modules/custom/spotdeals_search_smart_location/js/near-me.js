@@ -15,6 +15,7 @@
   const RETRY_LOADING_MIN_MS = 650;
   const SCROLL_STORAGE_KEY = 'spotdealsScrollToResults';
   const SCROLL_QUERY_PARAM = 'scroll_results';
+  const BOTTOM_CONTROLS_CLASS = 'spotdeals-recommendation-bottom-actions';
 
   function ensureHidden(form, name) {
     let input = form.querySelector(`input[name="${name}"]`);
@@ -454,6 +455,105 @@
     }
   }
 
+
+  function removeRecommendationBottomControls(form) {
+    const view = getRecommendationView(form);
+    if (!view) {
+      return;
+    }
+
+    view.classList.remove('spotdeals-recommendation-bottom-actions-active');
+
+    view.querySelectorAll('.' + BOTTOM_CONTROLS_CLASS).forEach(function (controls) {
+      controls.remove();
+    });
+  }
+
+  function buildRecommendationBottomButton(label, modifier) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = BOTTOM_CONTROLS_CLASS + '__button ' + BOTTOM_CONTROLS_CLASS + '__button--' + modifier;
+    button.textContent = label;
+    return button;
+  }
+
+  function submitRecommendationRetryFromBottom(form) {
+    setHiddenValue(form, 'recommendation_action', 'retry');
+
+    const submit = getPrimarySubmitButton(form);
+    if (submit && typeof submit.click === 'function') {
+      submit.click();
+      return;
+    }
+
+    if (typeof form.requestSubmit === 'function') {
+      form.requestSubmit();
+      return;
+    }
+
+    form.submit();
+  }
+
+  function resetRecommendationFromBottom(form) {
+    clearFreshSearchState(form);
+    clearScrollToResultsPending(form);
+    form.dataset.spotdealsLastSubmittedKeywords = '';
+    stripActionQuery(form);
+
+    const searchInput = getSearchInput(form);
+    syncSearchInputUi(form, searchInput);
+    updatePrimarySubmitLabel(form);
+    removeRecommendationBottomControls(form);
+
+    const reset = form.querySelector('input[type="reset"], button[type="reset"], a[href].button--secondary, a[href].form-submit');
+    if (reset && typeof reset.click === 'function') {
+      reset.click();
+      return;
+    }
+
+    window.location.href = window.location.pathname;
+  }
+
+  function syncRecommendationBottomControls(form) {
+    const view = getRecommendationView(form);
+    const resultsWrapper = getResultsWrapper(form);
+
+    if (!view || !resultsWrapper || !isRecommendationActive(form)) {
+      removeRecommendationBottomControls(form);
+      return;
+    }
+
+    let controls = resultsWrapper.querySelector('.' + BOTTOM_CONTROLS_CLASS);
+    if (!controls) {
+      controls = document.createElement('div');
+      controls.className = BOTTOM_CONTROLS_CLASS;
+      controls.setAttribute('aria-label', 'Recommendation actions');
+
+      const retryButton = buildRecommendationBottomButton('Try again', 'primary');
+      retryButton.addEventListener('click', function () {
+        submitRecommendationRetryFromBottom(form);
+      });
+
+      const resetButton = buildRecommendationBottomButton('Reset', 'secondary');
+      resetButton.addEventListener('click', function () {
+        resetRecommendationFromBottom(form);
+      });
+
+      controls.appendChild(retryButton);
+      controls.appendChild(resetButton);
+    }
+
+    const content = resultsWrapper.querySelector('.view-content, .view-empty');
+    if (content && content.nextSibling !== controls) {
+      content.insertAdjacentElement('afterend', controls);
+    }
+    else if (!content && controls.parentNode !== resultsWrapper) {
+      resultsWrapper.appendChild(controls);
+    }
+
+    view.classList.add('spotdeals-recommendation-bottom-actions-active');
+  }
+
   function suppressReadonlyRecommendationInteraction(event, form, searchInput) {
     if (!searchInput || event.target !== searchInput) {
       return;
@@ -638,6 +738,7 @@
     }
 
     updatePrimarySubmitLabel(form);
+    syncRecommendationBottomControls(form);
     clearRetryLoadingState(form);
     scrollToResults(form);
   }
@@ -718,6 +819,7 @@
         ensureLastSubmittedKeywords(form, searchInput);
         syncSearchInputUi(form, searchInput);
         updatePrimarySubmitLabel(form);
+        syncRecommendationBottomControls(form);
         maybeScrollToResultsOnLoad(form);
 
         let lastClickedSubmitter = null;
@@ -741,6 +843,7 @@
           form.dataset.recommendationActive = '0';
           clearRetryLoadingState(form);
           updatePrimarySubmitLabel(form);
+          syncRecommendationBottomControls(form);
         });
 
         const helpMeChooseCheckbox = form.querySelector('input[name="help_me_choose"]');
@@ -780,6 +883,7 @@
             stripActionQuery(form);
             syncSearchInputUi(form, searchInput);
             updatePrimarySubmitLabel(form);
+            syncRecommendationBottomControls(form);
           }
         }, true);
 
@@ -799,6 +903,7 @@
             form.dataset.spotdealsLastSubmittedKeywords = '';
             syncSearchInputUi(form, currentSearchInput);
             updatePrimarySubmitLabel(form);
+            syncRecommendationBottomControls(form);
             return;
           }
 
@@ -818,6 +923,7 @@
             setHiddenValue(form, 'recommendation_action', '');
             rememberSubmittedKeywords(form, currentSearchInput);
             updatePrimarySubmitLabel(form);
+            syncRecommendationBottomControls(form);
             return;
           }
 

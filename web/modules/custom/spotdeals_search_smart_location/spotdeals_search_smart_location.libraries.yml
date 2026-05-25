@@ -1,4 +1,7 @@
 near_me:
+  css:
+    theme:
+      css/recommendation-note.css: {}
   js:
     js/near-me.js: {}
   dependencies:
