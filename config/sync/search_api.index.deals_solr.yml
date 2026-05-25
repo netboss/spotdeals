@@ -86,11 +86,33 @@ field_settings:
         - field.storage.node.field_venue
       module:
         - node
+  address_line1_text:
+    label: 'Venue » Content » Address » The first line of the address block'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_address:address_line1'
+    type: text
+    dependencies:
+      config:
+        - field.storage.node.field_address
+        - field.storage.node.field_venue
+      module:
+        - node
   administrative_area:
     label: 'Venue » Content » Address » The top-level administrative subdivision of the country'
     datasource_id: 'entity:node'
     property_path: 'field_venue:entity:field_address:administrative_area'
     type: string
+    dependencies:
+      config:
+        - field.storage.node.field_address
+        - field.storage.node.field_venue
+      module:
+        - node
+  administrative_area_text:
+    label: 'Venue » Content » Address » The top-level administrative subdivision of the country'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_address:administrative_area'
+    type: text
     dependencies:
       config:
         - field.storage.node.field_address
@@ -199,6 +221,18 @@ field_settings:
     datasource_id: 'entity:node'
     property_path: 'field_venue:entity:field_address:locality'
     type: string
+    dependencies:
+      config:
+        - field.storage.node.field_address
+        - field.storage.node.field_venue
+      module:
+        - node
+  locality_text:
+    label: 'Venue » Content » Address » The locality (i.e. city)'
+    datasource_id: 'entity:node'
+    property_path: 'field_venue:entity:field_address:locality'
+    type: text
+    boost: 5.0
     dependencies:
       config:
         - field.storage.node.field_address
