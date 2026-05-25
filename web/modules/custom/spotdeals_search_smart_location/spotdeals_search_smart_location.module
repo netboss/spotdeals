@@ -470,6 +470,36 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     $parsed['keywords'] = $effective_recommendation_keywords;
   }
 
+  // Keep natural keyword + city searches as fulltext when there is no ZIP,
+  // browser origin, or recommendation mode. This lets queries like
+  // "wine orlando" and "martinis orlando" match the fulltext city fields
+  // instead of stripping the city term and forcing an exact city filter.
+  if (!$recommendation_mode && !$has_browser_origin && empty($parsed['zip']) && !empty($parsed['city'])) {
+    $keywords = _spotdeals_search_smart_location_normalize_keywords($raw);
+
+    if ($keywords !== '') {
+      _spotdeals_search_smart_location_prepare_search_insight($raw, $keywords, $recommendation_mode);
+
+      $input['search_raw'] = $raw;
+      $input[$search_param] = $keywords;
+
+      if (array_key_exists('search_deals', $input)) {
+        $input['search_deals'] = $keywords;
+      }
+
+      if (array_key_exists('search_api_fulltext', $input)) {
+        $input['search_api_fulltext'] = $keywords;
+      }
+
+      $request->attributes->set('spotdeals_search_smart_location.explicit_location', FALSE);
+      $request->attributes->set('spotdeals_search_smart_location.city', '');
+      $request->attributes->set('spotdeals_search_smart_location.zip', '');
+
+      $view->setExposedInput($input);
+      return;
+    }
+  }
+
   _spotdeals_search_smart_location_prepare_search_insight($raw, (string) ($parsed['keywords'] ?? ''), $recommendation_mode);
 
   $input['search_raw'] = $raw;
