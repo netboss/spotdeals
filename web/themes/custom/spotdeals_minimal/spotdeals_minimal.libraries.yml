@@ -5,6 +5,7 @@ global:
       css/style.css: {}
       css/views.css: {}
       css/form.css: {}
+      css/back-to-top.css: {}
       components/deal-card/deal-card.css: {}
       components/vote-summary/vote-summary.css: {}
 

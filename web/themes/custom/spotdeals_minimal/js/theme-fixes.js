@@ -611,6 +611,66 @@
   }
 
 
+  function getBackToTopButton() {
+    let button = document.querySelector('.spotdeals-back-to-top');
+
+    if (button) {
+      return button;
+    }
+
+    button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'spotdeals-back-to-top';
+    button.setAttribute('aria-label', 'Back to top');
+    button.setAttribute('title', 'Back to top');
+    button.innerHTML = '<span class="spotdeals-back-to-top__icon" aria-hidden="true">↑</span>';
+    document.body.appendChild(button);
+
+    button.addEventListener('click', function () {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+
+    return button;
+  }
+
+  function hasStickyRecommendationActions() {
+    return Boolean(document.querySelector('.view-id-deals_search_solr.view-display-id-page_1.spotdeals-recommendation-bottom-actions-active .spotdeals-recommendation-bottom-actions'));
+  }
+
+  function syncBackToTopState(button) {
+    const shouldShow = window.scrollY > 420;
+
+    button.classList.toggle('is-visible', shouldShow);
+    document.body.classList.toggle('spotdeals-has-sticky-recommendation-actions', hasStickyRecommendationActions());
+  }
+
+  function attachBackToTopButton(context) {
+    once('spotdeals-back-to-top-v1', 'body', context).forEach(function () {
+      const button = getBackToTopButton();
+      let ticking = false;
+
+      const requestSync = function () {
+        if (ticking) {
+          return;
+        }
+
+        ticking = true;
+        window.requestAnimationFrame(function () {
+          syncBackToTopState(button);
+          ticking = false;
+        });
+      };
+
+      syncBackToTopState(button);
+      window.addEventListener('scroll', requestSync, { passive: true });
+      window.addEventListener('resize', requestSync);
+    });
+  }
+
+
   Drupal.behaviors.spotdealsThemeFixes = {
     attach: function (context) {
       once('spotdeals-theme-fixes', '.spotdeals-finder__results', context).forEach(function (resultsWrapper) {
@@ -619,6 +679,7 @@
 
       moveMobileDiscoveryBlocks();
       attachMobileDiscoveryResizeHandler(context);
+      attachBackToTopButton(context);
       moveVotesIntoDealCards(context);
       moveInternalVenueVotesIntoTarget(context);
       applyVoteStateClasses(context);
