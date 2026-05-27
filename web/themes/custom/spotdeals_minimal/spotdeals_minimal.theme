@@ -23,6 +23,30 @@ function spotdeals_minimal_theme_suggestions_page_alter(array &$suggestions, arr
 function spotdeals_minimal_preprocess_page(array &$variables): void {
   $node = \Drupal::routeMatch()->getParameter('node');
 
+
+  if (\Drupal::service('path.matcher')->isFrontPage()) {
+    $popular = \Drupal::service('spotdeals_search_insights.logger')
+      ->getPopularSearches(6, 7);
+
+    $icons = ['🍹', '🌮', '🍕', '☕', '🍺', '🎲'];
+    $chips = [];
+
+    foreach ($popular as $index => $item) {
+      $keyword = trim((string) ($item['keyword'] ?? ''));
+
+      if ($keyword === '') {
+        continue;
+      }
+
+      $chips[] = [
+        'label' => ($icons[$index] ?? '✨') . ' ' . mb_convert_case($keyword, MB_CASE_TITLE, 'UTF-8'),
+        'search' => $keyword,
+      ];
+    }
+
+    $variables['spotdeals_home_feed_chips'] = $chips;
+  }
+
   if (!$node instanceof NodeInterface || $node->bundle() !== 'deal') {
     return;
   }

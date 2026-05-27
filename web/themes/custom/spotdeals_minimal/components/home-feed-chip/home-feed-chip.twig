@@ -1,0 +1,11 @@
+{#
+/**
+ * @file
+ * SpotDeals homepage feed chip component.
+ */
+#}
+{% set component_attributes = attributes|default(create_attribute()) %}
+
+<button{{ component_attributes.addClass('spotdeals-home-feed__chip').setAttribute('type', 'button').setAttribute('data-search', search|default('')) }}>
+  {{ label }}
+</button>

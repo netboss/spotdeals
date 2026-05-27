@@ -5,9 +5,12 @@ global:
       css/style.css: {}
       css/views.css: {}
       css/form.css: {}
+      css/homepage-feed.css: {}
       css/back-to-top.css: {}
       components/deal-card/deal-card.css: {}
       components/vote-summary/vote-summary.css: {}
+      components/home-feed-card/home-feed-card.css: {}
+      components/home-feed-chip/home-feed-chip.css: {}
 
   js:
     https://unpkg.com/htmx.org@1.9.12:

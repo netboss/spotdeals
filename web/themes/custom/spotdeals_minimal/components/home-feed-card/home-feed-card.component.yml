@@ -1,0 +1,28 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/11.x/core/modules/sdc/src/metadata.schema.json
+name: Home feed card
+status: experimental
+description: Homepage recommendation card for featured and clickable mood/deal prompts.
+props:
+  type: object
+  properties:
+    variant:
+      type: string
+      title: Variant
+      enum:
+        - featured
+        - button
+    tag:
+      type: string
+      title: Tag
+    title:
+      type: string
+      title: Title
+    text:
+      type: string
+      title: Text
+    search:
+      type: string
+      title: Search terms
+    cta_label:
+      type: ['string', 'null']
+      title: CTA label
