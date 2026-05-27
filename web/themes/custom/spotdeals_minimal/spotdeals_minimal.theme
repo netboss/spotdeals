@@ -5,7 +5,6 @@ use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
 use Drupal\views\ViewExecutable;
 
-
 /**
  * Implements hook_theme_suggestions_page_alter().
  */
@@ -28,10 +27,9 @@ function spotdeals_minimal_preprocess_page(array &$variables): void {
     $popular = \Drupal::service('spotdeals_search_insights.logger')
       ->getPopularSearches(6, 7);
 
-    $icons = ['🍹', '🌮', '🍕', '☕', '🍺', '🎲'];
     $chips = [];
 
-    foreach ($popular as $index => $item) {
+    foreach ($popular as $item) {
       $keyword = trim((string) ($item['keyword'] ?? ''));
 
       if ($keyword === '') {
@@ -39,7 +37,7 @@ function spotdeals_minimal_preprocess_page(array &$variables): void {
       }
 
       $chips[] = [
-        'label' => ($icons[$index] ?? '✨') . ' ' . mb_convert_case($keyword, MB_CASE_TITLE, 'UTF-8'),
+        'label' => spotdeals_minimal_home_feed_chip_icon($keyword) . ' ' . mb_convert_case($keyword, MB_CASE_TITLE, 'UTF-8'),
         'search' => $keyword,
       ];
     }
@@ -227,7 +225,6 @@ function _spotdeals_minimal_extract_node_from_candidate(mixed $candidate): ?Node
   return NULL;
 }
 
-
 /**
  * Builds activity badge data for deal cards.
  *
@@ -355,7 +352,6 @@ function spotdeals_minimal_views_pre_render(ViewExecutable $view) {
   ];
 }
 
-
 /**
  * Implements hook_form_alter().
  */
@@ -394,4 +390,54 @@ function spotdeals_minimal_theme() {
       'template' => 'spotdeals-results-only',
     ],
   ];
+}
+
+/**
+ * Returns an emoji icon for a homepage feed chip keyword.
+ */
+function spotdeals_minimal_home_feed_chip_icon(string $keyword): string {
+  $normalized = mb_strtolower($keyword, 'UTF-8');
+
+  $icon_map = [
+    'happy hour' => '🍹',
+    'tappy hour' => '🍻',
+    'taco' => '🌮',
+    'tacos' => '🌮',
+    'mexican' => '🌮',
+    'arepa' => '🫓',
+    'arepas' => '🫓',
+    'burger' => '🍔',
+    'burgers' => '🍔',
+    'pizza' => '🍕',
+    'coffee' => '☕',
+    'breakfast' => '☕',
+    'bakery' => '🥐',
+    'beer' => '🍺',
+    'wine' => '🍷',
+    'drink' => '🍹',
+    'drinks' => '🍹',
+    'cocktail' => '🍹',
+    'cocktails' => '🍹',
+    'wings' => '🍗',
+    'chicken' => '🍗',
+    'canes' => '🍗',
+    'raising canes' => '🍗',
+    'chipotle' => '🌯',
+    'burrito' => '🌯',
+    'pasta' => '🍝',
+    'thai' => '🍜',
+    'seafood' => '🦐',
+    'bbq' => '🔥',
+    'barbecue' => '🔥',
+    'lunch' => '🍽️',
+    'dinner' => '🍽️',
+  ];
+
+  foreach ($icon_map as $term => $icon) {
+    if (str_contains($normalized, $term)) {
+      return $icon;
+    }
+  }
+
+  return '✨';
 }
