@@ -246,7 +246,9 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   }
 
   $excluded_venue_nids = _spotdeals_search_smart_location_get_recommendation_exclusions();
+  $excluded_deal_nids = _spotdeals_search_smart_location_get_recommendation_deal_exclusions();
   $request->attributes->set('spotdeals_search_smart_location.excluded_venue_nids', $excluded_venue_nids);
+  $request->attributes->set('spotdeals_search_smart_location.excluded_deal_nids', $excluded_deal_nids);
 
   //\Drupal::logger('spotdeals_search_smart_location')->notice(
   //  'SMART LOCATION recommendation request state: action="@action" excluded="@excluded" current="@current"',
@@ -347,9 +349,10 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
           (float) $origin_lat,
           (float) $origin_lon,
           $effective_recommendation_cuisines,
-          25.0,
+          40.25,
           [],
-          $excluded_venue_nids
+          $excluded_venue_nids,
+          $excluded_deal_nids
         );
       $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', $recommended_nids);
       $request->attributes->set(
@@ -553,9 +556,10 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
           (float) $origin['lat'],
           (float) $origin['lon'],
           $effective_recommendation_cuisines,
-          25.0,
+          40.25,
           [],
-          $excluded_venue_nids
+          $excluded_venue_nids,
+          $excluded_deal_nids
         );
       $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', $recommended_nids);
       $request->attributes->set(
@@ -1475,6 +1479,10 @@ function _spotdeals_search_smart_location_direct_recommendation_matches_query(in
     $haystacks[] = _spotdeals_search_smart_location_expand_keywords((string) $deal->get('body')->value);
   }
 
+  if ($deal->hasField('field_price_offer_text') && !$deal->get('field_price_offer_text')->isEmpty()) {
+    $haystacks[] = _spotdeals_search_smart_location_expand_keywords((string) $deal->get('field_price_offer_text')->value);
+  }
+
   $venue = NULL;
   if ($deal->hasField('field_venue') && !$deal->get('field_venue')->isEmpty()) {
     $venue_entity = $deal->get('field_venue')->entity;
@@ -1608,7 +1616,7 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
 
   $origin_lat = (float) $origin['lat'];
   $origin_lon = (float) $origin['lon'];
-  $radius_km = 25.0;
+  $radius_km = 40.25;
   $before_count = count($view->result);
   $order_map = is_array($ranked_nids) ? array_flip(array_values($ranked_nids)) : [];
   $active_keywords = _spotdeals_search_smart_location_current_debug_keywords();
@@ -2072,6 +2080,22 @@ function _spotdeals_search_smart_location_get_recommendation_exclusions(): array
 }
 
 /**
+ * Returns deal IDs excluded in the current recommendation session.
+ *
+ * @return array<int,int>
+ *   Excluded deal node IDs in retry order.
+ */
+function _spotdeals_search_smart_location_get_recommendation_deal_exclusions(): array {
+  $session = \Drupal::request()->getSession();
+  $excluded_deal_nids = $session->get('spotdeals_search_smart_location.excluded_deal_nids', []);
+
+  return array_values(array_unique(array_filter(
+    array_map('intval', is_array($excluded_deal_nids) ? $excluded_deal_nids : []),
+    static fn(int $nid): bool => $nid > 0
+  )));
+}
+
+/**
  * Returns TRUE when a current recommendation exists in session.
  */
 function _spotdeals_search_smart_location_has_current_recommendation(): bool {
@@ -2128,6 +2152,7 @@ function _spotdeals_search_smart_location_has_visible_recommendation_request(): 
 function _spotdeals_search_smart_location_reset_recommendation_session(): void {
   $session = \Drupal::request()->getSession();
   $session->remove('spotdeals_search_smart_location.excluded_venue_nids');
+  $session->remove('spotdeals_search_smart_location.excluded_deal_nids');
   $session->remove('spotdeals_search_smart_location.current_recommendation');
 }
 
@@ -2181,24 +2206,39 @@ function _spotdeals_search_smart_location_apply_recommendation_action_to_session
   $session = \Drupal::request()->getSession();
   $current = $session->get('spotdeals_search_smart_location.current_recommendation', []);
 
-  if (!is_array($current) || empty($current['venue_nid'])) {
+  if (!is_array($current) || empty($current['deal_nid']) || empty($current['venue_nid'])) {
     return;
   }
 
+  $deal_nid = (int) $current['deal_nid'];
   $venue_nid = (int) $current['venue_nid'];
-  if ($venue_nid <= 0) {
+  if ($deal_nid <= 0 || $venue_nid <= 0) {
     return;
   }
+
+  $excluded_deal_nids = $session->get('spotdeals_search_smart_location.excluded_deal_nids', []);
+  $excluded_deal_nids = array_values(array_filter(
+    array_map('intval', is_array($excluded_deal_nids) ? $excluded_deal_nids : []),
+    static fn(int $nid): bool => $nid > 0
+  ));
+  $excluded_deal_nids = array_values(array_filter(
+    $excluded_deal_nids,
+    static fn(int $nid): bool => $nid !== $deal_nid
+  ));
+  $excluded_deal_nids[] = $deal_nid;
 
   $excluded_venue_nids = $session->get('spotdeals_search_smart_location.excluded_venue_nids', []);
-  $excluded_venue_nids = array_values(array_unique(array_filter(
+  $excluded_venue_nids = array_values(array_filter(
     array_map('intval', is_array($excluded_venue_nids) ? $excluded_venue_nids : []),
     static fn(int $nid): bool => $nid > 0
-  )));
-
+  ));
+  $excluded_venue_nids = array_values(array_filter(
+    $excluded_venue_nids,
+    static fn(int $nid): bool => $nid !== $venue_nid
+  ));
   $excluded_venue_nids[] = $venue_nid;
-  $excluded_venue_nids = array_values(array_unique($excluded_venue_nids));
 
+  $session->set('spotdeals_search_smart_location.excluded_deal_nids', $excluded_deal_nids);
   $session->set('spotdeals_search_smart_location.excluded_venue_nids', $excluded_venue_nids);
 }
 
