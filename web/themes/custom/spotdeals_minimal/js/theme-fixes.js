@@ -166,7 +166,6 @@
     });
   }
 
-
   function findInternalVenueVoteElements(card) {
     const target = card.querySelector("[data-spotdeals-card-venue-votes]");
     const main = card.querySelector(".spotdeals-deal-card__main");
@@ -252,7 +251,6 @@
   function normalizeWhitespace(value) {
     return (value || '').replace(/\s+/g, ' ').trim();
   }
-
 
   function isDealsDiscoveryPage() {
     return document.body.classList.contains('path-frontpage') || document.body.classList.contains('path-deals');
@@ -430,7 +428,6 @@
       hasVotes: Boolean(percentMatch) && !noVotes
     };
   }
-
 
   function extractCompactVoteMetrics(sourceText, labels) {
     const text = normalizeWhitespace(sourceText);
@@ -610,7 +607,6 @@
     });
   }
 
-
   function getBackToTopButton() {
     let button = document.querySelector('.spotdeals-back-to-top');
 
@@ -670,6 +666,120 @@
     });
   }
 
+  function submitHomepageRecommendation(searchValue) {
+    const form = document.querySelector('.spotdeals-finder__filters form');
+
+    if (!form) {
+      return;
+    }
+
+    const searchInput = form.querySelector('input[name="search_deals"], input[name="search_api_fulltext"]');
+    const helpMeChooseCheckbox = form.querySelector('input[name="help_me_choose"]');
+    const recommendationAction = form.querySelector('input[name="recommendation_action"]');
+    const scrollResults = form.querySelector('input[name="scroll_results"]');
+    const submitButton = form.querySelector('input[type="submit"]');
+
+    if (!searchInput || !submitButton) {
+      return;
+    }
+
+    searchInput.value = searchValue || '';
+
+    if (helpMeChooseCheckbox) {
+      helpMeChooseCheckbox.checked = true;
+      helpMeChooseCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    if (recommendationAction) {
+      recommendationAction.value = '';
+    }
+
+    if (scrollResults) {
+      scrollResults.value = '1';
+    }
+
+    submitButton.click();
+  }
+
+  function clearHomepageRecommendationActiveStates() {
+    document.querySelectorAll('.spotdeals-home-feed [data-search].is-active').forEach(function (item) {
+      item.classList.remove('is-active');
+      item.removeAttribute('aria-pressed');
+    });
+  }
+
+  function getHomepageCurrentSearchValue() {
+    const params = new URLSearchParams(window.location.search);
+    const urlSearchValue = params.get('search_deals') || params.get('search_api_fulltext') || params.get('search_clean');
+
+    if (urlSearchValue !== null) {
+      return urlSearchValue.trim();
+    }
+
+    const form = document.querySelector('.spotdeals-finder__filters form');
+    const searchInput = form ? form.querySelector('input[name="search_deals"], input[name="search_api_fulltext"]') : null;
+
+    return searchInput ? searchInput.value.trim() : '';
+  }
+
+  function syncHomepageRecommendationActiveState() {
+    const currentSearchValue = getHomepageCurrentSearchValue();
+    const form = document.querySelector('.spotdeals-finder__filters form');
+    const helpMeChoose = form ? form.querySelector('input[name="help_me_choose"]') : null;
+
+    clearHomepageRecommendationActiveStates();
+
+    if (!helpMeChoose || !helpMeChoose.checked) {
+      return;
+    }
+
+    const triggers = document.querySelectorAll('.spotdeals-home-feed [data-search]');
+    let activeItem = null;
+
+    triggers.forEach(function (trigger) {
+      if (activeItem) {
+        return;
+      }
+
+      if ((trigger.getAttribute('data-search') || '').trim() === currentSearchValue) {
+        activeItem = trigger;
+      }
+    });
+
+    if (activeItem) {
+      activeItem.classList.add('is-active');
+      activeItem.setAttribute('aria-pressed', 'true');
+    }
+  }
+
+  function attachHomepageRecommendationActions(context) {
+    once('spotdeals-home-recommendation-actions', '.spotdeals-home-feed [data-search]', context).forEach(function (trigger) {
+      trigger.addEventListener('click', function () {
+        clearHomepageRecommendationActiveStates();
+        trigger.classList.add('is-active');
+        trigger.setAttribute('aria-pressed', 'true');
+
+        submitHomepageRecommendation(trigger.getAttribute('data-search') || '');
+      });
+    });
+
+    syncHomepageRecommendationActiveState();
+  }
+
+  function attachHomepageFeedMobileAccordion(context) {
+    once('spotdeals-home-feed-mobile-accordion', '.spotdeals-home-feed__mobile-toggle', context).forEach(function (toggle) {
+      toggle.addEventListener('click', function () {
+        const feed = toggle.closest('.spotdeals-home-feed');
+
+        if (!feed) {
+          return;
+        }
+
+        const isOpen = feed.classList.toggle('is-open');
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+    });
+  }
 
   Drupal.behaviors.spotdealsThemeFixes = {
     attach: function (context) {
@@ -680,6 +790,8 @@
       moveMobileDiscoveryBlocks();
       attachMobileDiscoveryResizeHandler(context);
       attachBackToTopButton(context);
+      attachHomepageRecommendationActions(context);
+      attachHomepageFeedMobileAccordion(context);
       moveVotesIntoDealCards(context);
       moveInternalVenueVotesIntoTarget(context);
       applyVoteStateClasses(context);

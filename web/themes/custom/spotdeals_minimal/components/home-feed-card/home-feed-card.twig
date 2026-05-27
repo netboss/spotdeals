@@ -1,0 +1,49 @@
+{#
+/**
+ * @file
+ * SpotDeals homepage feed card component.
+ */
+#}
+{% set variant = variant|default('button') %}
+{% set card_classes = [
+  'spotdeals-home-feed__card',
+  variant == 'featured' ? 'spotdeals-home-feed__card--featured',
+  variant == 'button' ? 'spotdeals-home-feed__card--button'
+] %}
+{% set component_attributes = attributes|default(create_attribute()) %}
+
+{% if variant == 'featured' %}
+  <article{{ component_attributes.addClass(card_classes) }}>
+    {% if tag %}
+      <div class="spotdeals-home-feed__card-tag">{{ tag }}</div>
+    {% endif %}
+
+    {% if title %}
+      <h3>{{ title }}</h3>
+    {% endif %}
+
+    {% if text %}
+      <p>{{ text }}</p>
+    {% endif %}
+
+    {% if cta_label %}
+      <button class="spotdeals-home-feed__cta" type="button" data-search="{{ search|default('')|e('html_attr') }}">
+        {{ cta_label }}
+      </button>
+    {% endif %}
+  </article>
+{% else %}
+  <button{{ component_attributes.addClass(card_classes).setAttribute('type', 'button').setAttribute('data-search', search|default('')) }}>
+    {% if tag %}
+      <span class="spotdeals-home-feed__mini-tag">{{ tag }}</span>
+    {% endif %}
+
+    {% if title %}
+      <span class="spotdeals-home-feed__card-title">{{ title }}</span>
+    {% endif %}
+
+    {% if text %}
+      <span class="spotdeals-home-feed__card-text">{{ text }}</span>
+    {% endif %}
+  </button>
+{% endif %}

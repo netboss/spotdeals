@@ -89,49 +89,67 @@
               <main class="spotdeals-main-content">
                 {% if is_front %}
                   <section class="spotdeals-home-feed" aria-label="{{ 'Tonight Near You'|t }}">
+
                     <div class="spotdeals-home-feed__hero">
                       <div class="spotdeals-home-feed__eyebrow">{{ 'Tonight Near You'|t }}</div>
-                      <h2 class="spotdeals-home-feed__title">{{ 'Need help deciding where to go?'|t }}</h2>
+
+                      <h2 class="spotdeals-home-feed__title">
+                        {{ 'Need help deciding where to go?'|t }}
+                      </h2>
+
                       <p class="spotdeals-home-feed__text">
                         {{ 'Discover nearby food, drinks, happy hours and local spots without endlessly scrolling.'|t }}
                       </p>
+                    </div>                    <div class="spotdeals-home-feed__chips" aria-label="{{ 'Quick mood picks'|t }}">
+                      {% for chip in spotdeals_home_feed_chips %}
+                        {{ include('spotdeals_minimal:home-feed-chip', {
+                          label: chip.label,
+                          search: chip.search,
+                        }, with_context = false) }}
+                      {% endfor %}
+                    </div>
+                    <button class="spotdeals-home-feed__mobile-toggle" type="button" aria-expanded="false" aria-controls="spotdeals-home-feed-cards-panel">
+                      <span>{{ 'View nearby picks'|t }}</span>
+                      <span class="spotdeals-home-feed__mobile-toggle-icon" aria-hidden="true">+</span>
+                    </button>
+
+
+
+                    <div id="spotdeals-home-feed-cards-panel" class="spotdeals-home-feed__cards">
+                      {{ include('spotdeals_minimal:home-feed-card', {
+                        variant: 'featured',
+                        tag: 'Trending nearby tonight'|t,
+                        title: 'Popular happy hour spots nearby'|t,
+                        text: 'Explore nearby deals, drinks and local favorites happening right now.'|t,
+                        cta_label: 'Help Me Choose'|t,
+                        search: ''
+                      }, with_context = false) }}
+
+                      {{ include('spotdeals_minimal:home-feed-card', {
+                        variant: 'button',
+                        tag: 'Open now'|t,
+                        title: 'Tacos + Margaritas'|t,
+                        text: 'Popular nearby Mexican spots with active deals.'|t,
+                        search: 'tacos margaritas mexican'
+                      }, with_context = false) }}
+
+                      {{ include('spotdeals_minimal:home-feed-card', {
+                        variant: 'button',
+                        tag: 'Trending'|t,
+                        title: 'Late Night Bites'|t,
+                        text: 'Fast nearby recommendations for tonight.'|t,
+                        search: 'late night bites quick food'
+                      }, with_context = false) }}
+
+                      {{ include('spotdeals_minimal:home-feed-card', {
+                        variant: 'button',
+                        tag: 'Nearby'|t,
+                        title: 'Coffee + Breakfast'|t,
+                        text: 'Quick local picks for a morning or afternoon stop.'|t,
+                        search: 'coffee breakfast bakery'
+                      }, with_context = false) }}
                     </div>
 
-                    <div class="spotdeals-home-feed__chips" aria-label="{{ 'Quick mood picks'|t }}">
-                      <button class="spotdeals-home-feed__chip" type="button">{{ '🍹 Happy Hour'|t }}</button>
-                      <button class="spotdeals-home-feed__chip" type="button">{{ '🌮 Quick Bite'|t }}</button>
-                      <button class="spotdeals-home-feed__chip" type="button">{{ '🍕 Comfort Food'|t }}</button>
-                      <button class="spotdeals-home-feed__chip" type="button">{{ '☕ Coffee Break'|t }}</button>
-                      <button class="spotdeals-home-feed__chip" type="button">{{ '🍺 Drinks Tonight'|t }}</button>
-                      <button class="spotdeals-home-feed__chip" type="button">{{ '🎲 Surprise Me'|t }}</button>
-                    </div>
-
-                    <div class="spotdeals-home-feed__cards">
-                      <article class="spotdeals-home-feed__card spotdeals-home-feed__card--featured">
-                        <div class="spotdeals-home-feed__card-tag">{{ 'Trending nearby tonight'|t }}</div>
-                        <h3>{{ 'Popular happy hour spots nearby'|t }}</h3>
-                        <p>{{ 'Explore nearby deals, drinks and local favorites happening right now.'|t }}</p>
-                        <button class="spotdeals-home-feed__cta" type="button">{{ 'Help Me Choose'|t }}</button>
-                      </article>
-
-                      <article class="spotdeals-home-feed__card">
-                        <div class="spotdeals-home-feed__mini-tag">{{ 'Open now'|t }}</div>
-                        <h4>{{ 'Tacos + Margaritas'|t }}</h4>
-                        <p>{{ 'Popular nearby Mexican spots with active deals.'|t }}</p>
-                      </article>
-
-                      <article class="spotdeals-home-feed__card">
-                        <div class="spotdeals-home-feed__mini-tag">{{ 'Trending'|t }}</div>
-                        <h4>{{ 'Late Night Bites'|t }}</h4>
-                        <p>{{ 'Fast nearby recommendations for tonight.'|t }}</p>
-                      </article>
-
-                      <article class="spotdeals-home-feed__card">
-                        <div class="spotdeals-home-feed__mini-tag">{{ 'Nearby'|t }}</div>
-                        <h4>{{ 'Coffee + Breakfast'|t }}</h4>
-                        <p>{{ 'Quick local picks for a morning or afternoon stop.'|t }}</p>
-                      </article>
-                    </div>
                   </section>
                 {% endif %}
 
