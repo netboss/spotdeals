@@ -18,12 +18,12 @@ final class NearMeRanker {
   /**
    * Cache ID for the cross-request base dataset cache.
    */
-  private const BASE_DATASET_CACHE_ID = 'spotdeals_search_smart_location:near_me_ranker:base_dataset:v1';
+  private const BASE_DATASET_CACHE_ID = 'spotdeals_search_smart_location:near_me_ranker:base_dataset:v2';
 
   /**
    * Default radius in kilometers.
    */
-  private const DEFAULT_RADIUS_KM = 25.0;
+  private const DEFAULT_RADIUS_KM = 40.25;
 
   /**
    * Request-local cache of all nearby deal candidates for one origin.
@@ -242,6 +242,7 @@ final class NearMeRanker {
         'position' => (int) $dealRow['position'],
         'deal_title' => (string) $dealRow['deal_title'],
         'deal_body' => (string) $dealRow['deal_body'],
+        'deal_offer_text' => (string) ($dealRow['deal_offer_text'] ?? ''),
         'venue_title' => (string) $venueMetadata['title'],
         'venue_description' => (string) $venueMetadata['description'],
         'venue_cuisine' => (string) $venueMetadata['cuisine'],
@@ -385,6 +386,11 @@ final class NearMeRanker {
         'deal_body' => $this->normalize(
           $deal->hasField('body') && !$deal->get('body')->isEmpty()
             ? (string) $deal->get('body')->value
+            : ''
+        ),
+        'deal_offer_text' => $this->normalize(
+          $deal->hasField('field_price_offer_text') && !$deal->get('field_price_offer_text')->isEmpty()
+            ? (string) $deal->get('field_price_offer_text')->value
             : ''
         ),
       ];
@@ -575,6 +581,7 @@ final class NearMeRanker {
 
     $dealTitle = (string) ($candidate['deal_title'] ?? '');
     $body = (string) ($candidate['deal_body'] ?? '');
+    $offerText = (string) ($candidate['deal_offer_text'] ?? '');
     $venueTitle = (string) ($candidate['venue_title'] ?? '');
     $venueDescription = (string) ($candidate['venue_description'] ?? '');
     $venueCuisine = (string) ($candidate['venue_cuisine'] ?? '');
@@ -591,6 +598,9 @@ final class NearMeRanker {
       if ($body !== '' && str_contains($body, 'happy hour')) {
         $score += 140;
       }
+      if ($offerText !== '' && str_contains($offerText, 'happy hour')) {
+        $score += 160;
+      }
 
       foreach (['happy', 'hour'] as $token) {
         if (str_contains($dealTitle, $token)) {
@@ -598,6 +608,9 @@ final class NearMeRanker {
         }
         if (str_contains($body, $token)) {
           $score += 20;
+        }
+        if (str_contains($offerText, $token)) {
+          $score += 24;
         }
       }
 
@@ -612,6 +625,9 @@ final class NearMeRanker {
     }
     if ($body !== '' && str_contains($body, $keywords)) {
       $dealScore += 140;
+    }
+    if ($offerText !== '' && str_contains($offerText, $keywords)) {
+      $dealScore += 170;
     }
 
     foreach ($tokens as $token) {
@@ -637,6 +653,17 @@ final class NearMeRanker {
 
         if (str_contains($body, $variant)) {
           $dealScore += $variant === $token ? 25 : 20;
+          break;
+        }
+      }
+
+      foreach ($this->tokenVariants($token) as $variant) {
+        if ($variant === '') {
+          continue;
+        }
+
+        if (str_contains($offerText, $variant)) {
+          $dealScore += $variant === $token ? 32 : 26;
           break;
         }
       }
@@ -721,6 +748,9 @@ final class NearMeRanker {
         if ($body !== '' && str_contains($body, $alias)) {
           $dealScore += $alias === $keywords ? 30 : 18;
         }
+        if ($offerText !== '' && str_contains($offerText, $alias)) {
+          $dealScore += $alias === $keywords ? 40 : 24;
+        }
 
         if ($venueTitle !== '' && str_contains($venueTitle, $alias)) {
           $cuisineVenueScore += $alias === $keywords ? 45 : 25;
@@ -790,6 +820,8 @@ final class NearMeRanker {
   private function cuisineIntentAliases(string $keywords, array $tokens): array {
     $map = [
       'american' => ['american'],
+      'arepa' => ['arepa', 'arepas', 'arepita', 'venezuelan', 'latin american', 'latin'],
+      'arepas' => ['arepas', 'arepa', 'arepita', 'venezuelan', 'latin american', 'latin'],
       'asian' => ['asian', 'thai', 'japanese', 'chinese', 'sushi', 'ramen', 'hibachi'],
       'bbq' => ['bbq', 'barbecue', 'bar b q', 'bar-b-q'],
       'barbecue' => ['barbecue', 'bbq', 'bar b q', 'bar-b-q'],
@@ -804,7 +836,9 @@ final class NearMeRanker {
       'hibachi' => ['hibachi', 'japanese', 'asian'],
       'italian' => ['italian', 'pizza', 'pasta'],
       'japanese' => ['japanese', 'sushi', 'ramen', 'hibachi', 'asian'],
-      'mexican' => ['mexican', 'tex mex', 'tex-mex', 'taco', 'tacos', 'burrito', 'burritos', 'quesadilla', 'quesadillas', 'enchilada', 'enchiladas'],
+      'mexican' => ['mexican', 'tex mex', 'tex-mex', 'burrito', 'burritos', 'quesadilla', 'quesadillas', 'enchilada', 'enchiladas'],
+      'taco' => ['taco', 'tacos'],
+      'tacos' => ['taco', 'tacos'],
       'pasta' => ['pasta', 'italian'],
       'pizza' => ['pizza', 'italian'],
       'ramen' => ['ramen', 'japanese', 'asian'],
@@ -817,6 +851,7 @@ final class NearMeRanker {
       'thai' => ['thai', 'pad thai', 'thai curry', 'asian'],
       'tex mex' => ['tex mex', 'tex-mex', 'mexican', 'taco', 'tacos'],
       'tex-mex' => ['tex-mex', 'tex mex', 'mexican', 'taco', 'tacos'],
+      'venezuelan' => ['venezuelan', 'arepa', 'arepas', 'latin american', 'latin'],
       'wings' => ['wings', 'chicken'],
     ];
 

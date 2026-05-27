@@ -16,7 +16,7 @@ final class RecommendationService {
   /**
    * Default radius in kilometers.
    */
-  private const DEFAULT_RADIUS_KM = 25.0;
+  private const DEFAULT_RADIUS_KM = 40.25;
 
   /**
    * Maximum number of near-me candidates to inspect.
@@ -85,6 +85,7 @@ final class RecommendationService {
     float $radiusKm = self::DEFAULT_RADIUS_KM,
     array $excludedCuisines = [],
     array $excludedVenueNids = [],
+    array $excludedDealNids = [],
     bool $allowRecycle = TRUE,
   ): array {
     $startedAt = microtime(TRUE);
@@ -95,143 +96,85 @@ final class RecommendationService {
       array_map('intval', $excludedVenueNids),
       static fn(int $nid): bool => $nid > 0
     )));
+    $excludedDealNids = array_values(array_unique(array_filter(
+      array_map('intval', $excludedDealNids),
+      static fn(int $nid): bool => $nid > 0
+    )));
 
     $preferredLocalities = $this->localitiesForVenueNids($excludedVenueNids);
+    $radiusAttempts = $this->radiusAttempts($radiusKm);
     $candidateSets = [];
+    $candidateAttemptMeta = [];
 
-    if (!empty($cuisines)) {
+    foreach ($radiusAttempts as $attemptRadiusKm) {
       $candidateSets[] = $this->buildCandidates(
         $originLat,
         $originLon,
         $cuisines,
-        $radiusKm,
+        $attemptRadiusKm,
         $excludedCuisines,
-        $excludedVenueNids
+        $excludedVenueNids,
+        $excludedDealNids
       );
+      $candidateAttemptMeta[] = [
+        'radius_km' => $attemptRadiusKm,
+        'recycled' => FALSE,
+      ];
 
       if (!empty($excludedCuisines)) {
         $candidateSets[] = $this->buildCandidates(
           $originLat,
           $originLon,
           $cuisines,
-          $radiusKm,
+          $attemptRadiusKm,
           [],
-          $excludedVenueNids
+          $excludedVenueNids,
+          $excludedDealNids
         );
+        $candidateAttemptMeta[] = [
+          'radius_km' => $attemptRadiusKm,
+          'recycled' => FALSE,
+        ];
       }
+    }
 
-      if ($radiusKm < 1000.0) {
+    // If every strict relevant result has already been shown, start the strict
+    // cycle over without the oldest exclusions, but keep the most recently shown
+    // deal excluded so Try again does not immediately repeat the same card.
+    // This preserves relevance for chips such as arepas/wine while still making
+    // low-inventory searches usable after their result pool is exhausted.
+    if ($allowRecycle && !empty($excludedDealNids)) {
+      $recentDealNid = (int) end($excludedDealNids);
+      $recycleExcludedDealNids = $recentDealNid > 0 ? [$recentDealNid] : [];
+      foreach ($radiusAttempts as $attemptRadiusKm) {
         $candidateSets[] = $this->buildCandidates(
           $originLat,
           $originLon,
           $cuisines,
-          1000.0,
+          $attemptRadiusKm,
           $excludedCuisines,
-          $excludedVenueNids
+          [],
+          $recycleExcludedDealNids
         );
+        $candidateAttemptMeta[] = [
+          'radius_km' => $attemptRadiusKm,
+          'recycled' => TRUE,
+        ];
 
         if (!empty($excludedCuisines)) {
           $candidateSets[] = $this->buildCandidates(
             $originLat,
             $originLon,
             $cuisines,
-            1000.0,
+            $attemptRadiusKm,
             [],
-            $excludedVenueNids
+            [],
+            $recycleExcludedDealNids
           );
-        }
-      }
-
-      // If strict cuisine-overlap recommendation attempts produce no result,
-      // keep the same ranking keywords but relax the overlap requirement so a
-      // retry still returns exactly one recommendation instead of falling back
-      // to the full normal results list.
-      $candidateSets[] = $this->buildCandidates(
-        $originLat,
-        $originLon,
-        [],
-        $radiusKm,
-        $excludedCuisines,
-        $excludedVenueNids,
-        $cuisines
-      );
-
-      if (!empty($excludedCuisines)) {
-        $candidateSets[] = $this->buildCandidates(
-          $originLat,
-          $originLon,
-          [],
-          $radiusKm,
-          [],
-          $excludedVenueNids,
-          $cuisines
-        );
-      }
-
-      if ($radiusKm < 1000.0) {
-        $candidateSets[] = $this->buildCandidates(
-          $originLat,
-          $originLon,
-          [],
-          1000.0,
-          $excludedCuisines,
-          $excludedVenueNids,
-          $cuisines
-        );
-
-        if (!empty($excludedCuisines)) {
-          $candidateSets[] = $this->buildCandidates(
-            $originLat,
-            $originLon,
-            [],
-            1000.0,
-            [],
-            $excludedVenueNids,
-            $cuisines
-          );
-        }
-      }
-    }
-    else {
-      $candidateSets[] = $this->buildCandidates(
-        $originLat,
-        $originLon,
-        [],
-        $radiusKm,
-        $excludedCuisines,
-        $excludedVenueNids
-      );
-
-      if (!empty($excludedCuisines)) {
-        $candidateSets[] = $this->buildCandidates(
-          $originLat,
-          $originLon,
-          [],
-          $radiusKm,
-          [],
-          $excludedVenueNids
-        );
-      }
-
-      if ($radiusKm < 1000.0) {
-        $candidateSets[] = $this->buildCandidates(
-          $originLat,
-          $originLon,
-          [],
-          1000.0,
-          $excludedCuisines,
-          $excludedVenueNids
-        );
-
-        if (!empty($excludedCuisines)) {
-          $candidateSets[] = $this->buildCandidates(
-            $originLat,
-            $originLon,
-            [],
-            1000.0,
-            [],
-            $excludedVenueNids
-          );
+          $candidateAttemptMeta[] = [
+            'radius_km' => $attemptRadiusKm,
+            'recycled' => TRUE,
+          ];
         }
       }
     }
@@ -241,60 +184,36 @@ final class RecommendationService {
 
     $picked = $this->pickFromCandidateSets($candidateSets, $preferredLocalities);
     if ($picked !== NULL) {
+      $attemptIndex = max(0, ((int) $picked['attempt_index']) - 1);
+      $attemptMeta = $candidateAttemptMeta[$attemptIndex] ?? ['radius_km' => $radiusKm, 'recycled' => FALSE];
       $this->logTiming(sprintf(
-        'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="%d" top_tier_count="%d" picked_deal_nid="%d" picked_venue_nid="%d" recycled="0"',
+        'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" excluded_deals_count="%d" requested_radius_km="%s" selected_radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="%d" top_tier_count="%d" picked_deal_nid="%d" picked_venue_nid="%d" recycled="%s"',
         $this->formatMs($startedAt),
         count($cuisines),
         count($excludedCuisines),
         count($excludedVenueNids),
+        count($excludedDealNids),
         (string) $radiusKm,
+        (string) ($attemptMeta['radius_km'] ?? $radiusKm),
         count($candidateSets),
         $attemptSizesJson,
         (int) $picked['attempt_index'],
         (int) $picked['top_tier_count'],
         (int) $picked['candidate']['deal_nid'],
         (int) $picked['candidate']['venue_nid'],
+        !empty($attemptMeta['recycled']) ? '1' : '0',
       ));
 
       return [(int) $picked['candidate']['deal_nid']];
     }
 
-    // If every eligible candidate has already been shown in this
-    // recommendation session, recycle only after exhausting the unshown pool.
-    // This keeps Try again varied without letting the picker go blank in
-    // low-inventory areas.
-    if ($allowRecycle && !empty($excludedVenueNids)) {
-      $recycled = $this->recommendDealNids(
-        $originLat,
-        $originLon,
-        $cuisines,
-        $radiusKm,
-        $excludedCuisines,
-        [],
-        FALSE
-      );
-
-      if (!empty($recycled)) {
-        $this->logTiming(sprintf(
-          'SMART LOCATION recommendation recycled exhausted session pool: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" radius_km="%s" picked_deal_nid="%d"',
-          $this->formatMs($startedAt),
-          count($cuisines),
-          count($excludedCuisines),
-          count($excludedVenueNids),
-          (string) $radiusKm,
-          (int) $recycled[0],
-        ));
-
-        return $recycled;
-      }
-    }
-
     $this->logTiming(sprintf(
-      'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="0" top_tier_count="0" picked_deal_nid="" picked_venue_nid=""',
+      'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" excluded_deals_count="%d" requested_radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="0" top_tier_count="0" picked_deal_nid="" picked_venue_nid=""',
       $this->formatMs($startedAt),
       count($cuisines),
       count($excludedCuisines),
       count($excludedVenueNids),
+      count($excludedDealNids),
       (string) $radiusKm,
       count($candidateSets),
       $attemptSizesJson,
@@ -367,13 +286,39 @@ final class RecommendationService {
       $topTier = array_slice($topTier, 0, self::RANDOM_TIE_LIMIT);
 
       return [
-        'candidate' => $topTier[array_rand($topTier)],
+        'candidate' => $topTier[0],
         'attempt_index' => ((int) $attemptIndex) + 1,
         'top_tier_count' => count($topTier),
       ];
     }
 
     return NULL;
+  }
+
+  /**
+   * Returns strict radius attempts for recommendation retry.
+   *
+   * Recommendation mode must be local-first, but not local-only forever. Try
+   * again exhausts strict relevant results inside the requested radius first,
+   * then expands outward in controlled steps before recycling.
+   *
+   * @return array<int,float>
+   *   Radius attempts in kilometers.
+   */
+  private function radiusAttempts(float $requestedRadiusKm): array {
+    $baseRadiusKm = max(0.1, $requestedRadiusKm);
+    $radii = [
+      $baseRadiusKm,
+      80.47,
+      160.93,
+      402.34,
+      1000.0,
+    ];
+
+    return array_values(array_unique(array_map(
+      static fn(float $radius): float => round($radius, 2),
+      array_filter($radii, static fn(float $radius): bool => $radius >= $baseRadiusKm)
+    )));
   }
 
   /**
@@ -399,9 +344,14 @@ final class RecommendationService {
     float $radiusKm,
     array $excludedCuisines,
     array $excludedVenueNids,
+    array $excludedDealNids = [],
     array $rankingKeywords = [],
   ): array {
     $rankingKeywords = $this->normalizeCuisineTokens($rankingKeywords);
+    $excludedDealNids = array_values(array_unique(array_filter(
+      array_map('intval', $excludedDealNids),
+      static fn(int $nid): bool => $nid > 0
+    )));
     $queryTokens = !empty($rankingKeywords) ? $rankingKeywords : $cuisines;
     $query = !empty($queryTokens) ? implode(' ', $queryTokens) : '';
 
@@ -434,15 +384,16 @@ final class RecommendationService {
         continue;
       }
 
+      if (in_array((int) $deal->id(), $excludedDealNids, TRUE)) {
+        continue;
+      }
+
       $venue = $this->dealVenue($deal);
       if (!$venue instanceof NodeInterface) {
         continue;
       }
 
       $venueNid = (int) $venue->id();
-      if (in_array($venueNid, $excludedVenueNids, TRUE)) {
-        continue;
-      }
 
       $venueCuisineTokens = $this->extractVenueCuisineTokens($venue);
       if (!empty($excludedCuisines) && !empty(array_intersect($excludedCuisines, $venueCuisineTokens))) {
@@ -463,7 +414,7 @@ final class RecommendationService {
     }
 
     $venueQualityScores = $this->freshnessScorer->scoreVenueNids($candidateVenueNids);
-    $bestByVenue = [];
+    $candidates = [];
 
     foreach ($candidateRows as $row) {
       $deal = $row['deal'];
@@ -490,12 +441,10 @@ final class RecommendationService {
         continue;
       }
 
-      if (!isset($bestByVenue[$venueNid]) || $this->isBetterCandidate($candidate, $bestByVenue[$venueNid])) {
-        $bestByVenue[$venueNid] = $candidate;
-      }
+      $candidates[] = $candidate;
     }
 
-    return array_values($bestByVenue);
+    return $candidates;
   }
 
   /**
@@ -542,6 +491,11 @@ final class RecommendationService {
         : ''
     );
     $venueCuisine = implode(' ', $venueCuisineTokens);
+    $dealOfferText = $this->normalize(
+      $deal->hasField('field_price_offer_text') && !$deal->get('field_price_offer_text')->isEmpty()
+        ? (string) $deal->get('field_price_offer_text')->value
+        : ''
+    );
     $venueTags = $this->normalize(
       $venue->hasField('field_tags') && !$venue->get('field_tags')->isEmpty()
         ? $this->venueTagsText($venue)
@@ -553,6 +507,7 @@ final class RecommendationService {
       'deal_title' => $dealTitle,
       'venue_title' => $venueTitle,
       'deal_body' => $dealBody,
+      'deal_offer_text' => $dealOfferText,
       'venue_description' => $venueDescription,
       'venue_tags' => $venueTags,
     ];
@@ -568,8 +523,13 @@ final class RecommendationService {
         }
 
         $matched = FALSE;
+        $requiresDealLevelMatch = $this->requiresDealLevelMatch($cuisine);
 
-        if ($haystacks['venue_cuisine'] !== '' && str_contains($haystacks['venue_cuisine'], $cuisine)) {
+        if (
+          !$requiresDealLevelMatch
+          && $haystacks['venue_cuisine'] !== ''
+          && str_contains($haystacks['venue_cuisine'], $cuisine)
+        ) {
           $score += 80;
           $matched = TRUE;
         }
@@ -585,11 +545,23 @@ final class RecommendationService {
           $score += 18;
           $matched = TRUE;
         }
-        if ($haystacks['venue_description'] !== '' && str_contains($haystacks['venue_description'], $cuisine)) {
+        if ($haystacks['deal_offer_text'] !== '' && str_contains($haystacks['deal_offer_text'], $cuisine)) {
+          $score += 40;
+          $matched = TRUE;
+        }
+        if (
+          !$requiresDealLevelMatch
+          && $haystacks['venue_description'] !== ''
+          && str_contains($haystacks['venue_description'], $cuisine)
+        ) {
           $score += 12;
           $matched = TRUE;
         }
-        if ($haystacks['venue_tags'] !== '' && str_contains($haystacks['venue_tags'], $cuisine)) {
+        if (
+          !$requiresDealLevelMatch
+          && $haystacks['venue_tags'] !== ''
+          && str_contains($haystacks['venue_tags'], $cuisine)
+        ) {
           $score += 20;
           $matched = TRUE;
         }
@@ -656,6 +628,34 @@ final class RecommendationService {
       'venue_locality' => $this->venueLocality($venue),
       'preference_mode' => $preferenceMode,
     ];
+  }
+
+
+  /**
+   * Determines whether a token should require deal-level matching.
+   */
+  private function requiresDealLevelMatch(string $token): bool {
+    $broadCuisineTerms = [
+      'mexican',
+      'italian',
+      'american',
+      'thai',
+      'japanese',
+      'chinese',
+      'indian',
+      'mediterranean',
+      'greek',
+      'bbq',
+      'barbecue',
+      'seafood',
+      'vegan',
+      'vegetarian',
+      'tex mex',
+      'tex-mex',
+      'texmex',
+    ];
+
+    return !in_array($token, $broadCuisineTerms, TRUE);
   }
 
 
@@ -1050,13 +1050,47 @@ final class RecommendationService {
       $parts = preg_split('/\s+/', $value) ?: [];
       foreach ($parts as $part) {
         $part = trim($part);
-        if ($part !== '') {
-          $normalized[] = $part;
+        if ($part === '') {
+          continue;
+        }
+
+        foreach ($this->expandedPreferenceTokens($part) as $expanded) {
+          if ($expanded !== '') {
+            $normalized[] = $expanded;
+          }
         }
       }
     }
 
     return array_values(array_unique($normalized));
+  }
+
+  /**
+   * Expands user-facing preference chips into local matching tokens.
+   *
+   * These aliases keep recommendation mode strict while still making common
+   * chips useful. For example, wine should be able to rotate through nearby
+   * local drink-oriented venues such as wine bars, breweries, taprooms, and
+   * craft beer spots; arepas should stay Venezuelan/arepa-related and never
+   * drift into unrelated Mexican/American venues.
+   *
+   * @return array<int,string>
+   *   Normalized preference tokens.
+   */
+  private function expandedPreferenceTokens(string $token): array {
+    $aliases = [
+      'arepa' => ['arepa', 'arepas', 'arepita', 'arepitas', 'venezuelan', 'venezolana'],
+      'arepas' => ['arepa', 'arepas', 'arepita', 'arepitas', 'venezuelan', 'venezolana'],
+      'arepita' => ['arepa', 'arepas', 'arepita', 'arepitas', 'venezuelan', 'venezolana'],
+      'arepitas' => ['arepa', 'arepas', 'arepita', 'arepitas', 'venezuelan', 'venezolana'],
+      'venezuelan' => ['venezuelan', 'venezolana', 'arepa', 'arepas'],
+      'venezolana' => ['venezuelan', 'venezolana', 'arepa', 'arepas'],
+      'wine' => ['wine', 'wines', 'winery'],
+      'wines' => ['wine', 'wines', 'winery'],
+      'winery' => ['wine', 'wines', 'winery'],
+    ];
+
+    return $aliases[$token] ?? [$token];
   }
 
   /**

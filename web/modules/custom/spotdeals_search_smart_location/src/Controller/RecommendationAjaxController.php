@@ -77,13 +77,15 @@ final class RecommendationAjaxController extends ControllerBase {
     }
 
     $excludedVenueNids = \_spotdeals_search_smart_location_get_recommendation_exclusions();
+    $excludedDealNids = \_spotdeals_search_smart_location_get_recommendation_deal_exclusions();
     $recommendedDealNids = $this->recommendationService->recommendDealNids(
       (float) $originLat,
       (float) $originLon,
       $effectiveRecommendationCuisines,
-      25.0,
+      40.25,
       [],
       $excludedVenueNids,
+      $excludedDealNids,
     );
 
     \_spotdeals_search_smart_location_store_current_recommendation($recommendedDealNids);
@@ -101,11 +103,12 @@ final class RecommendationAjaxController extends ControllerBase {
     $viewHtml = $this->renderer->renderRoot($viewBuild);
 
     \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION recommendation AJAX response built: action="@action" deal_nid="@deal" excluded="@excluded" recommended="@recommended"',
+      'SMART LOCATION recommendation AJAX response built: action="@action" deal_nid="@deal" excluded_venues="@excluded" excluded_deals="@excluded_deals" recommended="@recommended"',
       [
         '@action' => $recommendationAction,
         '@deal' => (string) $directRecommendationDealNid,
         '@excluded' => json_encode($excludedVenueNids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+        '@excluded_deals' => json_encode($excludedDealNids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
         '@recommended' => json_encode($recommendedDealNids, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
       ]
     );
