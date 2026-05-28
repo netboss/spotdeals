@@ -1,0 +1,20 @@
+uuid: 323c1db5-c27a-47a7-8e5c-7a0371ad4dac
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.deal_category
+  module:
+    - metatag
+id: taxonomy_term.deal_category.metatag
+field_name: metatag
+entity_type: taxonomy_term
+bundle: deal_category
+label: 'Metatags (Hidden field for JSON support)'
+description: 'The computed meta tags for the entity.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: metatag_computed

@@ -1,0 +1,18 @@
+uuid: 4d33031a-f5d0-4004-9376-d6518d89866b
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.venue_type
+id: taxonomy_term.venue_type.publish_on
+field_name: publish_on
+entity_type: taxonomy_term
+bundle: venue_type
+label: 'Publish on'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp

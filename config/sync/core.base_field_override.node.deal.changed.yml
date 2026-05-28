@@ -1,0 +1,18 @@
+uuid: f7e2f276-91f7-49fd-b468-8067d0a1c287
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.deal
+id: node.deal.changed
+field_name: changed
+entity_type: node
+bundle: deal
+label: Changed
+description: 'The time that the node was last edited.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: changed

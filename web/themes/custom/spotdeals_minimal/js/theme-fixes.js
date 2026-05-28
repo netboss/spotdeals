@@ -12,6 +12,28 @@
     return url.searchParams.has('help_me_choose') && url.searchParams.get('help_me_choose') !== '0';
   }
 
+  function getCurrentLanguageId() {
+    const htmlLang = (document.documentElement.getAttribute('lang') || '').toLowerCase();
+
+    if (htmlLang) {
+      return htmlLang.split('-')[0];
+    }
+
+    if (typeof drupalSettings !== 'undefined' && drupalSettings.path && drupalSettings.path.currentLanguage) {
+      return drupalSettings.path.currentLanguage;
+    }
+
+    return 'en';
+  }
+
+  function getResultSummaryText(start, end, total) {
+    if (getCurrentLanguageId() === 'es') {
+      return 'Mostrando ' + start + ' - ' + end + ' de ' + total;
+    }
+
+    return 'Displaying ' + start + ' - ' + end + ' of ' + total;
+  }
+
   function getRenderedRowCount(resultsWrapper) {
     const rows = resultsWrapper.querySelectorAll('.views-row');
 
@@ -35,7 +57,7 @@
       return null;
     }
 
-    const summaryPattern = /Displaying\s+\d+\s*-\s*\d+\s+of\s+\d+/i;
+    const summaryPattern = /(?:Displaying\s+\d+\s*-\s*\d+\s+of\s+\d+|Mostrando\s+\d+\s*-\s*\d+\s+de\s+\d+)/i;
 
     if (summaryPattern.test(header.textContent || '')) {
       return header;
@@ -59,7 +81,7 @@
       return;
     }
 
-    const summaryText = 'Displaying 1 - 1 of 1';
+    const summaryText = getResultSummaryText(1, 1, 1);
     const summaryElement = findSummaryElement(resultsWrapper);
 
     if (summaryElement) {
@@ -252,6 +274,26 @@
     return (value || '').replace(/\s+/g, ' ').trim();
   }
 
+
+  function translateFrontendLabel(label) {
+    const spanishLabels = {
+      'View nearby picks': 'Ver opciones cercanas',
+      'View popular searches': 'Ver búsquedas populares',
+      'View trending deals': 'Ver ofertas populares',
+      'View more deals': 'Ver más ofertas'
+    };
+
+    if (getCurrentLanguageId() === 'es' && spanishLabels[label]) {
+      return spanishLabels[label];
+    }
+
+    if (Drupal.t) {
+      return Drupal.t(label);
+    }
+
+    return label;
+  }
+
   function isDealsDiscoveryPage() {
     return document.body.classList.contains('path-frontpage') || document.body.classList.contains('path-deals');
   }
@@ -266,14 +308,14 @@
     const titleText = normalizeWhitespace(title ? title.textContent : '');
 
     if (block.classList.contains('block-spotdeals-search-insights') || /popular searches/i.test(titleText)) {
-      return 'View popular searches';
+      return translateFrontendLabel('View popular searches');
     }
 
     if (block.classList.contains('block-spotdeals-search-smart-location-trending-near-you') || /trending deals|trending near you/i.test(titleText)) {
-      return 'View trending deals';
+      return translateFrontendLabel('View trending deals');
     }
 
-    return titleText ? 'View ' + titleText.toLowerCase() : 'View more deals';
+    return titleText ? titleText : translateFrontendLabel('View more deals');
   }
 
   function enableMobileDiscoveryAccordion(block) {
@@ -768,6 +810,12 @@
 
   function attachHomepageFeedMobileAccordion(context) {
     once('spotdeals-home-feed-mobile-accordion', '.spotdeals-home-feed__mobile-toggle', context).forEach(function (toggle) {
+      const label = toggle.querySelector('span:first-child');
+
+      if (label) {
+        label.textContent = translateFrontendLabel('View nearby picks');
+      }
+
       toggle.addEventListener('click', function () {
         const feed = toggle.closest('.spotdeals-home-feed');
 

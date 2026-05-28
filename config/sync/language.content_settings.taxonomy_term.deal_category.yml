@@ -1,0 +1,18 @@
+uuid: a56b58eb-b70e-40a0-8cb4-8258185d3997
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.deal_category
+  module:
+    - content_translation
+third_party_settings:
+  content_translation:
+    enabled: false
+    bundle_settings:
+      untranslatable_fields_hide: '0'
+id: taxonomy_term.deal_category
+target_entity_type_id: taxonomy_term
+target_bundle: deal_category
+default_langcode: site_default
+language_alterable: false

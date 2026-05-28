@@ -1,0 +1,18 @@
+uuid: c7623895-c1af-4f83-954e-e194be811e67
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.venue
+  module:
+    - content_translation
+third_party_settings:
+  content_translation:
+    enabled: false
+    bundle_settings:
+      untranslatable_fields_hide: '0'
+id: node.venue
+target_entity_type_id: node
+target_bundle: venue
+default_langcode: site_default
+language_alterable: false

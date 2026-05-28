@@ -1,0 +1,18 @@
+uuid: 2414c719-fc41-4b3f-aad3-511e3a899f1f
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.venue_type
+id: taxonomy_term.venue_type.changed
+field_name: changed
+entity_type: taxonomy_term
+bundle: venue_type
+label: Changed
+description: 'The time that the term was last edited.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: changed

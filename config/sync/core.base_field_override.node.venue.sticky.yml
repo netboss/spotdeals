@@ -1,0 +1,22 @@
+uuid: 2b766f3c-0718-476a-bb50-6bc281126a5d
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.venue
+id: node.venue.sticky
+field_name: sticky
+entity_type: node
+bundle: venue
+label: 'Sticky at top of lists'
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

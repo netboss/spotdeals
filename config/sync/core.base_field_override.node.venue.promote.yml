@@ -1,0 +1,22 @@
+uuid: e4a3e620-037d-4b42-8c14-13187f18e40f
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.venue
+id: node.venue.promote
+field_name: promote
+entity_type: node
+bundle: venue
+label: 'Promoted to front page'
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

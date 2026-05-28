@@ -1,0 +1,18 @@
+uuid: 6a462711-50ff-467e-9814-437ae4d8b8f1
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.deal_category
+id: taxonomy_term.deal_category.publish_on
+field_name: publish_on
+entity_type: taxonomy_term
+bundle: deal_category
+label: 'Publish on'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp

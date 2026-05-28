@@ -1,0 +1,20 @@
+uuid: 395bbaf0-2ae8-43b0-9759-6ae12ba920d3
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.venue_type
+  module:
+    - path
+id: taxonomy_term.venue_type.path
+field_name: path
+entity_type: taxonomy_term
+bundle: venue_type
+label: 'URL alias'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: path

@@ -1,0 +1,20 @@
+uuid: e946147e-b4f8-4695-a74a-ca05d56dda5b
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.cuisine
+  module:
+    - metatag
+id: taxonomy_term.cuisine.metatag
+field_name: metatag
+entity_type: taxonomy_term
+bundle: cuisine
+label: 'Metatags (Hidden field for JSON support)'
+description: 'The computed meta tags for the entity.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: metatag_computed

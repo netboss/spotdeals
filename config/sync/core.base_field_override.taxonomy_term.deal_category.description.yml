@@ -1,0 +1,21 @@
+uuid: 360dc59c-bd49-4d7f-bb4e-80c34312de70
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.deal_category
+  module:
+    - text
+id: taxonomy_term.deal_category.description
+field_name: description
+entity_type: taxonomy_term
+bundle: deal_category
+label: Description
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

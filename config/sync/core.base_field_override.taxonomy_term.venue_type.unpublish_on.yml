@@ -1,0 +1,18 @@
+uuid: 9d933f6a-de98-4507-a940-71e304172b20
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.venue_type
+id: taxonomy_term.venue_type.unpublish_on
+field_name: unpublish_on
+entity_type: taxonomy_term
+bundle: venue_type
+label: 'Unpublish on'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp

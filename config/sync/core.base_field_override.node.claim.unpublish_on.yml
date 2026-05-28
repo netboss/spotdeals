@@ -1,0 +1,18 @@
+uuid: 8b95bc41-7f62-48cb-b66d-45cdbf6e73bc
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.claim
+id: node.claim.unpublish_on
+field_name: unpublish_on
+entity_type: node
+bundle: claim
+label: 'Unpublish on'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp

@@ -1,0 +1,18 @@
+uuid: 18970f4d-72bf-4c6a-bf75-3405ccc3de8f
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.deal
+id: node.deal.created
+field_name: created
+entity_type: node
+bundle: deal
+label: 'Authored on'
+description: 'The date and time that the content was created.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: created

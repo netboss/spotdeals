@@ -1,0 +1,18 @@
+uuid: 52cdc835-87a6-4026-8868-a5469732d40b
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.deal_category
+id: taxonomy_term.deal_category.name
+field_name: name
+entity_type: taxonomy_term
+bundle: deal_category
+label: Name
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

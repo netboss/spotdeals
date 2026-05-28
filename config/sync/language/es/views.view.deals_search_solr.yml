@@ -1,0 +1,34 @@
+display:
+  default:
+    display_options:
+      empty:
+        area:
+          content:
+            value: '<p>No encontramos resultados para tu búsqueda. Intenta con otra palabra clave.</p>'
+            format: basic_html
+      title: 'Buscador de ofertas'
+      exposed_form:
+        options:
+          submit_button: 'Encuentra ofertas'
+          reset_button_label: Resetea
+          exposed_sorts_label: 'Sortear por'
+          text_input_required: "<h4>Busca por comida o ubicación — o combínalos</h4>\r\n<p>Prueba:</p>\r\n<ul>\r\n<li>tacos</li>\r\n<li>happy hour</li>\r\n<li>almuerzo port orange</li>\r\n<li>mexicana daytona beach</li>\r\n<li>bbq orlando</li>\r\n<li>arepas tampa</li>\r\n<li>cubana miami</li>\r\n</ul>\r\n\r\n<h4>¿No estás seguro de lo que quieres?</h4>\r\n<p>Selecciona <strong>¿No sabes qué comer? ¡Elegimos por ti!</strong> y (opcionalmente) ingresa algunos tipos de comida (por ejemplo: mexican thai bbq) — encontraremos algo cerca de ti.</p>"
+      header:
+        result:
+          content: 'Mostrando @start - @end de @total'
+  page_1:
+    display_options:
+      filters:
+        search_api_fulltext:
+          expose:
+            label: 'Encuentra ofertas cerca de ti'
+      pager:
+        options:
+          tags:
+            next: 'Próximo ›'
+            previous: '‹ Previo'
+          expose:
+            items_per_page_label: 'Resultados por página'
+            items_per_page_options_all_label: '- Todos -'
+          views_infinite_scroll:
+            button_text: 'Cargar más'

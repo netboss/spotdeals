@@ -1,0 +1,18 @@
+uuid: ba4408f7-d7d8-49d1-b77b-078c3685f383
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.deal
+id: node.deal.unpublish_on
+field_name: unpublish_on
+entity_type: node
+bundle: deal
+label: 'Unpublish on'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp
