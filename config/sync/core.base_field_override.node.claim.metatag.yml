@@ -1,0 +1,20 @@
+uuid: f3180eea-4a4b-4294-880d-802513ea17ae
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.claim
+  module:
+    - metatag
+id: node.claim.metatag
+field_name: metatag
+entity_type: node
+bundle: claim
+label: 'Metatags (Hidden field for JSON support)'
+description: 'The computed meta tags for the entity.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: metatag_computed

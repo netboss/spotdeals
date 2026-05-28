@@ -1,0 +1,22 @@
+uuid: 1b3c9771-ce54-43a5-80c4-6b5ee5f71c17
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.venue
+id: node.venue.status
+field_name: status
+entity_type: node
+bundle: venue
+label: Published
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: 1
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

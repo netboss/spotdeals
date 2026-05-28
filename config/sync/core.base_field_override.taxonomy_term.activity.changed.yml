@@ -1,0 +1,18 @@
+uuid: 4f4676cf-3cac-414f-8981-c4531cbc8b70
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.activity
+id: taxonomy_term.activity.changed
+field_name: changed
+entity_type: taxonomy_term
+bundle: activity
+label: Changed
+description: 'The time that the term was last edited.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: changed

@@ -1,0 +1,20 @@
+uuid: 31bf043f-fe43-4892-a55d-bc2ec4e27e5d
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.deal_category
+  module:
+    - path
+id: taxonomy_term.deal_category.path
+field_name: path
+entity_type: taxonomy_term
+bundle: deal_category
+label: 'URL alias'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: path

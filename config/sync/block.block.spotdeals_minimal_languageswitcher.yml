@@ -1,0 +1,20 @@
+uuid: f74f9bec-0998-44d7-929c-de520ae31a8e
+langcode: en
+status: true
+dependencies:
+  module:
+    - language
+  theme:
+    - spotdeals_minimal
+id: spotdeals_minimal_languageswitcher
+theme: spotdeals_minimal
+region: primary_menu
+weight: -8
+provider: null
+plugin: 'language_block:language_interface'
+settings:
+  id: 'language_block:language_interface'
+  label: Language
+  label_display: '0'
+  provider: language
+visibility: {  }

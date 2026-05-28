@@ -1,0 +1,22 @@
+uuid: 24fcb3d2-b585-40f9-bb41-a865d0558497
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.deal
+id: node.deal.sticky
+field_name: sticky
+entity_type: node
+bundle: deal
+label: 'Sticky at top of lists'
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

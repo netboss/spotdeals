@@ -1,0 +1,22 @@
+uuid: d2753aa1-9581-4473-aac2-2c6795cbe679
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.deal_category
+id: taxonomy_term.deal_category.status
+field_name: status
+entity_type: taxonomy_term
+bundle: deal_category
+label: Published
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: 1
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

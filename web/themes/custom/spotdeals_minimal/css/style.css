@@ -3394,3 +3394,152 @@ h1.page-title {
     margin: 0;
   }
 }
+
+/* Spanish Phase 1: localize CSS-generated filter heading.
+ * This heading is rendered with CSS content, so it cannot pass through Drupal's
+ * interface translation system. Keep this scoped to the desktop Deals Finder
+ * layouts where the pseudo-heading is displayed.
+ */
+@media (min-width: 1024px) {
+  html[lang="es"] .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before,
+  html[lang|="es"] .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before,
+  html[lang="es"] .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before,
+  html[lang|="es"] .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before,
+  html[lang="es"] .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before,
+  html[lang|="es"] .path-deals .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before {
+    content: "Filtros";
+  }
+}
+
+/* =========================================
+   Language Switcher Header Polish
+   ========================================= */
+.block-language {
+  margin: 0;
+  padding: 0;
+}
+
+.block-language ul,
+.block-language .links {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.block-language li {
+  margin: 0;
+  padding: 0;
+}
+
+.block-language li::marker {
+  content: "";
+}
+
+.block-language a,
+.block-language .links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2rem;
+  min-height: 2rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: #4b5563;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.block-language a:hover,
+.block-language a:focus {
+  background: #f3f4f6;
+  border-color: #d7dde7;
+  color: #111827;
+  text-decoration: none;
+}
+
+.block-language .is-active a,
+.block-language a.is-active,
+.block-language .links .is-active a {
+  background: var(--spotdeals-accent);
+  border-color: var(--spotdeals-accent);
+  color: #fff;
+}
+
+/* The language switcher sits between navigation groups. Do not render a
+ * leading separator because it looks orphaned in the desktop header.
+ * Keep the internal language divider on desktop only.
+ */
+.block-language ul::before,
+.block-language .links::before {
+  content: none;
+}
+
+@media (min-width: 768px) {
+  .block-language li + li::before {
+    content: "|";
+    display: inline-flex;
+    align-items: center;
+    margin: 0 0.15rem 0 0.05rem;
+    color: #c7ced9;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+}
+
+@media (max-width: 767px) {
+  .block-language li + li::before {
+    content: none;
+  }
+
+  .block-language ul,
+  .block-language .links {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+
+  .block-language a,
+  .block-language .links a {
+    justify-content: flex-start;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #4b5563;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1.25;
+  }
+
+  .block-language a:hover,
+  .block-language a:focus {
+    background: transparent;
+    border-color: transparent;
+    color: var(--spotdeals-accent-dark);
+  }
+
+  .block-language .is-active a,
+  .block-language a.is-active,
+  .block-language .links .is-active a {
+    background: transparent;
+    border-color: transparent;
+    color: var(--spotdeals-accent-dark);
+  }
+}

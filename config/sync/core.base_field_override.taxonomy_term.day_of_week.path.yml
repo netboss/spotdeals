@@ -1,0 +1,20 @@
+uuid: e98a4e28-f049-4312-ba20-5296ec05715b
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.day_of_week
+  module:
+    - path
+id: taxonomy_term.day_of_week.path
+field_name: path
+entity_type: taxonomy_term
+bundle: day_of_week
+label: 'URL alias'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: path

@@ -1,0 +1,18 @@
+uuid: 53825ee8-fa35-4194-9e43-f4f3f6bf0afd
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.claim
+id: node.claim.changed
+field_name: changed
+entity_type: node
+bundle: claim
+label: Changed
+description: 'The time that the node was last edited.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: changed

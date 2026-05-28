@@ -133,7 +133,12 @@ final class TrendingNearYouBlock extends BlockBase implements ContainerFactoryPl
 
     return [
       'title' => [
-        '#markup' => '<h2 class="block-title">' . $blockTitle . '</h2>',
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#attributes' => [
+          'class' => ['block-title'],
+        ],
+        '#value' => $blockTitle,
       ],
       'items' => [
         '#theme' => 'item_list',

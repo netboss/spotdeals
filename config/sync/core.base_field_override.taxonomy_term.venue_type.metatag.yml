@@ -1,0 +1,20 @@
+uuid: 9bdec4a5-0911-4873-b801-eb6708b8e54c
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.venue_type
+  module:
+    - metatag
+id: taxonomy_term.venue_type.metatag
+field_name: metatag
+entity_type: taxonomy_term
+bundle: venue_type
+label: 'Metatags (Hidden field for JSON support)'
+description: 'The computed meta tags for the entity.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: metatag_computed

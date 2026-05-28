@@ -1,6 +1,48 @@
 (function (Drupal, once) {
   'use strict';
 
+  const SPOTDEALS_ES_TRANSLATIONS = {
+    'Find deal': 'Buscar oferta',
+    'Find deals': 'Buscar ofertas',
+    'Try again': 'Probar otra vez',
+    'Reset': 'Restablecer',
+    'Recommendation actions': 'Acciones de recomendación',
+    'Finding another nearby pick…': 'Buscando otra opción cercana…',
+    'No nearby pick could be found right now. Please try again.': 'No se pudo encontrar una opción cercana ahora mismo. Inténtalo otra vez.',
+    'Sit back — we’ll pick a great deal nearby.': 'Relájate — encontraremos una gran oferta cerca de ti.'
+  };
+
+  function isSpanishPage() {
+    const htmlLang = document.documentElement.getAttribute('lang') || '';
+    return /^es(?:-|$)/i.test(htmlLang);
+  }
+
+  function applyTextArgs(text, args) {
+    if (!args) {
+      return text;
+    }
+
+    return Object.keys(args).reduce(function (value, key) {
+      return value.replace(key, args[key]);
+    }, text);
+  }
+
+  function t(text, args) {
+    if (Drupal && typeof Drupal.t === 'function') {
+      const translated = Drupal.t(text, args || {});
+
+      if (translated !== text) {
+        return translated;
+      }
+    }
+
+    if (isSpanishPage() && SPOTDEALS_ES_TRANSLATIONS[text]) {
+      return applyTextArgs(SPOTDEALS_ES_TRANSLATIONS[text], args);
+    }
+
+    return applyTextArgs(text, args);
+  }
+
   const FRESH_SEARCH_PARAMS = [
     'search_raw',
     'search_clean',
@@ -408,7 +450,7 @@
       searchInput.blur();
 
       if (helper) {
-        helper.textContent = 'Sit back — we’ll pick a great deal nearby.';
+        helper.textContent = t('Sit back — we’ll pick a great deal nearby.');
         helper.style.display = '';
       }
     }
@@ -436,14 +478,14 @@
     }
 
     const recommendationMode = helpMeChooseEnabled(form);
-    let label = 'Find deals';
+    let label = t('Find deals');
 
     if (recommendationMode) {
       if (isRecommendationActive(form)) {
-        label = 'Try again';
+        label = t('Try again');
       }
       else {
-        label = 'Find deal';
+        label = t('Find deal');
       }
     }
 
@@ -527,14 +569,14 @@
     if (!controls) {
       controls = document.createElement('div');
       controls.className = BOTTOM_CONTROLS_CLASS;
-      controls.setAttribute('aria-label', 'Recommendation actions');
+      controls.setAttribute('aria-label', t('Recommendation actions'));
 
-      const retryButton = buildRecommendationBottomButton('Try again', 'primary');
+      const retryButton = buildRecommendationBottomButton(t('Try again'), 'primary');
       retryButton.addEventListener('click', function () {
         submitRecommendationRetryFromBottom(form);
       });
 
-      const resetButton = buildRecommendationBottomButton('Reset', 'secondary');
+      const resetButton = buildRecommendationBottomButton(t('Reset'), 'secondary');
       resetButton.addEventListener('click', function () {
         resetRecommendationFromBottom(form);
       });
@@ -593,7 +635,7 @@
       + '<div class="spotdeals-recommendation-note spotdeals-recommendation-note--loading" aria-live="polite">'
       + '  <div class="spotdeals-recommendation-note__icon" aria-hidden="true"></div>'
       + '  <div class="spotdeals-recommendation-note__content">'
-      + '    <span class="spotdeals-recommendation-note__line"><strong>Finding another nearby pick…</strong></span>'
+      + '    <span class="spotdeals-recommendation-note__line"><strong>' + t('Finding another nearby pick…') + '</strong></span>'
       + '  </div>'
       + '</div>';
   }
@@ -719,7 +761,7 @@
       else {
         resultsWrapper.innerHTML = ''
           + '<div class="view-empty" data-result-count="0">'
-          + '  <p>No nearby pick could be found right now. Please try again.</p>'
+          + '  <p>' + t('No nearby pick could be found right now. Please try again.') + '</p>'
           + '</div>';
       }
     }

@@ -1,7 +1,13 @@
 <div class="spotdeals-finder__results">
   {% if data.is_recommendation_mode %}
+    {% set start = data.result_count > 0 ? 1 : 0 %}
+
     <div class="view-header">
-      Displaying {{ data.result_count > 0 ? 1 : 0 }} - {{ data.result_count }} of {{ data.result_count }}
+      {% if language.getId() == 'es' %}
+        Mostrando {{ start }} - {{ data.result_count }} de {{ data.result_count }}
+      {% else %}
+        Displaying {{ start }} - {{ data.result_count }} of {{ data.result_count }}
+      {% endif %}
     </div>
   {% elseif data.header %}
     <div class="view-header">
@@ -35,4 +41,3 @@
     </div>
   {% endif %}
 </div>
-

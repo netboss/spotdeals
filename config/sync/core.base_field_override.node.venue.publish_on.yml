@@ -1,0 +1,18 @@
+uuid: ea98a96f-c4bb-4837-8478-82bd486ea015
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.venue
+id: node.venue.publish_on
+field_name: publish_on
+entity_type: node
+bundle: venue
+label: 'Publish on'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp

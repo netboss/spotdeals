@@ -61,8 +61,14 @@
 
   <section class="spotdeals-finder__results">
     {% if header %}
+      {% set result_count = spotdeals_direct_recommendation ? 1 : spotdeals_result_count|default(0) %}
+      {% set result_start = result_count > 0 ? 1 : 0 %}
       <div class="view-header">
-        {{ header }}
+        {{ 'Displaying @start - @end of @total'|t({
+          '@start': result_start,
+          '@end': result_count,
+          '@total': result_count
+        }) }}
       </div>
     {% endif %}
 

@@ -1,0 +1,18 @@
+uuid: 1adcaf64-9107-48a3-b8ae-9b2ad56070ec
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.deal_category
+id: taxonomy_term.deal_category.unpublish_on
+field_name: unpublish_on
+entity_type: taxonomy_term
+bundle: deal_category
+label: 'Unpublish on'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp

@@ -1,0 +1,18 @@
+uuid: 96a212cd-ca5f-4a1a-a48f-051cf581527c
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.venue
+id: node.venue.unpublish_on
+field_name: unpublish_on
+entity_type: node
+bundle: venue
+label: 'Unpublish on'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp

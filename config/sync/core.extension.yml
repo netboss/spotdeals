@@ -16,6 +16,7 @@ module:
   comment: 0
   config: 0
   config_split: 0
+  config_translation: 0
   contact: 0
   contextual: 0
   ctools: 0
@@ -38,6 +39,7 @@ module:
   image: 0
   language: 0
   link: 0
+  locale: 0
   media: 0
   media_library: 0
   menu_link_content: 0
@@ -87,6 +89,7 @@ module:
   webform: 0
   webform_ui: 0
   pathauto: 1
+  content_translation: 10
   views: 10
   paragraphs: 11
   standard: 1000

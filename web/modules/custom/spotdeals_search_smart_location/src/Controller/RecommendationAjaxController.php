@@ -41,7 +41,7 @@ final class RecommendationAjaxController extends ControllerBase {
     $values = $request->request->all();
 
     if (!\_spotdeals_search_smart_location_is_recommendation_mode($values)) {
-      return $this->buildErrorResponse('Recommendation mode is not active.', 400);
+      return $this->buildErrorResponse($this->t('Recommendation mode is not active.'), 400);
     }
 
     $originMode = (string) ($values['search_origin_mode'] ?? '');
@@ -49,7 +49,7 @@ final class RecommendationAjaxController extends ControllerBase {
     $originLon = $values['origin_lon'] ?? NULL;
 
     if ($originMode !== 'browser' || !is_numeric($originLat) || !is_numeric($originLon)) {
-      return $this->buildErrorResponse('Browser location is required for recommendation mode.', 400);
+      return $this->buildErrorResponse($this->t('Browser location is required for recommendation mode.'), 400);
     }
 
     $rawQuery = trim((string) ($values['search_raw'] ?? $values['search_deals'] ?? $values['search_api_fulltext'] ?? ''));
@@ -185,10 +185,10 @@ final class RecommendationAjaxController extends ControllerBase {
   /**
    * Builds a JSON error response with no-cache headers.
    */
-  private function buildErrorResponse(string $message, int $statusCode): JsonResponse {
+  private function buildErrorResponse(\Stringable|string $message, int $statusCode): JsonResponse {
     $response = new JsonResponse([
       'success' => FALSE,
-      'message' => $message,
+      'message' => (string) $message,
     ], $statusCode);
     $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
 

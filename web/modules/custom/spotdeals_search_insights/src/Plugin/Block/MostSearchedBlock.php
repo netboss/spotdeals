@@ -99,7 +99,12 @@ final class MostSearchedBlock extends BlockBase implements ContainerFactoryPlugi
 
     return [
       'title' => [
-        '#markup' => '<h2 class="block-title">' . $this->t('Popular Searches') . '</h2>',
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#attributes' => [
+          'class' => ['block-title'],
+        ],
+        '#value' => $this->t('Popular Searches'),
       ],
       'items' => [
         '#theme' => 'item_list',

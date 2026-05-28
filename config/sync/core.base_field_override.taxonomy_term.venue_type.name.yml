@@ -1,0 +1,18 @@
+uuid: fc84fe9f-9775-44cd-b481-2b06d590a5e7
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.venue_type
+id: taxonomy_term.venue_type.name
+field_name: name
+entity_type: taxonomy_term
+bundle: venue_type
+label: Name
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

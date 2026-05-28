@@ -85,8 +85,8 @@ final class DealVoteRenderBuilder {
       (int) $deal->id(),
       $venueNid,
       $voteState,
-      'Worth it?',
-      'Worth it?',
+      (string) t('Worth it?'),
+      (string) t('Worth it?'),
     );
 
     if (!$compact) {
@@ -95,8 +95,8 @@ final class DealVoteRenderBuilder {
         (int) $deal->id(),
         $venueNid,
         $voteState,
-        'Go back?',
-        'Go back?',
+        (string) t('Go back?'),
+        (string) t('Go back?'),
       );
     }
 

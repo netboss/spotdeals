@@ -1,0 +1,18 @@
+uuid: fb270c72-69b7-4ed1-9f09-fbf50aebb853
+langcode: en
+status: true
+dependencies:
+  config:
+    - media.type.video
+id: media.video.unpublish_on
+field_name: unpublish_on
+entity_type: media
+bundle: video
+label: 'Unpublish on'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp

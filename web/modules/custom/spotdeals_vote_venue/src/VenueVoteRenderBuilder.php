@@ -90,8 +90,8 @@ final class VenueVoteRenderBuilder {
       'worth_it',
       $venueNid,
       $voteState,
-      'Worth it?',
-      'Worth it?'
+      (string) t('Worth it?'),
+      (string) t('Worth it?')
     );
 
     if (!$compact) {
@@ -99,8 +99,8 @@ final class VenueVoteRenderBuilder {
         'would_go_again',
         $venueNid,
         $voteState,
-        'Go back?',
-        'Go back?'
+        (string) t('Go back?'),
+        (string) t('Go back?')
       );
     }
 

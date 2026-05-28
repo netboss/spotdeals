@@ -379,6 +379,99 @@ function spotdeals_minimal_form_alter(array &$form, \Drupal\Core\Form\FormStateI
 }
 
 /**
+ * Implements hook_preprocess_menu().
+ */
+function spotdeals_minimal_preprocess_menu(array &$variables): void {
+  if (empty($variables['items']) || !is_array($variables['items'])) {
+    return;
+  }
+
+  _spotdeals_minimal_translate_menu_items($variables['items']);
+}
+
+/**
+ * Implements hook_preprocess_block().
+ */
+function spotdeals_minimal_preprocess_block(array &$variables): void {
+  foreach (['label', 'configuration.label'] as $key) {
+    $value = $key === 'configuration.label'
+      ? ($variables['configuration']['label'] ?? NULL)
+      : ($variables[$key] ?? NULL);
+
+    if (!is_string($value)) {
+      continue;
+    }
+
+    $translation = _spotdeals_minimal_translate_static_frontend_string($value);
+    if ($translation === NULL) {
+      continue;
+    }
+
+    if ($key === 'configuration.label') {
+      $variables['configuration']['label'] = $translation;
+    }
+    else {
+      $variables[$key] = $translation;
+    }
+  }
+}
+
+/**
+ * Applies small frontend translations to menu link titles.
+ */
+function _spotdeals_minimal_translate_menu_items(array &$items): void {
+  foreach ($items as &$item) {
+    if (isset($item['title']) && is_string($item['title'])) {
+      $translation = _spotdeals_minimal_translate_static_frontend_string($item['title']);
+      if ($translation !== NULL) {
+        $item['title'] = $translation;
+      }
+    }
+
+    if (!empty($item['below']) && is_array($item['below'])) {
+      _spotdeals_minimal_translate_menu_items($item['below']);
+    }
+  }
+}
+
+/**
+ * Translates small frontend labels that are difficult to manage through the UI.
+ */
+function _spotdeals_minimal_translate_static_frontend_string(string $label): mixed {
+  $normalized_label = trim($label);
+
+  if ($normalized_label === '') {
+    return NULL;
+  }
+
+  $spanish_labels = [
+    'Home' => 'Inicio',
+    'About Us' => 'Sobre nosotros',
+    'Privacy Policy' => 'Política de privacidad',
+    'Keep Exploring' => 'Sigue explorando',
+  ];
+
+  $translatable_labels = [
+    'Home',
+    'About Us',
+    'Privacy Policy',
+    'Keep Exploring',
+  ];
+
+  $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+
+  if ($langcode === 'es' && isset($spanish_labels[$normalized_label])) {
+    return $spanish_labels[$normalized_label];
+  }
+
+  if (in_array($normalized_label, $translatable_labels, TRUE)) {
+    return t($normalized_label);
+  }
+
+  return NULL;
+}
+
+/**
  * Implements hook_theme().
  */
 function spotdeals_minimal_theme() {

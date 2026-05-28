@@ -1,0 +1,21 @@
+uuid: 7fa702e7-50d1-475e-b52f-b44c18e9aab8
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.neighborhood
+  module:
+    - text
+id: taxonomy_term.neighborhood.description
+field_name: description
+entity_type: taxonomy_term
+bundle: neighborhood
+label: Description
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats: {  }
+field_type: text_long

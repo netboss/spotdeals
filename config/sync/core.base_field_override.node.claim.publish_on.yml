@@ -1,0 +1,18 @@
+uuid: 5456d481-f704-465a-96c7-d5695548d11b
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.claim
+id: node.claim.publish_on
+field_name: publish_on
+entity_type: node
+bundle: claim
+label: 'Publish on'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: timestamp

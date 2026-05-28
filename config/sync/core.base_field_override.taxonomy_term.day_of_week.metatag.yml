@@ -1,0 +1,20 @@
+uuid: f4a68f17-2c06-48d1-b7ea-d8d60b1c842b
+langcode: en
+status: true
+dependencies:
+  config:
+    - taxonomy.vocabulary.day_of_week
+  module:
+    - metatag
+id: taxonomy_term.day_of_week.metatag
+field_name: metatag
+entity_type: taxonomy_term
+bundle: day_of_week
+label: 'Metatags (Hidden field for JSON support)'
+description: 'The computed meta tags for the entity.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: metatag_computed
