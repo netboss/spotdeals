@@ -612,7 +612,17 @@
   }
 
   function buildRetryAjaxUrl() {
-    return '/spotdeals-search-smart-location/recommendation/ajax';
+    const path = 'spotdeals-search-smart-location/recommendation/ajax';
+
+    if (Drupal && typeof Drupal.url === 'function') {
+      return Drupal.url(path);
+    }
+
+    const settings = window.drupalSettings && window.drupalSettings.path ? window.drupalSettings.path : {};
+    const baseUrl = settings.baseUrl || '/';
+    const pathPrefix = settings.pathPrefix || '';
+
+    return baseUrl.replace(/\/?$/, '/') + pathPrefix + path;
   }
 
   function shouldUseRetryAjax(form) {
