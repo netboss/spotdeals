@@ -309,8 +309,10 @@ final class RecommendationService {
     $baseRadiusKm = max(0.1, $requestedRadiusKm);
     $radii = [
       $baseRadiusKm,
-      80.47,
-      160.93,
+      max($baseRadiusKm, 50.0),
+      max($baseRadiusKm, 80.47),
+      max($baseRadiusKm, 120.0),
+      max($baseRadiusKm, 160.93),
       402.34,
       1000.0,
     ];
