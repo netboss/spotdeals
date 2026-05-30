@@ -440,3 +440,22 @@ Before proposing a feature:
 2. Review attached modules/files when provided.
 3. Prefer enhancing existing systems over replacing them.
 4. Focus on gaps, bottlenecks, and measurable improvements.
+
+---
+
+# Accounts
+
+## Primary SpotDeals Google Account
+
+Email:
+admin@spotdeals.app
+
+Used For:
+- Google Analytics
+- Google Search Console
+- Google Business Profile
+- YouTube
+- Google Ads (future)
+
+IMPORTANT:
+Always verify which Google account is active before troubleshooting Analytics, Search Console, or Business Profile issues.
