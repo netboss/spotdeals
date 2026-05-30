@@ -515,6 +515,10 @@ final class RecommendationService {
     ];
 
     $preferenceMode = !empty($cuisines);
+    if ($preferenceMode && $this->hasBreweryPreference($cuisines) && !$this->venueMatchesBreweryPreference($haystacks)) {
+      return NULL;
+    }
+
     $overlapCount = 0;
     $score = 0;
 
@@ -658,6 +662,80 @@ final class RecommendationService {
     ];
 
     return !in_array($token, $broadCuisineTerms, TRUE);
+  }
+
+  /**
+   * Determines whether the current preference set is brewery-specific.
+   *
+   * This intentionally treats "craft beer" as brewery intent, but avoids using
+   * standalone "beer" as brewery intent because regular restaurants can have
+   * beer or draft beer deals without being breweries.
+   *
+   * @param array<int,string> $tokens
+   *   Normalized preference tokens.
+   */
+  private function hasBreweryPreference(array $tokens): bool {
+    $tokens = array_values(array_unique(array_filter($tokens)));
+    if (empty($tokens)) {
+      return FALSE;
+    }
+
+    $breweryTokens = [
+      'brewery',
+      'breweries',
+      'brewpub',
+      'taproom',
+      'brewing',
+    ];
+
+    if (!empty(array_intersect($breweryTokens, $tokens))) {
+      return TRUE;
+    }
+
+    return in_array('craft', $tokens, TRUE) && in_array('beer', $tokens, TRUE);
+  }
+
+  /**
+   * Checks whether brewery intent is represented by venue-level data.
+   *
+   * Deal text is deliberately excluded here. A restaurant with a draft beer or
+   * happy hour special should not qualify as a brewery unless the venue itself
+   * is tagged/described as one.
+   *
+   * @param array<string,string> $haystacks
+   *   Normalized candidate text grouped by source.
+   */
+  private function venueMatchesBreweryPreference(array $haystacks): bool {
+    $venueText = implode(' ', array_filter([
+      $haystacks['venue_cuisine'] ?? '',
+      $haystacks['venue_title'] ?? '',
+      $haystacks['venue_description'] ?? '',
+      $haystacks['venue_tags'] ?? '',
+    ]));
+
+    if ($venueText === '') {
+      return FALSE;
+    }
+
+    $breweryNeedles = [
+      'brewery',
+      'breweries',
+      'brewing',
+      'brewpub',
+      'brew pub',
+      'taproom',
+      'tap room',
+      'craft beer',
+      'craft brewery',
+    ];
+
+    foreach ($breweryNeedles as $needle) {
+      if (str_contains($venueText, $needle)) {
+        return TRUE;
+      }
+    }
+
+    return FALSE;
   }
 
 

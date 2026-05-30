@@ -42,7 +42,7 @@ function spotdeals_minimal_preprocess_page(array &$variables): void {
       ];
     }
 
-    $variables['spotdeals_home_feed_chips'] = $chips;
+    $variables['spotdeals_home_feed_chips'] = _spotdeals_minimal_add_default_home_feed_chips($chips);
   }
 
   if (!$node instanceof NodeInterface || $node->bundle() !== 'deal') {
@@ -472,6 +472,98 @@ function _spotdeals_minimal_translate_static_frontend_string(string $label): mix
 }
 
 /**
+ * Adds default homepage feed chips that should always be available.
+ *
+ * @param array<int,array{label:string,search:string}> $chips
+ *   Popular-search chips already collected from logged search data.
+ *
+ * @return array<int,array{label:string,search:string}>
+ *   Default chips followed by popular-search chips without duplicate searches.
+ */
+function _spotdeals_minimal_add_default_home_feed_chips(array $chips): array {
+  $default_chips = [
+    [
+      'label' => '🍺 ' . t('Breweries'),
+      'search' => 'brewery breweries brewpub taproom craft beer craft-beer',
+    ],
+    [
+      'label' => '☕ ' . t('Coffee'),
+      'search' => 'coffee cafe café espresso latte cappuccino',
+    ],
+  ];
+
+  $seen_searches = [];
+  $seen_intents = [];
+  $merged_chips = [];
+
+  foreach (array_merge($default_chips, $chips) as $chip) {
+    $search = trim((string) ($chip['search'] ?? ''));
+    if ($search === '') {
+      continue;
+    }
+
+    $search_key = mb_strtolower($search, 'UTF-8');
+    if (isset($seen_searches[$search_key])) {
+      continue;
+    }
+
+    $intent_key = _spotdeals_minimal_home_feed_chip_intent_key($search);
+    if ($intent_key !== NULL && isset($seen_intents[$intent_key])) {
+      continue;
+    }
+
+    $seen_searches[$search_key] = TRUE;
+    if ($intent_key !== NULL) {
+      $seen_intents[$intent_key] = TRUE;
+    }
+
+    $merged_chips[] = [
+      'label' => $chip['label'] ?? mb_convert_case($search, MB_CASE_TITLE, 'UTF-8'),
+      'search' => $search,
+    ];
+  }
+
+  return $merged_chips;
+}
+
+/**
+ * Returns a normalized intent key for homepage chips that should not duplicate.
+ */
+function _spotdeals_minimal_home_feed_chip_intent_key(string $search): ?string {
+  $normalized = mb_strtolower(trim($search), 'UTF-8');
+  $normalized = str_replace('-', ' ', $normalized);
+  $normalized = preg_replace('/\s+/', ' ', $normalized) ?? $normalized;
+
+  $intent_terms = [
+    'brewery' => [
+      'brewery',
+      'breweries',
+      'brewpub',
+      'taproom',
+      'craft beer',
+    ],
+    'coffee' => [
+      'coffee',
+      'cafe',
+      'café',
+      'espresso',
+      'latte',
+      'cappuccino',
+    ],
+  ];
+
+  foreach ($intent_terms as $intent_key => $terms) {
+    foreach ($terms as $term) {
+      if (str_contains($normalized, $term)) {
+        return $intent_key;
+      }
+    }
+  }
+
+  return NULL;
+}
+
+/**
  * Implements hook_theme().
  */
 function spotdeals_minimal_theme() {
@@ -503,8 +595,18 @@ function spotdeals_minimal_home_feed_chip_icon(string $keyword): string {
     'burgers' => '🍔',
     'pizza' => '🍕',
     'coffee' => '☕',
+    'cafe' => '☕',
+    'café' => '☕',
+    'espresso' => '☕',
+    'latte' => '☕',
+    'cappuccino' => '☕',
     'breakfast' => '☕',
     'bakery' => '🥐',
+    'brewery' => '🍺',
+    'breweries' => '🍺',
+    'brewpub' => '🍺',
+    'craft beer' => '🍺',
+    'taproom' => '🍺',
     'beer' => '🍺',
     'wine' => '🍷',
     'drink' => '🍹',
