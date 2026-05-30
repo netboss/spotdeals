@@ -459,3 +459,82 @@ Used For:
 
 IMPORTANT:
 Always verify which Google account is active before troubleshooting Analytics, Search Console, or Business Profile issues.
+
+---
+
+## Security and Update Checks
+
+Periodically check for Drupal, Symfony, Twig, and Composer package security advisories.
+
+### Check Composer Security Advisories
+
+```bash
+cd /var/www/spotdeals
+composer audit
+```
+
+This scans all Composer-managed packages and reports known security vulnerabilities.
+
+### Check Available Drupal Updates
+
+```bash
+drush pm:updates
+```
+
+This lists available updates for Drupal core and contributed modules.
+
+### Notes
+
+* `drush pm:security` is no longer available in modern Drupal/Drush installations.
+* Use `composer audit` as the primary security advisory check.
+* Review security advisories before major deployments.
+* Prioritize updates marked:
+
+  * Critical
+  * Highly Critical
+  * Remote Code Execution (RCE)
+  * SQL Injection
+  * Authentication Bypass
+  * Cross-Site Scripting (XSS)
+
+### Current SpotDeals Status (May 2026)
+
+The latest audit reported vulnerabilities affecting:
+
+* Drupal Core
+* Symfony components
+* Twig
+
+Notable advisories included:
+
+* Critical Drupal Core XSS vulnerabilities
+* Highly Critical Drupal Core SQL Injection vulnerability
+* Critical Twig PHP code injection vulnerability
+* High severity Twig code execution vulnerability
+
+These are resolved by updating Drupal core and its Composer-managed dependencies to the latest supported release.
+
+### Recommended Update Process
+
+```bash
+cd /var/www/spotdeals
+
+composer audit
+drush pm:updates
+```
+
+If updates are required:
+
+```bash
+composer update drupal/core-* --with-all-dependencies
+drush updatedb -y
+drush cr
+```
+
+After updating:
+
+```bash
+composer audit
+```
+
+Verify that no security advisories remain.
