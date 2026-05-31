@@ -269,17 +269,44 @@ function _spotdeals_minimal_build_activity_badges(NodeInterface $deal): array {
  *
  * Selection order:
  * - Deal field_image.
+ * - Drink-focused deal placeholder for happy hour / drink deals.
  * - Referenced venue field_image.
  * - Empty array when neither exists.
  */
 function _spotdeals_minimal_build_deal_card_image(NodeInterface $deal, ?NodeInterface $venue = NULL): array {
-  $image_entity = $deal;
-
-  if (!$deal->hasField('field_image') || $deal->get('field_image')->isEmpty()) {
-    $image_entity = $venue;
+  if ($deal->hasField('field_image') && !$deal->get('field_image')->isEmpty()) {
+    return _spotdeals_minimal_build_deal_card_entity_image($deal);
   }
 
-  if (!$image_entity instanceof NodeInterface || !$image_entity->hasField('field_image') || $image_entity->get('field_image')->isEmpty()) {
+  if (_spotdeals_minimal_deal_has_drink_intent($deal)) {
+    $theme_path = \Drupal::service('extension.list.theme')->getPath('spotdeals_minimal');
+
+    return [
+      '#theme' => 'image',
+      '#uri' => $theme_path . '/images/placeholders/deal-drink-placeholder.webp',
+      '#alt' => t('Assorted happy hour drinks'),
+      '#attributes' => [
+        'loading' => 'lazy',
+        'class' => [
+          'spotdeals-deal-card__image',
+          'spotdeals-deal-card__image--drink-deal',
+        ],
+      ],
+    ];
+  }
+
+  if ($venue instanceof NodeInterface && $venue->hasField('field_image') && !$venue->get('field_image')->isEmpty()) {
+    return _spotdeals_minimal_build_deal_card_entity_image($venue);
+  }
+
+  return [];
+}
+
+/**
+ * Builds a deal-card image render array from a node image field.
+ */
+function _spotdeals_minimal_build_deal_card_entity_image(NodeInterface $image_entity): array {
+  if (!$image_entity->hasField('field_image') || $image_entity->get('field_image')->isEmpty()) {
     return [];
   }
 
@@ -305,6 +332,80 @@ function _spotdeals_minimal_build_deal_card_image(NodeInterface $deal, ?NodeInte
       'class' => ['spotdeals-deal-card__image'],
     ],
   ];
+}
+
+/**
+ * Determines whether a deal should use the drink-focused placeholder image.
+ */
+function _spotdeals_minimal_deal_has_drink_intent(NodeInterface $deal): bool {
+  $parts = [$deal->label()];
+
+  foreach ([
+    'field_price_offer_text',
+    'field_deal_category',
+    'field_day_of_week',
+    'field_start_time',
+  ] as $field_name) {
+    if (!$deal->hasField($field_name) || $deal->get($field_name)->isEmpty()) {
+      continue;
+    }
+
+    foreach ($deal->get($field_name) as $item) {
+      if (!empty($item->entity) && $item->entity instanceof EntityInterface) {
+        $parts[] = $item->entity->label();
+        continue;
+      }
+
+      foreach (['value', 'target_id'] as $property) {
+        if (isset($item->{$property}) && trim((string) $item->{$property}) !== '') {
+          $parts[] = (string) $item->{$property};
+        }
+      }
+    }
+  }
+
+  $haystack = mb_strtolower(implode(' ', $parts), 'UTF-8');
+
+  $drink_terms = [
+    'happy hour',
+    'beer',
+    'beers',
+    'wine',
+    'wines',
+    'cocktail',
+    'cocktails',
+    'margarita',
+    'margaritas',
+    'mojito',
+    'mojitos',
+    'drink',
+    'drinks',
+    'draft',
+    'drafts',
+    'pint',
+    'pints',
+    'brewery',
+    'breweries',
+    'brewpub',
+    'taproom',
+    'bar',
+    'rum',
+    'sake',
+    'sangria',
+    'martini',
+    'martinis',
+    'liquor',
+    'well drink',
+    'well drinks',
+  ];
+
+  foreach ($drink_terms as $term) {
+    if (str_contains($haystack, $term)) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
 }
 
 /**

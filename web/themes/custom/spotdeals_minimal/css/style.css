@@ -3543,3 +3543,9 @@ h1.page-title {
     color: var(--spotdeals-accent-dark);
   }
 }
+
+/* SD-117: Drink-focused placeholder for happy hour and beverage deals. */
+.spotdeals-deal-card__image--drink-deal {
+  background-color: #f8fafc;
+  object-position: center center;
+}
