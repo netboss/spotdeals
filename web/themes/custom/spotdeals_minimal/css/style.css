@@ -3549,3 +3549,9 @@ h1.page-title {
   background-color: #f8fafc;
   object-position: center center;
 }
+
+@media (max-width: 767px) {
+  .breadcrumb.spotdeals-breadcrumb {
+    padding-left: 0.75rem;
+  }
+}

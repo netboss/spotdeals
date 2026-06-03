@@ -43,6 +43,29 @@ final class DealsSeoLandingController extends ControllerBase {
   private const DEAL_CATEGORY_VOCABULARY = 'deal_category';
 
   /**
+   * High-value deal categories to cross-link from SEO landing pages.
+   */
+  private const RELATED_DEAL_CATEGORIES = [
+    'happy-hour' => 'Happy Hour',
+    'lunch-special' => 'Lunch Specials',
+    'daily-special' => 'Daily Special',
+    'beer' => 'Beer',
+    'food-deals' => 'Food Deals',
+  ];
+
+  /**
+   * Nearby area suggestions for important Florida markets.
+   */
+  private const NEARBY_AREAS_BY_CITY = [
+    'orlando' => ['Winter Park', 'Kissimmee', 'Maitland'],
+    'tampa' => ['Downtown Tampa', 'Ybor City', 'Hyde Park', 'Seminole Heights', 'Brandon'],
+    'jacksonville' => ['Downtown Jacksonville', 'Riverside', 'San Marco', 'Jacksonville Beach', 'Orange Park'],
+    'st-petersburg' => ['Downtown St. Petersburg', 'Grand Central District', 'Edge District', 'Gulfport', 'Pinellas Park'],
+    'new-smyrna-beach' => ['Canal Street', 'Flagler Avenue', 'Edgewater', 'Port Orange', 'Daytona Beach'],
+    'daytona-beach' => ['Beachside', 'Downtown Daytona Beach', 'Ormond Beach', 'Port Orange', 'South Daytona'],
+  ];
+
+  /**
    * Resolved city labels keyed by normalized slug.
    *
    * @var array<string, string|null>
@@ -106,8 +129,9 @@ final class DealsSeoLandingController extends ControllerBase {
    */
   public function cityTitle(string $city): string {
     $city_label = $this->resolveCityLabel($city) ?? $this->slugToLikelyLabel($city);
+    $deal_count = $this->countDeals($city_label);
 
-    return sprintf('Deals in %s', $city_label);
+    return sprintf('%d Deals in %s', $deal_count, $city_label);
   }
 
   /**
@@ -116,8 +140,9 @@ final class DealsSeoLandingController extends ControllerBase {
   public function cityCategoryTitle(string $city, string $category): string {
     $city_label = $this->resolveCityLabel($city) ?? $this->slugToLikelyLabel($city);
     $category_label = $this->resolveDealCategoryLabel($category) ?? $this->slugToLikelyLabel($category);
+    $deal_count = $this->countDeals($city_label, $category_label);
 
-    return sprintf('%s in %s', $category_label, $city_label);
+    return sprintf('%d %s in %s', $deal_count, $this->pluralizeLabel($category_label), $city_label);
   }
 
   /**
@@ -137,6 +162,7 @@ final class DealsSeoLandingController extends ControllerBase {
       }
     }
 
+    $landing_data = $this->buildLandingData($city, $city_label, $category, $category_label);
     $deals_build = $this->buildDealsResults($city_label, $category_label);
 
     $page_title = $category_label !== NULL
@@ -203,7 +229,18 @@ final class DealsSeoLandingController extends ControllerBase {
               ],
             ],
           ],
-          'results' => $deals_build,
+          'summary' => $this->buildSummaryCards($landing_data),
+          'related_deals' => $this->buildRelatedDealLinks($landing_data),
+          'nearby_areas' => $this->buildNearbyAreas($landing_data),
+          'results' => [
+            '#type' => 'container',
+            '#attributes' => [
+              'class' => ['spotdeals-seo-landing__results'],
+            ],
+            'view' => $deals_build,
+          ],
+          'bottom_cta' => $this->buildBottomCta($landing_data),
+          'about' => $this->buildAboutBlock($landing_data),
         ],
       ],
       '#cache' => [
@@ -252,6 +289,481 @@ final class DealsSeoLandingController extends ControllerBase {
         ],
       ],
     ];
+  }
+
+  /**
+   * Builds reusable display data for city and city/category landing pages.
+   *
+   * @return array<string, mixed>
+   *   Landing page data used by render helpers.
+   */
+  private function buildLandingData(
+    string $citySlug,
+    string $cityLabel,
+    ?string $categorySlug,
+    ?string $categoryLabel,
+  ): array {
+    $total_deals = $this->countDeals($cityLabel, $categoryLabel);
+    $venue_count = $this->countVenuesWithDeals($cityLabel, $categoryLabel);
+    $related_categories = $this->buildRelatedCategoryData($citySlug, $categorySlug, $cityLabel);
+    $nearby_areas = $this->buildNearbyAreaData($citySlug);
+    $primary_stat_label = $categoryLabel !== NULL ? $categoryLabel : 'Local Deals';
+
+    return [
+      'city_slug' => $citySlug,
+      'city_label' => $cityLabel,
+      'category_slug' => $categorySlug,
+      'category_label' => $categoryLabel,
+      'total_deals' => $total_deals,
+      'venue_count' => $venue_count,
+      'primary_stat_label' => $primary_stat_label,
+      'related_categories' => $related_categories,
+      'nearby_areas' => $nearby_areas,
+    ];
+  }
+
+  /**
+   * Builds inventory summary cards above SEO landing results.
+   *
+   * @param array<string, mixed> $landingData
+   *   Landing page data.
+   */
+  private function buildSummaryCards(array $landingData): array {
+    $city_label = (string) $landingData['city_label'];
+    $category_label = $landingData['category_label'] !== NULL ? (string) $landingData['category_label'] : 'Local Deals';
+    $total_deals = (int) $landingData['total_deals'];
+    $venue_count = (int) $landingData['venue_count'];
+    $related_categories = is_array($landingData['related_categories']) ? $landingData['related_categories'] : [];
+    $first_related_count = isset($related_categories[0]['count']) ? (int) $related_categories[0]['count'] : 0;
+    $first_related_label = isset($related_categories[0]['label']) ? (string) $related_categories[0]['label'] : 'Related Deals';
+    $second_related_count = isset($related_categories[1]['count']) ? (int) $related_categories[1]['count'] : 0;
+    $second_related_label = isset($related_categories[1]['label']) ? (string) $related_categories[1]['label'] : 'More Deals';
+
+    return [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['spotdeals-seo-summary'],
+        'aria-label' => $this->t('Deal summary for @city', ['@city' => $city_label]),
+      ],
+      'total' => $this->buildSummaryCard('🍽️', (string) $total_deals, $category_label, $this->t('Current local offers')),
+      'venues' => $this->buildSummaryCard('🏬', (string) $venue_count, $this->t('Restaurants & Bars'), $this->t('Places with matching deals')),
+      'related_one' => $this->buildSummaryCard('🏷️', (string) $first_related_count, $first_related_label, $this->t('Related local specials')),
+      'related_two' => $this->buildSummaryCard('🍹', (string) $second_related_count, $second_related_label, $this->t('More ways to save')),
+      'updated' => $this->buildSummaryCard('📅', $this->t('Updated'), $this->t('Daily'), $this->t('Fresh local deal listings')),
+    ];
+  }
+
+  /**
+   * Builds one summary card.
+   */
+  private function buildSummaryCard(string $icon, string|\Stringable $value, string|\Stringable $label, string|\Stringable $description): array {
+    return [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['spotdeals-seo-summary__card'],
+      ],
+      'icon' => [
+        '#type' => 'html_tag',
+        '#tag' => 'div',
+        '#value' => $icon,
+        '#attributes' => [
+          'class' => ['spotdeals-seo-summary__icon'],
+          'aria-hidden' => 'true',
+        ],
+      ],
+      'value' => [
+        '#type' => 'html_tag',
+        '#tag' => 'div',
+        '#value' => (string) $value,
+        '#attributes' => [
+          'class' => ['spotdeals-seo-summary__value'],
+        ],
+      ],
+      'label' => [
+        '#type' => 'html_tag',
+        '#tag' => 'div',
+        '#value' => (string) $label,
+        '#attributes' => [
+          'class' => ['spotdeals-seo-summary__label'],
+        ],
+      ],
+      'description' => [
+        '#type' => 'html_tag',
+        '#tag' => 'div',
+        '#value' => (string) $description,
+        '#attributes' => [
+          'class' => ['spotdeals-seo-summary__description'],
+        ],
+      ],
+    ];
+  }
+
+  /**
+   * Builds related deal links for the same city.
+   *
+   * @param array<string, mixed> $landingData
+   *   Landing page data.
+   */
+  private function buildRelatedDealLinks(array $landingData): array {
+    $city_label = (string) $landingData['city_label'];
+    $related_categories = is_array($landingData['related_categories']) ? $landingData['related_categories'] : [];
+
+    $links = [];
+    foreach ($related_categories as $delta => $item) {
+      if (!is_array($item) || empty($item['url']) || empty($item['label'])) {
+        continue;
+      }
+
+      $links['link_' . $delta] = [
+        '#type' => 'link',
+        '#title' => [
+          '#markup' => '<span class="spotdeals-seo-related__icon" aria-hidden="true">' . $this->categoryIcon((string) $item['slug']) . '</span><span>' . $this->escape((string) $item['label']) . '<small>' . $this->escape($city_label) . '</small></span>',
+        ],
+        '#url' => $item['url'],
+        '#attributes' => [
+          'class' => ['spotdeals-seo-related__link'],
+        ],
+      ];
+    }
+
+    if (empty($links)) {
+      return ['#markup' => ''];
+    }
+
+    return [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['spotdeals-seo-related'],
+      ],
+      'title' => [
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#value' => $this->t('Explore More @city Deals', ['@city' => $city_label]),
+        '#attributes' => [
+          'class' => ['spotdeals-seo-section-title'],
+        ],
+      ],
+      'links' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['spotdeals-seo-related__links'],
+        ],
+      ] + $links,
+    ];
+  }
+
+  /**
+   * Builds nearby area links.
+   *
+   * @param array<string, mixed> $landingData
+   *   Landing page data.
+   */
+  private function buildNearbyAreas(array $landingData): array {
+    $nearby_areas = is_array($landingData['nearby_areas']) ? $landingData['nearby_areas'] : [];
+    if (empty($nearby_areas)) {
+      return ['#markup' => ''];
+    }
+
+    $items = [];
+    foreach ($nearby_areas as $delta => $area) {
+      if (!is_array($area) || empty($area['label']) || empty($area['url'])) {
+        continue;
+      }
+
+      $items['area_' . $delta] = [
+        '#type' => 'link',
+        '#title' => (string) $area['label'],
+        '#url' => $area['url'],
+        '#attributes' => [
+          'class' => ['spotdeals-seo-nearby__item'],
+        ],
+      ];
+    }
+
+    if (empty($items)) {
+      return ['#markup' => ''];
+    }
+
+    return [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['spotdeals-seo-nearby'],
+      ],
+      'title' => [
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#value' => $this->t('Popular Deals Near @city', ['@city' => $landingData['city_label']]),
+        '#attributes' => [
+          'class' => ['spotdeals-seo-section-title'],
+        ],
+      ],
+      'items' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['spotdeals-seo-nearby__items'],
+        ],
+      ] + $items,
+    ];
+  }
+
+  /**
+   * Builds bottom conversion CTA.
+   *
+   * @param array<string, mixed> $landingData
+   *   Landing page data.
+   */
+  private function buildBottomCta(array $landingData): array {
+    $city_label = (string) $landingData['city_label'];
+
+    return [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['spotdeals-seo-cta'],
+      ],
+      'copy' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['spotdeals-seo-cta__copy'],
+        ],
+        'title' => [
+          '#type' => 'html_tag',
+          '#tag' => 'h2',
+          '#value' => $this->t('Can\'t find what you\'re looking for?'),
+        ],
+        'text' => [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => $this->t('Browse all restaurants in @city or use Deals Finder to discover more nearby specials.', ['@city' => $city_label]),
+        ],
+      ],
+      'action' => [
+        '#type' => 'link',
+        '#title' => $this->t('Open Deals Finder'),
+        '#url' => Url::fromUserInput('/'),
+        '#attributes' => [
+          'class' => ['button', 'spotdeals-seo-cta__button'],
+        ],
+      ],
+    ];
+  }
+
+  /**
+   * Builds a short local context block below results.
+   *
+   * @param array<string, mixed> $landingData
+   *   Landing page data.
+   */
+  private function buildAboutBlock(array $landingData): array {
+    $city_label = (string) $landingData['city_label'];
+    $category_label = $landingData['category_label'] !== NULL ? (string) $landingData['category_label'] : 'local deals';
+    $total_deals = (int) $landingData['total_deals'];
+    $venue_count = (int) $landingData['venue_count'];
+
+    return [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['spotdeals-seo-about'],
+      ],
+      'title' => [
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#value' => $this->t('About @category in @city', [
+          '@category' => $category_label,
+          '@city' => $city_label,
+        ]),
+        '#attributes' => [
+          'class' => ['spotdeals-seo-section-title'],
+        ],
+      ],
+      'text' => [
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#value' => $this->t('SpotDeals tracks @count @category from @venues local restaurants, bars, cafes, breweries, and neighborhood dining spots in @city. Use this page to compare current offers, discover nearby places, and keep exploring more ways to save.', [
+          '@count' => $total_deals,
+          '@category' => mb_strtolower($category_label, 'UTF-8'),
+          '@venues' => $venue_count,
+          '@city' => $city_label,
+        ]),
+      ],
+    ];
+  }
+
+  /**
+   * Builds related category data for a city.
+   *
+   * @return array<int, array<string, mixed>>
+   *   Related category links with counts.
+   */
+  private function buildRelatedCategoryData(string $citySlug, ?string $currentCategorySlug, string $cityLabel): array {
+    $items = [];
+    foreach (self::RELATED_DEAL_CATEGORIES as $slug => $label) {
+      if ($currentCategorySlug !== NULL && $this->normalizeForComparison($slug) === $this->normalizeForComparison($currentCategorySlug)) {
+        continue;
+      }
+
+      $resolved_label = $this->resolveDealCategoryLabel($slug);
+      if ($resolved_label === NULL) {
+        continue;
+      }
+
+      $count = $this->countDeals($cityLabel, $resolved_label);
+      if ($count < 1) {
+        continue;
+      }
+
+      $items[] = [
+        'slug' => $slug,
+        'label' => $label,
+        'count' => $count,
+        'url' => Url::fromRoute('spotdeals_seo_landing.deals_city_category', [
+          'city' => $citySlug,
+          'category' => $slug,
+        ]),
+      ];
+    }
+
+    usort($items, static function (array $a, array $b): int {
+      return ((int) $b['count']) <=> ((int) $a['count']);
+    });
+
+    return array_slice($items, 0, 6);
+  }
+
+  /**
+   * Builds nearby area data.
+   *
+   * @return array<int, array<string, mixed>>
+   *   Nearby area links.
+   */
+  private function buildNearbyAreaData(string $citySlug): array {
+    $areas = self::NEARBY_AREAS_BY_CITY[$citySlug] ?? [];
+    $items = [];
+
+    foreach ($areas as $area) {
+      $area_slug = $this->labelToSlug($area);
+      if ($this->resolveCityLabel($area_slug) === NULL) {
+        continue;
+      }
+
+      $items[] = [
+        'label' => $area,
+        'url' => Url::fromRoute('spotdeals_seo_landing.deals_city', [
+          'city' => $area_slug,
+        ]),
+      ];
+    }
+
+    return $items;
+  }
+
+  /**
+   * Counts active deals for a city, optionally limited to category.
+   */
+  private function countDeals(string $cityLabel, ?string $categoryLabel = NULL): int {
+    $query = $this->seoLandingDatabase->select('node_field_data', 'd');
+    $query->addExpression('COUNT(DISTINCT d.nid)', 'deal_count');
+    $query->innerJoin('node__field_venue', 'fv', 'fv.entity_id = d.nid AND fv.deleted = 0');
+    $query->innerJoin('node_field_data', 'v', 'v.nid = fv.field_venue_target_id AND v.status = 1');
+    $query->innerJoin('node__field_address', 'fa', 'fa.entity_id = v.nid AND fa.deleted = 0');
+    $query->condition('d.type', 'deal');
+    $query->condition('d.status', 1);
+    $query->condition('v.type', 'venue');
+    $query->condition('fa.field_address_locality', $cityLabel);
+
+    if ($categoryLabel !== NULL) {
+      $query->innerJoin('node__field_deal_category', 'fdc', 'fdc.entity_id = d.nid AND fdc.deleted = 0');
+      $query->innerJoin('taxonomy_term_field_data', 'tfd', 'tfd.tid = fdc.field_deal_category_target_id');
+      $query->condition('tfd.vid', self::DEAL_CATEGORY_VOCABULARY);
+      $query->condition('tfd.name', $categoryLabel);
+    }
+
+    return (int) $query->execute()->fetchField();
+  }
+
+  /**
+   * Counts venues with active deals for a city, optionally limited to category.
+   */
+  private function countVenuesWithDeals(string $cityLabel, ?string $categoryLabel = NULL): int {
+    $query = $this->seoLandingDatabase->select('node_field_data', 'v');
+    $query->addExpression('COUNT(DISTINCT v.nid)', 'venue_count');
+    $query->innerJoin('node__field_address', 'fa', 'fa.entity_id = v.nid AND fa.deleted = 0');
+    $query->innerJoin('node__field_venue', 'fv', 'fv.field_venue_target_id = v.nid AND fv.deleted = 0');
+    $query->innerJoin('node_field_data', 'd', 'd.nid = fv.entity_id AND d.type = :deal_type AND d.status = 1', [':deal_type' => 'deal']);
+    $query->condition('v.type', 'venue');
+    $query->condition('v.status', 1);
+    $query->condition('fa.field_address_locality', $cityLabel);
+
+    if ($categoryLabel !== NULL) {
+      $query->innerJoin('node__field_deal_category', 'fdc', 'fdc.entity_id = d.nid AND fdc.deleted = 0');
+      $query->innerJoin('taxonomy_term_field_data', 'tfd', 'tfd.tid = fdc.field_deal_category_target_id');
+      $query->condition('tfd.vid', self::DEAL_CATEGORY_VOCABULARY);
+      $query->condition('tfd.name', $categoryLabel);
+    }
+
+    return (int) $query->execute()->fetchField();
+  }
+
+  /**
+   * Returns a small icon for a category slug.
+   */
+  private function categoryIcon(string $slug): string {
+    $icons = [
+      'happy-hour' => '🍹',
+      'lunch-special' => '🍔',
+      'taco-tuesday' => '🌮',
+      'daily-special' => '🏷️',
+      'beer' => '🍺',
+      'food-deals' => '🏷️',
+    ];
+
+    return $icons[$slug] ?? '🏷️';
+  }
+
+  /**
+   * Provides a simple plural label for page titles.
+   */
+  private function pluralizeLabel(string $label): string {
+    $normalized = $this->normalizeForComparison($label);
+    $known = [
+      'daily special' => 'Daily Specials',
+      'happy hour' => 'Happy Hours',
+      'lunch special' => 'Lunch Specials',
+      'drink special' => 'Drink Specials',
+      'taco tuesday' => 'Taco Tuesdays',
+      'craft beer' => 'Craft Beer Deals',
+      'beer' => 'Beer Deals',
+      'wine' => 'Wine Deals',
+      'coffee' => 'Coffee Deals',
+      'food deal' => 'Food Deals',
+    ];
+
+    if (isset($known[$normalized])) {
+      return $known[$normalized];
+    }
+
+    if (str_ends_with($label, 's')) {
+      return $label;
+    }
+
+    return $label . 's';
+  }
+
+  /**
+   * Converts a label to a URL slug.
+   */
+  private function labelToSlug(string $label): string {
+    $slug = mb_strtolower(trim($label), 'UTF-8');
+    $slug = preg_replace('/[^a-z0-9]+/u', '-', $slug) ?? '';
+    $slug = trim($slug, '-');
+
+    return $slug;
+  }
+
+  /**
+   * Escapes text for small trusted HTML strings in link titles.
+   */
+  private function escape(string $value): string {
+    return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
   }
 
   /**
