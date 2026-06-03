@@ -21,3 +21,9 @@ global:
   dependencies:
     - core/drupal
     - core/once
+
+seo_landing:
+  version: 1.x
+  css:
+    theme:
+      css/seo-landing.css: {}
