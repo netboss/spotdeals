@@ -135,7 +135,16 @@ function spotdeals_minimal_preprocess_views_view_fields(array &$variables): void
   }
 
   $view = $variables['view'];
-  if ($view->id() !== 'deals_search_solr' || $view->current_display !== 'page_1') {
+  if ($view->id() !== 'deals_search_solr') {
+    return;
+  }
+
+  $vote_enabled_displays = [
+    'page_1',
+    'block_1',
+    'block_2',
+  ];
+  if (!in_array((string) $view->current_display, $vote_enabled_displays, TRUE)) {
     return;
   }
 
