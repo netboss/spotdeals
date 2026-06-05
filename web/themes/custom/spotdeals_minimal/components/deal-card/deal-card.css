@@ -1433,7 +1433,7 @@
   color: var(--deal-card-text);
   font-size: 0.78rem;
   font-weight: 700;
-  padding-bottom: 1rem;
+  padding-bottom: 0.5rem;
 }
 
 .spotdeals-deal-card__venue-votes .spotdeals-vote__buttons,

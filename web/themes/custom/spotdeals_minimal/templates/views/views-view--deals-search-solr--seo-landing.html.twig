@@ -1,0 +1,100 @@
+{#
+/**
+ * @file
+ * SEO landing override for the Deals Search (Solr) view.
+ *
+ * This template is used only inside SpotDeals SEO landing pages. It avoids the
+ * front-page `.spotdeals-finder` wrapper and exposed filter column so the SEO
+ * landing page can own the left rail/results shell without inheriting the
+ * regular Deals Finder grid.
+ *
+ * Available variables:
+ * - attributes: HTML attributes for the container.
+ * - css_name: A CSS-safe version of the view name.
+ * - css_class: CSS classes.
+ * - header: The view header.
+ * - footer: The view footer.
+ * - rows: The results.
+ * - empty: The empty text.
+ * - exposed: Exposed widget form / filters.
+ * - pager: The pager output.
+ * - more: "More" link.
+ * - feed_icons: Feed icons.
+ * - title: The view title.
+ * - attachment_before: Attachments before.
+ * - attachment_after: Attachments after.
+ * - dom_id: Unique DOM id.
+ * - spotdeals_result_count: Real number of rendered result rows.
+ */
+#}
+{%
+  set classes = [
+    'view',
+    'view-' ~ id,
+    'view-id-' ~ id,
+    'view-display-id-' ~ display_id,
+    dom_id ? 'js-view-dom-id-' ~ dom_id,
+    'spotdeals-seo-results-view'
+  ]
+%}
+<div{{ attributes.addClass(classes) }}>
+  <section class="spotdeals-seo-results-view__results">
+    {% if header %}
+      {% set result_count = spotdeals_direct_recommendation ? 1 : spotdeals_result_count|default(0) %}
+      {% set result_start = result_count > 0 ? 1 : 0 %}
+      <div class="view-header">
+        {{ 'Displaying @start - @end of @total'|t({
+          '@start': result_start,
+          '@end': result_count,
+          '@total': result_count
+        }) }}
+      </div>
+    {% endif %}
+
+    {% if attachment_before %}
+      <div class="attachment attachment-before">
+        {{ attachment_before }}
+      </div>
+    {% endif %}
+
+    {% if spotdeals_direct_recommendation %}
+      <div class="view-content spotdeals-finder__cards" data-result-count="1">
+        {{ spotdeals_direct_recommendation }}
+      </div>
+    {% elseif rows %}
+      <div class="view-content spotdeals-finder__cards" data-result-count="{{ spotdeals_result_count }}">
+        {{ rows }}
+      </div>
+    {% elseif empty %}
+      <div class="view-empty" data-result-count="{{ spotdeals_result_count }}">
+        {{ empty }}
+      </div>
+    {% endif %}
+
+    {% if pager %}
+      {{ pager }}
+    {% endif %}
+
+    {% if attachment_after %}
+      <div class="attachment attachment-after">
+        {{ attachment_after }}
+      </div>
+    {% endif %}
+
+    {% if more %}
+      {{ more }}
+    {% endif %}
+
+    {% if footer %}
+      <div class="view-footer">
+        {{ footer }}
+      </div>
+    {% endif %}
+
+    {% if feed_icons %}
+      <div class="feed-icons">
+        {{ feed_icons }}
+      </div>
+    {% endif %}
+  </section>
+</div>

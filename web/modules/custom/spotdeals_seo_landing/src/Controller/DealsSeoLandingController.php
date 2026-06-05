@@ -230,17 +230,35 @@ final class DealsSeoLandingController extends ControllerBase {
             ],
           ],
           'summary' => $this->buildSummaryCards($landing_data),
-          'related_deals' => $this->buildRelatedDealLinks($landing_data),
-          'nearby_areas' => $this->buildNearbyAreas($landing_data),
-          'results' => [
+          'shell' => [
             '#type' => 'container',
             '#attributes' => [
-              'class' => ['spotdeals-seo-landing__results'],
+              'class' => ['spotdeals-seo-landing__shell'],
             ],
-            'view' => $deals_build,
+            'left_rail' => [
+              '#type' => 'container',
+              '#attributes' => [
+                'class' => ['spotdeals-seo-landing__left-rail'],
+              ],
+              'related_deals' => $this->buildRelatedDealLinks($landing_data),
+              'nearby_areas' => $this->buildNearbyAreas($landing_data),
+            ],
+            'results_column' => [
+              '#type' => 'container',
+              '#attributes' => [
+                'class' => ['spotdeals-seo-landing__results-column'],
+              ],
+              'results' => [
+                '#type' => 'container',
+                '#attributes' => [
+                  'class' => ['spotdeals-seo-landing__results'],
+                ],
+                'view' => $deals_build,
+              ],
+              'bottom_cta' => $this->buildBottomCta($landing_data),
+              'about' => $this->buildAboutBlock($landing_data),
+            ],
           ],
-          'bottom_cta' => $this->buildBottomCta($landing_data),
-          'about' => $this->buildAboutBlock($landing_data),
         ],
       ],
       '#cache' => [
