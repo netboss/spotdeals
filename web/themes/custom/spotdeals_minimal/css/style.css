@@ -1949,7 +1949,7 @@ h1.page-title {
   .path-frontpage .spotdeals-main-content .spotdeals-deal-card__content,
   .path-deals .spotdeals-main-content .spotdeals-deal-card__content {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 250px;
+    grid-template-columns: minmax(0, 1fr) 260px;
     grid-template-areas:
       "main deal"
       "votes deal"
@@ -1957,12 +1957,11 @@ h1.page-title {
     column-gap: 12px;
     row-gap: 12px;
     min-width: 0;
-    padding: 18px 16px 18px 22px;
+    padding: 1rem;
   }
 
   .path-frontpage .spotdeals-main-content .spotdeals-deal-card__deal-panel,
   .path-deals .spotdeals-main-content .spotdeals-deal-card__deal-panel {
-    padding-left: 22px;
     border-left: 1px solid #e3e7ee;
   }
 

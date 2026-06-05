@@ -327,3 +327,251 @@
     text-align: center;
   }
 }
+
+
+/* SD SEO landing: desktop left rail shell.
+ * Option 1 implementation: give the existing deal-card layout enough room
+ * instead of squeezing or rewriting the card internals. The shell owns only
+ * the helper rail + results column; header and summary stay above it.
+ */
+@media (min-width: 1024px) {
+  .spotdeals-seo-landing__shell {
+    margin-top: 1.75rem;
+  }
+
+  .spotdeals-seo-landing__left-rail,
+  .spotdeals-seo-landing__results-column,
+  .spotdeals-seo-landing__results {
+    min-width: 0;
+  }
+
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-related,
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-nearby {
+    margin: 0;
+    border: 1px solid var(--spotdeals-seo-border);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(17, 24, 39, 0.035);
+    overflow: hidden;
+  }
+
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-section-title {
+    margin: 0;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid var(--spotdeals-seo-border);
+    background: #f8fafc;
+    font-size: 0.95rem;
+    line-height: 1.25;
+  }
+
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-related__links,
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-nearby__items {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0 1.1rem 1rem;
+  }
+
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-related__link {
+    min-height: 0;
+    padding: 0.85rem 0;
+    border: 0;
+    border-bottom: 1px solid var(--spotdeals-seo-border);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-related__link::after {
+    content: '›';
+    margin-left: auto;
+    color: var(--spotdeals-seo-muted);
+    font-size: 1.35rem;
+    line-height: 1;
+  }
+
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-related__link:last-child {
+    border-bottom: 0;
+  }
+
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-related__link:hover,
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-related__link:focus {
+    box-shadow: none;
+    transform: none;
+  }
+
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-nearby__item {
+    align-items: center;
+    justify-content: space-between;
+    min-height: 3.4rem;
+    margin-top: 0.75rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-nearby__item::after {
+    content: '›';
+    font-size: 1.35rem;
+    line-height: 1;
+  }
+
+  .spotdeals-seo-results-view,
+  .spotdeals-seo-results-view__results,
+  .spotdeals-seo-results-view .view-content,
+  .spotdeals-seo-results-view .spotdeals-finder__cards,
+  .spotdeals-seo-results-view .spotdeals-finder__cards > .views-row {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .spotdeals-seo-results-view .view-header {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Keep tablet / smaller desktop stable. The left rail stays stacked until
+ * there is enough horizontal room for the existing deal-card design.
+ */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .spotdeals-seo-landing__shell {
+    display: block;
+  }
+
+  .spotdeals-seo-landing__left-rail {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .spotdeals-seo-landing__results {
+    margin-top: 0;
+  }
+}
+
+/* Wide desktop: create the mock-up layout by widening the page workspace and
+ * giving the center results column enough room for the existing deal cards.
+ */
+@media (min-width: 1280px) {
+  .path-deals .main-content__container.container {
+    width: min(calc(100vw - 2rem), 1560px);
+    max-width: none;
+    margin-inline: auto;
+  }
+
+  .path-deals .spotdeals-page-main--deals-landing {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    grid-template-areas: "main right";
+    gap: 28px;
+    align-items: start;
+    width: 100%;
+    max-width: none;
+  }
+
+  .path-deals .spotdeals-main-content--deals-landing {
+    grid-area: 1 / 1 / span 1 / span 1;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .path-deals .spotdeals-sidebar-right {
+    grid-area: right;
+    width: 220px;
+    max-width: 220px;
+    min-width: 0;
+  }
+
+  .spotdeals-seo-landing__layout,
+  .spotdeals-seo-landing__main {
+    width: 100%;
+    max-width: none;
+  }
+
+  .spotdeals-seo-landing__header,
+  .spotdeals-seo-summary {
+    width: min(100%, 840px);
+    max-width: 840px;
+    margin-left: 244px;
+    margin-right: 0;
+  }
+
+  .spotdeals-seo-landing__shell {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 840px);
+    gap: 24px;
+    align-items: start;
+    justify-content: start;
+    width: 100%;
+    max-width: none;
+  }
+
+  .spotdeals-seo-landing__left-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    position: sticky;
+    top: 20px;
+  }
+
+  .spotdeals-seo-landing__results-column,
+  .spotdeals-seo-landing__results {
+    width: 100%;
+    max-width: 840px;
+  }
+
+  .spotdeals-seo-landing__results {
+    margin-top: 0;
+  }
+}
+
+@media (min-width: 1460px) {
+  .path-deals .main-content__container.container {
+    width: min(calc(100vw - 3rem), 1660px);
+  }
+
+  .path-deals .spotdeals-page-main--deals-landing {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 0;
+  }
+
+  .path-deals .spotdeals-sidebar-right {
+    width: 250px;
+    max-width: 250px;
+  }
+
+  .spotdeals-seo-landing__header,
+  .spotdeals-seo-summary {
+    width: min(100%, 900px);
+    max-width: 900px;
+    margin-left: 0;
+    transform: translateX(55px);
+  }
+
+  .spotdeals-seo-landing__shell {
+    grid-template-columns: 310px minmax(800px, 1fr);
+    gap: 20px;
+    transform: translateX(55px);
+  }
+
+  .spotdeals-seo-landing__results-column,
+  .spotdeals-seo-landing__results {
+    max-width: 900px;
+  }
+
+  .path-deals .layout--pass--content-medium>*,
+  .path-deals .layout--content-medium {
+    grid-column: 2 / 14;
+  }
+
+  .path-deals h1.page-title {
+    margin-left: 1.8rem;
+  }
+
+  .path-deals .breadcrumb {
+    margin-left: 0.15rem;
+  }
+}
+
+
