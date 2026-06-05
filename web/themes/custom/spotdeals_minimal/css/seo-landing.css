@@ -574,4 +574,31 @@
   }
 }
 
+/* Mobile-only accordions for SEO landing left rail sections.
+ * The summary text is generated from the existing dynamic section title, so
+ * city-specific labels such as "Explore More Orlando Deals" stay dynamic.
+ */
+@media (max-width: 640px) {
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-related,
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-nearby {
+    margin: 0 0 0.85rem;
+  }
 
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-left-rail-accordion {
+    margin: 0;
+  }
+
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-left-rail-accordion .spotdeals-seo-section-title {
+    display: none;
+  }
+
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-left-rail-accordion .spotdeals-seo-related__links,
+  .spotdeals-seo-landing__left-rail .spotdeals-seo-left-rail-accordion .spotdeals-seo-nearby__items {
+    gap: 0.65rem;
+    padding: 0;
+  }
+
+  .spotdeals-seo-nearby__item {
+    min-height: auto;
+  }
+}

@@ -371,6 +371,83 @@
     delete block.dataset.spotdealsMobileAccordion;
   }
 
+
+  function getSeoLandingSectionTitle(section) {
+    return Array.from(section.children).find(function (child) {
+      return child.classList.contains('spotdeals-seo-section-title');
+    }) || null;
+  }
+
+  function enableSeoLandingMobileAccordion(section) {
+    if (section.dataset.spotdealsSeoMobileAccordion === '1') {
+      return;
+    }
+
+    const title = getSeoLandingSectionTitle(section);
+    const titleText = normalizeWhitespace(title ? title.textContent : '');
+
+    if (!titleText) {
+      return;
+    }
+
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    const content = document.createElement('div');
+
+    details.className = 'spotdeals-mobile-discovery-accordion spotdeals-seo-left-rail-accordion';
+    summary.className = 'spotdeals-mobile-discovery-accordion__summary';
+    content.className = 'spotdeals-mobile-discovery-accordion__content';
+    summary.textContent = titleText;
+
+    while (section.firstChild) {
+      content.appendChild(section.firstChild);
+    }
+
+    details.appendChild(summary);
+    details.appendChild(content);
+    section.appendChild(details);
+    section.dataset.spotdealsSeoMobileAccordion = '1';
+  }
+
+  function disableSeoLandingMobileAccordion(section) {
+    if (section.dataset.spotdealsSeoMobileAccordion !== '1') {
+      return;
+    }
+
+    const details = Array.from(section.children).find(function (child) {
+      return child.classList.contains('spotdeals-seo-left-rail-accordion');
+    });
+
+    if (!details) {
+      delete section.dataset.spotdealsSeoMobileAccordion;
+      return;
+    }
+
+    const content = details.querySelector('.spotdeals-mobile-discovery-accordion__content');
+    if (content) {
+      while (content.firstChild) {
+        section.insertBefore(content.firstChild, details);
+      }
+    }
+
+    details.remove();
+    delete section.dataset.spotdealsSeoMobileAccordion;
+  }
+
+  function moveSeoLandingMobileAccordions() {
+    const isMobile = window.matchMedia('(max-width: 640px)').matches;
+    const sections = document.querySelectorAll('.spotdeals-seo-landing__left-rail .spotdeals-seo-related, .spotdeals-seo-landing__left-rail .spotdeals-seo-nearby');
+
+    sections.forEach(function (section) {
+      if (isMobile) {
+        enableSeoLandingMobileAccordion(section);
+        return;
+      }
+
+      disableSeoLandingMobileAccordion(section);
+    });
+  }
+
   function moveMobileDiscoveryBlocks() {
     if (!isDealsDiscoveryPage()) {
       return;
@@ -412,7 +489,10 @@
       let resizeTimer = null;
       window.addEventListener('resize', function () {
         window.clearTimeout(resizeTimer);
-        resizeTimer = window.setTimeout(moveMobileDiscoveryBlocks, 150);
+        resizeTimer = window.setTimeout(function () {
+          moveMobileDiscoveryBlocks();
+          moveSeoLandingMobileAccordions();
+        }, 150);
       });
     });
   }
@@ -836,6 +916,7 @@
       });
 
       moveMobileDiscoveryBlocks();
+      moveSeoLandingMobileAccordions();
       attachMobileDiscoveryResizeHandler(context);
       attachBackToTopButton(context);
       attachHomepageRecommendationActions(context);
