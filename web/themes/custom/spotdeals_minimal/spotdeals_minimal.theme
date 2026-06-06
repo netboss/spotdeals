@@ -493,6 +493,26 @@ function spotdeals_minimal_views_pre_render(ViewExecutable $view) {
  * Implements hook_form_alter().
  */
 function spotdeals_minimal_form_alter(array &$form, \Drupal\Core\Form\FormStateInterface $form_state, string $form_id): void {
+  if ($form_id === 'views_exposed_form') {
+    $view = $form_state->get('view');
+    $route_name = (string) \Drupal::routeMatch()->getRouteName();
+
+    // The Deals SEO landing pages embed deals_search_solr block displays.
+    // Without this override, the exposed form submits back to the main /deals
+    // page display. Keep the homepage /deals exposed form untouched and only
+    // submit SEO landing block filters back to their current landing URL.
+    if ($view instanceof ViewExecutable
+      && $view->id() === 'deals_search_solr'
+      && in_array((string) $view->current_display, ['block_1', 'block_2'], TRUE)
+      && in_array($route_name, [
+        'spotdeals_seo_landing.deals_city',
+        'spotdeals_seo_landing.deals_city_category',
+      ], TRUE)
+    ) {
+      $form['#action'] = \Drupal::service('path.current')->getPath();
+    }
+  }
+
   if ($form_id !== 'user_register_form') {
     return;
   }

@@ -197,7 +197,10 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
  * Implements hook_views_pre_view().
  */
 function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, string $display_id, array &$args): void {
-  if ($view->id() !== 'deals_search_solr' || $display_id !== 'page_1') {
+  if (
+    $view->id() !== 'deals_search_solr'
+    || !in_array($display_id, ['page_1', 'block_1', 'block_2'], TRUE)
+  ) {
     return;
   }
 
@@ -205,11 +208,21 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
   $request = \Drupal::request();
 
   $search_param = NULL;
-  if (array_key_exists('search_deals', $input) || $request->query->has('search_deals')) {
-    $search_param = 'search_deals';
+  if ($display_id === 'page_1') {
+    if (array_key_exists('search_deals', $input) || $request->query->has('search_deals')) {
+      $search_param = 'search_deals';
+    }
+    elseif (array_key_exists('search_api_fulltext', $input) || $request->query->has('search_api_fulltext')) {
+      $search_param = 'search_api_fulltext';
+    }
   }
-  elseif (array_key_exists('search_api_fulltext', $input) || $request->query->has('search_api_fulltext')) {
-    $search_param = 'search_api_fulltext';
+  else {
+    if (array_key_exists('search_deals_by_city', $input) || $request->query->has('search_deals_by_city')) {
+      $search_param = 'search_deals_by_city';
+    }
+    elseif (array_key_exists('search_api_fulltext', $input) || $request->query->has('search_api_fulltext')) {
+      $search_param = 'search_api_fulltext';
+    }
   }
 
   if ($search_param === NULL) {
@@ -422,6 +435,10 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
       $input['search_api_fulltext'] = $solr_keywords;
     }
 
+    if ($search_param === 'search_deals_by_city' && array_key_exists('search_deals_by_city', $input)) {
+      $input['search_deals_by_city'] = $solr_keywords;
+    }
+
     //\Drupal::logger('spotdeals_search_smart_location')->notice(
     //  'SMART LOCATION default near-me applied from browser origin: view="@view" display="@display" raw="@raw" keywords="@keywords" solr_keywords="@solr_keywords" recommendation_mode="@recommendation_mode" recommended_count="@recommended" nearest_city="@city" origin_lat="@lat" origin_lon="@lon" ranked_count="@ranked" city_filter="off"',
     //  [
@@ -494,6 +511,10 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
         $input['search_api_fulltext'] = $keywords;
       }
 
+      if ($search_param === 'search_deals_by_city' && array_key_exists('search_deals_by_city', $input)) {
+        $input['search_deals_by_city'] = $keywords;
+      }
+
       $request->attributes->set('spotdeals_search_smart_location.explicit_location', FALSE);
       $request->attributes->set('spotdeals_search_smart_location.city', '');
       $request->attributes->set('spotdeals_search_smart_location.zip', '');
@@ -514,6 +535,10 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
 
   if (array_key_exists('search_api_fulltext', $input)) {
     $input['search_api_fulltext'] = $parsed['keywords'];
+  }
+
+  if ($search_param === 'search_deals_by_city' && array_key_exists('search_deals_by_city', $input)) {
+    $input['search_deals_by_city'] = $parsed['keywords'];
   }
 
   $exact_city = '';
@@ -1964,7 +1989,11 @@ function _spotdeals_search_smart_location_reset_result_row_indexes(array $rows):
  * Sync pager/count metadata after post-filtering rows.
  */
 function _spotdeals_search_smart_location_sync_filtered_pager(ViewExecutable $view, ?int $forced_count = NULL): void {
-  $count = $forced_count ?? count($view->result);
+  if ($forced_count === NULL) {
+    return;
+  }
+
+  $count = $forced_count;
 
   $view->total_rows = $count;
 
