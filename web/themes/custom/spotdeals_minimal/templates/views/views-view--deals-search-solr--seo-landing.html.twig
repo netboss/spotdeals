@@ -37,6 +37,13 @@
     'spotdeals-seo-results-view'
   ]
 %}
+
+{% if exposed %}
+  <section class="spotdeals-finder__filters">
+    {{ exposed }}
+  </section>
+{% endif %}
+
 <div{{ attributes.addClass(classes) }}>
   <section class="spotdeals-seo-results-view__results">
     {% if header %}

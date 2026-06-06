@@ -1552,7 +1552,7 @@ h1.page-title {
   }
 
   .path-frontpage .spotdeals-main-content .spotdeals-finder__filters,
-  .path-deals .spotdeals-main-content .spotdeals-finder__filters,
+  /*.path-deals .spotdeals-main-content .spotdeals-finder__filters,*/
   .path-frontpage .spotdeals-main-content .spotdeals-finder__intro,
   .path-deals .spotdeals-main-content .spotdeals-finder__intro {
     display: none;
