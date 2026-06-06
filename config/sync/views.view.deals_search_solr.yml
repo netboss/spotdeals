@@ -1273,7 +1273,7 @@ display:
             remember_roles:
               authenticated: authenticated
             expose_fields: false
-            placeholder: 'Search by venue, cuisine, food type, or deal...'
+            placeholder: 'Filter by venue, cuisine, food type, or deal...'
             searched_fields_id: search_api_fulltext_searched_fields
             value_maxlength: 128
             value_max_words: null
@@ -1497,7 +1497,7 @@ display:
             remember_roles:
               authenticated: authenticated
             expose_fields: false
-            placeholder: 'Search by venue, cuisine, food type, or deal...'
+            placeholder: 'Filter by venue, cuisine, food type, or deal...'
             searched_fields_id: search_api_fulltext_searched_fields
             value_maxlength: 128
             value_max_words: null
@@ -2624,7 +2624,7 @@ display:
             remember_roles:
               authenticated: authenticated
             expose_fields: false
-            placeholder: ''
+            placeholder: 'Search by cuisine, food type, ZIP, city, or deal...'
             searched_fields_id: search_api_fulltext_searched_fields
             value_maxlength: 128
             value_max_words: null
