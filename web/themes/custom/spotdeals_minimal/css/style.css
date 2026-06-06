@@ -640,6 +640,11 @@ h1.page-title {
   .spotdeals-finder__results {
     padding: var(--spotdeals-space-5);
   }
+
+  .path-deals .spotdeals-finder__filters,
+  .path-deals .spotdeals-finder__results {
+    margin-bottom: 1rem;
+  }
 }
 
 @media (min-width: 1100px) {
@@ -2213,7 +2218,7 @@ h1.page-title {
     display: block;
     width: 100%;
     max-width: none;
-    margin: 0 0 1rem;
+    margin: 0;
   }
 
   .path-frontpage .view-id-deals_search_solr.view-display-id-page_1 .spotdeals-finder__filters::before,
@@ -3552,5 +3557,63 @@ h1.page-title {
 @media (max-width: 767px) {
   .breadcrumb.spotdeals-breadcrumb {
     padding-left: 0.75rem;
+  }
+}
+
+
+/* Mobile sticky search form for regular Deals searches.
+ * Recommendation result actions use their own sticky bar and are intentionally
+ * excluded by the body.spotdeals-has-sticky-recommendation-actions guard.
+ */
+@media (max-width: 767px) {
+  body.spotdeals-has-mobile-search-form:not(.spotdeals-has-sticky-recommendation-actions) {
+    padding-bottom: calc(12.75rem + env(safe-area-inset-bottom));
+  }
+
+  body.spotdeals-has-mobile-search-form:not(.spotdeals-has-sticky-recommendation-actions) .spotdeals-mobile-sticky-search-form {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 80;
+    width: auto;
+    max-width: max-content;
+    max-height: min(55vh, 24rem);
+    margin: 0;
+    padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.98);
+    border-top: 1px solid var(--spotdeals-border);
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: 0 -10px 24px rgba(15, 23, 42, 0.14);
+  }
+
+  body.spotdeals-has-mobile-search-form:not(.spotdeals-has-sticky-recommendation-actions) .spotdeals-mobile-sticky-search-form form,
+  body.spotdeals-has-mobile-search-form:not(.spotdeals-has-sticky-recommendation-actions) .spotdeals-mobile-sticky-search-form .views-exposed-form {
+    display: grid;
+    gap: 0.85rem;
+    margin: 0 1rem 0 0;
+  }
+
+  body.spotdeals-has-mobile-search-form:not(.spotdeals-has-sticky-recommendation-actions) .spotdeals-mobile-sticky-search-form .form-actions,
+  body.spotdeals-has-mobile-search-form:not(.spotdeals-has-sticky-recommendation-actions) .spotdeals-mobile-sticky-search-form .views-exposed-form .form-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: stretch;
+    margin: 0;
+    padding: 0;
+  }
+
+  body.spotdeals-has-mobile-search-form:not(.spotdeals-has-sticky-recommendation-actions) .spotdeals-mobile-sticky-search-form .form-actions input[type="submit"],
+  body.spotdeals-has-mobile-search-form:not(.spotdeals-has-sticky-recommendation-actions) .spotdeals-mobile-sticky-search-form .form-actions input[type="reset"],
+  body.spotdeals-has-mobile-search-form:not(.spotdeals-has-sticky-recommendation-actions) .spotdeals-mobile-sticky-search-form .form-actions button,
+  body.spotdeals-has-mobile-search-form:not(.spotdeals-has-sticky-recommendation-actions) .spotdeals-mobile-sticky-search-form .form-actions .button {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
   }
 }

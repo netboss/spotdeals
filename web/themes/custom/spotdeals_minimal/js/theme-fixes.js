@@ -909,6 +909,194 @@
     });
   }
 
+
+
+  function getSeoLandingFilterSearchInput(form) {
+    return form.querySelector('input[name="search_deals_by_city"]');
+  }
+
+  function ensureSeoLandingHiddenInput(form, name) {
+    let input = form.querySelector('input[name="' + name + '"]');
+
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      form.appendChild(input);
+    }
+
+    return input;
+  }
+
+  function getSeoLandingResultsTarget(form) {
+    const filterWrapper = form.closest('.spotdeals-finder__filters');
+
+    if (filterWrapper && filterWrapper.nextElementSibling && filterWrapper.nextElementSibling.classList.contains('spotdeals-seo-results-view')) {
+      return filterWrapper.nextElementSibling;
+    }
+
+    return document.querySelector('.spotdeals-seo-results-view');
+  }
+
+  function clearSeoLandingScrollFlag(form) {
+    const scrollInput = ensureSeoLandingHiddenInput(form, 'scroll_results');
+    scrollInput.value = '';
+
+    try {
+      const url = new URL(window.location.href);
+
+      if (!url.searchParams.has('scroll_results')) {
+        return;
+      }
+
+      url.searchParams.delete('scroll_results');
+      window.history.replaceState({}, '', url.toString());
+    }
+    catch (e) {
+      // Ignore history/url failures.
+    }
+  }
+
+  function scrollSeoLandingResultsIntoView(form) {
+    const target = getSeoLandingResultsTarget(form);
+
+    if (!target) {
+      clearSeoLandingScrollFlag(form);
+      return;
+    }
+
+    const offset = 16;
+    const rect = target.getBoundingClientRect();
+    const top = window.pageYOffset + rect.top - offset;
+
+    window.setTimeout(function () {
+      window.scrollTo({
+        top: Math.max(0, top),
+        behavior: 'smooth'
+      });
+      clearSeoLandingScrollFlag(form);
+    }, 60);
+  }
+
+  function shouldScrollSeoLandingResultsOnLoad() {
+    try {
+      const url = new URL(window.location.href);
+      return url.searchParams.get('scroll_results') === '1';
+    }
+    catch (e) {
+      return false;
+    }
+  }
+
+  function attachSeoLandingFilterEnhancements(context) {
+    once('spotdeals-seo-landing-filter-enhancements', 'form.views-exposed-form', context).forEach(function (form) {
+      const searchInput = getSeoLandingFilterSearchInput(form);
+
+      if (!searchInput) {
+        return;
+      }
+
+      const scrollInput = ensureSeoLandingHiddenInput(form, 'scroll_results');
+      let lastClickedSubmitter = null;
+
+      form.classList.add('spotdeals-seo-filter-form');
+      document.body.classList.add('spotdeals-has-seo-filter-actions');
+
+      form.addEventListener('click', function (event) {
+        const target = event.target;
+
+        if (!(target instanceof Element)) {
+          return;
+        }
+
+        const button = target.closest('input[type="submit"], button[type="submit"]');
+
+        if (button) {
+          lastClickedSubmitter = button;
+        }
+      }, true);
+
+      form.addEventListener('submit', function (event) {
+        const submitter = event.submitter || lastClickedSubmitter;
+        const label = submitter ? ((submitter.getAttribute('value') || submitter.textContent || '').trim()) : '';
+        const isReset = /reset/i.test(label) || (submitter && /reset/i.test(submitter.getAttribute('name') || ''));
+
+        scrollInput.value = isReset ? '' : '1';
+      });
+
+      if (shouldScrollSeoLandingResultsOnLoad()) {
+        scrollSeoLandingResultsIntoView(form);
+      }
+    });
+  }
+
+  function getRegularSearchFilterWrapper() {
+    const wrappers = document.querySelectorAll('.spotdeals-finder__filters');
+
+    for (let i = 0; i < wrappers.length; i += 1) {
+      const wrapper = wrappers[i];
+      const form = wrapper.querySelector('form.views-exposed-form, form');
+
+      if (!form) {
+        continue;
+      }
+
+      if (wrapper.querySelector('.spotdeals-recommendation-bottom-actions')) {
+        continue;
+      }
+
+      if (form.querySelector('input[name="search_deals"], input[name="search_api_fulltext"], input[name="search_deals_by_city"]')) {
+        return wrapper;
+      }
+    }
+
+    return null;
+  }
+
+  function syncMobileStickySearchFormState() {
+    const wrapper = getRegularSearchFilterWrapper();
+    const hasRecommendationActions = hasStickyRecommendationActions();
+
+    document.body.classList.toggle('spotdeals-has-mobile-search-form', Boolean(wrapper) && !hasRecommendationActions);
+
+    document.querySelectorAll('.spotdeals-mobile-sticky-search-form').forEach(function (item) {
+      if (item !== wrapper) {
+        item.classList.remove('spotdeals-mobile-sticky-search-form');
+      }
+    });
+
+    if (wrapper && !hasRecommendationActions) {
+      wrapper.classList.add('spotdeals-mobile-sticky-search-form');
+    }
+    else if (wrapper) {
+      wrapper.classList.remove('spotdeals-mobile-sticky-search-form');
+    }
+  }
+
+  function attachMobileStickySearchForm(context) {
+    once('spotdeals-mobile-sticky-search-form-v1', 'body', context).forEach(function () {
+      let ticking = false;
+
+      const requestSync = function () {
+        if (ticking) {
+          return;
+        }
+
+        ticking = true;
+        window.requestAnimationFrame(function () {
+          syncMobileStickySearchFormState();
+          ticking = false;
+        });
+      };
+
+      syncMobileStickySearchFormState();
+      window.addEventListener('resize', requestSync);
+      window.addEventListener('orientationchange', requestSync);
+    });
+
+    syncMobileStickySearchFormState();
+  }
+
   Drupal.behaviors.spotdealsThemeFixes = {
     attach: function (context) {
       once('spotdeals-theme-fixes', '.spotdeals-finder__results', context).forEach(function (resultsWrapper) {
@@ -921,6 +1109,8 @@
       attachBackToTopButton(context);
       attachHomepageRecommendationActions(context);
       attachHomepageFeedMobileAccordion(context);
+      attachSeoLandingFilterEnhancements(context);
+      attachMobileStickySearchForm(context);
       moveVotesIntoDealCards(context);
       moveInternalVenueVotesIntoTarget(context);
       applyVoteStateClasses(context);
