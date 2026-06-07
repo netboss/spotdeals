@@ -3596,6 +3596,7 @@ h1.page-title {
     display: grid;
     gap: 0.85rem;
     margin: 0 1rem 0 0;
+    padding-bottom: 1rem;
   }
 
   body.spotdeals-has-mobile-search-form:not(.spotdeals-has-sticky-recommendation-actions) .spotdeals-mobile-sticky-search-form .form-actions,
@@ -3605,7 +3606,7 @@ h1.page-title {
     gap: 0.75rem;
     align-items: stretch;
     margin: 0;
-    padding: 0;
+    padding: 0 0 1rem;
   }
 
   body.spotdeals-has-mobile-search-form:not(.spotdeals-has-sticky-recommendation-actions) .spotdeals-mobile-sticky-search-form .form-actions input[type="submit"],
