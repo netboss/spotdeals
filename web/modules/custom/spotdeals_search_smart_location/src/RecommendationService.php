@@ -223,6 +223,105 @@ final class RecommendationService {
   }
 
 
+
+  /**
+   * Returns one recommended deal from an already-localized result set.
+   *
+   * This is used by SEO landing pages where city/category/search filtering has
+   * already produced the eligible local deal pool. It reuses the same candidate
+   * scoring, vote-quality filtering, and session retry behavior as the regular
+   * recommendation engine, but it does not require browser geolocation.
+   *
+   * @param array<int,int> $dealNids
+   *   Local eligible deal node IDs in display order.
+   * @param array<int,string> $cuisines
+   *   Optional preference tokens.
+   * @param array<int,int> $excludedVenueNids
+   *   Venue node IDs already shown in the current recommendation session.
+   * @param array<int,int> $excludedDealNids
+   *   Deal node IDs already shown in the current recommendation session.
+   * @param bool $allowRecycle
+   *   Whether to restart the cycle after every strict local candidate has been
+   *   shown. The most recent deal stays excluded to avoid immediate repeats.
+   *
+   * @return array<int,int>
+   *   A single recommended deal node ID, or an empty array.
+   */
+  public function recommendFromDealNids(
+    array $dealNids,
+    array $cuisines = [],
+    array $excludedVenueNids = [],
+    array $excludedDealNids = [],
+    bool $allowRecycle = TRUE,
+  ): array {
+    $startedAt = microtime(TRUE);
+
+    $dealNids = array_values(array_unique(array_filter(
+      array_map('intval', $dealNids),
+      static fn(int $nid): bool => $nid > 0
+    )));
+    $cuisines = $this->normalizeCuisineTokens($cuisines);
+    $excludedVenueNids = array_values(array_unique(array_filter(
+      array_map('intval', $excludedVenueNids),
+      static fn(int $nid): bool => $nid > 0
+    )));
+    $excludedDealNids = array_values(array_unique(array_filter(
+      array_map('intval', $excludedDealNids),
+      static fn(int $nid): bool => $nid > 0
+    )));
+
+    if (empty($dealNids)) {
+      return [];
+    }
+
+    $preferredLocalities = $this->localitiesForVenueNids($excludedVenueNids);
+    $candidateSets = [
+      $this->buildCandidatesFromDealNids($dealNids, $cuisines, $excludedVenueNids, $excludedDealNids),
+    ];
+
+    if ($allowRecycle && !empty($excludedDealNids)) {
+      $recentDealNid = (int) end($excludedDealNids);
+      $recycleExcludedDealNids = $recentDealNid > 0 ? [$recentDealNid] : [];
+      $candidateSets[] = $this->buildCandidatesFromDealNids($dealNids, $cuisines, [], $recycleExcludedDealNids);
+    }
+
+    $setSizes = array_map(static fn(array $set): int => count($set), $candidateSets);
+    $attemptSizesJson = json_encode($setSizes, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]';
+
+    $picked = $this->pickFromCandidateSets($candidateSets, $preferredLocalities);
+    if ($picked !== NULL) {
+      $this->logTiming(sprintf(
+        'SMART LOCATION local SEO recommendation timing: total_ms="%s" local_candidates="%d" cuisines_count="%d" excluded_venues_count="%d" excluded_deals_count="%d" attempts_built="%d" attempt_sizes="%s" selected_attempt="%d" top_tier_count="%d" picked_deal_nid="%d" picked_venue_nid="%d"',
+        $this->formatMs($startedAt),
+        count($dealNids),
+        count($cuisines),
+        count($excludedVenueNids),
+        count($excludedDealNids),
+        count($candidateSets),
+        $attemptSizesJson,
+        (int) $picked['attempt_index'],
+        (int) $picked['top_tier_count'],
+        (int) $picked['candidate']['deal_nid'],
+        (int) $picked['candidate']['venue_nid'],
+      ));
+
+      return [(int) $picked['candidate']['deal_nid']];
+    }
+
+    $this->logTiming(sprintf(
+      'SMART LOCATION local SEO recommendation timing: total_ms="%s" local_candidates="%d" cuisines_count="%d" excluded_venues_count="%d" excluded_deals_count="%d" attempts_built="%d" attempt_sizes="%s" selected_attempt="0" top_tier_count="0" picked_deal_nid="" picked_venue_nid=""',
+      $this->formatMs($startedAt),
+      count($dealNids),
+      count($cuisines),
+      count($excludedVenueNids),
+      count($excludedDealNids),
+      count($candidateSets),
+      $attemptSizesJson,
+    ));
+
+    return [];
+  }
+
   /**
    * Picks the best eligible candidate from ordered candidate attempts.
    *
@@ -321,6 +420,122 @@ final class RecommendationService {
       static fn(float $radius): float => round($radius, 2),
       array_filter($radii, static fn(float $radius): bool => $radius >= $baseRadiusKm)
     )));
+  }
+
+
+  /**
+   * Builds scored candidates from a fixed local set of deal node IDs.
+   *
+   * @param array<int,int> $dealNids
+   *   Local eligible deal node IDs in display order.
+   * @param array<int,string> $cuisines
+   *   Normalized preference tokens.
+   * @param array<int,int> $excludedVenueNids
+   *   Venue node IDs already shown.
+   * @param array<int,int> $excludedDealNids
+   *   Deal node IDs already shown.
+   *
+   * @return array<int,array<string,int|float|string|bool>>
+   *   Recommendation candidates.
+   */
+  private function buildCandidatesFromDealNids(
+    array $dealNids,
+    array $cuisines,
+    array $excludedVenueNids = [],
+    array $excludedDealNids = [],
+  ): array {
+    $dealNids = array_values(array_unique(array_filter(
+      array_map('intval', $dealNids),
+      static fn(int $nid): bool => $nid > 0
+    )));
+    $excludedVenueNids = array_values(array_unique(array_filter(
+      array_map('intval', $excludedVenueNids),
+      static fn(int $nid): bool => $nid > 0
+    )));
+    $excludedDealNids = array_values(array_unique(array_filter(
+      array_map('intval', $excludedDealNids),
+      static fn(int $nid): bool => $nid > 0
+    )));
+
+    if (empty($dealNids)) {
+      return [];
+    }
+
+    $candidateNids = array_slice($dealNids, 0, self::CANDIDATE_LIMIT);
+    $deals = $this->entityTypeManager->getStorage('node')->loadMultiple($candidateNids);
+    if (empty($deals)) {
+      return [];
+    }
+
+    $freshnessScores = $this->freshnessScorer->scoreDealNids($candidateNids);
+    $candidateRows = [];
+    $candidateVenueNids = [];
+
+    foreach ($candidateNids as $rankIndex => $dealNid) {
+      $deal = $deals[$dealNid] ?? NULL;
+      if (!$deal instanceof NodeInterface) {
+        continue;
+      }
+
+      if (in_array((int) $deal->id(), $excludedDealNids, TRUE)) {
+        continue;
+      }
+
+      $venue = $this->dealVenue($deal);
+      if (!$venue instanceof NodeInterface) {
+        continue;
+      }
+
+      $venueNid = (int) $venue->id();
+      if (in_array($venueNid, $excludedVenueNids, TRUE)) {
+        continue;
+      }
+
+      $candidateRows[] = [
+        'deal' => $deal,
+        'venue' => $venue,
+        'venue_cuisine_tokens' => $this->extractVenueCuisineTokens($venue),
+        'rank_index' => (int) $rankIndex,
+      ];
+      $candidateVenueNids[] = $venueNid;
+    }
+
+    if (empty($candidateRows)) {
+      return [];
+    }
+
+    $venueQualityScores = $this->freshnessScorer->scoreVenueNids($candidateVenueNids);
+    $candidates = [];
+
+    foreach ($candidateRows as $row) {
+      $deal = $row['deal'];
+      $venue = $row['venue'];
+      if (!$deal instanceof NodeInterface || !$venue instanceof NodeInterface) {
+        continue;
+      }
+
+      $dealNid = (int) $deal->id();
+      $venueNid = (int) $venue->id();
+
+      $candidate = $this->buildCandidate(
+        $deal,
+        $venue,
+        $cuisines,
+        $row['venue_cuisine_tokens'],
+        (int) $row['rank_index'],
+        $freshnessScores[$dealNid] ?? [],
+        $venueQualityScores[$venueNid] ?? [],
+        0.0,
+        0.0
+      );
+      if ($candidate === NULL) {
+        continue;
+      }
+
+      $candidates[] = $candidate;
+    }
+
+    return $candidates;
   }
 
   /**

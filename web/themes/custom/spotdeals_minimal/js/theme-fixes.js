@@ -928,8 +928,47 @@
     return input;
   }
 
+  function getActiveSeoLandingLocalPick() {
+    return document.querySelector('.spotdeals-seo-local-pick.is-active');
+  }
+
+  function hasActiveSeoLandingLocalPick() {
+    return Boolean(getActiveSeoLandingLocalPick());
+  }
+
+  function syncSeoLandingLocalPickFilterVisibility() {
+    document.querySelectorAll('.spotdeals-finder__filters.is-covered-by-local-pick').forEach(function (filterWrapper) {
+      filterWrapper.classList.remove('is-covered-by-local-pick');
+    });
+
+    const localPick = getActiveSeoLandingLocalPick();
+
+    if (!localPick) {
+      document.body.classList.remove('spotdeals-has-active-local-pick');
+      return;
+    }
+
+    const resultsColumn = localPick.closest('.spotdeals-seo-landing__results-column') || document;
+    const filterWrapper = resultsColumn.querySelector('.spotdeals-finder__filters');
+
+    if (filterWrapper) {
+      filterWrapper.classList.add('is-covered-by-local-pick');
+    }
+
+    document.body.classList.add('spotdeals-has-active-local-pick');
+  }
+
   function getSeoLandingResultsTarget(form) {
     const filterWrapper = form.closest('.spotdeals-finder__filters');
+    const localPick = getActiveSeoLandingLocalPick();
+
+    // Local recommendation requests render a sticky "Your local pick" control.
+    // In that state, the regular filter form is hidden and the pick control
+    // becomes the scroll anchor. Regular filter searches keep the results-view
+    // anchor so the normal search experience is unchanged.
+    if (localPick && filterWrapper) {
+      return localPick;
+    }
 
     if (filterWrapper && filterWrapper.nextElementSibling && filterWrapper.nextElementSibling.classList.contains('spotdeals-seo-results-view')) {
       return filterWrapper.nextElementSibling;
@@ -938,10 +977,7 @@
     return document.querySelector('.spotdeals-seo-results-view');
   }
 
-  function clearSeoLandingScrollFlag(form) {
-    const scrollInput = ensureSeoLandingHiddenInput(form, 'scroll_results');
-    scrollInput.value = '';
-
+  function clearSeoLandingScrollUrlFlag() {
     try {
       const url = new URL(window.location.href);
 
@@ -955,6 +991,12 @@
     catch (e) {
       // Ignore history/url failures.
     }
+  }
+
+  function clearSeoLandingScrollFlag(form) {
+    const scrollInput = ensureSeoLandingHiddenInput(form, 'scroll_results');
+    scrollInput.value = '';
+    clearSeoLandingScrollUrlFlag();
   }
 
   function scrollSeoLandingResultsIntoView(form) {
@@ -977,6 +1019,57 @@
       clearSeoLandingScrollFlag(form);
     }, 60);
   }
+  function getSeoLandingStandaloneResultsTarget() {
+    const localPick = getActiveSeoLandingLocalPick();
+
+    if (localPick) {
+      return localPick;
+    }
+
+    return document.querySelector('.spotdeals-seo-results-view[data-recommendation-active="1"]') || document.querySelector('.spotdeals-seo-results-view');
+  }
+
+  function scrollSeoLandingStandaloneResultsIntoView() {
+    const target = getSeoLandingStandaloneResultsTarget();
+
+    if (!target) {
+      clearSeoLandingScrollUrlFlag();
+      return;
+    }
+
+    const offset = 16;
+    const rect = target.getBoundingClientRect();
+    const top = window.pageYOffset + rect.top - offset;
+
+    window.setTimeout(function () {
+      window.scrollTo({
+        top: Math.max(0, top),
+        behavior: 'smooth'
+      });
+      clearSeoLandingScrollUrlFlag();
+    }, 60);
+  }
+
+  function attachSeoLandingScrollFallback(context) {
+    once('spotdeals-seo-landing-scroll-fallback', 'body', context).forEach(function () {
+      if (!shouldScrollSeoLandingResultsOnLoad()) {
+        return;
+      }
+
+      window.setTimeout(function () {
+        if (!shouldScrollSeoLandingResultsOnLoad()) {
+          return;
+        }
+
+        if (document.querySelector('form.spotdeals-seo-filter-form')) {
+          return;
+        }
+
+        scrollSeoLandingStandaloneResultsIntoView();
+      }, 120);
+    });
+  }
+
 
   function shouldScrollSeoLandingResultsOnLoad() {
     try {
@@ -1105,11 +1198,13 @@
 
       moveMobileDiscoveryBlocks();
       moveSeoLandingMobileAccordions();
+      syncSeoLandingLocalPickFilterVisibility();
       attachMobileDiscoveryResizeHandler(context);
       attachBackToTopButton(context);
       attachHomepageRecommendationActions(context);
       attachHomepageFeedMobileAccordion(context);
       attachSeoLandingFilterEnhancements(context);
+      attachSeoLandingScrollFallback(context);
       attachMobileStickySearchForm(context);
       moveVotesIntoDealCards(context);
       moveInternalVenueVotesIntoTarget(context);
