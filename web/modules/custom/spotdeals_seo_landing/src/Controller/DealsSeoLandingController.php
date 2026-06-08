@@ -150,22 +150,29 @@ final class DealsSeoLandingController extends ControllerBase {
   /**
    * Title callback for /deals/{city}.
    */
-  public function cityTitle(string $city): string {
+  public function cityTitle(string $city): string|\Stringable {
     $city_label = $this->resolveCityLabel($city) ?? $this->slugToLikelyLabel($city);
     $deal_count = $this->countDeals($city_label);
 
-    return sprintf('%d Deals in %s', $deal_count, $city_label);
+    return $this->t('@count Deals in @city', [
+      '@count' => $deal_count,
+      '@city' => $city_label,
+    ]);
   }
 
   /**
    * Title callback for /deals/{city}/{category}.
    */
-  public function cityCategoryTitle(string $city, string $category): string {
+  public function cityCategoryTitle(string $city, string $category): string|\Stringable {
     $city_label = $this->resolveCityLabel($city) ?? $this->slugToLikelyLabel($city);
     $category_label = $this->resolveDealCategoryLabel($category) ?? $this->slugToLikelyLabel($category);
     $deal_count = $this->countDeals($city_label, $category_label);
 
-    return sprintf('%d %s in %s', $deal_count, $this->pluralizeLabel($category_label), $city_label);
+    return $this->t('@count @category in @city', [
+      '@count' => $deal_count,
+      '@category' => $this->translateDisplayLabel($this->pluralizeLabel($category_label)),
+      '@city' => $city_label,
+    ]);
   }
 
   /**
@@ -190,30 +197,29 @@ final class DealsSeoLandingController extends ControllerBase {
     $deals_build = $this->buildDealsResults($city_label, $category_label);
 
     $page_title = $category_label !== NULL
-      ? sprintf('%s in %s', $category_label, $city_label)
-      : sprintf('Deals in %s', $city_label);
+      ? $this->t('@category in @city', [
+        '@category' => $this->translateDisplayLabel($category_label),
+        '@city' => $city_label,
+      ])
+      : $this->t('Deals in @city', ['@city' => $city_label]);
 
     $intro_text = $category_label !== NULL
-      ? sprintf(
-        'Find %s in %s, including current local offers, food and drink specials, and nearby places worth checking out.',
-        $category_label,
-        $city_label
-      )
-      : sprintf(
-        'Browse current local deals in %s, including restaurant specials, food offers, and nearby places worth checking out.',
-        $city_label
-      );
+      ? $this->t('Find @category in @city, including current local offers, food and drink specials, and nearby places worth checking out.', [
+        '@category' => $this->translateDisplayLabel($category_label),
+        '@city' => $city_label,
+      ])
+      : $this->t('Browse current local deals in @city, including restaurant specials, food offers, and nearby places worth checking out.', [
+        '@city' => $city_label,
+      ]);
 
     $meta_description = $category_label !== NULL
-      ? sprintf(
-        'Find %s in %s on SpotDeals. Browse current local specials, restaurant deals, and nearby offers.',
-        $category_label,
-        $city_label
-      )
-      : sprintf(
-        'Find local deals in %s on SpotDeals. Browse current restaurant specials, food deals, and nearby offers.',
-        $city_label
-      );
+      ? $this->t('Find @category in @city on SpotDeals. Browse current local specials, restaurant deals, and nearby offers.', [
+        '@category' => $this->translateDisplayLabel($category_label),
+        '@city' => $city_label,
+      ])
+      : $this->t('Find local deals in @city on SpotDeals. Browse current restaurant specials, food deals, and nearby offers.', [
+        '@city' => $city_label,
+      ]);
 
     $canonical_url = $category_label !== NULL
       ? Url::fromRoute('spotdeals_seo_landing.deals_city_category', [
@@ -305,7 +311,7 @@ final class DealsSeoLandingController extends ControllerBase {
               '#tag' => 'meta',
               '#attributes' => [
                 'name' => 'description',
-                'content' => $meta_description,
+                'content' => (string) $meta_description,
               ],
             ],
             'spotdeals_seo_landing_meta_description',
@@ -325,7 +331,7 @@ final class DealsSeoLandingController extends ControllerBase {
               '#tag' => 'meta',
               '#attributes' => [
                 'property' => 'og:title',
-                'content' => $page_title,
+                'content' => (string) $page_title,
               ],
             ],
             'spotdeals_seo_landing_og_title',
@@ -1103,6 +1109,32 @@ final class DealsSeoLandingController extends ControllerBase {
     ];
 
     return $icons[$slug] ?? '🏷️';
+  }
+
+  /**
+   * Translates common display labels used in dynamic SEO page titles.
+   */
+  private function translateDisplayLabel(string $label): string|\Stringable {
+    return match ($this->normalizeForComparison($label)) {
+      'beer deals' => $this->t('Beer Deals'),
+      'craft beer deals' => $this->t('Craft Beer Deals'),
+      'coffee deals' => $this->t('Coffee Deals'),
+      'daily special' => $this->t('Daily Special'),
+      'daily specials' => $this->t('Daily Specials'),
+      'deals' => $this->t('Deals'),
+      'dining deals' => $this->t('Dining Deals'),
+      'drink specials' => $this->t('Drink Specials'),
+      'food deals' => $this->t('Food Deals'),
+      'happy hour' => $this->t('Happy Hour'),
+      'happy hours' => $this->t('Happy Hours'),
+      'local deals' => $this->t('Local Deals'),
+      'lunch special' => $this->t('Lunch Special'),
+      'lunch specials' => $this->t('Lunch Specials'),
+      'nightlife deals' => $this->t('Nightlife Deals'),
+      'taco tuesdays' => $this->t('Taco Tuesdays'),
+      'wine deals' => $this->t('Wine Deals'),
+      default => $label,
+    };
   }
 
   /**

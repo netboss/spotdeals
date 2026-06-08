@@ -510,6 +510,7 @@ function spotdeals_minimal_form_alter(array &$form, \Drupal\Core\Form\FormStateI
       ], TRUE)
     ) {
       $form['#action'] = \Drupal::service('path.current')->getPath();
+      _spotdeals_minimal_translate_deals_seo_exposed_form($form);
     }
   }
 
@@ -533,6 +534,177 @@ function spotdeals_minimal_form_alter(array &$form, \Drupal\Core\Form\FormStateI
       $form[$element_key]['#access'] = FALSE;
     }
   }
+}
+
+
+
+/**
+ * Implements hook_preprocess_form_element_label().
+ */
+function spotdeals_minimal_preprocess_form_element_label(array &$variables): void {
+  $route_name = (string) \Drupal::routeMatch()->getRouteName();
+
+  if (!str_starts_with($route_name, 'spotdeals_seo_landing.deals_')) {
+    return;
+  }
+
+  if (empty($variables['title']) || !is_string($variables['title'])) {
+    return;
+  }
+
+  $variables['title'] = _spotdeals_minimal_translate_deals_seo_filter_string($variables['title']);
+}
+
+/**
+ * Applies translations to the Deals SEO landing exposed filter form.
+ */
+function _spotdeals_minimal_translate_deals_seo_exposed_form(array &$form): void {
+  $city_label = _spotdeals_minimal_current_deals_seo_city_label();
+
+  if (isset($form['search_deals_by_city']) && is_array($form['search_deals_by_city'])) {
+    $form['search_deals_by_city']['#title'] = _spotdeals_minimal_translate_deals_seo_filter_string('Filter deals by keyword');
+    $form['search_deals_by_city']['#placeholder'] = _spotdeals_minimal_translate_deals_seo_filter_string('Search tacos, burgers, happy hour...');
+    $form['search_deals_by_city']['#description'] = _spotdeals_minimal_translate_deals_seo_filter_string('Optional. Filter this local list by food, drink, venue, or deal type.');
+
+    $form['search_deals_by_city']['#attributes']['placeholder'] = (string) _spotdeals_minimal_translate_deals_seo_filter_string('Search tacos, burgers, happy hour...');
+    $form['search_deals_by_city']['#attributes']['aria-label'] = (string) _spotdeals_minimal_translate_deals_seo_filter_string('Filter deals by keyword');
+  }
+
+  _spotdeals_minimal_translate_deals_seo_form_element($form, $city_label);
+}
+
+/**
+ * Recursively translates labels and text-like properties in the SEO filter form.
+ */
+function _spotdeals_minimal_translate_deals_seo_form_element(array &$element, string $city_label): void {
+  foreach (['#title', '#description', '#placeholder', '#field_prefix', '#field_suffix'] as $property) {
+    if (isset($element[$property]) && is_string($element[$property])) {
+      $element[$property] = _spotdeals_minimal_translate_deals_seo_filter_string($element[$property], $city_label);
+    }
+  }
+
+  foreach (['#value'] as $property) {
+    if (isset($element[$property]) && is_string($element[$property])) {
+      $element[$property] = _spotdeals_minimal_translate_deals_seo_filter_string($element[$property], $city_label);
+    }
+  }
+
+  if (isset($element['#attributes']) && is_array($element['#attributes'])) {
+    foreach (['placeholder', 'aria-label', 'title'] as $attribute) {
+      if (isset($element['#attributes'][$attribute]) && is_string($element['#attributes'][$attribute])) {
+        $element['#attributes'][$attribute] = (string) _spotdeals_minimal_translate_deals_seo_filter_string($element['#attributes'][$attribute], $city_label);
+      }
+    }
+  }
+
+  if (isset($element['#options']) && is_array($element['#options'])) {
+    foreach ($element['#options'] as $key => $option_label) {
+      if (is_string($option_label)) {
+        $element['#options'][$key] = _spotdeals_minimal_translate_deals_seo_filter_string($option_label, $city_label);
+      }
+    }
+  }
+
+  foreach ($element as $key => &$child) {
+    if (!is_string($key) || str_starts_with($key, '#') || !is_array($child)) {
+      continue;
+    }
+
+    _spotdeals_minimal_translate_deals_seo_form_element($child, $city_label);
+  }
+}
+
+/**
+ * Translates Deals SEO exposed-filter strings that can come from Views config.
+ */
+function _spotdeals_minimal_translate_deals_seo_filter_string(string $label, string $city_label = ''): mixed {
+  $normalized_label = trim($label);
+
+  if ($normalized_label === '') {
+    return $label;
+  }
+
+  $dynamic_city_patterns = [
+    '/^Filter options near (.+)$/i' => 'Filtrar opciones cerca de @city',
+    '/^Filter deals near (.+)$/i' => 'Filtrar ofertas cerca de @city',
+    '/^Search deals near (.+)$/i' => 'Buscar ofertas cerca de @city',
+    '/^Find deals near (.+)$/i' => 'Buscar ofertas cerca de @city',
+  ];
+
+  foreach ($dynamic_city_patterns as $pattern => $spanish_template) {
+    if (preg_match($pattern, $normalized_label, $matches)) {
+      $matched_city = trim((string) ($matches[1] ?? $city_label));
+      return _spotdeals_minimal_current_language_is_spanish()
+        ? str_replace('@city', $matched_city, $spanish_template)
+        : t(str_replace('@city', $matched_city, preg_replace('/^(.+)$/', '$0', $normalized_label) ?? $normalized_label));
+    }
+  }
+
+  $spanish_labels = [
+    '- Any -' => '- Cualquiera -',
+    'Apply' => 'Aplicar',
+    'City or ZIP code' => 'Ciudad o código postal',
+    'Distance' => 'Distancia',
+    'Enter a city or ZIP code' => 'Ingresa una ciudad o código postal',
+    'Enter city or ZIP code' => 'Ingresa ciudad o código postal',
+    'Enter ZIP code or city' => 'Ingresa código postal o ciudad',
+    'Filter deals by keyword' => 'Filtrar ofertas por palabra clave',
+    'Filter options' => 'Filtrar opciones',
+    'Filter results' => 'Filtrar resultados',
+    'Filter deals' => 'Buscar ofertas',
+    'Find deals' => 'Buscar ofertas',
+    'Keyword' => 'Palabra clave',
+    'Keywords' => 'Palabras clave',
+    'Location' => 'Ubicación',
+    'Optional. Filter this local list by food, drink, venue, or deal type.' => 'Opcional. Filtra esta lista local por comida, bebida, lugar o tipo de oferta.',
+    'Reset' => 'Restablecer',
+    'Search' => 'Buscar',
+    'Search by food type, or location to discover nearby deals.' => 'Busca por tipo de comida o ubicación para descubrir ofertas cercanas.',
+    'Search deals' => 'Buscar ofertas',
+    'Search keywords' => 'Buscar palabras clave',
+    'Search tacos, burgers, happy hour...' => 'Busca tacos, hamburguesas, happy hour...',
+    'Search terms' => 'Términos de búsqueda',
+    'Sort by' => 'Ordenar por',
+    'ZIP code' => 'Código postal',
+    'Zip code' => 'Código postal',
+  ];
+
+  if ($city_label !== '') {
+    $spanish_labels['Filter options near @city'] = 'Filtrar opciones cerca de @city';
+    $spanish_labels['Filter deals near @city'] = 'Filtrar ofertas cerca de @city';
+  }
+
+  if (_spotdeals_minimal_current_language_is_spanish() && isset($spanish_labels[$normalized_label])) {
+    $translated = $spanish_labels[$normalized_label];
+    return $city_label !== '' ? str_replace('@city', $city_label, $translated) : $translated;
+  }
+
+  if (isset($spanish_labels[$normalized_label])) {
+    return t($normalized_label, $city_label !== '' ? ['@city' => $city_label] : []);
+  }
+
+  return $label;
+}
+
+/**
+ * Returns the current SEO landing city label from the route, when available.
+ */
+function _spotdeals_minimal_current_deals_seo_city_label(): string {
+  $city_slug = (string) \Drupal::routeMatch()->getParameter('city');
+
+  if ($city_slug === '') {
+    return '';
+  }
+
+  $city_label = str_replace('-', ' ', $city_slug);
+  return mb_convert_case($city_label, MB_CASE_TITLE, 'UTF-8');
+}
+
+/**
+ * Checks whether the current interface language is Spanish.
+ */
+function _spotdeals_minimal_current_language_is_spanish(): bool {
+  return \Drupal::languageManager()->getCurrentLanguage()->getId() === 'es';
 }
 
 /**
