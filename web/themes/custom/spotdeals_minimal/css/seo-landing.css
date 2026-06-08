@@ -71,7 +71,7 @@
 
 .spotdeals-seo-summary__value {
   color: var(--spotdeals-seo-green-dark);
-  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  font-size: clamp(1.05rem, 1.5vw, 1.45rem);
   font-weight: 800;
   line-height: 1.1;
 }
@@ -602,3 +602,127 @@
     min-height: auto;
   }
 }
+
+/* Local recommendation picker for SEO deal pages. */
+.spotdeals-seo-local-pick {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #d6e4ad;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f9fcf0 0%, #f2f8df 100%);
+}
+
+.spotdeals-seo-local-pick h2 {
+  margin: 0 0 0.25rem;
+  color: var(--spotdeals-seo-text);
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.spotdeals-seo-local-pick p {
+  margin: 0;
+  color: var(--spotdeals-seo-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.spotdeals-seo-local-pick__actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.65rem;
+}
+
+.spotdeals-seo-local-pick__button,
+.spotdeals-seo-local-pick__button:visited {
+  padding: 0.7rem 1.15rem;
+  border-radius: 6px;
+  background: var(--spotdeals-seo-green);
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.spotdeals-seo-local-pick__button:hover,
+.spotdeals-seo-local-pick__button:focus {
+  background: var(--spotdeals-seo-green-dark);
+  color: #fff;
+  text-decoration: none;
+}
+
+.spotdeals-seo-local-pick__reset,
+.spotdeals-seo-local-pick__reset:visited {
+  padding: 0.7rem 1.15rem;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--spotdeals-seo-text);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.spotdeals-seo-local-pick__reset:hover,
+.spotdeals-seo-local-pick__reset:focus {
+  color: var(--spotdeals-seo-green-dark);
+  text-decoration: none;
+}
+
+/* Keep the local recommendation controls visible after a user asks for a pick.
+ * The sticky state is applied only to the active recommendation state so the
+ * idle callout keeps behaving like normal page content. Scroll margin keeps
+ * smooth-scroll from landing with the sticky controls covering the result.
+ */
+.spotdeals-seo-local-pick.is-active {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 20;
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.12);
+}
+
+.spotdeals-seo-landing__results,
+.spotdeals-seo-results-view {
+  scroll-margin-top: 7.5rem;
+}
+
+@media (max-width: 640px) {
+  .spotdeals-seo-local-pick {
+    align-items: stretch;
+    flex-direction: column;
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+
+  .spotdeals-seo-local-pick.is-active {
+    top: 0.5rem;
+    z-index: 30;
+  }
+
+  .spotdeals-seo-landing__results,
+  .spotdeals-seo-results-view {
+    scroll-margin-top: 11rem;
+  }
+
+  .spotdeals-seo-local-pick__actions {
+    flex-direction: column;
+  }
+
+  .spotdeals-seo-local-pick__button,
+  .spotdeals-seo-local-pick__reset {
+    text-align: center;
+    margin: 0;
+    justify-content: center;
+  }
+}
+
+
+/* Hide the default SEO filter form while the sticky local pick controls are active.
+ * The form remains available during normal filter searches; only recommendation
+ * sessions use the compact "Your local pick" controls.
+ */
+.spotdeals-finder__filters.is-covered-by-local-pick,
+.spotdeals-finder__filters.is-covered-by-local-pick.spotdeals-mobile-sticky-search-form {
+  display: none;
+}
+

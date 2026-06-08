@@ -649,7 +649,7 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
   }
 
   $view = $variables['view'];
-  if ($view->id() !== 'deals_search_solr' || $view->current_display !== 'page_1') {
+  if ($view->id() !== 'deals_search_solr' || !in_array((string) $view->current_display, ['page_1', 'block_1', 'block_2'], TRUE)) {
     return;
   }
 
@@ -712,7 +712,7 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
   $view->element['#attached']['html_head'][] = [
     [
       '#tag' => 'style',
-      '#value' => '.view-id-deals_search_solr.view-display-id-page_1 .pager__summary{display:none !important;}',
+      '#value' => '.view-id-deals_search_solr .pager__summary{display:none !important;}',
     ],
     'spotdeals_search_smart_location_hide_recommendation_pager_summary',
   ];
@@ -748,7 +748,7 @@ function spotdeals_search_smart_location_preprocess_views_view_unformatted(array
   }
 
   $view = $variables['view'];
-  if ($view->id() !== 'deals_search_solr' || $view->current_display !== 'page_1') {
+  if ($view->id() !== 'deals_search_solr' || !in_array((string) $view->current_display, ['page_1', 'block_1', 'block_2'], TRUE)) {
     return;
   }
 

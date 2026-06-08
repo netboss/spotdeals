@@ -7,7 +7,9 @@ namespace Drupal\spotdeals_seo_landing\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 use Drupal\Core\Url;
+use Drupal\spotdeals_search_smart_location\RecommendationService;
 use Drupal\views\ViewExecutable;
 use Drupal\views\Views;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -41,6 +43,11 @@ final class DealsSeoLandingController extends ControllerBase {
    * Deal category vocabulary machine name.
    */
   private const DEAL_CATEGORY_VOCABULARY = 'deal_category';
+
+  /**
+   * Query flag used to show one local recommendation on SEO deal pages.
+   */
+  private const LOCAL_RECOMMENDATION_QUERY = 'seo_recommendation';
 
   /**
    * High-value deal categories to cross-link from SEO landing pages.
@@ -90,14 +97,28 @@ final class DealsSeoLandingController extends ControllerBase {
   private EntityTypeManagerInterface $seoLandingEntityTypeManager;
 
   /**
+   * Recommendation service.
+   */
+  private RecommendationService $seoLandingRecommendationService;
+
+  /**
+   * Page cache kill switch.
+   */
+  private KillSwitch $seoLandingPageCacheKillSwitch;
+
+  /**
    * Constructs the controller.
    */
   public function __construct(
     Connection $database,
     EntityTypeManagerInterface $entityTypeManager,
+    RecommendationService $recommendationService,
+    KillSwitch $pageCacheKillSwitch,
   ) {
     $this->seoLandingDatabase = $database;
     $this->seoLandingEntityTypeManager = $entityTypeManager;
+    $this->seoLandingRecommendationService = $recommendationService;
+    $this->seoLandingPageCacheKillSwitch = $pageCacheKillSwitch;
   }
 
   /**
@@ -107,6 +128,8 @@ final class DealsSeoLandingController extends ControllerBase {
     return new self(
       $container->get('database'),
       $container->get('entity_type.manager'),
+      $container->get('spotdeals_search_smart_location.recommendation_service'),
+      $container->get('page_cache_kill_switch'),
     );
   }
 
@@ -163,6 +186,7 @@ final class DealsSeoLandingController extends ControllerBase {
     }
 
     $landing_data = $this->buildLandingData($city, $city_label, $category, $category_label);
+    $local_recommendation = $this->prepareLocalRecommendation($city_label, $category_label);
     $deals_build = $this->buildDealsResults($city_label, $category_label);
 
     $page_title = $category_label !== NULL
@@ -248,6 +272,7 @@ final class DealsSeoLandingController extends ControllerBase {
               '#attributes' => [
                 'class' => ['spotdeals-seo-landing__results-column'],
               ],
+              'local_recommendation' => $this->buildLocalRecommendationBlock($landing_data, $local_recommendation),
               'results' => [
                 '#type' => 'container',
                 '#attributes' => [
@@ -264,6 +289,7 @@ final class DealsSeoLandingController extends ControllerBase {
       '#cache' => [
         'contexts' => [
           'url.path',
+          'url.query_args',
         ],
         'tags' => [
           'config:views.view.' . self::DEALS_VIEW_ID,
@@ -522,6 +548,346 @@ final class DealsSeoLandingController extends ControllerBase {
         ],
       ] + $items,
     ];
+  }
+
+  /**
+   * Prepares a local recommendation from the current SEO page result pool.
+   *
+   * @return array<string,mixed>
+   *   Recommendation state used by rendering helpers.
+   */
+  private function prepareLocalRecommendation(string $cityLabel, ?string $categoryLabel = NULL): array {
+    $request = \Drupal::request();
+    $action = mb_strtolower(trim((string) $request->query->get('recommendation_action', '')), 'UTF-8');
+    $active = $this->queryFlagIsEnabled((string) $request->query->get(self::LOCAL_RECOMMENDATION_QUERY, '')) && $action !== 'reset';
+    $search_text = trim((string) $request->query->get('search_deals_by_city', ''));
+
+    $candidate_deal_nids = $this->loadLocalRecommendationDealNids($cityLabel, $categoryLabel, $search_text);
+    $recommended_deal_nids = [];
+
+    if ($active && !empty($candidate_deal_nids)) {
+      $this->killPageCacheForLocalRecommendation();
+
+      if ($action === 'retry') {
+        \_spotdeals_search_smart_location_apply_recommendation_action_to_session($action);
+      }
+
+      $excluded_venue_nids = \_spotdeals_search_smart_location_get_recommendation_exclusions();
+      $excluded_deal_nids = \_spotdeals_search_smart_location_get_recommendation_deal_exclusions();
+      // The visible SEO page filter has already constrained the local pool.
+      // Do not pass the keyword as a strict recommendation preference here:
+      // generic terms such as "tacos" can fail exact preference matching on
+      // otherwise valid Taco Tuesday deals. Pick from the filtered pool instead.
+      $recommended_deal_nids = $this->seoLandingRecommendationService->recommendFromDealNids(
+        $candidate_deal_nids,
+        [],
+        $excluded_venue_nids,
+        $excluded_deal_nids
+      );
+
+      if (empty($recommended_deal_nids)) {
+        $recommended_deal_nids = $this->fallbackLocalRecommendationDealNids($candidate_deal_nids, $excluded_deal_nids);
+      }
+
+      $direct_recommendation_deal_nid = !empty($recommended_deal_nids[0]) ? (int) $recommended_deal_nids[0] : 0;
+
+      $request->attributes->set('spotdeals_search_smart_location.recommendation_mode', TRUE);
+      $request->attributes->set('spotdeals_search_smart_location.raw_query', $search_text);
+      $request->attributes->set('spotdeals_search_smart_location.recommendation_action', $action);
+      $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', $recommended_deal_nids);
+      $request->attributes->set('spotdeals_search_smart_location.direct_recommendation_deal_nid', $direct_recommendation_deal_nid);
+      $request->attributes->set('spotdeals_search_smart_location.recommendation_nearby_message_added', FALSE);
+
+      \_spotdeals_search_smart_location_store_current_recommendation($recommended_deal_nids);
+    }
+
+    return [
+      'active' => $active,
+      'candidate_count' => count($candidate_deal_nids),
+      'recommended_deal_nids' => $recommended_deal_nids,
+      'search_text' => $search_text,
+    ];
+  }
+
+  /**
+   * Builds the local recommendation callout above SEO page results.
+   *
+   * @param array<string, mixed> $landingData
+   *   Landing page data.
+   * @param array<string, mixed> $localRecommendation
+   *   Prepared recommendation state.
+   */
+  private function buildLocalRecommendationBlock(array $landingData, array $localRecommendation): array {
+    $candidate_count = (int) ($localRecommendation['candidate_count'] ?? 0);
+    if ($candidate_count <= 1) {
+      return ['#markup' => ''];
+    }
+
+    $city_label = (string) $landingData['city_label'];
+    $category_label = $landingData['category_label'] !== NULL ? (string) $landingData['category_label'] : 'deals';
+    $active = !empty($localRecommendation['active']);
+    $search_text = trim((string) ($localRecommendation['search_text'] ?? ''));
+    $has_recommendation = !empty($localRecommendation['recommended_deal_nids']);
+
+    $title = $active && $has_recommendation
+      ? $this->t('Your local pick')
+      : $this->t('Need help choosing?');
+
+    if ($active && $has_recommendation) {
+      $description = $search_text !== ''
+        ? $this->t('Try another pick from these @city @category matching “@search”.', [
+          '@city' => $city_label,
+          '@category' => mb_strtolower($category_label, 'UTF-8'),
+          '@search' => $search_text,
+        ])
+        : $this->t('Try another pick from these @city @category.', [
+          '@city' => $city_label,
+          '@category' => mb_strtolower($category_label, 'UTF-8'),
+        ]);
+    }
+    else {
+      $description = $search_text !== ''
+        ? $this->t('Let SpotDeals pick one from the @count local results matching “@search”.', [
+          '@count' => $candidate_count,
+          '@search' => $search_text,
+        ])
+        : $this->t('Let SpotDeals pick one from these @count local results.', [
+          '@count' => $candidate_count,
+        ]);
+    }
+
+    $build = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => [
+          'spotdeals-seo-local-pick',
+          $active && $has_recommendation ? 'is-active' : 'is-idle',
+        ],
+      ],
+      'copy' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['spotdeals-seo-local-pick__copy'],
+        ],
+        'title' => [
+          '#type' => 'html_tag',
+          '#tag' => 'h2',
+          '#value' => $title,
+        ],
+        'description' => [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => $description,
+        ],
+      ],
+      'actions' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['spotdeals-seo-local-pick__actions'],
+        ],
+        'pick' => [
+          '#type' => 'link',
+          '#title' => $active && $has_recommendation ? $this->t('Try another') : $this->t('Pick one for me'),
+          '#url' => $this->buildLocalRecommendationUrl($active && $has_recommendation ? 'retry' : ''),
+          '#attributes' => [
+            'class' => ['button', 'spotdeals-seo-local-pick__button'],
+            'rel' => 'nofollow',
+          ],
+        ],
+      ],
+    ];
+
+    if ($active) {
+      $build['actions']['reset'] = [
+        '#type' => 'link',
+        '#title' => $this->t('Show all'),
+        '#url' => $this->buildLocalRecommendationResetUrl(),
+        '#attributes' => [
+          'class' => ['button', 'button--secondary', 'spotdeals-seo-local-pick__reset'],
+          'rel' => 'nofollow',
+        ],
+      ];
+    }
+
+    return $build;
+  }
+
+  /**
+   * Builds a URL that keeps the current local filters and enables local pick mode.
+   */
+  private function buildLocalRecommendationUrl(string $action = ''): Url {
+    $query = \Drupal::request()->query->all();
+    $query[self::LOCAL_RECOMMENDATION_QUERY] = '1';
+    $query['scroll_results'] = '1';
+
+    if ($action !== '') {
+      $query['recommendation_action'] = $action;
+    }
+    else {
+      unset($query['recommendation_action']);
+    }
+
+    unset($query['page']);
+
+    return Url::fromRoute('<current>', [], [
+      'query' => $query,
+    ]);
+  }
+
+  /**
+   * Builds a URL that disables local pick mode and preserves other filters.
+   */
+  private function buildLocalRecommendationResetUrl(): Url {
+    $query = \Drupal::request()->query->all();
+    unset(
+      $query[self::LOCAL_RECOMMENDATION_QUERY],
+      $query['recommendation_action'],
+      $query['help_me_choose'],
+      $query['recommendation_cuisines'],
+      $query['origin_lat'],
+      $query['origin_lon'],
+      $query['search_origin_mode'],
+      $query['page']
+    );
+
+    return Url::fromRoute('<current>', [], [
+      'query' => $query,
+    ]);
+  }
+
+  /**
+   * Returns local deal IDs eligible for the SEO page recommendation picker.
+   *
+   * @return array<int,int>
+   *   Deal node IDs in a stable, display-friendly order.
+   */
+  /**
+   * Provides a deterministic fallback when the recommendation service cannot pick.
+   *
+   * The current SEO page filters have already constrained the candidate pool. If
+   * the recommendation service returns no item because every candidate is
+   * excluded by the current rotation session, still return one visible filtered
+   * result so the local pick action never falls back to the full result list.
+   *
+   * @param array<int,int> $candidateDealNids
+   *   Deal IDs eligible for the current local SEO page and keyword filter.
+   * @param array<int,int> $excludedDealNids
+   *   Deal IDs already used in the current recommendation rotation.
+   *
+   * @return array<int,int>
+   *   A single fallback deal ID, or an empty array when no candidate exists.
+   */
+  private function fallbackLocalRecommendationDealNids(array $candidateDealNids, array $excludedDealNids): array {
+    $candidateDealNids = array_values(array_unique(array_filter(
+      array_map('intval', $candidateDealNids),
+      static fn(int $nid): bool => $nid > 0
+    )));
+    $excludedDealNids = array_values(array_unique(array_filter(
+      array_map('intval', $excludedDealNids),
+      static fn(int $nid): bool => $nid > 0
+    )));
+
+    if (empty($candidateDealNids)) {
+      return [];
+    }
+
+    $availableDealNids = array_values(array_diff($candidateDealNids, $excludedDealNids));
+    if (!empty($availableDealNids)) {
+      return [(int) $availableDealNids[array_rand($availableDealNids)]];
+    }
+
+    return [(int) $candidateDealNids[array_rand($candidateDealNids)]];
+  }
+
+  private function loadLocalRecommendationDealNids(string $cityLabel, ?string $categoryLabel = NULL, string $searchText = ''): array {
+    $query = $this->seoLandingDatabase->select('node_field_data', 'd');
+    $query->distinct();
+    $query->addField('d', 'nid');
+    $query->innerJoin('node__field_venue', 'fv', 'fv.entity_id = d.nid AND fv.deleted = 0');
+    $query->innerJoin('node_field_data', 'v', 'v.nid = fv.field_venue_target_id AND v.status = 1');
+    $query->innerJoin('node__field_address', 'fa', 'fa.entity_id = v.nid AND fa.deleted = 0');
+    $query->condition('d.type', 'deal');
+    $query->condition('d.status', 1);
+    $query->condition('v.type', 'venue');
+    $query->condition('fa.field_address_locality', $cityLabel);
+
+    if ($categoryLabel !== NULL) {
+      $query->innerJoin('node__field_deal_category', 'fdc', 'fdc.entity_id = d.nid AND fdc.deleted = 0');
+      $query->innerJoin('taxonomy_term_field_data', 'deal_category', 'deal_category.tid = fdc.field_deal_category_target_id');
+      $query->condition('deal_category.vid', self::DEAL_CATEGORY_VOCABULARY);
+      $query->condition('deal_category.name', $categoryLabel);
+    }
+
+    $this->applyLocalRecommendationSearchFilter($query, $searchText);
+
+    $query->orderBy('d.changed', 'DESC');
+    $query->orderBy('d.title', 'ASC');
+    $query->range(0, 75);
+
+    return array_values(array_filter(
+      array_map('intval', $query->execute()->fetchCol()),
+      static fn(int $nid): bool => $nid > 0
+    ));
+  }
+
+  /**
+   * Applies a simple local keyword filter matching the visible SEO page search.
+   */
+  private function applyLocalRecommendationSearchFilter($query, string $searchText): void {
+    $tokens = $this->localRecommendationSearchTokens($searchText);
+    if (empty($tokens)) {
+      return;
+    }
+
+    $query->leftJoin('node__field_price_offer_text', 'offer_text', 'offer_text.entity_id = d.nid AND offer_text.deleted = 0');
+    $query->leftJoin('node__body', 'deal_body', 'deal_body.entity_id = d.nid AND deal_body.deleted = 0');
+    $query->leftJoin('node__field_cuisine', 'venue_cuisine', 'venue_cuisine.entity_id = v.nid AND venue_cuisine.deleted = 0');
+    $query->leftJoin('taxonomy_term_field_data', 'venue_cuisine_term', 'venue_cuisine_term.tid = venue_cuisine.field_cuisine_target_id');
+    $query->leftJoin('node__field_tags', 'venue_tags', 'venue_tags.entity_id = v.nid AND venue_tags.deleted = 0');
+    $query->leftJoin('taxonomy_term_field_data', 'venue_tag_term', 'venue_tag_term.tid = venue_tags.field_tags_target_id');
+
+    foreach ($tokens as $token) {
+      $like = '%' . $this->seoLandingDatabase->escapeLike($token) . '%';
+      $or = $query->orConditionGroup()
+        ->condition('d.title', $like, 'LIKE')
+        ->condition('v.title', $like, 'LIKE')
+        ->condition('offer_text.field_price_offer_text_value', $like, 'LIKE')
+        ->condition('deal_body.body_value', $like, 'LIKE')
+        ->condition('venue_cuisine_term.name', $like, 'LIKE')
+        ->condition('venue_tag_term.name', $like, 'LIKE');
+      $query->condition($or);
+    }
+  }
+
+  /**
+   * Tokenizes local SEO recommendation search text.
+   *
+   * @return array<int,string>
+   *   Search tokens.
+   */
+  private function localRecommendationSearchTokens(string $searchText): array {
+    $searchText = mb_strtolower(trim($searchText), 'UTF-8');
+    $searchText = preg_replace('/[^[:alnum:]\s]+/u', ' ', $searchText) ?? '';
+    $tokens = preg_split('/\s+/', $searchText) ?: [];
+
+    return array_values(array_unique(array_filter(
+      array_map('trim', $tokens),
+      static fn(string $token): bool => mb_strlen($token, 'UTF-8') >= 2
+    )));
+  }
+
+  /**
+   * Returns TRUE when a query flag value is enabled.
+   */
+  private function queryFlagIsEnabled(string $value): bool {
+    return in_array(mb_strtolower(trim($value), 'UTF-8'), ['1', 'true', 'on', 'yes'], TRUE);
+  }
+
+  /**
+   * Disables page cache for personalized local recommendation mode.
+   */
+  private function killPageCacheForLocalRecommendation(): void {
+    $this->seoLandingPageCacheKillSwitch->trigger();
   }
 
   /**
@@ -797,9 +1163,80 @@ final class DealsSeoLandingController extends ControllerBase {
       $arguments = [$cityLabel];
     }
 
+    $direct_recommendation_deal_nid = (int) \Drupal::request()->attributes->get('spotdeals_search_smart_location.direct_recommendation_deal_nid', 0);
+    if ($direct_recommendation_deal_nid > 0) {
+      return $this->buildDirectLocalRecommendationResults($display_id, $direct_recommendation_deal_nid);
+    }
+
     $result = $this->buildViewDisplay(self::DEALS_VIEW_ID, $display_id, $arguments, TRUE);
 
     return $result['build'];
+  }
+
+  /**
+   * Builds the single direct recommendation result for local SEO pick mode.
+   */
+  private function buildDirectLocalRecommendationResults(string $displayId, int $dealNid): array {
+    if (
+      $dealNid <= 0
+      || !function_exists('\_spotdeals_search_smart_location_build_direct_recommendation_render')
+    ) {
+      return ['#markup' => ''];
+    }
+
+    $direct_recommendation = \_spotdeals_search_smart_location_build_direct_recommendation_render($dealNid);
+    if (empty($direct_recommendation)) {
+      return ['#markup' => ''];
+    }
+
+    return [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => [
+          'view',
+          'view-deals-search-solr',
+          'view-id-deals_search_solr',
+          'view-display-id-' . $displayId,
+          'spotdeals-seo-results-view',
+        ],
+        'data-recommendation-active' => '1',
+      ],
+      'results' => [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['spotdeals-seo-results-view__results'],
+        ],
+        'header' => [
+          '#type' => 'html_tag',
+          '#tag' => 'div',
+          '#value' => $this->t('Displaying @start - @end of @total', [
+            '@start' => 1,
+            '@end' => 1,
+            '@total' => 1,
+          ]),
+          '#attributes' => [
+            'class' => ['view-header'],
+          ],
+        ],
+        'content' => [
+          '#type' => 'container',
+          '#attributes' => [
+            'class' => ['view-content', 'spotdeals-finder__cards'],
+            'data-result-count' => '1',
+          ],
+          'direct_recommendation' => $direct_recommendation,
+        ],
+      ],
+      '#cache' => [
+        'max-age' => 0,
+      ],
+      '#attached' => [
+        'library' => [
+          'spotdeals_minimal/deal-card',
+          'spotdeals_vote/vote',
+        ],
+      ],
+    ];
   }
 
   /**
