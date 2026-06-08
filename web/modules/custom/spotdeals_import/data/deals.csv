@@ -80,7 +80,7 @@ Kids Eat Free Daily,One children's meal free with each adult meal purchased,Dail
 Kids Eat Free Daily,One free kids meal with purchase of an adult meal,Daily,After 2pm,Kids eat free,IHOP DeLand,1.0,1,,,
 Kids Eat Free Weekdays,Children under 5 eat free from special kids menu with adult meal purchase,Weekdays,5am–3pm,Kids eat free,JoJo's Country Cafe,1.0,1,,,
 Kids Eat Free Tuesday,One free kids meal with purchase of $10 food item,Tuesday,Opens at 11am,Kids eat free,Miller's Ale House Daytona Beach,1.0,1,,,
-Kids Eat Free Tuesday,One frae kids meal with purchase of $10 food item,Tuesday,Opens at 11am,Kids eat free,Miller's Ale House Port Orange,1.0,1,,,
+Kids Eat Free Tuesday,One free kids meal with purchase of $10 food item,Tuesday,Opens at 11am,Kids eat free,Miller's Ale House Port Orange,1.0,1,,,
 Kids Eat Free Sunday,Kids 12 and under eat free with adult meal purchase,Sunday,Regular hours,Kids eat free,Moe's Southwest Grill Ormond Beach,1.0,1,,,
 Kids Eat Free Sunday,Kids 12 and under eat free with adult meal purchase,Sunday,Regular hours,Kids eat free,Moe's Southwest Grill DeLand,1.0,1,,,
 Kids Eat Free Sunday,Kids 12 and under eat free with adult meal purchase,Sunday,Regular hours,Kids eat free,Moe's Southwest Grill Orange City,1.0,1,,,
@@ -2594,3 +2594,15 @@ Ceviche 28 Weekday Happy Hour,"Monday-Friday happy hour with 2 house margaritas 
 Ceviche 28 Thursday Extended Happy Hour,"Thursday extended happy hour with 2 house margaritas for $9 and 2 for 1 draft beer.",Thursday,3:00 PM,Happy Hour,Ceviche 28 by Pedro's,1,1,7:00 PM,https://ceviche28.net/,View Happy Hour
 Ceviche 28 Taco Tuesday,"Dine-in Taco Tuesday specials: 3 beef or tinga pork tacos for $6.99, 2 fish tacos for $6.99, or 3 birria tacos for $8.99.",Tuesday,Regular hours,Taco Tuesday,Ceviche 28 by Pedro's,1,1,,https://ceviche28.net/,View Specials
 Pictona Discounted Day Pass,Discounted $15 visitor day pass at Pictona at Holly Hill.,Every day,Regular hours,Entertainment Deal,The Kitchen at Pictona,1,1,,https://www.daytonabeach.com/offers/pictona-discounted-day-pass-%7C-daytona-beach-pickleball-deal/3323/,View Deal
+FILO Rewards,Join FILO Rewards and earn points on every order. New accounts receive a $5 reward.,Every day,Regular hours,Rewards Offer,Filo Greek,1,1,,https://eatfilo.com/,Join Rewards
+CAVA Rewards,Earn points with every qualifying purchase and redeem points for rewards through CAVA Rewards.,Every day,Regular hours,Rewards Offer,CAVA Daytona Beach,1,1,,https://cava.com/rewards,Join Rewards
+Gili's Kitchen Rewards,Earn points for free food through the Gili's Kitchen app.,Every day,Regular hours,Rewards Offer,Gili's Kitchen Ormond Beach,1,1,,https://giliskitchen.com/page/locations,Open App
+Turquoise Cafe App Rewards,Use the Turquoise Cafe app to save time, earn rewards, and get notified about new deals.,Every day,Regular hours,Rewards Offer,Turquoise Cafe & Bakery,1,1,,https://turquoisecafebistro.com/,Open App
+Houligan's Ormond Granada MVP Club,Join the Houligan's MVP Club and get 6 free Wally Wings plus access to offers and daily specials.,Every day,Regular hours,Rewards Offer,Houligan's Ormond Granada,1,1,,https://www.houliganswings.com/,Join MVP Club
+Houligan's Port Orange MVP Club,Join the Houligan's MVP Club and get 6 free Wally Wings plus access to offers and daily specials.,Every day,Regular hours,Rewards Offer,Houligan's Port Orange,1,1,,https://www.houliganswings.com/,Join MVP Club
+Houligan's Speedway MVP Club,Join the Houligan's MVP Club and get 6 free Wally Wings plus access to offers and daily specials.,Every day,Regular hours,Rewards Offer,Houligan's Speedway,1,1,,https://www.houliganswings.com/,Join MVP Club
+Houligan's Destination Daytona MVP Club,Join the Houligan's MVP Club and get 6 free Wally Wings plus access to offers and daily specials.,Every day,Regular hours,Rewards Offer,Houligan's Destination Daytona,1,1,,https://www.houliganswings.com/,Join MVP Club
+Don Rico's Weekday Happy Hour,Monday-Friday happy hour from 4pm-6pm at Don Rico's Sports Bar & Grill.,Monday-Friday,4:00 PM,Happy Hour,Don Rico's Sports Bar & Grill,1,1,6:00 PM,https://www.daytonahilton.com/dining/don-ricos-sports-bar-grill,View Happy Hour
+McCoy's Rum Room Nightly Happy Hour,Nightly happy hour with draft beer wine and cocktails plus live entertainment and Atlantic views.,Nightly,Evening,Happy Hour,McCoy's Rum Room,1,1,,https://www.daytonahilton.com/dining,View Happy Hour
+Chase's Weekday Happy Hour,Monday-Friday happy hour food and drink specials from 3pm-6pm.,Monday-Friday,3:00 PM,Happy Hour,Chase's on the Beach,1,1,6:00 PM,https://www.chasesonthebeach.com/specials,View Specials
+Chase's Wine Wednesday,$2 off all wine on Wednesdays.,Wednesday,Regular hours,Wine Special,Chase's on the Beach,1,1,,https://www.chasesonthebeach.com/specials,View Specials
