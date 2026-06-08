@@ -16,12 +16,40 @@ display:
       header:
         result:
           content: 'Mostrando @start - @end de @total'
+      filters:
+        search_api_fulltext:
+          expose:
+            description: ''
+        name:
+          expose:
+            description: ''
+            min_placeholder: ''
+            max_placeholder: ''
+            placeholder: ''
+        name_1:
+          expose:
+            description: ''
+            min_placeholder: ''
+            max_placeholder: ''
+            placeholder: ''
   page_1:
     display_options:
       filters:
         search_api_fulltext:
           expose:
             label: 'Encuentra ofertas cerca de ti'
+        name:
+          expose:
+            description: ''
+            min_placeholder: ''
+            max_placeholder: ''
+            placeholder: ''
+        name_1:
+          expose:
+            description: ''
+            min_placeholder: ''
+            max_placeholder: ''
+            placeholder: ''
       pager:
         options:
           tags:
@@ -32,3 +60,15 @@ display:
             items_per_page_options_all_label: '- Todos -'
           views_infinite_scroll:
             button_text: 'Cargar más'
+  block_1:
+    display_options:
+      filters:
+        search_api_fulltext:
+          expose:
+            label: 'Filtrar resultados'
+  block_2:
+    display_options:
+      filters:
+        search_api_fulltext:
+          expose:
+            label: 'Filtrar resultados'
