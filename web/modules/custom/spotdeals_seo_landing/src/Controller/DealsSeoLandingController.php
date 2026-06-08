@@ -803,6 +803,8 @@ final class DealsSeoLandingController extends ControllerBase {
     $query = $this->seoLandingDatabase->select('node_field_data', 'd');
     $query->distinct();
     $query->addField('d', 'nid');
+    $query->addField('d', 'changed');
+    $query->addField('d', 'title');
     $query->innerJoin('node__field_venue', 'fv', 'fv.entity_id = d.nid AND fv.deleted = 0');
     $query->innerJoin('node_field_data', 'v', 'v.nid = fv.field_venue_target_id AND v.status = 1');
     $query->innerJoin('node__field_address', 'fa', 'fa.entity_id = v.nid AND fa.deleted = 0');
