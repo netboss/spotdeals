@@ -135,16 +135,16 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
       : [];
 
     if (!$recommendation_mode && !empty($ranked_nids)) {
+      // Keep the ranked NID list as an ordering/boost signal only. Do not add a
+      // hard Search API condition here. When NearMeRanker misses a valid keyword
+      // match, a strict NID constraint can remove otherwise valid Solr results
+      // before rendering.
       $ranked_nids = array_slice($ranked_nids, 0, self::MAX_RANKED_NIDS);
-      $operator = count($ranked_nids) > 1 ? 'IN' : '=';
-      $value = count($ranked_nids) > 1 ? $ranked_nids : $ranked_nids[0];
-      $query->addCondition('nid', $value, $operator);
 
       \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION subscriber constrained location query to ranked deal IDs at PRE_QUERY: nids_count="@count" operator="@operator"',
+        'SMART LOCATION subscriber kept ranked deal IDs as soft ordering signal at PRE_QUERY: nids_count="@count"',
         [
           '@count' => (string) count($ranked_nids),
-          '@operator' => $operator,
         ]
       );
     }

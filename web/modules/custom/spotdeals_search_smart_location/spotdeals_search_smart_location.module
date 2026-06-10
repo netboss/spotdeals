@@ -1645,7 +1645,11 @@ function _spotdeals_search_smart_location_apply_near_me_order(ViewExecutable $vi
   $before_count = count($view->result);
   $order_map = is_array($ranked_nids) ? array_flip(array_values($ranked_nids)) : [];
   $active_keywords = _spotdeals_search_smart_location_current_debug_keywords();
-  $requires_rank_match = $active_keywords !== '' && is_array($ranked_nids);
+  // Do not drop valid Solr/View rows just because NearMeRanker did not include them.
+  // The ranked NID list is used as a boost/order signal only; strict post-filtering
+  // caused valid results to disappear from the rendered page while the Views header
+  // still reported the original total.
+  $requires_rank_match = FALSE;
   $filtered = [];
   $missing_coords = 0;
   $outside_radius = 0;
