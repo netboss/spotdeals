@@ -749,31 +749,31 @@ final class RecommendationService {
         if (
           !$requiresDealLevelMatch
           && $haystacks['venue_cuisine'] !== ''
-          && str_contains($haystacks['venue_cuisine'], $cuisine)
+          && $this->textContainsPreferenceToken($haystacks['venue_cuisine'], $cuisine)
         ) {
           $score += 80;
           $matched = TRUE;
         }
-        if ($haystacks['deal_title'] !== '' && str_contains($haystacks['deal_title'], $cuisine)) {
+        if ($haystacks['deal_title'] !== '' && $this->textContainsPreferenceToken($haystacks['deal_title'], $cuisine)) {
           $score += 45;
           $matched = TRUE;
         }
-        if ($haystacks['venue_title'] !== '' && str_contains($haystacks['venue_title'], $cuisine)) {
+        if ($haystacks['venue_title'] !== '' && $this->textContainsPreferenceToken($haystacks['venue_title'], $cuisine)) {
           $score += 30;
           $matched = TRUE;
         }
-        if ($haystacks['deal_body'] !== '' && str_contains($haystacks['deal_body'], $cuisine)) {
+        if ($haystacks['deal_body'] !== '' && $this->textContainsPreferenceToken($haystacks['deal_body'], $cuisine)) {
           $score += 18;
           $matched = TRUE;
         }
-        if ($haystacks['deal_offer_text'] !== '' && str_contains($haystacks['deal_offer_text'], $cuisine)) {
+        if ($haystacks['deal_offer_text'] !== '' && $this->textContainsPreferenceToken($haystacks['deal_offer_text'], $cuisine)) {
           $score += 40;
           $matched = TRUE;
         }
         if (
           !$requiresDealLevelMatch
           && $haystacks['venue_description'] !== ''
-          && str_contains($haystacks['venue_description'], $cuisine)
+          && $this->textContainsPreferenceToken($haystacks['venue_description'], $cuisine)
         ) {
           $score += 12;
           $matched = TRUE;
@@ -781,7 +781,7 @@ final class RecommendationService {
         if (
           !$requiresDealLevelMatch
           && $haystacks['venue_tags'] !== ''
-          && str_contains($haystacks['venue_tags'], $cuisine)
+          && $this->textContainsPreferenceToken($haystacks['venue_tags'], $cuisine)
         ) {
           $score += 20;
           $matched = TRUE;
@@ -851,6 +851,26 @@ final class RecommendationService {
     ];
   }
 
+
+  /**
+   * Checks one normalized preference token against normalized text.
+   *
+   * Recommendation matching must use token/phrase boundaries instead of raw
+   * substring checks. Raw substring matching allowed queries such as "ice"
+   * from the Ice Cream chip to match unrelated words like "rice", which made
+   * recommendation mode pick irrelevant deals.
+   */
+  private function textContainsPreferenceToken(string $text, string $token): bool {
+    $text = trim($text);
+    $token = trim($token);
+
+    if ($text === '' || $token === '') {
+      return FALSE;
+    }
+
+    $pattern = '/(?<![\p{L}\p{N}])' . preg_quote($token, '/') . '(?![\p{L}\p{N}])/u';
+    return (bool) preg_match($pattern, $text);
+  }
 
   /**
    * Determines whether a token should require deal-level matching.
@@ -1383,6 +1403,16 @@ final class RecommendationService {
       'wine' => ['wine', 'wines', 'winery'],
       'wines' => ['wine', 'wines', 'winery'],
       'winery' => ['wine', 'wines', 'winery'],
+      'ice' => ['ice'],
+      'cream' => ['cream'],
+      'gelato' => ['gelato'],
+      'sundae' => ['sundae', 'sundaes'],
+      'sundaes' => ['sundae', 'sundaes'],
+      'blizzard' => ['blizzard', 'blizzards'],
+      'blizzards' => ['blizzard', 'blizzards'],
+      'milkshake' => ['milkshake', 'milkshakes', 'shake', 'shakes'],
+      'milkshakes' => ['milkshake', 'milkshakes', 'shake', 'shakes'],
+      'custard' => ['custard', 'frozen custard'],
     ];
 
     return $aliases[$token] ?? [$token];
