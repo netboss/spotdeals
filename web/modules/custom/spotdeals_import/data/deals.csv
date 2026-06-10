@@ -254,7 +254,6 @@ Brunch Menu,$18 brunch plates,Weekends,Morning,Brunch Special,Oxford Exchange Ta
 Comfort Lunch,$12 lunch specials,Daily,Lunch,Lunch Special,Datz Tampa,1.0,1,,,
 Build Your Taco Combo,$10 tacos + drink,Daily,Lunch,Combo,Taco Dirty Tampa,1.0,1,,,
 Taco Deal,$3 tacos,Daily,Happy Hour,Daily Special,Bartaco Tampa,1.0,1,,,
-Ramen Special,$13 ramen bowls,Daily,Lunch,Lunch Special,Ichicoro Ramen Tampa,1.0,1,,,
 Coffee & Breakfast,$6 combo,Daily,Morning,Breakfast Special,Buddy Brew Coffee Tampa,1.0,1,,,
 Brunch Combo,$13 brunch plates,Daily,Morning,Brunch Special,First Watch Tampa,1.0,1,,,
 Taco Tuesday,$2 tacos,Tuesday,All day,Daily Special,Torchy's Tacos Orlando,1.0,1,,,
@@ -329,7 +328,6 @@ Healthy Bowl,$11 bowl combo,Daily,Lunch,Combo,Fresh Kitchen Tampa,1.0,1,,,
 Dessert Combo,$8 dessert + drink,Daily,All day,Daily Special,Bake'n Babes Tampa,1.0,1,,,
 Breakfast Combo,$10 biscuit + coffee,Daily,Morning,Breakfast Special,Maple Street Biscuit Company Jacksonville,1.0,1,,,
 Breakfast Plate,$9 breakfast combo,Daily,Morning,Breakfast Special,Metro Diner Jacksonville,1.0,1,,,
-Brunch Special,$12 brunch plates,Weekends,Morning,Brunch Special,Biscottis Jacksonville,1.0,1,,,
 Coffee + Pastry,$6 combo,Daily,Morning,Breakfast Special,Bold Bean Coffee Jacksonville,1.0,1,,,
 Asian Lunch,$11 noodles combo,Daily,Lunch,Combo,Hawkers Asian Street Food Jacksonville,1.0,1,,,
 Ramen Special,$12 ramen bowl,Daily,Lunch,Daily Special,Domu Jacksonville,1.0,1,,,
@@ -344,15 +342,12 @@ Healthy Bowl,$12 bowl + drink,Daily,Lunch,Combo,Pura Vida Miami,1.0,1,,,
 Donut + Coffee,$6 combo,Daily,Morning,Breakfast Special,The Salty Donut Miami,1.0,1,,,
 Grilled Cheese Combo,$11 sandwich + drink,Daily,Lunch,Combo,Ms Cheezious Miami,1.0,1,,,
 Taco Combo,$10 tacos + drink,Daily,Lunch,Combo,TacoCraft Fort Lauderdale,1.0,1,,,
-Seafood Lunch,$15 seafood plate,Daily,Lunch,Daily Special,Coconuts Fort Lauderdale,1.0,1,,,
-Pizza Lunch,$12 pizza combo,Daily,Lunch,Combo,Louie Bossi Fort Lauderdale,1.0,1,,,
 Taco Special,$9 taco deal,Daily,Lunch,Daily Special,El Camino Fort Lauderdale,1.0,1,,,
 Brunch Special,$14 brunch menu,Weekends,Morning,Brunch Special,Batch New Southern Kitchen Fort Lauderdale,1.0,1,,,
 Breakfast Combo,$9 breakfast plate,Daily,Morning,Breakfast Special,Howley's Restaurant West Palm Beach,1.0,1,,,
 Pizza Combo,$11 pizza + drink,Daily,Lunch,Combo,Grato West Palm Beach,1.0,1,,,
 Brunch Special,$13 brunch menu,Weekends,Morning,Brunch Special,Rhythm Cafe West Palm Beach,1.0,1,,,
 Pastry Combo,$7 pastry + coffee,Daily,Morning,Breakfast Special,Ganache Bakery West Palm Beach,1.0,1,,,
-Lunch Sandwich,$10 sandwich combo,Daily,Lunch,Combo,Aioli West Palm Beach,1.0,1,,,
 Cuban Lunch,$11 lunch combo,Daily,Lunch,Combo,La Carreta Miami,1.0,1,,,
 Breakfast Special,$8 breakfast plate,Daily,Morning,Breakfast Special,La Carreta Miami,1.0,1,,,
 Dinner Plate,$14 dinner combo,Daily,Dinner,Daily Special,La Carreta Miami,1.0,1,,,
@@ -435,7 +430,6 @@ Lunch Combo,$9 sandwich meal,Daily,Lunch,Combo,Zaza Cuban Comfort Food Orlando,1
 Dinner Combo,$12 meal,Daily,Dinner,Daily Special,Zaza Cuban Comfort Food Orlando,1.0,1,,,
 Family Combo,$20 bundle,Daily,Dinner,Combo,Zaza Cuban Comfort Food Orlando,1.0,1,,,
 Healthy Bowl,$10 bowl,Daily,Lunch,Lunch Special,Bolay West Palm Beach,1.0,1,,,
-Dinner Bowl,$12 meal,Daily,Dinner,Daily Special,Bolay West Palm Beach,1.0,1,,,
 Lunch Combo,$11 combo,Daily,Lunch,Combo,Bolay West Palm Beach,1.0,1,,,
 Family Combo,$22 bundle,Daily,Dinner,Combo,Bolay West Palm Beach,1.0,1,,,
 Latin Combo,$10 meal,Daily,Lunch,Combo,El Arepazo Latin Grill Orlando,1.0,1,,,
@@ -1675,19 +1669,16 @@ French Bakery Breakfast & Pastries,"Fresh croissants, danishes, cinnamon rolls, 
 Scratch-Made Bistro Dining,"Scratch-made lunch, dinner, wine, and upscale casual bistro dishes.","Tuesday, Wednesday, Thursday, Friday, Saturday",11:30,Lunch,City Market Bistro,1,1,22:00,https://citymarketbistronsb.com/bistro-menus,View Menu
 French Cafe Breakfast & Dinner,"French-style breakfast, lunch, dinner, and cafe favorites in New Smyrna Beach.",Every day,08:00,Brunch,Voo La Voo Cafe,1,1,21:00,https://www.voolavoocafe.com/general-4,View Menu
 Island Brunch & Cocktails,"Polynesian-inspired food, brunch, island cocktails, and drinks on Flagler Avenue.",Every day,,Brunch,Avanu On Flagler,1,1,,https://www.avanuonflagler.com/,View Menu
-Deli Sandwiches & Salads,"Sandwiches, salads, desserts, and casual deli lunch options.",Every day,,Lunch,The Happy Deli,1,1,,,View Menu
 Custom Cakes & Sweet Treats,"Custom cakes, cupcakes, and sweet treats for parties and celebrations.",Every day,,Bakery,Treats & Sweets Cakery,1,1,,https://www.daytonabeach.com/listings/treats-%26-sweets-cakery/5439/,View Menu
 Bundt Cakes & Celebration Desserts,"Bundt cakes, Bundtlets, Bundtinis, birthday cakes, and celebration desserts.",Every day,,Bakery,Nothing Bundt Cakes - Ormond Beach,1,1,,https://www.nothingbundtcakes.com/find-a-bakery/fl/ormondbeach/bakery-441.html,Order Online
 Cinnamon Rolls & Baked Treats,"Cinnamon rolls, baked treats, coffee, and sweet drinks.",Every day,,Bakery,Cinnabon - Daytona Beach,1,1,,https://www.cinnabon.com/menu,View Menu
 Smoothie Bowls & Goodies,"Smoothies, acai bowls, sweet goodies, and refreshing drinks.",Every day,,Dessert,Solberry Bowls,1,1,,https://solberrybowls.com/,View Menu
 Custom Cakes & Macarons,"Cakes, macarons, and custom desserts from a Daytona Beach home bakery.",Every day,,Dessert,Obviously Dessert,1,1,,https://www.instagram.com/obviously.dessert/,View Menu
 French Pastries & Breads,"Authentic French breads, pastries, and desserts.",Every day,,Bakery,The French Bakery & Pastry Shop,1,1,,https://www.facebook.com/thefrenchbakeryfl/,View Menu
-Cupcakes & Sweet Treats,"Cupcakes, cakes, and sweet treats in the Daytona Beach area.",Every day,,Bakery,Sweet Dreams Bakery,1,1,,,View Menu
 "Cakes, Cookies & Coffee","Cakes, cookies, cheesecakes, pastries, coffee, and sweet treats.",Every day,,Bakery,Kneading More Sweets Bakery,1,1,,https://kneadingmoresweets.com/,View Menu
 Custom Cakes & Cupcakes,"Custom cakes, cupcakes, and baked goods from the in-store bakery.",Every day,07:00,Bakery,Walmart Bakery - Daytona Beach Supercenter,1,1,,https://www.walmart.com/store/1391-daytona-beach-fl/bakery,Order Online
 Fresh Cookies & Desserts,"Fresh cookies, rotating weekly dessert flavors, mini pies, cakes, pickup, delivery, and catering.",Every day,08:00,Bakery,Crumbl - Daytona Beach,1,1,,https://crumblcookies.com/stores/fl/fldaytonabeach,Order Online
 "Coffee, Beverages & Light Bites","Handcrafted beverages, coffee, snacks, and light bites in a work-friendly cafe setting.",Every day,,Cafe,Capital One Cafe - Florida Mall,1,1,,,
-Island Wings & Casual Favorites,"Baked wings, burgers, tacos, sandwiches, salads, drinks, and island-inspired casual favorites.",Every day,11:00,Wings,Island Wing Company - Hunters Creek,1,1,,,
 Puerto Rican Bakery Breakfast,"Puerto Rican pastries, breakfast, coffee, sandwiches, burgers, and Latin bakery favorites.",Every day,06:00,Breakfast,Melao Bakery - Kissimmee,1,1,21:00,https://www.melaobakery.com/,Order Online
 "Southern Breakfast, Lunch & Dinner","Southern-inspired breakfast, lunch, dinner, cocktails, and farm-fresh dishes at Grande Lakes.",Every day,07:00,Southern,Highball & Harvest,1,1,22:00,,
 Puerto Rican Bakery Breakfast,"Puerto Rican pastries, breakfast, coffee, sandwiches, burgers, and Latin bakery favorites.",Every day,06:00,Breakfast,Melao Bakery - Orlando,1,1,21:00,https://www.melaobakery.com/,Order Online
@@ -1874,11 +1865,6 @@ Rock & Brews Online Ordering,"Order scratch-made American food, burgers, wings a
 Rock & Brews Promotions,Kids Eat Free Mondays and current promotions listed by Rock & Brews Oviedo,Monday,11:00:00,Promotion,Rock & Brews - Oviedo,1,1,22:00:00,https://www.rockandbrews.com/oviedo-promotions,View Details
 Smoke & Donuts Online Ordering,"Order barbecue, smoked meats, sandwiches, sides and donuts online",Daily,11:00:00,Online Ordering,Smoke & Donuts,1,1,21:00:00,https://order.toasttab.com/online/smokeanddonuts,Order Online
 Smoke & Donuts Food Menu,"BBQ sandwiches, smoked meats, sides, brunch items and donuts",Daily,11:00:00,Menu Special,Smoke & Donuts,1,1,21:00:00,https://smokeanddonuts.com/menus,View Menu
-Cafe Pinar Cuban Menu,"Cuban sandwiches, coffee, pastries and breakfast menu",Daily,07:00:00,Menu Special,Cafe Pinar,1,1,18:00:00,,View Menu
-Anh Hong Vietnamese Menu,"Pho, banh mi, vermicelli bowls and rice dishes",Daily,10:00:00,Menu Special,Anh Hong Restaurant,1,1,21:00:00,,View Menu
-Mamak Asian Street Food Menu,Malaysian and Southeast Asian street food including noodles and rice plates,Daily,11:00:00,Menu Special,Mamak Asian Street Food Orlando,1,1,21:00:00,,View Menu
-Pho 88 Menu,"Vietnamese pho, noodles and rice dishes",Daily,10:00:00,Menu Special,Pho 88 Restaurant,1,1,22:00:00,,View Menu
-Sushi Katana Menu,"Sushi rolls, sashimi and hibachi dishes",Daily,11:00:00,Menu Special,Sushi Katana,1,1,22:00:00,,View Menu
 Greenbeat Online Ordering,"Order salads, wraps and healthy bowls online",Daily,10:30:00,Online Ordering,Greenbeat,1,1,20:00:00,https://order.greenbeat.com/,Order Online
 Francesco's Online Ordering,"Order Italian pasta, pizza, seafood and scratch-made dishes online",Daily,11:00:00,Online Ordering,Francesco's Ristorante & Pizzeria,1,1,21:00:00,https://francescos-rist.com/order-online/,Order Online
 Francesco's Italian Menu,"Italian menu with pasta, pizza, panini, seafood, wine and classic dishes",Daily,11:00:00,Menu Special,Francesco's Ristorante & Pizzeria,1,1,21:00:00,https://francescos-rist.com/menu/,View Menu
@@ -2215,7 +2201,6 @@ Late High Tide Hour,Late-night High Tide Hour at the bar during the last 1.5 hou
 Happy Hour Tappy Hour Wine & Martinis,"$3 off 5oz pours on select wines, $3 off specialty cocktails, espresso martinis and brews, plus $2 off shared plates.","Monday, Tuesday, Wednesday, Thursday, Friday",3:00 PM,Happy Hour,Sixty Vines Sand Lake,1,1,6:00 PM,https://www.sixtyvines.com/locations/sand-lake,View Tappy Hour
 Happy Hour Tappy Hour Wine & Martinis,"$3 off 5oz pours on select wines, $3 off specialty cocktails, espresso martinis and brews, plus $2 off shared plates.","Monday, Tuesday, Wednesday, Thursday, Friday",3:00 PM,Happy Hour,Sixty Vines Boca Raton,1,1,6:00 PM,https://www.sixtyvines.com/locations/boca-raton,View Tappy Hour
 Happy Hour Tappy Hour Wine & Martinis,"$3 off 5oz pours on select wines, $3 off specialty cocktails, espresso martinis and brews, plus $2 off shared plates.","Monday, Tuesday, Wednesday, Thursday, Friday",3:00 PM,Happy Hour,Sixty Vines Fort Lauderdale,1,1,6:00 PM,https://www.sixtyvines.com/locations/fort-lauderdale,View Tappy Hour
-Beachside Tavern Tuesday Pint Night,$3 Select Draft Beers,Tuesday,17:00,Drink Special,Beachside Tavern,1,1,23:59,https://beachsidetavern.com/,View Details
 Chick-fil-A One Rewards,Earn points and redeem rewards through Chick-fil-A One,Monday|Tuesday|Wednesday|Thursday|Friday|Saturday,,Rewards,Chick-fil-A Edgewater,1,1,,https://www.chick-fil-a.com/one,Join Rewards
 Chick-fil-A One Rewards,Earn points and redeem rewards through Chick-fil-A One,Monday|Tuesday|Wednesday|Thursday|Friday|Saturday,,Rewards,Chick-fil-A Port Orange,1,1,,https://www.chick-fil-a.com/one,Join Rewards
 Burger King New Smyrna Beach Royal Perks,Earn Crowns and access exclusive digital coupons through Burger King Royal Perks,Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday,,Rewards,Burger King New Smyrna Beach,1,1,,https://www.bk.com/royalperks,Join Royal Perks
@@ -2369,12 +2354,10 @@ Friday Urban Night Specials,"Friday Urban Fridays at Mango's nightclub: $10 Cîr
 Daily Drink Specials,"Daily 11am-7pm specials include 2-for-1 shots, 2-for-1 Skyy vodka drinks, $2 beers, and $5 beer pitchers.",Daily,11am,Happy Hour,Devaney's Sports Pub,1,1,7pm,https://thehappyhourfinder.com/us_fl/orlando/devaneys-sports-pub/,View specials
 Happier Hour,"Daily 7-10pm: double it up for free on calls and wells, plus $2 beers and $5 pitchers.",Daily,7pm,Happy Hour,Devaney's Sports Pub,1,1,10pm,https://thehappyhourfinder.com/us_fl/orlando/devaneys-sports-pub/,View specials
 The Porch Happy Hour,Tuesday-Friday happy hour drinks from 11:30am-6pm at The Porch Winter Park.,Tuesday-Friday,11:30am,Happy Hour,The Porch Winter Park,1,1,6pm,https://theporchorlando.com/,View happy hour
-Sam Snead's Happy Hour,Happy hour Monday-Friday 3-7pm; Thursday 3pm-close; Saturday 4pm-close with beer, wine, and cocktail specials.,Monday-Saturday,3pm,Happy Hour,Sam Snead's Oak Grill and Tavern,1,1,7pm,https://www.facebook.com/samsneadsoakgrillandtavern/,View happy hour
 FishBones Daily Happy Hour,Daily 4-6pm happy hour available in the bar and patio only with specially priced food and drinks.,Daily,4pm,Happy Hour,FishBones Lake Mary,1,1,6pm,https://www.fishbonesrestaurants.com/lake-mary-menu/,View happy hour menu
 Tommy Bahama Daily Happy Hour,Daily 3-5pm happy hour at Tommy Bahama Marlin Bar Winter Park.,Daily,3pm,Happy Hour,Tommy Bahama Marlin Bar Winter Park,1,1,5pm,https://www.tommybahama.com/restaurants-and-marlin-bars/locations/winter-park,View happy hour
 Bonefish Social Hour,Daily Social Hour starting at 4pm with hand-crafted cocktails and menu items starting at $7; times may vary by location.,Daily,4pm,Happy Hour,Bonefish Grill Orlando Lake Underhill,1,1,,https://locations.bonefishgrill.com/florida/orlando/12301-lake-underhill-road,View social hour
 Daily Happy Hour,"Open to 8pm Sunday-Friday and open to 6pm Saturday: $2+ off cocktails, $1 off beer and wine, and $2.50 Jell-O shots all day.",Daily,,Happy Hour,Savoy Orlando,1,1,,https://www.savoyorlando.com/pages/happy-hour,View happy hour
-Daily Drink Specials,Daily rotating drink specials at Savoy Orlando including weekday vodka, well drink, bourbon, and employee discount specials.,Daily,,Daily Special,Savoy Orlando,1,1,,https://www.savoyorlando.com/pages/daily-specials,View daily specials
 Oza Happy Hour,Happy hour 5-6:30pm Monday-Saturday and Sunday until close at Oza Izakaya.,Daily,5pm,Happy Hour,Oza Izakaya,1,1,6:30pm,https://www.ozaizakaya.com/,View happy hour
 Oza Late Night Happy Hour,Late-night happy hour starts at 10pm at Oza Izakaya.,Daily,10pm,Late Night,Oza Izakaya,1,1,,https://www.ozaizakaya.com/,View happy hour
 Lil' Indies Daily Happy Hour,Daily 4-8pm happy hour with 20% off the entire tab.,Daily,4pm,Happy Hour,Lil' Indies,1,1,8pm,https://www.orlandodatenightguide.com/orlandohappyhours-11771/,View happy hour
@@ -2441,7 +2424,6 @@ The Castle Weekday Happy Hour,"Monday-Friday 3-6pm happy hour with $7 select sig
 The Castle Whiskey and Wine Wednesday,Wednesday all day: $2 off Irish whiskey and glasses of wine.,Wednesday,11am,Daily Special,The Castle Irish Pub and Restaurant,1,1,2am,https://thecastleirishpub.com/orlando-the-castle-irish-pub-and-restaurant-specials,View specials
 La Bella Luna Happy Hour,"Tuesday-Saturday 5-7pm happy hour with beer and wine specials.",Tuesday-Saturday,5pm,Happy Hour,La Bella Luna,1,1,7pm,https://www.goldenbuzz.social/orlando/happyhour/la-bella-luna/,View happy hour
 Seito Sushi Weekday Happy Hour,"Tuesday-Friday 5-7pm happy hour with cocktails, sake, wine, beer, and sushi specials.",Tuesday-Friday,5pm,Happy Hour,Seito Sushi Baldwin Park,1,1,7pm,https://www.seitosushibp.com/visit-us,View happy hour
-Seito Sushi Weekend Happy Hour,Friday-Sunday 12-3pm weekend happy hour with cocktails, sake, wine, beer, and sushi specials.,Friday-Sunday,12pm,Happy Hour,Seito Sushi Baldwin Park,1,1,3pm,https://www.seitosushibp.com/visit-us,View happy hour
 The Trap Happy Hour,"Tuesday-Saturday 4-6pm happy hour with drink and food specials.",Tuesday-Saturday,4pm,Happy Hour,The Trap Winter Park,1,1,6pm,https://www.goldenbuzz.social/orlando/happyhour/area/winter-park/,View happy hour
 P.F. Chang's Winter Park Happy Hour,"Monday-Friday 3-6pm happy hour with drinks and food specials.",Monday-Friday,3pm,Happy Hour,P.F. Chang's Winter Park,1,1,6pm,https://www.goldenbuzz.social/orlando/happyhour/area/winter-park/,View happy hour
 Lucky Eight Happy Hour,"Select appetizers, dim sum, and cocktails $8",Weekdays,3pm–6pm,Happy Hour,P.F. Chang's Winter Park,1.0,1,,,
@@ -2463,8 +2445,6 @@ Fujiyama Thursday Roll Special,Thursday buy 2 rolls and get 1 free on sushi roll
 Brass Tap Weekday Happy Hour,"Monday-Friday 4-7pm happy hour with food, beer, wine, and liquor specials.",Monday-Friday,4pm,Happy Hour,The Brass Tap Waterford Lakes,1,1,7pm,https://www.brasstapbeerbar.com/waterfordlakes/specials,View specials
 Brass Tap Taco Tuesday,"Tuesday special: $10 for two chicken or cod tacos with chips and salsa, or $11 for two steak, brisket, or Impossible tacos with chips and salsa.",Tuesday,,Daily Special,The Brass Tap Waterford Lakes,1,1,,https://www.brasstapbeerbar.com/waterfordlakes/specials,View specials
 Brass Tap Bottomless Mimosas,Saturday-Sunday 11am-3pm bottomless mimosas for $21.,Saturday-Sunday,11am,Brunch Special,The Brass Tap Waterford Lakes,1,1,3pm,https://www.brasstapbeerbar.com/waterfordlakes/specials,View specials
-Tijuana Flats Taco Tuesdaze,Tuesday special: two tacos, chips, and a drink for $7.99 at participating locations.,Tuesday,,Daily Special,Tijuana Flats UCF,1,1,,https://www.tijuanaflats.com/promotions/specials-and-deals,View specials
-Tijuana Flats Throwback Thursdaze,Thursday special: burrito or bowl, chips, and a drink for $8.99 at participating locations.,Thursday,,Daily Special,Tijuana Flats UCF,1,1,,https://www.tijuanaflats.com/promotions/specials-and-deals,View specials
 Buffalo Wild Wings UCF Happy Hour,"Monday-Friday 3-6pm happy hour with discounted food, beer, cocktails, margaritas, shots, and well drinks.",Monday-Friday,3pm,Happy Hour,Buffalo Wild Wings UCF,1,1,6pm,https://www.buffalowildwings.com/happy-hour/,View happy hour
 Aurora Daily Happy Hour,Daily 4-6pm happy hour with discounted cocktails and small bites at Aurora at The Celeste.,Daily,4pm,Happy Hour,Aurora at The Celeste,1,1,6pm,https://aurorarestaurantorlando.com/happy-hour/,View happy hour
 Hinabe Happy Hour,Wednesday-Sunday 5-7pm happy hour with discounted wagyu bites and appetizers.,Wednesday-Sunday,5pm,Happy Hour,Hinabe,1,1,7pm,https://www.goldenbuzz.social/orlando/happyhour/hinabe/,View happy hour
@@ -2556,7 +2536,6 @@ Dairy Queen NSB Friday Blizzard Special,Friday daily special: large Blizzard for
 Dairy Queen NSB Saturday MooLatte Special,Saturday daily special: medium MooLatte for $3.59.,Saturday,11:00,Dessert Deal,Dairy Queen New Smyrna Beach,1,1,,,
 Dairy Queen NSB Weekday Lunch Special,"Monday-Friday 11am-3pm: hot dog, chips, medium soda, and small sundae for $6.",Monday-Friday,11:00,Lunch Special,Dairy Queen New Smyrna Beach,1,1,15:00,,
 Dairy Queen NSB Weekday Blizzard Lunch Special,"Monday-Friday 11am-3pm: hot dog, chips, medium soda, and small Blizzard for $7.",Monday-Friday,11:00,Lunch Special,Dairy Queen New Smyrna Beach,1,1,15:00,,
-The Pelican Bistro Daily Happy Hour,Daily happy hour 3-6pm with discounted appetizers, drink specials, and rotating menu features.,All,15:00,Happy Hour,The Pelican Bistro,1,1,18:00,,
 McKenna's Port Orange Daily Happy Hour,"Everyday 2-7pm: $3.75 select domestic pints, $1 off well drinks, $1 off wines, $1 off draft craft beers, and $3.99 mini nachos.",All,14:00,Happy Hour,McKenna's Place Port Orange,1,1,19:00,,
 McKenna's Port Orange Daily Margarita Special,Everyday all day: 2-for-1 margaritas; dine-in only.,All,11:00,Happy Hour,McKenna's Place Port Orange,1,1,,,
 The Turn Saturday Snow Crab Special,Saturday 11am-5pm: 1 lb snow crab for $27.,Saturday,11:00,Dining Deal,The Turn,1,1,17:00,,
@@ -2597,7 +2576,6 @@ Pictona Discounted Day Pass,Discounted $15 visitor day pass at Pictona at Holly 
 FILO Rewards,Join FILO Rewards and earn points on every order. New accounts receive a $5 reward.,Every day,Regular hours,Rewards Offer,Filo Greek,1,1,,https://eatfilo.com/,Join Rewards
 CAVA Rewards,Earn points with every qualifying purchase and redeem points for rewards through CAVA Rewards.,Every day,Regular hours,Rewards Offer,CAVA Daytona Beach,1,1,,https://cava.com/rewards,Join Rewards
 Gili's Kitchen Rewards,Earn points for free food through the Gili's Kitchen app.,Every day,Regular hours,Rewards Offer,Gili's Kitchen Ormond Beach,1,1,,https://giliskitchen.com/page/locations,Open App
-Turquoise Cafe App Rewards,Use the Turquoise Cafe app to save time, earn rewards, and get notified about new deals.,Every day,Regular hours,Rewards Offer,Turquoise Cafe & Bakery,1,1,,https://turquoisecafebistro.com/,Open App
 Houligan's Ormond Granada MVP Club,Join the Houligan's MVP Club and get 6 free Wally Wings plus access to offers and daily specials.,Every day,Regular hours,Rewards Offer,Houligan's Ormond Granada,1,1,,https://www.houliganswings.com/,Join MVP Club
 Houligan's Port Orange MVP Club,Join the Houligan's MVP Club and get 6 free Wally Wings plus access to offers and daily specials.,Every day,Regular hours,Rewards Offer,Houligan's Port Orange,1,1,,https://www.houliganswings.com/,Join MVP Club
 Houligan's Speedway MVP Club,Join the Houligan's MVP Club and get 6 free Wally Wings plus access to offers and daily specials.,Every day,Regular hours,Rewards Offer,Houligan's Speedway,1,1,,https://www.houliganswings.com/,Join MVP Club
@@ -2606,3 +2584,18 @@ Don Rico's Weekday Happy Hour,Monday-Friday happy hour from 4pm-6pm at Don Rico'
 McCoy's Rum Room Nightly Happy Hour,Nightly happy hour with draft beer wine and cocktails plus live entertainment and Atlantic views.,Nightly,Evening,Happy Hour,McCoy's Rum Room,1,1,,https://www.daytonahilton.com/dining,View Happy Hour
 Chase's Weekday Happy Hour,Monday-Friday happy hour food and drink specials from 3pm-6pm.,Monday-Friday,3:00 PM,Happy Hour,Chase's on the Beach,1,1,6:00 PM,https://www.chasesonthebeach.com/specials,View Specials
 Chase's Wine Wednesday,$2 off all wine on Wednesdays.,Wednesday,Regular hours,Wine Special,Chase's on the Beach,1,1,,https://www.chasesonthebeach.com/specials,View Specials
+Beachside Tavern Tuesday Pint Night,$3 Select Draft Beers,Tuesday,17:00:00,Drink Special,Beachside Tavern,1,1,23:59:00,https://beachsidetavern.com/,View Details
+Sam Snead's Happy Hour,"Happy hour Monday-Friday 3-7pm; Thursday 3pm-close; Saturday 4pm-close with beer, wine, and cocktail specials.",Monday-Saturday,15:00:00,Happy Hour,Sam Snead's Oak Grill and Tavern,1,1,19:00:00,https://www.facebook.com/samsneadsoakgrillandtavern/,View happy hour
+Daily Drink Specials,"Daily rotating drink specials at Savoy Orlando including weekday vodka, well drink, bourbon, and employee discount specials.",Daily,,Daily Special,Savoy Orlando,1,1,,https://www.savoyorlando.com/pages/daily-specials,View daily specials
+Seito Sushi Weekend Happy Hour,"Friday-Sunday 12-3pm weekend happy hour with cocktails, sake, wine, beer, and sushi specials.",Friday-Sunday,12:00:00,Happy Hour,Seito Sushi Baldwin Park,1,1,15:00:00,https://www.seitosushibp.com/visit-us,View happy hour
+Tijuana Flats Taco Tuesdaze,"Tuesday special: two tacos, chips, and a drink for $7.99 at participating locations.",Tuesday,,Daily Special,Tijuana Flats UCF,1,1,,https://www.tijuanaflats.com/promotions/specials-and-deals,View specials
+Tijuana Flats Throwback Thursdaze,"Thursday special: burrito or bowl, chips, and a drink for $8.99 at participating locations.",Thursday,,Daily Special,Tijuana Flats UCF,1,1,,https://www.tijuanaflats.com/promotions/specials-and-deals,View specials
+The Pelican Bistro Daily Happy Hour,"Daily happy hour 3-6pm with discounted appetizers, drink specials, and rotating menu features.",All,15:00:00,Happy Hour,The Pelican Bistro,1,1,18:00:00,,
+Turquoise Cafe App Rewards,"Use the Turquoise Cafe app to save time, earn rewards, and get notified about new deals.",Every day,,Rewards Offer,Turquoise Cafe & Bakery,1,1,,https://turquoisecafebistro.com/,Open App
+Deli Sandwiches & Salads,"Sandwiches, salads, desserts, and casual deli lunch options.",Every day,,Lunch,The Happy Deli,1,1,,,
+Cupcakes & Sweet Treats,"Cupcakes, cakes, and sweet treats in the Daytona Beach area.",Every day,,Bakery,Sweet Dreams Bakery,1,1,,,
+Cafe Pinar Cuban Menu,"Cuban sandwiches, coffee, pastries and breakfast menu",Daily,07:00:00,Menu Special,Cafe Pinar,1,1,18:00:00,,
+Anh Hong Vietnamese Menu,"Pho, banh mi, vermicelli bowls and rice dishes",Daily,10:00:00,Menu Special,Anh Hong Restaurant,1,1,21:00:00,,
+Mamak Asian Street Food Menu,Malaysian and Southeast Asian street food including noodles and rice plates,Daily,11:00:00,Menu Special,Mamak Asian Street Food Orlando,1,1,21:00:00,,
+Pho 88 Menu,"Vietnamese pho, noodles and rice dishes",Daily,10:00:00,Menu Special,Pho 88 Restaurant,1,1,22:00:00,,
+Sushi Katana Menu,"Sushi rolls, sashimi and hibachi dishes",Daily,11:00:00,Menu Special,Sushi Katana,1,1,22:00:00,,
