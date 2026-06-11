@@ -888,6 +888,63 @@
     syncHomepageRecommendationActiveState();
   }
 
+
+  function buildHelpMeChooseUrl(latitude, longitude) {
+    const url = new URL('/', window.location.origin);
+
+    url.searchParams.set('search_deals', '');
+    url.searchParams.set('origin_lat', latitude || '');
+    url.searchParams.set('origin_lon', longitude || '');
+    url.searchParams.set('search_origin_mode', latitude && longitude ? 'browser' : '');
+    url.searchParams.set('search_clean', '');
+    url.searchParams.set('recommendation_action', '');
+    url.searchParams.set('help_me_choose', '1');
+    url.searchParams.set('recommendation_cuisines', '');
+    url.searchParams.set('search_raw', '');
+    url.searchParams.set('postal_code_exact', '');
+    url.searchParams.set('locality_exact', '');
+    url.searchParams.set('scroll_results', '1');
+
+    try {
+      window.sessionStorage.setItem('spotdealsScrollToResults', '1');
+    }
+    catch (e) {
+      // Ignore storage failures. The query parameter is enough for the normal path.
+    }
+
+    return url.toString();
+  }
+
+  function attachHelpMeChooseNoResultsActions(context) {
+    once('spotdeals-help-me-choose-no-results-actions', '.spotdeals-help-me-choose-trigger', context).forEach(function (trigger) {
+      trigger.addEventListener('click', function (event) {
+        event.preventDefault();
+
+        if (!navigator.geolocation) {
+          window.location.href = buildHelpMeChooseUrl('', '');
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          function (position) {
+            window.location.href = buildHelpMeChooseUrl(
+              String(position.coords.latitude),
+              String(position.coords.longitude)
+            );
+          },
+          function () {
+            window.location.href = buildHelpMeChooseUrl('', '');
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 8000,
+            maximumAge: 300000
+          }
+        );
+      });
+    });
+  }
+
   function attachHomepageFeedMobileAccordion(context) {
     once('spotdeals-home-feed-mobile-accordion', '.spotdeals-home-feed__mobile-toggle', context).forEach(function (toggle) {
       const label = toggle.querySelector('span:first-child');
@@ -1202,6 +1259,7 @@
       attachMobileDiscoveryResizeHandler(context);
       attachBackToTopButton(context);
       attachHomepageRecommendationActions(context);
+      attachHelpMeChooseNoResultsActions(context);
       attachHomepageFeedMobileAccordion(context);
       attachSeoLandingFilterEnhancements(context);
       attachSeoLandingScrollFallback(context);

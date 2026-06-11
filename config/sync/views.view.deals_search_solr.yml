@@ -803,8 +803,8 @@ display:
           plugin_id: text
           empty: true
           content:
-            value: "We couldn't find any results matching your search. To improve your search results, you can try another keyword."
-            format: basic_html
+            value: "<p>We couldn't find any results matching your search. To improve your search results, you can try another keyword.</p>\r\n<p>Not sure what to try next?</p>\r\n<a class=\"button button--primary spotdeals-help-me-choose-trigger\" href=\"/?help_me_choose=1\">Help Me Choose</a>"
+            format: full_html
           tokenize: false
       sorts: {  }
       arguments: {  }
