@@ -3617,3 +3617,67 @@ h1.page-title {
     margin: 0;
   }
 }
+
+/* SD-135 mobile breadcrumb overflow fix.
+ * Keep long breadcrumb trails inside the mobile viewport without hiding links.
+ */
+@media (max-width: 767px) {
+  .breadcrumb.spotdeals-breadcrumb,
+  .spotdeals-breadcrumb,
+  .region--breadcrumb {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: visible;
+  }
+
+  .breadcrumb.spotdeals-breadcrumb {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .breadcrumb.spotdeals-breadcrumb .breadcrumb__content,
+  .breadcrumb.spotdeals-breadcrumb .breadcrumb__list,
+  .breadcrumb.spotdeals-breadcrumb ol,
+  .breadcrumb.spotdeals-breadcrumb ul {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.65rem;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: 0;
+    padding-inline: 0;
+    box-sizing: border-box;
+    overflow: visible;
+  }
+
+  .breadcrumb.spotdeals-breadcrumb .breadcrumb__item,
+  .breadcrumb.spotdeals-breadcrumb li {
+    flex: 0 1 auto;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .breadcrumb.spotdeals-breadcrumb .breadcrumb__link,
+  .breadcrumb.spotdeals-breadcrumb a,
+  .breadcrumb.spotdeals-breadcrumb span {
+    display: inline;
+    max-width: 100%;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .breadcrumb__item {
+    &:nth-child(n+2)::before {
+      margin-inline: 0;
+      margin-left: 0;
+      margin-right: 0.5rem;
+    }
+  }
+}
