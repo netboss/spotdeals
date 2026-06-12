@@ -95,6 +95,55 @@
     resultsWrapper.insertBefore(header, resultsWrapper.firstChild);
   }
 
+
+  function getDirectChildByClass(parent, className) {
+    if (!parent) {
+      return null;
+    }
+
+    for (let i = 0; i < parent.children.length; i += 1) {
+      if (parent.children[i].classList && parent.children[i].classList.contains(className)) {
+        return parent.children[i];
+      }
+    }
+
+    return null;
+  }
+
+  function normalizeSpotDealsFinderResultsMarkup(context) {
+    const scope = context && context.querySelectorAll ? context : document;
+    const resultsWrappers = [];
+
+    if (scope.classList && scope.classList.contains('spotdeals-finder__results')) {
+      resultsWrappers.push(scope);
+    }
+
+    scope.querySelectorAll('.spotdeals-finder__results').forEach(function (resultsWrapper) {
+      if (resultsWrappers.indexOf(resultsWrapper) === -1) {
+        resultsWrappers.push(resultsWrapper);
+      }
+    });
+
+    resultsWrappers.forEach(function (resultsWrapper) {
+      const viewContent = getDirectChildByClass(resultsWrapper, 'view-content');
+
+      ensureRecommendationSummary(resultsWrapper);
+
+      if (!viewContent) {
+        return;
+      }
+
+      viewContent.classList.add('spotdeals-finder__cards');
+      viewContent.classList.remove('grid');
+
+      const rows = viewContent.querySelectorAll('.views-row');
+
+      if (rows.length > 0) {
+        viewContent.setAttribute('data-result-count', String(rows.length));
+      }
+    });
+  }
+
   function findExternalVoteElements(row, card) {
     const selectors = [
       '.views-field-spotdeals-vote',
@@ -788,6 +837,37 @@
     });
   }
 
+  function ensureHiddenInput(form, name) {
+    let input = form.querySelector('input[name="' + name + '"]');
+
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      form.appendChild(input);
+    }
+
+    return input;
+  }
+
+  function setScrollToResultsFlag() {
+    try {
+      window.sessionStorage.setItem('spotdealsScrollToResults', '1');
+    }
+    catch (e) {
+      // Ignore storage failures. Query/form parameters still cover the normal path.
+    }
+  }
+
+  function clearScrollToResultsFlag() {
+    try {
+      window.sessionStorage.removeItem('spotdealsScrollToResults');
+    }
+    catch (e) {
+      // Ignore storage failures.
+    }
+  }
+
   function submitHomepageRecommendation(searchValue) {
     const form = document.querySelector('.spotdeals-finder__filters form');
 
@@ -798,7 +878,7 @@
     const searchInput = form.querySelector('input[name="search_deals"], input[name="search_api_fulltext"]');
     const helpMeChooseCheckbox = form.querySelector('input[name="help_me_choose"]');
     const recommendationAction = form.querySelector('input[name="recommendation_action"]');
-    const scrollResults = form.querySelector('input[name="scroll_results"]');
+    const scrollResults = ensureHiddenInput(form, 'scroll_results');
     const submitButton = form.querySelector('input[type="submit"]');
 
     if (!searchInput || !submitButton) {
@@ -820,6 +900,7 @@
       scrollResults.value = '1';
     }
 
+    setScrollToResultsFlag();
     submitButton.click();
   }
 
@@ -905,12 +986,7 @@
     url.searchParams.set('locality_exact', '');
     url.searchParams.set('scroll_results', '1');
 
-    try {
-      window.sessionStorage.setItem('spotdealsScrollToResults', '1');
-    }
-    catch (e) {
-      // Ignore storage failures. The query parameter is enough for the normal path.
-    }
+    setScrollToResultsFlag();
 
     return url.toString();
   }
@@ -1015,17 +1091,30 @@
     document.body.classList.add('spotdeals-has-active-local-pick');
   }
 
-  function getSeoLandingResultsTarget(form) {
-    const filterWrapper = form.closest('.spotdeals-finder__filters');
-    const localPick = getActiveSeoLandingLocalPick();
+  function getSpotDealsFinderResultsSection() {
+    return document.querySelector('.spotdeals-finder__results');
+  }
 
-    // Local recommendation requests render a sticky "Your local pick" control.
-    // In that state, the regular filter form is hidden and the pick control
-    // becomes the scroll anchor. Regular filter searches keep the results-view
-    // anchor so the normal search experience is unchanged.
-    if (localPick && filterWrapper) {
-      return localPick;
+  function getSpotDealsFinderResultsScrollTarget() {
+    const finderResults = getSpotDealsFinderResultsSection();
+
+    if (!finderResults) {
+      return null;
     }
+
+    ensureRecommendationSummary(finderResults);
+
+    return finderResults.querySelector('.view-header') || finderResults;
+  }
+
+  function getSeoLandingResultsTarget(form) {
+    const finderTarget = getSpotDealsFinderResultsScrollTarget();
+
+    if (finderTarget) {
+      return finderTarget;
+    }
+
+    const filterWrapper = form.closest('.spotdeals-finder__filters');
 
     if (filterWrapper && filterWrapper.nextElementSibling && filterWrapper.nextElementSibling.classList.contains('spotdeals-seo-results-view')) {
       return filterWrapper.nextElementSibling;
@@ -1035,6 +1124,8 @@
   }
 
   function clearSeoLandingScrollUrlFlag() {
+    clearScrollToResultsFlag();
+
     try {
       const url = new URL(window.location.href);
 
@@ -1056,55 +1147,98 @@
     clearSeoLandingScrollUrlFlag();
   }
 
-  function scrollSeoLandingResultsIntoView(form) {
-    const target = getSeoLandingResultsTarget(form);
+  function getCurrentSpotDealsFinderResultsScrollTarget() {
+    const target = getSpotDealsFinderResultsScrollTarget();
 
-    if (!target) {
-      clearSeoLandingScrollFlag(form);
-      return;
+    if (target) {
+      target.style.display = '';
+      target.removeAttribute('hidden');
     }
 
-    const offset = 16;
-    const rect = target.getBoundingClientRect();
-    const top = window.pageYOffset + rect.top - offset;
-
-    window.setTimeout(function () {
-      window.scrollTo({
-        top: Math.max(0, top),
-        behavior: 'smooth'
-      });
-      clearSeoLandingScrollFlag(form);
-    }, 60);
+    return target;
   }
-  function getSeoLandingStandaloneResultsTarget() {
+
+  function getSpotDealsFinderScrollOffset(target) {
+    const baseOffset = 16;
     const localPick = getActiveSeoLandingLocalPick();
 
-    if (localPick) {
-      return localPick;
+    if (!target || !localPick || !isMobileViewport()) {
+      return baseOffset;
     }
 
-    return document.querySelector('.spotdeals-seo-results-view[data-recommendation-active="1"]') || document.querySelector('.spotdeals-seo-results-view');
+    if (localPick.contains(target)) {
+      return baseOffset;
+    }
+
+    const localPickStyle = window.getComputedStyle(localPick);
+    const localPickIsPinned = localPickStyle.position === 'sticky' ||
+      localPickStyle.position === '-webkit-sticky' ||
+      localPickStyle.position === 'fixed';
+
+    if (!localPickIsPinned) {
+      return baseOffset;
+    }
+
+    return Math.ceil(localPick.getBoundingClientRect().height) + 24;
+  }
+
+  function scrollToSpotDealsFinderTarget(targetOrResolver, clearCallback) {
+    const resolveTarget = function () {
+      if (typeof targetOrResolver === 'function') {
+        return targetOrResolver();
+      }
+
+      return targetOrResolver || getCurrentSpotDealsFinderResultsScrollTarget();
+    };
+
+    const scrollToTarget = function () {
+      const target = resolveTarget();
+
+      if (!target) {
+        return false;
+      }
+
+      const offset = getSpotDealsFinderScrollOffset(target);
+      const rect = target.getBoundingClientRect();
+      const top = window.pageYOffset + rect.top - offset;
+
+      window.scrollTo({
+        top: Math.max(0, top),
+        behavior: 'auto'
+      });
+
+      return true;
+    };
+
+    let scrolled = false;
+
+    [80, 180, 360, 750, 1300, 2200].forEach(function (delay, index, delays) {
+      window.setTimeout(function () {
+        scrolled = scrollToTarget() || scrolled;
+
+        if (index === delays.length - 1 && clearCallback && scrolled) {
+          clearCallback();
+        }
+      }, delay);
+    });
+  }
+
+  function scrollSeoLandingResultsIntoView(form) {
+    scrollToSpotDealsFinderTarget(function () {
+      return getSeoLandingResultsTarget(form);
+    }, function () {
+      clearSeoLandingScrollFlag(form);
+    });
+  }
+
+  function getSeoLandingStandaloneResultsTarget() {
+    return getSpotDealsFinderResultsScrollTarget() ||
+      document.querySelector('.spotdeals-seo-results-view[data-recommendation-active="1"]') ||
+      document.querySelector('.spotdeals-seo-results-view');
   }
 
   function scrollSeoLandingStandaloneResultsIntoView() {
-    const target = getSeoLandingStandaloneResultsTarget();
-
-    if (!target) {
-      clearSeoLandingScrollUrlFlag();
-      return;
-    }
-
-    const offset = 16;
-    const rect = target.getBoundingClientRect();
-    const top = window.pageYOffset + rect.top - offset;
-
-    window.setTimeout(function () {
-      window.scrollTo({
-        top: Math.max(0, top),
-        behavior: 'smooth'
-      });
-      clearSeoLandingScrollUrlFlag();
-    }, 60);
+    scrollToSpotDealsFinderTarget(getSeoLandingStandaloneResultsTarget, clearSeoLandingScrollUrlFlag);
   }
 
   function attachSeoLandingScrollFallback(context) {
@@ -1131,7 +1265,16 @@
   function shouldScrollSeoLandingResultsOnLoad() {
     try {
       const url = new URL(window.location.href);
-      return url.searchParams.get('scroll_results') === '1';
+
+      if (url.searchParams.get('scroll_results') === '1') {
+        return true;
+      }
+
+      if (url.searchParams.get('help_me_choose') === '1' && url.searchParams.get('search_origin_mode') === 'browser') {
+        return true;
+      }
+
+      return window.sessionStorage.getItem('spotdealsScrollToResults') === '1';
     }
     catch (e) {
       return false;
@@ -1172,6 +1315,12 @@
         const isReset = /reset/i.test(label) || (submitter && /reset/i.test(submitter.getAttribute('name') || ''));
 
         scrollInput.value = isReset ? '' : '1';
+
+        const helpMeChoose = form.querySelector('input[name="help_me_choose"]');
+        if (!isReset && helpMeChoose && helpMeChoose.checked) {
+          scrollInput.value = '1';
+          setScrollToResultsFlag();
+        }
       });
 
       if (shouldScrollSeoLandingResultsOnLoad()) {
@@ -1223,6 +1372,81 @@
     }
   }
 
+
+  function isMobileViewport() {
+    return window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+  }
+
+  function getRecommendationResultComfortTarget() {
+    return getCurrentSpotDealsFinderResultsScrollTarget();
+  }
+
+  function scrollRecommendationResultComfortably() {
+    const target = getRecommendationResultComfortTarget();
+
+    if (!target) {
+      return;
+    }
+
+    const offset = 16;
+    const rect = target.getBoundingClientRect();
+    const top = window.pageYOffset + rect.top - offset;
+
+    window.scrollTo({
+      top: Math.max(0, top),
+      behavior: 'auto'
+    });
+  }
+
+  function scheduleRecommendationResultComfortScroll() {
+    [900, 1400, 2100].forEach(function (delay) {
+      window.setTimeout(scrollRecommendationResultComfortably, delay);
+    });
+  }
+
+  function attachRecommendationRetryScrollCorrection(context) {
+    once('spotdeals-recommendation-retry-scroll-correction', 'form.views-exposed-form', context).forEach(function (form) {
+      let lastClickedSubmitter = null;
+
+      form.addEventListener('click', function (event) {
+        const target = event.target;
+
+        if (!(target instanceof Element)) {
+          return;
+        }
+
+        const submitter = target.closest('input[type="submit"], button[type="submit"]');
+
+        if (submitter) {
+          lastClickedSubmitter = submitter;
+        }
+      }, true);
+
+      form.addEventListener('submit', function (event) {
+        const submitter = event.submitter || lastClickedSubmitter || document.activeElement;
+        const label = submitter ? ((submitter.getAttribute('value') || submitter.textContent || '').trim()) : '';
+        const isReset = /reset/i.test(label) || (submitter && /reset/i.test(submitter.getAttribute('name') || ''));
+        const helpMeChoose = form.querySelector('input[name="help_me_choose"]');
+
+        if (!helpMeChoose || !helpMeChoose.checked || isReset) {
+          return;
+        }
+
+        ensureHiddenInput(form, 'scroll_results').value = '1';
+        setScrollToResultsFlag();
+
+        try {
+          if ('scrollRestoration' in window.history) {
+            window.history.scrollRestoration = 'manual';
+          }
+        }
+        catch (e) {
+          // Ignore browser history failures.
+        }
+      }, true);
+    });
+  }
+
   function attachMobileStickySearchForm(context) {
     once('spotdeals-mobile-sticky-search-form-v1', 'body', context).forEach(function () {
       let ticking = false;
@@ -1249,9 +1473,7 @@
 
   Drupal.behaviors.spotdealsThemeFixes = {
     attach: function (context) {
-      once('spotdeals-theme-fixes', '.spotdeals-finder__results', context).forEach(function (resultsWrapper) {
-        ensureRecommendationSummary(resultsWrapper);
-      });
+      normalizeSpotDealsFinderResultsMarkup(context);
 
       moveMobileDiscoveryBlocks();
       moveSeoLandingMobileAccordions();
@@ -1261,9 +1483,25 @@
       attachHomepageRecommendationActions(context);
       attachHelpMeChooseNoResultsActions(context);
       attachHomepageFeedMobileAccordion(context);
+      if (shouldScrollSeoLandingResultsOnLoad()) {
+        try {
+          if ('scrollRestoration' in window.history) {
+            window.history.scrollRestoration = 'manual';
+          }
+        }
+        catch (e) {
+          // Ignore browser history failures.
+        }
+      }
+
       attachSeoLandingFilterEnhancements(context);
       attachSeoLandingScrollFallback(context);
+
+      if (shouldScrollSeoLandingResultsOnLoad()) {
+        scrollToSpotDealsFinderTarget(getCurrentSpotDealsFinderResultsScrollTarget, clearSeoLandingScrollUrlFlag);
+      }
       attachMobileStickySearchForm(context);
+      attachRecommendationRetryScrollCorrection(context);
       moveVotesIntoDealCards(context);
       moveInternalVenueVotesIntoTarget(context);
       applyVoteStateClasses(context);
