@@ -1868,8 +1868,8 @@ Smoke & Donuts Food Menu,"BBQ sandwiches, smoked meats, sides, brunch items and 
 Greenbeat Online Ordering,"Order salads, wraps and healthy bowls online",Daily,10:30:00,Online Ordering,Greenbeat,1,1,20:00:00,https://order.greenbeat.com/,Order Online
 Francesco's Online Ordering,"Order Italian pasta, pizza, seafood and scratch-made dishes online",Daily,11:00:00,Online Ordering,Francesco's Ristorante & Pizzeria,1,1,21:00:00,https://francescos-rist.com/order-online/,Order Online
 Francesco's Italian Menu,"Italian menu with pasta, pizza, panini, seafood, wine and classic dishes",Daily,11:00:00,Menu Special,Francesco's Ristorante & Pizzeria,1,1,21:00:00,https://francescos-rist.com/menu/,View Menu
-The Hangry Bison Hangry Hour,Hangry Hour Monday through Friday from 3 PM to 6 PM,Monday,15:00:00,Happy Hour,The Hangry Bison - Winter Park,1,1,18:00:00,https://www.thehangrybison.com/hangryhourmenu,View Menu
-The Hangry Bison Online Ordering,"Order burgers, appetizers, salads and signature plates online",Daily,11:00:00,Online Ordering,The Hangry Bison - Winter Park,1,1,22:00:00,https://www.thehangrybison.com/order-online,Order Online
+The Hangry Bison Hangry Hour,Hangry Hour Monday through Friday from 3 PM to 6 PM,Monday,15:00:00,Happy Hour,The Hangry Bison Winter Park,1,1,18:00:00,https://www.thehangrybison.com/hangryhourmenu,View Menu
+The Hangry Bison Online Ordering,"Order burgers, appetizers, salads and signature plates online",Daily,11:00:00,Online Ordering,The Hangry Bison Winter Park,1,1,22:00:00,https://www.thehangrybison.com/order-online,Order Online
 The Moderne Happy Hour,"Happy Hour Sunday through Thursday from 5 PM to 6:30 PM and 11 PM to close, plus Monday all night",Sunday,17:00:00,Happy Hour,The Moderne,1,1,18:30:00,https://www.themodernebar.com/happy-hour,View Menu
 The Moderne Reservations,"Reserve a table for Asian-inspired tapas, cocktails and late-night dining",Daily,17:00:00,Reservation,The Moderne,1,1,23:30:00,https://www.themodernebar.com/reservations,Reserve
 American Social Social Hour,Social Hour every day from 4 PM to 7 PM and Sunday through Wednesday from 10 PM to close,Daily,16:00:00,Happy Hour,American Social - Orlando,1,1,19:00:00,https://americansocialbar.com/locations/orlando/,View Details
@@ -2635,3 +2635,13 @@ Frosty King Featured Venue,"Featured Edgewater ice cream stand serving homemade 
 Izzy's Island Tacos and Ice Cream Featured Venue,"Featured New Smyrna Beach taco and ice cream spot making its own ice cream and tortillas.",Every day,,Featured Venue,Izzy's Island Tacos and Ice Cream,1,1,,https://izzysisland.com/,View venue
 Lemons Italian Ice Featured Venue,"Featured New Smyrna Beach dessert shop serving Italian ice, gluten-free baked treats, fresh-squeezed lemonade, and sugar-free options.",Every day,,Featured Venue,Lemons Italian Ice & Gluten-Free Treats,1,1,,https://lemonsnsb.com/,View venue
 Shebeen Suspiciously Sweet Featured Venue,"Featured Canal Street coffee, chocolate, and ice cream shop in New Smyrna Beach.",Every day,,Featured Venue,Shebeen Suspiciously Sweet,1,1,,https://www.instagram.com/shebeen_suspiciously_sweet/,View venue
+New Smyrna Beach Brewing Trivia Night,Weekly trivia night every Wednesday with beer specials and prizes,Wednesday,19:00:00,Event,New Smyrna Beach Brewing Company,1,1,21:00:00,,
+First Watch Birthday Reward,Join Sun eClub and receive a birthday reward offer,Daily,00:00:00,Rewards,First Watch Port Orange,1,1,23:59:59,https://www.firstwatch.com/sun-eclub/,Join Sun eClub
+Sanford Brewing Happy Hour,$2 off draft beers and discounted appetizers,Monday|Tuesday|Wednesday|Thursday|Friday,15:00:00,Happy Hour,Sanford Brewing Company,1,1,18:00:00,,
+Wop's Hops Trivia Night,Weekly trivia night with prizes and beer specials,Wednesday,19:00:00,Event,Wop's Hops Brewing Company,1,1,21:00:00,,
+Deviant Wolfe Trivia Night,Weekly trivia night with rotating beer specials,Tuesday,19:00:00,Event,Deviant Wolfe Brewing,1,1,21:00:00,,
+Dees Brothers Bingo Night,Weekly bingo night featuring brewery specials and prizes,Thursday,19:00:00,Event,Dees Brothers Brewery,1,1,21:00:00,,
+Maya Books Open Mic Night,Recurring community open mic event featuring coffee specials and local performers,Thursday,19:00:00,Event,Maya Books & Music,1,1,21:00:00,,
+Framework Coffee Cupping Event,Recurring coffee tasting and educational event featuring featured roasts,Saturday,10:00:00,Event,Framework Craft Coffee House,1,1,11:30:00,,
+Henry's Depot Live Music Night,Recurring live music event featuring food drink and vendor specials,Friday,19:00:00,Event,Henry's Depot,1,1,22:00:00,,
+Kilwins Rewards Birthday Treat,Rewards members receive a birthday sweet treat offer,Daily,00:00:00,Rewards,Kilwins Sanford,1,1,23:59:59,,
