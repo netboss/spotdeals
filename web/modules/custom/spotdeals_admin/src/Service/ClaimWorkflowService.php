@@ -259,14 +259,62 @@ class ClaimWorkflowService {
    * Gets the venue linked from the claim.
    */
   protected function getClaimVenue(NodeInterface $claim): ?NodeInterface {
-    if (!$claim->hasField('field_venue') || $claim->get('field_venue')->isEmpty()) {
+    if ($claim->hasField('field_venue') && !$claim->get('field_venue')->isEmpty()) {
+      $venue = $claim->get('field_venue')->entity;
+
+      if ($venue instanceof NodeInterface && $venue->bundle() === 'venue') {
+        return $venue;
+      }
+    }
+
+    return $this->recoverClaimVenueByTitle($claim);
+  }
+
+  /**
+   * Attempts to recover older/orphaned claims by matching the claim title.
+   *
+   * Some early claim links created claims without a reliable field_venue value.
+   * After venue rollback/import cycles, those claims can no longer approve even
+   * when the matching venue still exists under a new node ID. If exactly one
+   * venue has the same title as the claim, attach it back to the claim and
+   * continue the approval workflow. If there are zero or multiple matches, do
+   * not guess.
+   */
+  protected function recoverClaimVenueByTitle(NodeInterface $claim): ?NodeInterface {
+    $title = trim((string) $claim->label());
+
+    if ($title === '') {
       return NULL;
     }
 
-    $venue = $claim->get('field_venue')->entity;
+    $ids = $this->entityTypeManager->getStorage('node')->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('type', 'venue')
+      ->condition('title', $title)
+      ->range(0, 2)
+      ->execute();
+
+    if (!is_array($ids) || count($ids) !== 1) {
+      return NULL;
+    }
+
+    $venue = $this->entityTypeManager->getStorage('node')->load(reset($ids));
+
     if (!$venue instanceof NodeInterface || $venue->bundle() !== 'venue') {
       return NULL;
     }
+
+    if ($claim->hasField('field_venue')) {
+      $claim->set('field_venue', ['target_id' => $venue->id()]);
+    }
+
+    $this->logger->notice(
+      'Recovered missing venue reference for claim @claim_id by exact title match to venue @venue_id.',
+      [
+        '@claim_id' => $claim->id(),
+        '@venue_id' => $venue->id(),
+      ]
+    );
 
     return $venue;
   }
