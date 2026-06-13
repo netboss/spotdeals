@@ -5,6 +5,7 @@ use Drupal\Core\Cache\RefinableCacheableDependencyInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\node\Entity\Node;
@@ -12,6 +13,18 @@ use Drupal\node\NodeInterface;
 use Drupal\user\Entity\User;
 use Drupal\user\UserInterface;
 
+
+/**
+ * Implements hook_mail().
+ */
+function spotdeals_admin_mail($key, &$message, $params) {
+  switch ($key) {
+    case 'admin_notification':
+      $message['subject'] = $params['subject'] ?? t('SpotDeals admin notification');
+      $message['body'][] = $params['body'] ?? '';
+      break;
+  }
+}
 
 /**
  * Implements hook_node_access().
@@ -388,15 +401,17 @@ function spotdeals_admin_entity_presave(EntityInterface $entity) {
  * in approved status.
  */
 function spotdeals_admin_entity_insert(EntityInterface $entity) {
-  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'claim') {
+  if (!$entity instanceof NodeInterface) {
     return;
   }
 
-  if (!spotdeals_admin_claim_status_matches($entity, ['approved'])) {
-    return;
-  }
+  if ($entity->bundle() === 'claim') {
+    spotdeals_admin_notify_claim_created($entity);
 
-  spotdeals_admin_reject_competing_pending_claims($entity);
+    if (spotdeals_admin_claim_status_matches($entity, ['approved'])) {
+      spotdeals_admin_reject_competing_pending_claims($entity);
+    }
+  }
 }
 
 /**
@@ -405,15 +420,184 @@ function spotdeals_admin_entity_insert(EntityInterface $entity) {
  * Ensures competing pending claims get rejected whenever a claim is approved.
  */
 function spotdeals_admin_entity_update(EntityInterface $entity) {
-  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'claim') {
+  if (!$entity instanceof NodeInterface) {
     return;
   }
 
-  if (!spotdeals_admin_claim_status_matches($entity, ['approved'])) {
+  if (in_array($entity->bundle(), ['venue', 'deal'], TRUE)) {
+    spotdeals_admin_notify_listing_modified($entity);
     return;
   }
 
-  spotdeals_admin_reject_competing_pending_claims($entity);
+  if ($entity->bundle() === 'claim' && spotdeals_admin_claim_status_matches($entity, ['approved'])) {
+    spotdeals_admin_reject_competing_pending_claims($entity);
+  }
+}
+
+/**
+ * Sends an admin notification when a claim node is created.
+ */
+function spotdeals_admin_notify_claim_created(NodeInterface $claim) {
+  if ($claim->bundle() !== 'claim') {
+    return;
+  }
+
+  $claimant = spotdeals_admin_claim_get_claimant_user($claim);
+  $venue = spotdeals_admin_claim_get_linked_venue($claim);
+  $current_user = \Drupal::currentUser();
+
+  $lines = [];
+  $lines[] = 'A new SpotDeals claim was created.';
+  $lines[] = '';
+  $lines[] = 'Claim: ' . $claim->label();
+  $lines[] = 'Claim node ID: ' . $claim->id();
+  $lines[] = 'Claim URL: ' . $claim->toUrl('canonical', ['absolute' => TRUE])->toString();
+  $lines[] = 'Created by current user: ' . spotdeals_admin_format_account_summary($current_user);
+
+  if ($claimant instanceof UserInterface) {
+    $lines[] = 'Claimant user: ' . spotdeals_admin_format_user_summary($claimant);
+  }
+  else {
+    $lines[] = 'Claimant user: [missing]';
+  }
+
+  if ($venue instanceof NodeInterface) {
+    $lines[] = 'Linked venue: ' . $venue->label() . ' (node ' . $venue->id() . ')';
+    $lines[] = 'Venue URL: ' . $venue->toUrl('canonical', ['absolute' => TRUE])->toString();
+  }
+  else {
+    $lines[] = 'Linked venue: [missing or invalid]';
+  }
+
+  $field_map = [
+    'field_first_name' => 'First name',
+    'field_last_name' => 'Last name',
+    'field_contact_email' => 'Contact email',
+    'field_contact_phone' => 'Contact phone',
+    'field_claim_status' => 'Claim status',
+  ];
+
+  foreach ($field_map as $field_name => $label) {
+    if ($claim->hasField($field_name) && !$claim->get($field_name)->isEmpty()) {
+      $lines[] = $label . ': ' . $claim->get($field_name)->value;
+    }
+  }
+
+  spotdeals_admin_send_admin_notification(
+    'New claim created: ' . $claim->label(),
+    implode("\n", $lines)
+  );
+}
+
+/**
+ * Sends an admin notification when a venue or deal node is updated.
+ */
+function spotdeals_admin_notify_listing_modified(NodeInterface $node) {
+  if (!in_array($node->bundle(), ['venue', 'deal'], TRUE)) {
+    return;
+  }
+
+  $current_user = \Drupal::currentUser();
+  $bundle_label = $node->bundle() === 'venue' ? 'Venue' : 'Deal';
+
+  $lines = [];
+  $lines[] = $bundle_label . ' node modified on SpotDeals.';
+  $lines[] = '';
+  $lines[] = $bundle_label . ': ' . $node->label();
+  $lines[] = 'Node ID: ' . $node->id();
+  $lines[] = 'URL: ' . $node->toUrl('canonical', ['absolute' => TRUE])->toString();
+  $lines[] = 'Modified by current user: ' . spotdeals_admin_format_account_summary($current_user);
+
+  $owner = $node->getOwner();
+  if ($owner instanceof UserInterface) {
+    $lines[] = 'Node author/owner: ' . spotdeals_admin_format_user_summary($owner);
+  }
+
+  if ($node->bundle() === 'deal' && $node->hasField('field_venue') && !$node->get('field_venue')->isEmpty()) {
+    $venue = $node->get('field_venue')->entity;
+    if ($venue instanceof NodeInterface) {
+      $lines[] = 'Linked venue: ' . $venue->label() . ' (node ' . $venue->id() . ')';
+      $lines[] = 'Venue URL: ' . $venue->toUrl('canonical', ['absolute' => TRUE])->toString();
+    }
+  }
+
+  spotdeals_admin_send_admin_notification(
+    $bundle_label . ' modified: ' . $node->label(),
+    implode("\n", $lines)
+  );
+}
+
+/**
+ * Sends an email notification to the configured site email address.
+ */
+function spotdeals_admin_send_admin_notification($subject, $body) {
+  $site_config = \Drupal::config('system.site');
+  $to = (string) $site_config->get('mail');
+
+  // Always write the full notification to Drupal logs first. This makes claim
+  // and listing-change notifications auditable even when local/prod mail
+  // transport is down or misconfigured.
+  \Drupal::logger('spotdeals_admin')->notice(
+    "Admin notification generated. Subject: @subject\n@body",
+    [
+      '@subject' => $subject,
+      '@body' => $body,
+    ]
+  );
+
+  if ($to === '') {
+    \Drupal::logger('spotdeals_admin')->warning('Admin notification email was not sent because system.site:mail is empty. Subject: @subject', [
+      '@subject' => $subject,
+    ]);
+    return;
+  }
+
+  $params = [
+    'subject' => $subject,
+    'body' => $body,
+  ];
+
+  $langcode = \Drupal::languageManager()->getDefaultLanguage()->getId();
+  $result = \Drupal::service('plugin.manager.mail')->mail('spotdeals_admin', 'admin_notification', $to, $langcode, $params, NULL, TRUE);
+
+  if (empty($result['result'])) {
+    // Drupal core may add a generic frontend error when mail transport fails.
+    // The notification is already preserved in watchdog above, so remove that
+    // noisy generic message from admin workflows such as claim delete/create.
+    \Drupal::messenger()->deleteByType(MessengerInterface::TYPE_ERROR);
+
+    \Drupal::logger('spotdeals_admin')->error('Admin notification email failed. Notification was preserved in Drupal logs. To: @to Subject: @subject', [
+      '@to' => $to,
+      '@subject' => $subject,
+    ]);
+    return;
+  }
+
+  \Drupal::logger('spotdeals_admin')->notice('Admin notification email sent. To: @to Subject: @subject', [
+    '@to' => $to,
+    '@subject' => $subject,
+  ]);
+}
+
+/**
+ * Formats an account proxy for notification emails.
+ */
+function spotdeals_admin_format_account_summary(AccountInterface $account) {
+  $name = $account->getAccountName() ?: '[unknown]';
+  $uid = $account->id();
+  $roles = implode(', ', $account->getRoles());
+
+  return $name . ' (uid ' . $uid . ', roles: ' . $roles . ')';
+}
+
+/**
+ * Formats a user entity for notification emails.
+ */
+function spotdeals_admin_format_user_summary(UserInterface $user) {
+  $email = $user->getEmail() ?: '[no email]';
+  $roles = implode(', ', $user->getRoles());
+
+  return $user->getDisplayName() . ' (uid ' . $user->id() . ', email: ' . $email . ', roles: ' . $roles . ')';
 }
 
 /**

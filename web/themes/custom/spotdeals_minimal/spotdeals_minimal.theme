@@ -74,16 +74,15 @@ function spotdeals_minimal_preprocess_page(array &$variables): void {
   ]);
 
   // The "Claim this listing" link is not stored in field_cta on these deal
-  // pages. It is generated from the referenced venue, matching the existing
-  // Views output pattern: /form/claim-venue-listing?venue_node_id=...&venue_title=...
+  // pages. It is generated from the referenced venue and uses the node claim
+  // form route that spotdeals_admin_form_alter() understands.
   if ($venue instanceof NodeInterface) {
     $variables['spotdeals_deal_sidebar_claim'] = [
       '#type' => 'link',
       '#title' => t('Claim this listing'),
-      '#url' => Url::fromUserInput('/form/claim-venue-listing', [
+      '#url' => Url::fromUserInput('/create/claim', [
         'query' => [
-          'venue_node_id' => $venue->id(),
-          'venue_title' => $venue->label(),
+          'venue' => $venue->id(),
         ],
       ]),
       '#attributes' => [
