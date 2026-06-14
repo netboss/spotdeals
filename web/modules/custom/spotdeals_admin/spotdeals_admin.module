@@ -512,6 +512,15 @@ function spotdeals_admin_notify_listing_modified(NodeInterface $node) {
     return;
   }
 
+  if (spotdeals_admin_should_suppress_listing_modified_email()) {
+    \Drupal::logger('spotdeals_admin')->notice('Listing modified email suppressed during SpotDeals migration command. Bundle: @bundle Node ID: @nid Title: @title', [
+      '@bundle' => $node->bundle(),
+      '@nid' => $node->id(),
+      '@title' => $node->label(),
+    ]);
+    return;
+  }
+
   $current_user = \Drupal::currentUser();
   $bundle_label = $node->bundle() === 'venue' ? 'Venue' : 'Deal';
 
@@ -662,6 +671,34 @@ function spotdeals_admin_send_claimant_notification($to, $subject, $body, NodeIn
 /**
  * Sends an email notification to the configured site email address.
  */
+
+/**
+ * Checks whether listing-modified admin emails should be suppressed.
+ *
+ * Bulk SpotDeals CSV rollback/import commands relink protected venue/deal
+ * nodes and can trigger hook_entity_update(). Those saves are maintenance
+ * actions, not real human listing edits, so they should stay in logs without
+ * flooding the admin mailbox.
+ */
+function spotdeals_admin_should_suppress_listing_modified_email() {
+  if (PHP_SAPI !== 'cli') {
+    return FALSE;
+  }
+
+  $argv = $_SERVER['argv'] ?? [];
+  if (!is_array($argv) || empty($argv)) {
+    return FALSE;
+  }
+
+  $command_line = implode(' ', array_map('strval', $argv));
+  $is_migration_command = str_contains($command_line, 'migrate:import') || str_contains($command_line, 'migrate:rollback');
+  if (!$is_migration_command) {
+    return FALSE;
+  }
+
+  return str_contains($command_line, 'spotdeals_venues') || str_contains($command_line, 'spotdeals_deals');
+}
+
 function spotdeals_admin_send_admin_notification($subject, $body) {
   $site_config = \Drupal::config('system.site');
   $to = (string) $site_config->get('mail');
