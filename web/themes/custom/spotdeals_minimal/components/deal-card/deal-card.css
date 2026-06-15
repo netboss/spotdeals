@@ -257,6 +257,15 @@
   text-decoration: none;
 }
 
+
+.spotdeals-deal-card__venue-description {
+  margin-top: 0.85rem;
+  max-width: 32rem;
+  color: var(--deal-card-muted);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
 .spotdeals-deal-card__deal-panel {
   padding-top: 0.85rem;
   /*border-top: 1px solid var(--deal-card-border);*/
@@ -973,6 +982,13 @@
     font-weight: 600;
   }
 
+
+  .spotdeals-deal-card__venue-description {
+    margin-top: 0.62rem;
+    font-size: 0.86rem;
+    line-height: 1.4;
+  }
+
   .spotdeals-deal-card__venue-votes,
   .spotdeals-deal-card__deal-panel {
     display: none;
@@ -1205,6 +1221,13 @@
     border-radius: 0.35rem;
     font-size: 0.78rem;
     font-weight: 600;
+  }
+
+
+  .spotdeals-deal-card__venue-description {
+    margin-top: 0.62rem;
+    font-size: 0.86rem;
+    line-height: 1.4;
   }
 
   .spotdeals-deal-card__venue-votes,
@@ -1550,10 +1573,64 @@
 .spotdeals-finder__cards > .views-row > .spotdeals-vote,
 .spotdeals-finder__cards > .views-row > .spotdeals-vote-widget,
 .spotdeals-finder__cards > .views-row > .spotdeals-vote-summary {
-  display: none !important;
+  display: none;
 }
 
 /* Hide duplicate raw Views vote widgets that are not in the explicit card vote slots. */
 .spotdeals-vote-source-hidden {
-  display: none !important;
+  display: none;
 }
+
+/* SD-141: keep venue vote data available but do not render venue voting inside cards. */
+.spotdeals-deal-card__venue-votes,
+.spotdeals-deal-card__mobile-votes,
+.spotdeals-deal-card [data-spotdeals-card-venue-votes],
+.spotdeals-deal-card [data-spotdeals-card-mobile-venue-votes] {
+  display: none;
+}
+
+/* SD-141: after hiding venue voting, avoid stretching the desktop media column
+ * into a tall empty block caused by the remaining deal-side content.
+ */
+@media screen and (min-width: 760px) {
+  .spotdeals-deal-card {
+    align-items: start;
+    min-height: 0;
+  }
+
+  .spotdeals-deal-card__media {
+    align-self: start;
+    background: transparent;
+  }
+
+  .spotdeals-deal-card__media img,
+  .spotdeals-deal-card__image,
+  .spotdeals-deal-card__image-placeholder {
+    height: auto;
+    aspect-ratio: 4 / 3;
+    min-height: 0;
+  }
+
+  .spotdeals-deal-card__content {
+    align-self: start;
+  }
+}
+
+/* SD-141: venue description shown on desktop only. */
+/* SD-141: temporarily disable venue descriptions until venue data is populated. */
+.spotdeals-deal-card__venue-description {
+  display: none;
+}
+
+/*
+@media screen and (min-width: 760px) {
+  .spotdeals-deal-card__venue-description {
+    display: block;
+    margin-top: 0.75rem;
+    max-width: 32rem;
+    color: var(--deal-card-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+}
+*/

@@ -11,7 +11,6 @@
   image ? 'spotdeals-deal-card--has-image' : 'spotdeals-deal-card--no-image'
 ] %}
 {% set component_attributes = attributes|default(create_attribute()) %}
-{% set resolved_venue_vote_summary = venue_vote_summary|default(vote_summary|default('')) %}
 {% set primary_cuisine = cuisine|default('')|striptags|split(',')|first|trim %}
 {% set cuisine_slug = primary_cuisine|replace({
   '&amp;': 'and',
@@ -70,19 +69,17 @@
           </div>
         {% endif %}
 
+        {% if venue_description|default('') %}
+          <div class="spotdeals-deal-card__venue-description">
+            {{ venue_description }}
+          </div>
+        {% endif %}
+
         {% if cta %}
           <div class="spotdeals-deal-card__cta">
             <span>{{ cta }}</span>
           </div>
         {% endif %}
-      {% endblock %}
-
-      {% block venue_votes %}
-        <div class="spotdeals-deal-card__venue-votes" data-spotdeals-card-venue-votes>
-          {% if resolved_venue_vote_summary %}
-            {{ resolved_venue_vote_summary }}
-          {% endif %}
-        </div>
       {% endblock %}
     </div>
 
@@ -111,10 +108,6 @@
           </div>
         {% endif %}
       </div>
-
-      {% if resolved_venue_vote_summary %}
-        <div class="spotdeals-deal-card__mobile-votes" data-spotdeals-card-mobile-venue-votes></div>
-      {% endif %}
     </div>
 
     {% if claim_link %}
