@@ -122,8 +122,24 @@ git tag -a prod-YYYY-MM-DD-01 -m "Production deploy"
 git push origin prod-YYYY-MM-DD-01
 ```
 
+## Commit Message Format
+
+Use this exact commit message format for all SpotDeals commits:
+
+```text
+SD-xxx: Commit message
+```
+
+Examples:
+
+```bash
+git commit -m "SD-141: Improve recommendation retry loading transition"
+git commit -m "SD-140: Suppress rollback import notification emails"
+```
+
 ## Rules
 
+* Use `SD-xxx: Commit message` for all commit messages.
 * Deploy from tags.
 * Use annotated tags.
 * Roll back using previous tags.
