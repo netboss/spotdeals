@@ -633,6 +633,29 @@
     return getHiddenValue(form, 'recommendation_action') === 'retry';
   }
 
+  function getRetryLoadingOverlay(resultsWrapper) {
+    return resultsWrapper.querySelector('.spotdeals-recommendation-retry-loading');
+  }
+
+  function removeRetryLoadingOverlay(resultsWrapper) {
+    if (!resultsWrapper) {
+      return;
+    }
+
+    const overlay = getRetryLoadingOverlay(resultsWrapper);
+    if (overlay) {
+      overlay.remove();
+    }
+
+    resultsWrapper.classList.remove('spotdeals-finder__results--retry-loading');
+    resultsWrapper.style.minHeight = '';
+
+    const view = getRecommendationView(null);
+    if (view) {
+      view.classList.remove('spotdeals-recommendation-retry-loading-active');
+    }
+  }
+
   function showRetryLoadingState(form) {
     const resultsWrapper = getResultsWrapper(form);
     if (!resultsWrapper) {
@@ -641,13 +664,33 @@
 
     form.dataset.spotdealsRetryLoadingStartedAt = String(Date.now());
 
-    resultsWrapper.innerHTML = ''
-      + '<div class="spotdeals-recommendation-note spotdeals-recommendation-note--loading" aria-live="polite">'
-      + '  <div class="spotdeals-recommendation-note__icon" aria-hidden="true"></div>'
-      + '  <div class="spotdeals-recommendation-note__content">'
-      + '    <span class="spotdeals-recommendation-note__line"><strong>' + t('Finding another nearby pick…') + '</strong></span>'
-      + '  </div>'
-      + '</div>';
+    const currentHeight = resultsWrapper.getBoundingClientRect().height;
+    if (currentHeight > 0) {
+      resultsWrapper.style.minHeight = Math.ceil(currentHeight) + 'px';
+    }
+
+    let overlay = getRetryLoadingOverlay(resultsWrapper);
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'spotdeals-recommendation-retry-loading';
+      overlay.setAttribute('aria-live', 'polite');
+      overlay.setAttribute('aria-busy', 'true');
+      overlay.innerHTML = ''
+        + '<div class="spotdeals-recommendation-note spotdeals-recommendation-note--loading">'
+        + '  <div class="spotdeals-recommendation-note__icon" aria-hidden="true"></div>'
+        + '  <div class="spotdeals-recommendation-note__content">'
+        + '    <span class="spotdeals-recommendation-note__line"><strong>' + t('Finding another nearby pick…') + '</strong></span>'
+        + '  </div>'
+        + '</div>';
+      resultsWrapper.appendChild(overlay);
+    }
+
+    resultsWrapper.classList.add('spotdeals-finder__results--retry-loading');
+
+    const view = getRecommendationView(form);
+    if (view) {
+      view.classList.add('spotdeals-recommendation-retry-loading-active');
+    }
   }
 
   function buildRetryAjaxPayload(form, submitter) {
@@ -672,6 +715,7 @@
   }
 
   function clearRetryLoadingState(form) {
+    removeRetryLoadingOverlay(getResultsWrapper(form));
     delete form.dataset.spotdealsRetryLoadingStartedAt;
   }
 
