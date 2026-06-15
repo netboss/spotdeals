@@ -3,8 +3,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2026-06-08 15:07-0400\n"
-"PO-Revision-Date: 2026-06-08 15:07-0400\n"
+"POT-Creation-Date: 2026-06-14 18:29-0400\n"
+"PO-Revision-Date: 2026-06-14 18:29-0400\n"
 "Last-Translator: NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
@@ -48428,7 +48428,8 @@ msgid ""
 "Browse all restaurants in @city or use Deals Finder to discover more "
 "nearby specials."
 msgstr ""
-"Explora todos los restaurantes en @city o usa el buscador de ofertas para descubrir más especiales cercanos."
+"Explora todos los restaurantes en @city o usa el buscador de ofertas "
+"para descubrir más especiales cercanos."
 
 msgid "Open Deals Finder"
 msgstr "Abrir buscador de ofertas"
@@ -48442,7 +48443,10 @@ msgid ""
 "this page to compare current offers, discover nearby places, and keep "
 "exploring more ways to save."
 msgstr ""
-"SpotDeals rastrea @count @category de @venues restaurantes, bares, cafés, cervecerías y lugares de comida del vecindario en @city. Usa esta página para comparar ofertas actuales, descubrir lugares cercanos y seguir explorando más formas de ahorrar."
+"SpotDeals rastrea @count @category de @venues restaurantes, bares, "
+"cafés, cervecerías y lugares de comida del vecindario en @city. Usa "
+"esta página para comparar ofertas actuales, descubrir lugares "
+"cercanos y seguir explorando más formas de ahorrar."
 
 msgid "Popular Deals Near @city"
 msgstr "Ofertas populares cerca de @city"
@@ -48458,7 +48462,9 @@ msgid "Need help choosing?"
 msgstr "¿Necesitas ayuda para elegir?"
 
 msgid "Let SpotDeals pick one from these @count local results."
-msgstr "Deja que SpotDeals elija una opción entre estos @count resultados locales."
+msgstr ""
+"Deja que SpotDeals elija una opción entre estos @count resultados "
+"locales."
 
 msgid "Pick one for me"
 msgstr "Elige una para mí"
@@ -48466,22 +48472,23 @@ msgstr "Elige una para mí"
 msgid "Assorted happy hour drinks"
 msgstr "Bebidas variadas de happy hour"
 
-
-
-# SpotDeals Spanish translation additions for deals landing pages.
-
 msgid "Your local pick"
 msgstr "Tu recomendación local"
 
 msgid "Try another pick from these @city @category matching “@search”."
-msgstr "Prueba otra opción de estos @category en @city que coinciden con “@search”."
+msgstr ""
+"Prueba otra opción de estos @category en @city que coinciden con "
+"“@search”."
 
 msgid "Try another pick from these @city @category."
 msgstr "Prueba otra opción de estos @category en @city."
 
-msgid "Let SpotDeals pick one from the @count local results matching “@search”."
+msgid ""
+"Let SpotDeals pick one from the @count local results matching "
+"“@search”."
 msgstr ""
-"Deja que SpotDeals elija una opción entre los @count resultados locales que coinciden con “@search”."
+"Deja que SpotDeals elija una opción entre los @count resultados "
+"locales que coinciden con “@search”."
 
 msgid "Try another"
 msgstr "Probar otra"
@@ -48544,24 +48551,34 @@ msgid "@count @category in @city"
 msgstr "@count @category en @city"
 
 msgid ""
-"Find @category in @city, including current local offers, food and drink specials, and nearby places worth checking out."
+"Find @category in @city, including current local offers, food and "
+"drink specials, and nearby places worth checking out."
 msgstr ""
-"Encuentra @category en @city, incluyendo ofertas locales actuales, especiales de comida y bebida, y lugares cercanos que vale la pena visitar."
+"Encuentra @category en @city, incluyendo ofertas locales actuales, "
+"especiales de comida y bebida, y lugares cercanos que vale la pena "
+"visitar."
 
 msgid ""
-"Browse current local deals in @city, including restaurant specials, food offers, and nearby places worth checking out."
+"Browse current local deals in @city, including restaurant specials, "
+"food offers, and nearby places worth checking out."
 msgstr ""
-"Explora ofertas locales actuales en @city, incluyendo especiales de restaurantes, ofertas de comida y lugares cercanos que vale la pena visitar."
+"Explora ofertas locales actuales en @city, incluyendo especiales de "
+"restaurantes, ofertas de comida y lugares cercanos que vale la pena "
+"visitar."
 
 msgid ""
-"Find @category in @city on SpotDeals. Browse current local specials, restaurant deals, and nearby offers."
+"Find @category in @city on SpotDeals. Browse current local specials, "
+"restaurant deals, and nearby offers."
 msgstr ""
-"Encuentra @category en @city en SpotDeals. Explora especiales locales actuales, ofertas de restaurantes y ofertas cercanas."
+"Encuentra @category en @city en SpotDeals. Explora especiales locales "
+"actuales, ofertas de restaurantes y ofertas cercanas."
 
 msgid ""
-"Find local deals in @city on SpotDeals. Browse current restaurant specials, food deals, and nearby offers."
+"Find local deals in @city on SpotDeals. Browse current restaurant "
+"specials, food deals, and nearby offers."
 msgstr ""
-"Encuentra ofertas locales en @city en SpotDeals. Explora especiales actuales de restaurantes, ofertas de comida y ofertas cercanas."
+"Encuentra ofertas locales en @city en SpotDeals. Explora especiales "
+"actuales de restaurantes, ofertas de comida y ofertas cercanas."
 
 msgid "More food options"
 msgstr "Más opciones de comida"
@@ -48580,3 +48597,43 @@ msgstr "Acerca de las ofertas gastronómicas en @city"
 
 msgid "About Nightlife Deals in @city"
 msgstr "Acerca de las ofertas de vida nocturna en @city"
+
+msgid "@category in @city"
+msgstr ""
+
+msgid "@category in @city"
+msgstr ""
+
+msgid "Search tacos, burgers, happy hour..."
+msgstr ""
+
+msgid "Filter deals by keyword"
+msgstr ""
+
+msgid "Optional. Filter this local list by food, drink, venue, or deal type."
+msgstr ""
+
+msgid "Food & drink deals"
+msgstr "Ofertas de comida y bebida"
+
+msgid ""
+"Discover nearby food, drinks, happy hours and local spots with active "
+"deals."
+msgstr ""
+"Descubre comida, bebidas, happy hours y lugares locales cercanos con ofertas activas."
+
+msgid "Pick something for me"
+msgstr "Elige algo por mí"
+
+msgid "Popular tonight"
+msgstr "Popular esta noche"
+
+msgid "Live Music"
+msgstr "Música en vivo"
+
+msgid "Karaoke"
+msgstr "Karaoke"
+
+msgid "Popular food"
+msgstr "Comida popular"
+
