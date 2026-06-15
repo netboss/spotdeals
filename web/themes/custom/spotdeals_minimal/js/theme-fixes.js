@@ -41,6 +41,12 @@
       return rows.length;
     }
 
+    const dealCards = resultsWrapper.querySelectorAll('.spotdeals-deal-card');
+
+    if (dealCards.length > 0) {
+      return dealCards.length;
+    }
+
     const unformattedItems = resultsWrapper.querySelectorAll('.view-content > *');
 
     if (unformattedItems.length > 0) {
@@ -71,13 +77,14 @@
   }
 
   function ensureRecommendationSummary(resultsWrapper) {
-    if (!isRecommendationMode(document)) {
+    if (!resultsWrapper || !isRecommendationMode(document)) {
       return;
     }
 
     const rowCount = getRenderedRowCount(resultsWrapper);
+    const hasDirectRecommendation = Boolean(resultsWrapper.querySelector('.spotdeals-direct-recommendation, .view-content[data-result-count="1"]'));
 
-    if (rowCount !== 1) {
+    if (rowCount !== 1 && !hasDirectRecommendation) {
       return;
     }
 
@@ -86,13 +93,76 @@
 
     if (summaryElement) {
       summaryElement.textContent = summaryText;
-      return;
+    }
+    else {
+      const header = document.createElement('div');
+      header.className = 'view-header';
+      header.textContent = summaryText;
+      resultsWrapper.insertBefore(header, resultsWrapper.firstChild);
     }
 
-    const header = document.createElement('div');
-    header.className = 'view-header';
-    header.textContent = summaryText;
-    resultsWrapper.insertBefore(header, resultsWrapper.firstChild);
+    resultsWrapper.setAttribute('data-recommendation-active', '1');
+
+    const viewWrapper = resultsWrapper.closest('.view-id-deals_search_solr, .spotdeals-finder');
+    if (viewWrapper) {
+      viewWrapper.setAttribute('data-recommendation-active', '1');
+    }
+
+    resultsWrapper.querySelectorAll('.pager__summary').forEach(function (summary) {
+      summary.setAttribute('hidden', 'hidden');
+      summary.setAttribute('aria-hidden', 'true');
+    });
+  }
+
+  function repairRecommendationSummaries(context) {
+    const scope = context && context.querySelectorAll ? context : document;
+    const wrappers = [];
+
+    if (scope.classList && scope.classList.contains('spotdeals-finder__results')) {
+      wrappers.push(scope);
+    }
+
+    scope.querySelectorAll('.spotdeals-finder__results').forEach(function (resultsWrapper) {
+      if (wrappers.indexOf(resultsWrapper) === -1) {
+        wrappers.push(resultsWrapper);
+      }
+    });
+
+    wrappers.forEach(ensureRecommendationSummary);
+  }
+
+  function attachRecommendationSummaryRepair(context) {
+    once('spotdeals-recommendation-summary-repair', 'body', context).forEach(function (body) {
+      let timer = null;
+
+      const scheduleRepair = function () {
+        if (timer) {
+          window.clearTimeout(timer);
+        }
+
+        timer = window.setTimeout(function () {
+          repairRecommendationSummaries(document);
+        }, 50);
+      };
+
+      const observer = new MutationObserver(scheduleRepair);
+      observer.observe(body, {
+        childList: true,
+        subtree: true
+      });
+
+      window.addEventListener('load', scheduleRepair);
+      window.addEventListener('pageshow', scheduleRepair);
+      document.addEventListener('ajaxComplete', scheduleRepair);
+      document.addEventListener('htmx:afterSwap', scheduleRepair);
+      document.addEventListener('htmx:afterSettle', scheduleRepair);
+
+      [50, 250, 700, 1400].forEach(function (delay) {
+        window.setTimeout(scheduleRepair, delay);
+      });
+    });
+
+    repairRecommendationSummaries(context);
   }
 
 
@@ -127,9 +197,8 @@
     resultsWrappers.forEach(function (resultsWrapper) {
       const viewContent = getDirectChildByClass(resultsWrapper, 'view-content');
 
-      ensureRecommendationSummary(resultsWrapper);
-
       if (!viewContent) {
+        ensureRecommendationSummary(resultsWrapper);
         return;
       }
 
@@ -141,6 +210,8 @@
       if (rows.length > 0) {
         viewContent.setAttribute('data-result-count', String(rows.length));
       }
+
+      ensureRecommendationSummary(resultsWrapper);
     });
   }
 
@@ -367,8 +438,52 @@
     return titleText ? titleText : translateFrontendLabel('View more deals');
   }
 
+  function hasActiveDealsDiscoverySearch() {
+    const url = new URL(window.location.href);
+    const ignoredParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gclid', 'fbclid'];
+
+    for (const key of url.searchParams.keys()) {
+      if (!ignoredParams.includes(key)) {
+        return true;
+      }
+    }
+
+    const form = document.querySelector('.spotdeals-finder__filters form, form.views-exposed-form');
+
+    if (!form) {
+      return false;
+    }
+
+    const searchInputs = form.querySelectorAll('input[type="search"], input[type="text"], input[name="search_deals_by_city"], input[name="search_api_fulltext"], input[name="keyword"], input[name="keys"]');
+    for (const input of searchInputs) {
+      if (normalizeWhitespace(input.value)) {
+        return true;
+      }
+    }
+
+    const helpMeChoose = form.querySelector('input[name="help_me_choose"]');
+    if (helpMeChoose && helpMeChoose.checked) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function shouldOpenMobileDiscoveryAccordion(block) {
+    const title = getDirectBlockTitle(block);
+    const titleText = normalizeWhitespace(title ? title.textContent : '');
+    const isTrendingBlock = block.classList.contains('block-spotdeals-search-smart-location-trending-near-you') || /trending deals|trending near you/i.test(titleText);
+
+    return isTrendingBlock && !hasActiveDealsDiscoverySearch();
+  }
+
+
   function enableMobileDiscoveryAccordion(block) {
     if (block.dataset.spotdealsMobileAccordion === '1') {
+      const existingDetails = block.querySelector('.spotdeals-mobile-discovery-accordion');
+      if (existingDetails) {
+        existingDetails.open = shouldOpenMobileDiscoveryAccordion(block);
+      }
       return;
     }
 
@@ -388,6 +503,10 @@
         content.appendChild(node);
       }
     });
+
+    if (shouldOpenMobileDiscoveryAccordion(block)) {
+      details.open = true;
+    }
 
     details.appendChild(summary);
     details.appendChild(content);
@@ -868,40 +987,56 @@
     }
   }
 
-  function submitHomepageRecommendation(searchValue) {
-    const form = document.querySelector('.spotdeals-finder__filters form');
+  function buildHomepageRecommendationUrl(searchValue, latitude, longitude, recommendationCuisines) {
+    const keyword = (searchValue || '').trim();
+    const cuisines = recommendationCuisines === undefined || recommendationCuisines === null ? keyword : recommendationCuisines;
+    const url = new URL('/', window.location.origin);
 
-    if (!form) {
-      return;
-    }
-
-    const searchInput = form.querySelector('input[name="search_deals"], input[name="search_api_fulltext"]');
-    const helpMeChooseCheckbox = form.querySelector('input[name="help_me_choose"]');
-    const recommendationAction = form.querySelector('input[name="recommendation_action"]');
-    const scrollResults = ensureHiddenInput(form, 'scroll_results');
-    const submitButton = form.querySelector('input[type="submit"]');
-
-    if (!searchInput || !submitButton) {
-      return;
-    }
-
-    searchInput.value = searchValue || '';
-
-    if (helpMeChooseCheckbox) {
-      helpMeChooseCheckbox.checked = true;
-      helpMeChooseCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-
-    if (recommendationAction) {
-      recommendationAction.value = '';
-    }
-
-    if (scrollResults) {
-      scrollResults.value = '1';
-    }
+    url.searchParams.set('search_deals', keyword);
+    url.searchParams.set('origin_lat', latitude || '');
+    url.searchParams.set('origin_lon', longitude || '');
+    url.searchParams.set('search_origin_mode', latitude && longitude ? 'browser' : '');
+    url.searchParams.set('search_clean', keyword);
+    url.searchParams.set('recommendation_action', '');
+    url.searchParams.set('help_me_choose', '1');
+    url.searchParams.set('recommendation_cuisines', cuisines);
+    url.searchParams.set('search_raw', keyword);
+    url.searchParams.set('postal_code_exact', '');
+    url.searchParams.set('locality_exact', '');
+    url.searchParams.set('scroll_results', '1');
 
     setScrollToResultsFlag();
-    submitButton.click();
+
+    return url.toString();
+  }
+
+  function submitHomepageRecommendation(searchValue, recommendationCuisines) {
+    const keyword = (searchValue || '').trim();
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          window.location.href = buildHomepageRecommendationUrl(
+            keyword,
+            position.coords.latitude,
+            position.coords.longitude,
+            recommendationCuisines
+          );
+        },
+        function () {
+          window.location.href = buildHomepageRecommendationUrl(keyword, '', '', recommendationCuisines);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 7000,
+          maximumAge: 300000
+        }
+      );
+
+      return;
+    }
+
+    window.location.href = buildHomepageRecommendationUrl(keyword, '', '', recommendationCuisines);
   }
 
   function clearHomepageRecommendationActiveStates() {
@@ -962,7 +1097,10 @@
         trigger.classList.add('is-active');
         trigger.setAttribute('aria-pressed', 'true');
 
-        submitHomepageRecommendation(trigger.getAttribute('data-search') || '');
+        submitHomepageRecommendation(
+          trigger.getAttribute('data-search') || '',
+          trigger.hasAttribute('data-recommendation-cuisines') ? trigger.getAttribute('data-recommendation-cuisines') : undefined
+        );
       });
     });
 
@@ -1502,6 +1640,7 @@
       }
       attachMobileStickySearchForm(context);
       attachRecommendationRetryScrollCorrection(context);
+      attachRecommendationSummaryRepair(context);
       moveVotesIntoDealCards(context);
       moveInternalVenueVotesIntoTarget(context);
       applyVoteStateClasses(context);

@@ -3681,3 +3681,22 @@ h1.page-title {
     }
   }
 }
+
+
+/* Mobile recommendation cleanup.
+ * The main search input already carries the near-me/recommendation keyword.
+ * Keep the optional cuisine preference input out of the sticky mobile panel so
+ * the recommendation controls stay compact.
+ */
+@media (max-width: 767px) {
+  .spotdeals-mobile-sticky-search-form .form-item-recommendation-cuisines,
+  .spotdeals-mobile-sticky-search-form .js-form-item-recommendation-cuisines {
+    display: none !important;
+  }
+
+  .spotdeals-finder[data-recommendation-active="1"] .pager__summary,
+  .spotdeals-finder__results[data-recommendation-active="1"] .pager__summary,
+  .view-id-deals_search_solr[data-recommendation-active="1"] .pager__summary {
+    display: none !important;
+  }
+}

@@ -122,7 +122,13 @@ function spotdeals_minimal_preprocess_views_view(array &$variables) {
     return;
   }
 
-  $variables['spotdeals_result_count'] = isset($view->total_rows) ? (int) $view->total_rows : (is_array($view->result) ? count($view->result) : 0);
+  $rendered_result_count = is_array($view->result) ? count($view->result) : 0;
+  $total_rows = isset($view->total_rows) ? (int) $view->total_rows : 0;
+
+  // Search API/Solr recommendation requests can render one direct result while
+  // Views still reports total_rows as 0. Never let a rendered row produce a
+  // broken "Displaying 0 - 0 of 0" header.
+  $variables['spotdeals_result_count'] = $total_rows > 0 ? $total_rows : $rendered_result_count;
 }
 
 /**
@@ -472,7 +478,7 @@ function spotdeals_minimal_views_pre_render(ViewExecutable $view) {
   $data = [
     'rows' => $rows,
     'pager' => $pager,
-    'result_count' => isset($view->total_rows) ? (int) $view->total_rows : (is_array($view->result) ? count($view->result) : 0),
+    'result_count' => (isset($view->total_rows) && (int) $view->total_rows > 0) ? (int) $view->total_rows : (is_array($view->result) ? count($view->result) : 0),
     'is_recommendation_mode' => (bool) $request->query->get('help_me_choose'),
     'has_results' => !empty($view->result),
   ];
