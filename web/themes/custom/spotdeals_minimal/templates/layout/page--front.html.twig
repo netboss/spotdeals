@@ -94,26 +94,55 @@
                       <div class="spotdeals-home-feed__eyebrow">{{ 'Tonight Near You'|t }}</div>
 
                       <h2 class="spotdeals-home-feed__title">
-                        {{ 'Need help deciding where to go?'|t }}
+                        {{ 'Food & drink deals'|t }}
                       </h2>
 
                       <p class="spotdeals-home-feed__text">
-                        {{ 'Discover nearby food, drinks, happy hours and local spots without endlessly scrolling.'|t }}
+                        {{ 'Discover nearby food, drinks, happy hours and local spots with active deals.'|t }}
                       </p>
-                    </div>                    <div class="spotdeals-home-feed__chips" aria-label="{{ 'Quick mood picks'|t }}">
-                      {% for chip in spotdeals_home_feed_chips %}
-                        {{ include('spotdeals_minimal:home-feed-chip', {
-                          label: chip.label,
-                          search: chip.search,
-                        }, with_context = false) }}
-                      {% endfor %}
+
+                      <button class="spotdeals-home-feed__surprise spotdeals-help-me-choose-trigger" type="button">
+                        <span class="spotdeals-home-feed__surprise-icon" aria-hidden="true">🎲</span>
+                        <span>{{ 'Pick something for me'|t }}</span>
+                      </button>
+
+                      <div class="spotdeals-home-feed__activity">
+                        <div class="spotdeals-home-feed__section-label">{{ 'Popular tonight'|t }}</div>
+
+                        <div class="spotdeals-home-feed__activity-list" aria-label="{{ 'Popular tonight'|t }}">
+                          <button type="button" class="spotdeals-home-feed__activity-item" data-search="happy hour">
+                            <span aria-hidden="true">🍹</span>
+                            <span>{{ 'Happy Hour'|t }}</span>
+                          </button>
+                          <button type="button" class="spotdeals-home-feed__activity-item" data-search="live music">
+                            <span aria-hidden="true">🎵</span>
+                            <span>{{ 'Live Music'|t }}</span>
+                          </button>
+                          <button type="button" class="spotdeals-home-feed__activity-item" data-search="brewery breweries brewpub taproom craft beer craft-beer" data-recommendation-cuisines="">
+                            <span aria-hidden="true">🍺</span>
+                            <span>{{ 'Breweries'|t }}</span>
+                          </button>
+                          <button type="button" class="spotdeals-home-feed__activity-item" data-search="karaoke">
+                            <span aria-hidden="true">🎤</span>
+                            <span>{{ 'Karaoke'|t }}</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
+
+                    <div class="spotdeals-home-feed__chips" aria-label="{{ 'Popular food'|t }}">
+                      {{ include('spotdeals_minimal:home-feed-chip', {label:'Pizza',search:'pizza'}, with_context = false) }}
+                      {{ include('spotdeals_minimal:home-feed-chip', {label:'Tacos',search:'tacos'}, with_context = false) }}
+                      {{ include('spotdeals_minimal:home-feed-chip', {label:'Coffee',search:'coffee'}, with_context = false) }}
+                      {{ include('spotdeals_minimal:home-feed-chip', {label:'Ice Cream',search:'ice cream'}, with_context = false) }}
+                      {{ include('spotdeals_minimal:home-feed-chip', {label:'Burgers',search:'burgers'}, with_context = false) }}
+                      {{ include('spotdeals_minimal:home-feed-chip', {label:'Wings',search:'wings'}, with_context = false) }}
+                    </div>
+
                     <button class="spotdeals-home-feed__mobile-toggle" type="button" aria-expanded="false" aria-controls="spotdeals-home-feed-cards-panel">
                       <span>{{ 'View nearby picks'|t }}</span>
                       <span class="spotdeals-home-feed__mobile-toggle-icon" aria-hidden="true">+</span>
                     </button>
-
-
 
                     <div id="spotdeals-home-feed-cards-panel" class="spotdeals-home-feed__cards">
                       {{ include('spotdeals_minimal:home-feed-card', {
