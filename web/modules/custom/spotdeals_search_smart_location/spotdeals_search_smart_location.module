@@ -886,6 +886,7 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
   $cuisine = $venue instanceof NodeInterface
     ? _spotdeals_search_smart_location_collect_node_term_labels_comma_separated($venue, 'field_cuisine')
     : '';
+  $venue_distance = _spotdeals_search_smart_location_build_direct_recommendation_distance_label($venue);
   $cta = _spotdeals_search_smart_location_get_preferred_cta($deal, $venue);
 
   $claim_link = [];
@@ -929,12 +930,13 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
     ],
     'card' => [
       '#type' => 'inline_template',
-      '#template' => "{{ include('spotdeals_minimal:deal-card', { variant: 'default', image: image, venue_title: venue_title, venue_meta: venue_meta, cuisine: cuisine, deal_title: deal_title, deal_category: deal_category, offer: offer, schedule: schedule, claim_link: claim_link, venue_vote_summary: venue_vote_summary, deal_vote_summary: deal_vote_summary }, with_context = false) }}",
+      '#template' => "{{ include('spotdeals_minimal:deal-card', { variant: 'default', image: image, venue_title: venue_title, venue_meta: venue_meta, cuisine: cuisine, venue_distance: venue_distance, deal_title: deal_title, deal_category: deal_category, offer: offer, schedule: schedule, claim_link: claim_link, venue_vote_summary: venue_vote_summary, deal_vote_summary: deal_vote_summary }, with_context = false) }}",
       '#context' => [
         'image' => $image,
         'venue_title' => $venue_title,
         'venue_meta' => $venue_meta,
         'cuisine' => $cuisine,
+        'venue_distance' => $venue_distance,
         'deal_title' => $deal_title,
         'deal_category' => $deal_category,
         'offer' => $offer,
@@ -968,6 +970,98 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
   //);
 
   return $build;
+}
+
+/**
+ * Builds a display label for the selected direct recommendation venue distance.
+ */
+function _spotdeals_search_smart_location_build_direct_recommendation_distance_label(?NodeInterface $venue): string {
+  if (!$venue instanceof NodeInterface) {
+    return '';
+  }
+
+  $request = \Drupal::request();
+  $origin = $request->attributes->get('spotdeals_search_smart_location.origin');
+
+  if (
+    !is_array($origin) ||
+    !isset($origin['lat'], $origin['lon']) ||
+    !is_numeric($origin['lat']) ||
+    !is_numeric($origin['lon'])
+  ) {
+    $origin_lat = $request->query->get('origin_lat');
+    $origin_lon = $request->query->get('origin_lon');
+
+    if (is_numeric($origin_lat) && is_numeric($origin_lon)) {
+      $origin = [
+        'lat' => (float) $origin_lat,
+        'lon' => (float) $origin_lon,
+      ];
+    }
+  }
+
+  if (
+    !is_array($origin) ||
+    !isset($origin['lat'], $origin['lon']) ||
+    !is_numeric($origin['lat']) ||
+    !is_numeric($origin['lon'])
+  ) {
+    $session_origin = $request->getSession()->get('spotdeals_search_smart_location.browser_origin', []);
+
+    if (
+      is_array($session_origin) &&
+      isset($session_origin['lat'], $session_origin['lon']) &&
+      is_numeric($session_origin['lat']) &&
+      is_numeric($session_origin['lon'])
+    ) {
+      $origin = [
+        'lat' => (float) $session_origin['lat'],
+        'lon' => (float) $session_origin['lon'],
+      ];
+    }
+  }
+
+  if (
+    !is_array($origin) ||
+    !isset($origin['lat'], $origin['lon']) ||
+    !is_numeric($origin['lat']) ||
+    !is_numeric($origin['lon'])
+  ) {
+    return '';
+  }
+
+  $request->getSession()->set('spotdeals_search_smart_location.browser_origin', [
+    'lat' => (float) $origin['lat'],
+    'lon' => (float) $origin['lon'],
+  ]);
+
+  $coords = _spotdeals_search_smart_location_node_coords($venue);
+  if ($coords === NULL) {
+    return '';
+  }
+
+  [$venue_lat, $venue_lon] = $coords;
+  $distance_km = _spotdeals_search_smart_location_haversine_km(
+    (float) $origin['lat'],
+    (float) $origin['lon'],
+    $venue_lat,
+    $venue_lon
+  );
+
+  if (!is_finite($distance_km) || $distance_km < 0) {
+    return '';
+  }
+
+  $miles = $distance_km * 0.621371;
+  if ($miles < 0.1) {
+    return (string) t('Nearby');
+  }
+
+  $formatted_distance = $miles < 10
+    ? number_format($miles, 1)
+    : number_format($miles, 0);
+
+  return (string) t('@distance miles away', ['@distance' => $formatted_distance]);
 }
 
 

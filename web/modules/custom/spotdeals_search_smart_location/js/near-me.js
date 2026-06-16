@@ -56,8 +56,89 @@
 
   const RETRY_LOADING_MIN_MS = 650;
   const SCROLL_STORAGE_KEY = 'spotdealsScrollToResults';
+  const BROWSER_ORIGIN_STORAGE_KEY = 'spotdealsBrowserOrigin';
   const SCROLL_QUERY_PARAM = 'scroll_results';
   const BOTTOM_CONTROLS_CLASS = 'spotdeals-recommendation-bottom-actions';
+
+  function isValidCoordinate(value, min, max) {
+    if (value === null || value === undefined || value === '') {
+      return false;
+    }
+
+    const number = Number(value);
+    return Number.isFinite(number) && number >= min && number <= max;
+  }
+
+  function isValidOrigin(lat, lon) {
+    return isValidCoordinate(lat, -90, 90) && isValidCoordinate(lon, -180, 180);
+  }
+
+  function rememberBrowserOrigin(lat, lon) {
+    if (!isValidOrigin(lat, lon)) {
+      return;
+    }
+
+    try {
+      window.sessionStorage.setItem(BROWSER_ORIGIN_STORAGE_KEY, JSON.stringify({
+        lat: String(lat),
+        lon: String(lon)
+      }));
+    }
+    catch (error) {
+      // Storage can be unavailable in private browsing or restricted contexts.
+    }
+  }
+
+  function getStoredBrowserOrigin() {
+    try {
+      const stored = window.sessionStorage.getItem(BROWSER_ORIGIN_STORAGE_KEY);
+      if (!stored) {
+        return null;
+      }
+
+      const parsed = JSON.parse(stored);
+      if (parsed && isValidOrigin(parsed.lat, parsed.lon)) {
+        return {
+          lat: String(parsed.lat),
+          lon: String(parsed.lon)
+        };
+      }
+    }
+    catch (error) {
+      // Ignore invalid or unavailable storage.
+    }
+
+    return null;
+  }
+
+  function getUrlBrowserOrigin() {
+    const url = new URL(window.location.href);
+    const lat = url.searchParams.get('origin_lat');
+    const lon = url.searchParams.get('origin_lon');
+
+    if (!isValidOrigin(lat, lon)) {
+      return null;
+    }
+
+    return {
+      lat: String(lat),
+      lon: String(lon)
+    };
+  }
+
+  function getCurrentBrowserOriginFallback(form) {
+    const hiddenLat = getHiddenValue(form, 'origin_lat');
+    const hiddenLon = getHiddenValue(form, 'origin_lon');
+
+    if (isValidOrigin(hiddenLat, hiddenLon)) {
+      return {
+        lat: hiddenLat,
+        lon: hiddenLon
+      };
+    }
+
+    return getUrlBrowserOrigin() || getStoredBrowserOrigin();
+  }
 
   function ensureHidden(form, name) {
     let input = form.querySelector(`input[name="${name}"]`);
@@ -912,6 +993,12 @@
         ensureHidden(form, 'origin_lon');
         ensureHidden(form, 'postal_code_exact');
         ensureHidden(form, 'locality_exact');
+
+        const initialBrowserOrigin = getUrlBrowserOrigin();
+        if (initialBrowserOrigin) {
+          rememberBrowserOrigin(initialBrowserOrigin.lat, initialBrowserOrigin.lon);
+        }
+
         ensureLastSubmittedKeywords(form, searchInput);
         syncSearchInputUi(form, searchInput);
         updatePrimarySubmitLabel(form);
@@ -1034,6 +1121,7 @@
           const useRetryAjax = shouldUseRetryAjax(form);
           const explicitLocation = extractExplicitLocation(rawValue);
           const explicitLocationSearch = !!explicitLocation;
+          const browserOriginFallback = getCurrentBrowserOriginFallback(form);
 
           if (explicitLocationSearch && !useRetryAjax) {
             delete form.dataset.spotdealsNearMeResolved;
@@ -1081,8 +1169,8 @@
           setHiddenValue(form, 'search_origin_mode', 'browser');
           setHiddenValue(form, 'search_raw', rawValue);
           setHiddenValue(form, 'search_clean', cleanNearMe(rawValue));
-          setHiddenValue(form, 'origin_lat', '');
-          setHiddenValue(form, 'origin_lon', '');
+          setHiddenValue(form, 'origin_lat', browserOriginFallback ? browserOriginFallback.lat : '');
+          setHiddenValue(form, 'origin_lon', browserOriginFallback ? browserOriginFallback.lon : '');
           setHiddenValue(form, 'postal_code_exact', '');
           setHiddenValue(form, 'locality_exact', '');
 
@@ -1111,8 +1199,12 @@
 
           navigator.geolocation.getCurrentPosition(
             function (position) {
-              setHiddenValue(form, 'origin_lat', String(position.coords.latitude));
-              setHiddenValue(form, 'origin_lon', String(position.coords.longitude));
+              const lat = String(position.coords.latitude);
+              const lon = String(position.coords.longitude);
+
+              setHiddenValue(form, 'origin_lat', lat);
+              setHiddenValue(form, 'origin_lon', lon);
+              rememberBrowserOrigin(lat, lon);
               finish();
             },
             function () {

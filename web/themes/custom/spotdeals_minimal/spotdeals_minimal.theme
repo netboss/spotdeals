@@ -174,14 +174,6 @@ function spotdeals_minimal_preprocess_views_view_fields(array &$variables): void
     $variables['spotdeals_deal_card_image'] = $image;
   }
 
-  if ($venue instanceof NodeInterface && $venue->hasField('body') && !$venue->get('body')->isEmpty()) {
-    $description = trim(strip_tags((string) ($venue->get('body')->value ?? '')));
-
-    if ($description !== '') {
-      $variables['spotdeals_venue_description'] = $description;
-    }
-  }
-
   // The Deals Search view can expose a compact venue vote field, and that
   // compact render only contains the "worth_it" metric. Build the venue
   // and deal vote render arrays directly from their real render builders so
@@ -194,6 +186,21 @@ function spotdeals_minimal_preprocess_views_view_fields(array &$variables): void
   if ($venue instanceof NodeInterface && \Drupal::hasService('spotdeals_vote_deal.render_builder')) {
     $variables['spotdeals_deal_vote_summary'] = \Drupal::service('spotdeals_vote_deal.render_builder')->build($deal, $venue, FALSE);
   }
+
+  $venue_description = _spotdeals_minimal_get_venue_card_description($venue);
+  if ($venue_description !== '') {
+    $variables['spotdeals_venue_description'] = $venue_description;
+  }
+
+  $venue_distance = _spotdeals_minimal_build_row_distance_label($variables['row'] ?? NULL)
+    ?? _spotdeals_minimal_build_venue_distance_label($venue);
+  if ($venue_distance !== NULL) {
+    $variables['spotdeals_venue_distance'] = $venue_distance;
+  }
+
+  $variables['#cache']['contexts'][] = 'url.query_args:origin_lat';
+  $variables['#cache']['contexts'][] = 'url.query_args:origin_lon';
+  $variables['#cache']['contexts'][] = 'url.query_args';
 
   $activity_badges = _spotdeals_minimal_build_activity_badges($deal);
   if ($activity_badges !== []) {
@@ -311,6 +318,146 @@ function _spotdeals_minimal_build_activity_badges(NodeInterface $deal): array {
   }
 
   return $badges;
+}
+
+
+/**
+ * Gets a compact venue description for deal cards.
+ */
+function _spotdeals_minimal_get_venue_card_description(?NodeInterface $venue): string {
+  if (!$venue instanceof NodeInterface || !$venue->hasField('body') || $venue->get('body')->isEmpty()) {
+    return '';
+  }
+
+  $value = trim((string) ($venue->get('body')->value ?? ''));
+  if ($value === '') {
+    return '';
+  }
+
+  $value = trim(strip_tags($value));
+  $value = preg_replace('/\s+/', ' ', $value) ?? $value;
+
+  if (mb_strlen($value, 'UTF-8') > 165) {
+    $value = rtrim(mb_substr($value, 0, 162, 'UTF-8')) . '…';
+  }
+
+  return $value;
+}
+
+/**
+ * Builds a desktop distance label from the distance calculated on a Views row.
+ */
+function _spotdeals_minimal_build_row_distance_label(mixed $row): ?string {
+  if (!is_object($row) || !isset($row->_spotdeals_distance_km) || !is_numeric($row->_spotdeals_distance_km)) {
+    return NULL;
+  }
+
+  $distance_km = (float) $row->_spotdeals_distance_km;
+  if (!is_finite($distance_km) || $distance_km < 0) {
+    return NULL;
+  }
+
+  $miles = $distance_km * 0.621371;
+  if ($miles < 0.1) {
+    return (string) t('Nearby');
+  }
+
+  $formatted_distance = $miles < 10
+    ? number_format($miles, 1)
+    : number_format($miles, 0);
+
+  return (string) t('@distance miles away', ['@distance' => $formatted_distance]);
+}
+
+/**
+ * Builds a desktop distance label from the current search origin to a venue.
+ */
+function _spotdeals_minimal_build_venue_distance_label(?NodeInterface $venue): ?string {
+  if (!$venue instanceof NodeInterface) {
+    return NULL;
+  }
+
+  $request = \Drupal::requestStack()->getCurrentRequest();
+  if ($request === NULL) {
+    return NULL;
+  }
+
+  $origin_lat = _spotdeals_minimal_parse_coordinate($request->query->get('origin_lat'));
+  $origin_lon = _spotdeals_minimal_parse_coordinate($request->query->get('origin_lon'));
+  $venue_lat = _spotdeals_minimal_get_node_coordinate($venue, 'field_latitude');
+  $venue_lon = _spotdeals_minimal_get_node_coordinate($venue, 'field_longitude');
+
+  if ($origin_lat === NULL || $origin_lon === NULL || $venue_lat === NULL || $venue_lon === NULL) {
+    return NULL;
+  }
+
+  $miles = _spotdeals_minimal_calculate_distance_miles($origin_lat, $origin_lon, $venue_lat, $venue_lon);
+  if ($miles === NULL) {
+    return NULL;
+  }
+
+  if ($miles < 0.1) {
+    return (string) t('Nearby');
+  }
+
+  $formatted_distance = $miles < 10
+    ? number_format($miles, 1)
+    : number_format($miles, 0);
+
+  return (string) t('@distance miles away', ['@distance' => $formatted_distance]);
+}
+
+/**
+ * Reads a numeric coordinate value from a venue node field.
+ */
+function _spotdeals_minimal_get_node_coordinate(NodeInterface $node, string $field_name): ?float {
+  if (!$node->hasField($field_name) || $node->get($field_name)->isEmpty()) {
+    return NULL;
+  }
+
+  return _spotdeals_minimal_parse_coordinate($node->get($field_name)->value ?? NULL);
+}
+
+/**
+ * Parses a latitude or longitude value.
+ */
+function _spotdeals_minimal_parse_coordinate(mixed $value): ?float {
+  if ($value === NULL || $value === '') {
+    return NULL;
+  }
+
+  if (!is_numeric($value)) {
+    return NULL;
+  }
+
+  return (float) $value;
+}
+
+/**
+ * Calculates distance between two coordinate pairs in miles.
+ */
+function _spotdeals_minimal_calculate_distance_miles(float $origin_lat, float $origin_lon, float $venue_lat, float $venue_lon): ?float {
+  if ($origin_lat < -90 || $origin_lat > 90 || $venue_lat < -90 || $venue_lat > 90) {
+    return NULL;
+  }
+
+  if ($origin_lon < -180 || $origin_lon > 180 || $venue_lon < -180 || $venue_lon > 180) {
+    return NULL;
+  }
+
+  $earth_radius_miles = 3958.7613;
+
+  $origin_lat_rad = deg2rad($origin_lat);
+  $venue_lat_rad = deg2rad($venue_lat);
+  $delta_lat = deg2rad($venue_lat - $origin_lat);
+  $delta_lon = deg2rad($venue_lon - $origin_lon);
+
+  $a = sin($delta_lat / 2) ** 2
+    + cos($origin_lat_rad) * cos($venue_lat_rad) * sin($delta_lon / 2) ** 2;
+
+  $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+  return $earth_radius_miles * $c;
 }
 
 /**
