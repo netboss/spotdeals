@@ -57,6 +57,7 @@
   const RETRY_LOADING_MIN_MS = 650;
   const SCROLL_STORAGE_KEY = 'spotdealsScrollToResults';
   const BROWSER_ORIGIN_STORAGE_KEY = 'spotdealsBrowserOrigin';
+  const SEO_ORIGIN_ATTEMPT_STORAGE_PREFIX = 'spotdealsSeoOriginAttempt:';
   const SCROLL_QUERY_PARAM = 'scroll_results';
   const BOTTOM_CONTROLS_CLASS = 'spotdeals-recommendation-bottom-actions';
 
@@ -138,6 +139,89 @@
     }
 
     return getUrlBrowserOrigin() || getStoredBrowserOrigin();
+  }
+
+
+  function isSeoDealsLandingPage() {
+    const path = window.location.pathname.replace(/\/+$/, '');
+
+    return /^\/(?:es\/)?deals\/.+/.test(path);
+  }
+
+  function buildSeoDealsOriginUrl(origin) {
+    if (!origin || !isValidOrigin(origin.lat, origin.lon)) {
+      return null;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('origin_lat', String(origin.lat));
+    url.searchParams.set('origin_lon', String(origin.lon));
+    url.searchParams.set('search_origin_mode', 'browser');
+
+    return url.toString();
+  }
+
+  function getSeoOriginAttemptKey() {
+    return SEO_ORIGIN_ATTEMPT_STORAGE_PREFIX + window.location.pathname;
+  }
+
+  function hasAttemptedSeoOrigin() {
+    try {
+      return window.sessionStorage.getItem(getSeoOriginAttemptKey()) === '1';
+    }
+    catch (error) {
+      return false;
+    }
+  }
+
+  function rememberSeoOriginAttempt() {
+    try {
+      window.sessionStorage.setItem(getSeoOriginAttemptKey(), '1');
+    }
+    catch (error) {
+      // Storage can be unavailable in private browsing or restricted contexts.
+    }
+  }
+
+  function maybePopulateSeoDealsOrigin() {
+    if (!isSeoDealsLandingPage() || getUrlBrowserOrigin()) {
+      return;
+    }
+
+    const storedOrigin = getStoredBrowserOrigin();
+    const storedUrl = buildSeoDealsOriginUrl(storedOrigin);
+    if (storedUrl) {
+      window.location.replace(storedUrl);
+      return;
+    }
+
+    if (hasAttemptedSeoOrigin() || !navigator.geolocation) {
+      return;
+    }
+
+    rememberSeoOriginAttempt();
+
+    navigator.geolocation.getCurrentPosition(
+      function (position) {
+        const lat = String(position.coords.latitude);
+        const lon = String(position.coords.longitude);
+        const url = buildSeoDealsOriginUrl({ lat, lon });
+
+        rememberBrowserOrigin(lat, lon);
+
+        if (url) {
+          window.location.replace(url);
+        }
+      },
+      function () {
+        // User denied location or the browser could not resolve it. Leave the SEO page unchanged.
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 300000
+      }
+    );
   }
 
   function ensureHidden(form, name) {
@@ -977,6 +1061,10 @@
 
   Drupal.behaviors.spotdealsNearMe = {
     attach(context) {
+      once('spotdeals-seo-origin', 'body', context).forEach(function () {
+        maybePopulateSeoDealsOrigin();
+      });
+
       once('spotdeals-near-me', 'form.views-exposed-form', context).forEach((form) => {
         const searchInput = getSearchInput(form);
 
@@ -1101,7 +1189,21 @@
           setHiddenValue(form, 'search_raw', rawValue);
 
           if (rawValue === '' && !recommendationMode) {
-            clearNearMeOnlyState(form);
+            const emptySearchOriginFallback = getCurrentBrowserOriginFallback(form);
+
+            if (emptySearchOriginFallback) {
+              setHiddenValue(form, 'search_origin_mode', 'browser');
+              setHiddenValue(form, 'search_raw', rawValue);
+              setHiddenValue(form, 'search_clean', '');
+              setHiddenValue(form, 'origin_lat', emptySearchOriginFallback.lat);
+              setHiddenValue(form, 'origin_lon', emptySearchOriginFallback.lon);
+              setHiddenValue(form, 'postal_code_exact', '');
+              setHiddenValue(form, 'locality_exact', '');
+            }
+            else {
+              clearNearMeOnlyState(form);
+            }
+
             setScrollToResultsPending(form);
             setHiddenValue(form, 'recommendation_action', '');
             rememberSubmittedKeywords(form, currentSearchInput);
