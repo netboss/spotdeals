@@ -626,7 +626,7 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
  * Implements hook_views_pre_render().
  */
 function spotdeals_search_smart_location_views_pre_render(ViewExecutable $view): void {
-  if ($view->id() !== 'deals_search_solr' || $view->current_display !== 'page_1') {
+  if ($view->id() !== 'deals_search_solr' || !in_array((string) $view->current_display, ['page_1', 'block_1', 'block_2'], TRUE)) {
     return;
   }
 
@@ -634,7 +634,22 @@ function spotdeals_search_smart_location_views_pre_render(ViewExecutable $view):
   $recommendation_mode = (bool) $request->attributes->get('spotdeals_search_smart_location.recommendation_mode', FALSE);
 
   if (!$recommendation_mode) {
-    _spotdeals_search_smart_location_apply_ranked_order($view);
+    if ($view->current_display === 'page_1') {
+      _spotdeals_search_smart_location_apply_ranked_order($view);
+    }
+    else {
+      $origin_lat = $request->query->get('origin_lat');
+      $origin_lon = $request->query->get('origin_lon');
+
+      if (is_numeric($origin_lat) && is_numeric($origin_lon)) {
+        $origin = [
+          'lat' => (float) $origin_lat,
+          'lon' => (float) $origin_lon,
+        ];
+        $exact_city = isset($view->args[0]) ? (string) $view->args[0] : '';
+        _spotdeals_search_smart_location_apply_city_distance_sort($view, $origin, $exact_city);
+      }
+    }
   }
 
   _spotdeals_search_smart_location_commit_search_insight($view);
@@ -1063,6 +1078,7 @@ function _spotdeals_search_smart_location_build_direct_recommendation_distance_l
 
   return (string) t('@distance miles away', ['@distance' => $formatted_distance]);
 }
+
 
 
 /**
@@ -1694,6 +1710,19 @@ function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $vie
   $origin = $request->attributes->get('spotdeals_search_smart_location.origin');
   $ranked_nids = $request->attributes->get('spotdeals_search_smart_location.ranked_deal_nids');
   $exact_city = (string) $request->attributes->get('spotdeals_search_smart_location.city', '');
+  $has_query_origin = FALSE;
+
+  if (
+    (!is_array($origin) || !isset($origin['lat'], $origin['lon']) || !is_numeric($origin['lat']) || !is_numeric($origin['lon']))
+    && is_numeric($request->query->get('origin_lat'))
+    && is_numeric($request->query->get('origin_lon'))
+  ) {
+    $origin = [
+      'lat' => (float) $request->query->get('origin_lat'),
+      'lon' => (float) $request->query->get('origin_lon'),
+    ];
+    $has_query_origin = TRUE;
+  }
 
   if (empty($view->result)) {
     return;
@@ -1706,6 +1735,11 @@ function _spotdeals_search_smart_location_apply_ranked_order(ViewExecutable $vie
 
   if ($is_browser_near_me || $is_explicit_location) {
     _spotdeals_search_smart_location_apply_near_me_order($view, $origin, $ranked_nids, $exact_city);
+    return;
+  }
+
+  if ($has_query_origin) {
+    _spotdeals_search_smart_location_apply_city_distance_sort($view, $origin, $exact_city);
     return;
   }
 

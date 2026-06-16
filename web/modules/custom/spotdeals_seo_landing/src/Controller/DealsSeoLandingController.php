@@ -305,6 +305,9 @@ final class DealsSeoLandingController extends ControllerBase {
         'max-age' => 3600,
       ],
       '#attached' => [
+        'library' => [
+          'spotdeals_search_smart_location/near_me',
+        ],
         'html_head' => [
           [
             [
