@@ -69,9 +69,10 @@
           </div>
         {% endif %}
 
-        {% if venue_description|default('') %}
-          <div class="spotdeals-deal-card__venue-description">
-            {{ venue_description }}
+        {% if venue_distance|default('') %}
+          <div class="spotdeals-deal-card__venue-distance">
+            <span class="spotdeals-deal-card__venue-distance-icon" aria-hidden="true">📍</span>
+            <span>{{ venue_distance }}</span>
           </div>
         {% endif %}
 
