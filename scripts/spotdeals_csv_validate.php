@@ -92,11 +92,12 @@ if ($strictFormat) {
 }
 
 if ($errors) {
-  exit(1);
+  print "CSV validation failed.\n";
+  return 1;
 }
 
 print "CSV validation passed.\n";
-exit(0);
+return 0;
 
 function readCsvFile(string $path, array $expectedHeader, string $label, array &$errors, array &$warnings): array {
   if (!is_file($path)) {
@@ -242,14 +243,14 @@ function validateVenues(array $rows, array &$errors, array &$warnings, array &$r
     validateCtaPair($cta, $ctaTitle, 'venues.csv', $line, $title, $warnings);
   }
 
-  foreach ($seenTitle as $titleKey => $items) {
+  foreach ($seenTitle as $items) {
     $addressKeys = array_unique(array_column($items, 2));
     if (count($items) > 1 && count($addressKeys) > 1) {
       $review[] = 'venues.csv: same title at multiple addresses: ' . summarizeReviewItems($items);
     }
   }
 
-  foreach ($seenAddress as $addressKey => $items) {
+  foreach ($seenAddress as $items) {
     $titleKeys = array_unique(array_column($items, 2));
     if (count($items) > 1 && count($titleKeys) > 1) {
       $review[] = 'venues.csv: same address with multiple titles: ' . summarizeReviewItems($items);
