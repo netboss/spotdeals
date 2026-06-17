@@ -18,12 +18,25 @@ final class NearMeRanker {
   /**
    * Cache ID for the cross-request base dataset cache.
    */
-  private const BASE_DATASET_CACHE_ID = 'spotdeals_search_smart_location:near_me_ranker:base_dataset:v2';
+  private const BASE_DATASET_CACHE_ID = 'spotdeals_search_smart_location:near_me_ranker:base_dataset:v3';
 
   /**
    * Default radius in kilometers.
    */
   private const DEFAULT_RADIUS_KM = 40.25;
+
+  /**
+   * ISO weekday numbers keyed by normalized English weekday label.
+   */
+  private const WEEKDAY_MAP = [
+    'monday' => 1,
+    'tuesday' => 2,
+    'wednesday' => 3,
+    'thursday' => 4,
+    'friday' => 5,
+    'saturday' => 6,
+    'sunday' => 7,
+  ];
 
   /**
    * Request-local cache of all nearby deal candidates for one origin.
@@ -125,7 +138,8 @@ final class NearMeRanker {
 
       $nid = (int) $candidate['nid'];
       $freshnessScore = (int) ($freshnessScores[$nid]['score'] ?? 0);
-      $totalScore = $keywordScore + $freshnessScore;
+      $timeRelevanceScore = $this->timeRelevanceScore($candidate);
+      $totalScore = $keywordScore + $freshnessScore + $timeRelevanceScore;
       $ranked[] = [
         'nid' => $nid,
         'distance' => (float) $candidate['distance'],
@@ -133,47 +147,49 @@ final class NearMeRanker {
         'score' => $totalScore,
         'relevance_tier' => $this->relevanceTier($keywordScore),
         'freshness_score' => $freshnessScore,
+        'time_relevance_score' => $timeRelevanceScore,
+        'time_relevance_group' => $this->timeRelevanceGroup($timeRelevanceScore),
+        'time_relevance_tier' => $this->timeRelevanceTier($timeRelevanceScore),
         'position' => (int) $candidate['position'],
       ];
     }
 
     usort($ranked, static function (array $a, array $b) use ($keywords): int {
       // Keyword searches should feel like search first, near-me second.
-      // Within the same relevance tier, prefer closer results before tiny
-      // score differences. This keeps true happy-hour/taco/etc. matches near
-      // the user ahead of farther matches that only have a small freshness or
-      // venue-tag boost.
+      // Time relevance is used as a coarse guardrail, then distance is allowed
+      // to dominate inside the same time group. This prevents wrong-day deals
+      // from surfacing, while avoiding jumps from NSB to Port Orange/Daytona
+      // ahead of closer deals that are also valid today.
       if ($keywords !== '') {
         $tierCompare = ($b['relevance_tier'] ?? 0) <=> ($a['relevance_tier'] ?? 0);
         if ($tierCompare !== 0) {
           return $tierCompare;
         }
-
-        $bucketCompare = $a['distance_bucket'] <=> $b['distance_bucket'];
-        if ($bucketCompare !== 0) {
-          return $bucketCompare;
-        }
-
-        $scoreCompare = $b['score'] <=> $a['score'];
-        if ($scoreCompare !== 0) {
-          return $scoreCompare;
-        }
       }
-      else {
-        $bucketCompare = $a['distance_bucket'] <=> $b['distance_bucket'];
-        if ($bucketCompare !== 0) {
-          return $bucketCompare;
-        }
 
-        $scoreCompare = $b['score'] <=> $a['score'];
-        if ($scoreCompare !== 0) {
-          return $scoreCompare;
-        }
+      $timeGroupCompare = ($b['time_relevance_group'] ?? 0) <=> ($a['time_relevance_group'] ?? 0);
+      if ($timeGroupCompare !== 0) {
+        return $timeGroupCompare;
+      }
+
+      $bucketCompare = $a['distance_bucket'] <=> $b['distance_bucket'];
+      if ($bucketCompare !== 0) {
+        return $bucketCompare;
       }
 
       $distanceCompare = $a['distance'] <=> $b['distance'];
       if ($distanceCompare !== 0) {
         return $distanceCompare;
+      }
+
+      $timeTierCompare = ($b['time_relevance_tier'] ?? 0) <=> ($a['time_relevance_tier'] ?? 0);
+      if ($timeTierCompare !== 0) {
+        return $timeTierCompare;
+      }
+
+      $scoreCompare = $b['score'] <=> $a['score'];
+      if ($scoreCompare !== 0) {
+        return $scoreCompare;
       }
 
       $positionCompare = $a['position'] <=> $b['position'];
@@ -243,6 +259,9 @@ final class NearMeRanker {
         'deal_title' => (string) $dealRow['deal_title'],
         'deal_body' => (string) $dealRow['deal_body'],
         'deal_offer_text' => (string) ($dealRow['deal_offer_text'] ?? ''),
+        'deal_day_labels' => (string) ($dealRow['deal_day_labels'] ?? ''),
+        'deal_start_time' => (string) ($dealRow['deal_start_time'] ?? ''),
+        'deal_end_time' => (string) ($dealRow['deal_end_time'] ?? ''),
         'venue_title' => (string) $venueMetadata['title'],
         'venue_description' => (string) $venueMetadata['description'],
         'venue_cuisine' => (string) $venueMetadata['cuisine'],
@@ -391,6 +410,17 @@ final class NearMeRanker {
         'deal_offer_text' => $this->normalize(
           $deal->hasField('field_price_offer_text') && !$deal->get('field_price_offer_text')->isEmpty()
             ? (string) $deal->get('field_price_offer_text')->value
+            : ''
+        ),
+        'deal_day_labels' => $this->normalize($this->dealDayLabelsText($deal)),
+        'deal_start_time' => $this->normalize(
+          $deal->hasField('field_start_time') && !$deal->get('field_start_time')->isEmpty()
+            ? (string) $deal->get('field_start_time')->value
+            : ''
+        ),
+        'deal_end_time' => $this->normalize(
+          $deal->hasField('field_end_time') && !$deal->get('field_end_time')->isEmpty()
+            ? (string) $deal->get('field_end_time')->value
             : ''
         ),
       ];
@@ -564,6 +594,279 @@ final class NearMeRanker {
     }
 
     return $loaded;
+  }
+
+
+  /**
+   * Scores a candidate by whether its deal schedule is relevant right now.
+   *
+   * This is intentionally a soft ranking boost/penalty, not a hard filter, so
+   * nearby searches do not suddenly look empty when schedule data is missing or
+   * vague.
+   *
+   * @param array<string,int|float|string> $candidate
+   *   Candidate row.
+   */
+  private function timeRelevanceScore(array $candidate): int {
+    $weekdays = $this->dealWeekdaysFromLabels((string) ($candidate['deal_day_labels'] ?? ''));
+    if (empty($weekdays)) {
+      return 0;
+    }
+
+    $timezoneName = \Drupal::config('system.date')->get('timezone.default');
+    if (empty($timezoneName)) {
+      $timezoneName = date_default_timezone_get() ?: 'UTC';
+    }
+
+    try {
+      $timezone = new \DateTimeZone((string) $timezoneName);
+    }
+    catch (\Throwable) {
+      $timezone = new \DateTimeZone('UTC');
+    }
+
+    $now = new \DateTimeImmutable('now', $timezone);
+    $today = (int) $now->format('N');
+
+    if (!in_array($today, $weekdays, TRUE)) {
+      $daysUntilNext = $this->daysUntilNextDealDay($today, $weekdays);
+      if ($daysUntilNext === 1) {
+        return -120;
+      }
+
+      return -300;
+    }
+
+    $titleWeekdays = $this->explicitWeekdaysFromText((string) ($candidate['deal_title'] ?? ''));
+    if (!empty($titleWeekdays) && !in_array($today, $titleWeekdays, TRUE)) {
+      // A broad field_day_of_week value like "Weekday" can make a deal look
+      // technically active today, while the visible deal title is clearly tied
+      // to another day, such as "Taco Tuesday" on Wednesday. Push those below
+      // deals whose visible offer is actually for today.
+      return -260;
+    }
+
+    $titleHasToday = !empty($titleWeekdays) && in_array($today, $titleWeekdays, TRUE);
+
+    $start = $this->parseScheduleTime((string) ($candidate['deal_start_time'] ?? ''), TRUE);
+    $end = $this->parseScheduleTime((string) ($candidate['deal_end_time'] ?? ''), FALSE);
+
+    if ($start === NULL && $end === NULL) {
+      return $titleHasToday ? 130 : 80;
+    }
+
+    if ($start === NULL) {
+      $start = ['hour' => 0, 'minute' => 0];
+    }
+    if ($end === NULL) {
+      $end = ['hour' => 23, 'minute' => 59];
+    }
+
+    $startAt = $now->setTime($start['hour'], $start['minute'], 0);
+    $endAt = $now->setTime($end['hour'], $end['minute'], 59);
+
+    if ($endAt <= $startAt) {
+      $endAt = $endAt->modify('+1 day');
+    }
+
+    if ($now >= $startAt && $now <= $endAt) {
+      return $titleHasToday ? 270 : 220;
+    }
+
+    if ($now < $startAt) {
+      return $titleHasToday ? 140 : 90;
+    }
+
+    return -180;
+  }
+
+  /**
+   * Converts a raw time relevance score into a coarse sorting tier.
+   *
+   * This keeps recommendation retries from surfacing clearly wrong-day deals
+   * ahead of active/today deals just because they are at the same nearby venue
+   * or have strong freshness signals.
+   */
+  private function timeRelevanceTier(int $score): int {
+    if ($score >= 200) {
+      return 4;
+    }
+    if ($score >= 80) {
+      return 3;
+    }
+    if ($score > 0) {
+      return 2;
+    }
+    if ($score === 0) {
+      return 1;
+    }
+
+    return 0;
+  }
+
+  /**
+   * Converts a time relevance score into a broad sorting group.
+   *
+   * Positive scores are valid today, zero means unknown/neutral schedule, and
+   * negative scores are wrong-day or already-ended deals. Distance sorting
+   * happens inside each group.
+   */
+  private function timeRelevanceGroup(int $score): int {
+    if ($score > 0) {
+      return 2;
+    }
+    if ($score === 0) {
+      return 1;
+    }
+
+    return 0;
+  }
+
+  /**
+   * Resolves ISO weekdays from normalized deal day labels.
+   *
+   * @return array<int,int>
+   *   ISO weekdays, where 1 is Monday and 7 is Sunday.
+   */
+  private function dealWeekdaysFromLabels(string $labels): array {
+    $labels = $this->normalize($labels);
+    if ($labels === '') {
+      return [];
+    }
+
+    $weekdays = [];
+    if (str_contains($labels, 'daily') || str_contains($labels, 'every day') || str_contains($labels, 'all days') || str_contains($labels, 'monday to sunday')) {
+      return [1, 2, 3, 4, 5, 6, 7];
+    }
+
+    if (str_contains($labels, 'weekday') || str_contains($labels, 'monday to friday')) {
+      $weekdays = array_merge($weekdays, [1, 2, 3, 4, 5]);
+    }
+
+    if (str_contains($labels, 'weekend')) {
+      $weekdays = array_merge($weekdays, [6, 7]);
+    }
+
+    foreach (self::WEEKDAY_MAP as $label => $weekday) {
+      if (str_contains($labels, $label)) {
+        $weekdays[] = $weekday;
+      }
+    }
+
+    $weekdays = array_values(array_unique($weekdays));
+    sort($weekdays);
+
+    return $weekdays;
+  }
+
+
+  /**
+   * Resolves explicit weekday mentions from visible deal text.
+   *
+   * This is intentionally stricter than field_day_of_week parsing. It is used
+   * only to catch visible offers like "Taco Tuesday" appearing on the wrong
+   * day, while preserving broad schedules such as "Weekday" or "Daily".
+   *
+   * @return array<int,int>
+   *   ISO weekdays, where 1 is Monday and 7 is Sunday.
+   */
+  private function explicitWeekdaysFromText(string $text): array {
+    $text = $this->normalize($text);
+    if ($text === '') {
+      return [];
+    }
+
+    if (str_contains($text, 'daily') || str_contains($text, 'every day') || str_contains($text, 'all days') || str_contains($text, 'monday sunday') || str_contains($text, 'monday to sunday')) {
+      return [1, 2, 3, 4, 5, 6, 7];
+    }
+
+    if (str_contains($text, 'weekday') || str_contains($text, 'weekdays') || str_contains($text, 'monday friday') || str_contains($text, 'monday to friday') || str_contains($text, 'monday through friday')) {
+      return [1, 2, 3, 4, 5];
+    }
+
+    if (str_contains($text, 'weekend') || str_contains($text, 'weekends') || str_contains($text, 'saturday sunday') || str_contains($text, 'saturday to sunday')) {
+      return [6, 7];
+    }
+
+    $weekdays = [];
+    foreach (self::WEEKDAY_MAP as $label => $weekday) {
+      if (preg_match('/\b' . preg_quote($label, '/') . '\b/', $text) === 1) {
+        $weekdays[] = $weekday;
+      }
+    }
+
+    $weekdays = array_values(array_unique($weekdays));
+    sort($weekdays);
+
+    return $weekdays;
+  }
+
+  /**
+   * Returns how many days away the next scheduled deal day is.
+   *
+   * @param array<int,int> $weekdays
+   *   ISO weekdays, where 1 is Monday and 7 is Sunday.
+   */
+  private function daysUntilNextDealDay(int $today, array $weekdays): int {
+    $closest = 7;
+
+    foreach ($weekdays as $weekday) {
+      $days = ($weekday - $today + 7) % 7;
+      if ($days === 0) {
+        return 0;
+      }
+      $closest = min($closest, $days);
+    }
+
+    return $closest;
+  }
+
+  /**
+   * Parses common deal schedule times into 24-hour parts.
+   *
+   * @return array{hour:int,minute:int}|null
+   *   Time parts, or NULL when the text is too vague.
+   */
+  private function parseScheduleTime(string $value, bool $isStart): ?array {
+    $value = $this->normalize($value);
+    if ($value === '') {
+      return NULL;
+    }
+
+    if (in_array($value, ['all day', 'all-day', 'open to close', 'regular hours'], TRUE)) {
+      return $isStart
+        ? ['hour' => 0, 'minute' => 0]
+        : ['hour' => 23, 'minute' => 59];
+    }
+
+    if ($value === 'close') {
+      return NULL;
+    }
+
+    if (!preg_match('/(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/', $value, $matches)) {
+      return NULL;
+    }
+
+    $hour = (int) $matches[1];
+    $minute = isset($matches[2]) && $matches[2] !== '' ? (int) $matches[2] : 0;
+    $ampm = $matches[3];
+
+    if ($hour < 1 || $hour > 12 || $minute < 0 || $minute > 59) {
+      return NULL;
+    }
+
+    if ($hour === 12) {
+      $hour = 0;
+    }
+
+    if ($ampm === 'pm') {
+      $hour += 12;
+    }
+
+    return [
+      'hour' => $hour,
+      'minute' => $minute,
+    ];
   }
 
   /**
@@ -902,6 +1205,23 @@ final class NearMeRanker {
     }
 
     return array_values(array_unique(array_filter($variants)));
+  }
+
+
+  /**
+   * Returns normalized day-of-week text for a deal.
+   */
+  private function dealDayLabelsText(NodeInterface $deal): string {
+    if (!$deal->hasField('field_day_of_week') || $deal->get('field_day_of_week')->isEmpty()) {
+      return '';
+    }
+
+    $labels = [];
+    foreach ($deal->get('field_day_of_week')->referencedEntities() as $term) {
+      $labels[] = (string) $term->label();
+    }
+
+    return implode(' ', $labels);
   }
 
   /**
