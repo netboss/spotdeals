@@ -39,6 +39,13 @@ final class NearMeRanker {
   ];
 
   /**
+   * Common themed weekday variants keyed by normalized visible text.
+   */
+  private const WEEKDAY_ALIAS_MAP = [
+    'tuesdaze' => 2,
+  ];
+
+  /**
    * Request-local cache of all nearby deal candidates for one origin.
    *
    * The cache is keyed only by origin so repeated recommendation attempts with
@@ -154,22 +161,27 @@ final class NearMeRanker {
       ];
     }
 
+    if ($this->hasUsableScheduleCandidates($ranked)) {
+      $ranked = array_values(array_filter(
+        $ranked,
+        static fn (array $row): bool => (int) ($row['time_relevance_group'] ?? 0) > 0
+      ));
+    }
+
     usort($ranked, static function (array $a, array $b) use ($keywords): int {
-      // Keyword searches should feel like search first, near-me second.
-      // Time relevance is used as a coarse guardrail, then distance is allowed
-      // to dominate inside the same time group. This prevents wrong-day deals
-      // from surfacing, while avoiding jumps from NSB to Port Orange/Daytona
-      // ahead of closer deals that are also valid today.
+      // Time relevance is a guardrail before keyword strength. A wrong-day
+      // exact match like "Taco Tuesday" should not beat a valid-today nearby
+      // option on Thursday just because the query was "tacos".
+      $timeGroupCompare = ($b['time_relevance_group'] ?? 0) <=> ($a['time_relevance_group'] ?? 0);
+      if ($timeGroupCompare !== 0) {
+        return $timeGroupCompare;
+      }
+
       if ($keywords !== '') {
         $tierCompare = ($b['relevance_tier'] ?? 0) <=> ($a['relevance_tier'] ?? 0);
         if ($tierCompare !== 0) {
           return $tierCompare;
         }
-      }
-
-      $timeGroupCompare = ($b['time_relevance_group'] ?? 0) <=> ($a['time_relevance_group'] ?? 0);
-      if ($timeGroupCompare !== 0) {
-        return $timeGroupCompare;
       }
 
       $bucketCompare = $a['distance_bucket'] <=> $b['distance_bucket'];
@@ -609,9 +621,6 @@ final class NearMeRanker {
    */
   private function timeRelevanceScore(array $candidate): int {
     $weekdays = $this->dealWeekdaysFromLabels((string) ($candidate['deal_day_labels'] ?? ''));
-    if (empty($weekdays)) {
-      return 0;
-    }
 
     $timezoneName = \Drupal::config('system.date')->get('timezone.default');
     if (empty($timezoneName)) {
@@ -628,6 +637,27 @@ final class NearMeRanker {
     $now = new \DateTimeImmutable('now', $timezone);
     $today = (int) $now->format('N');
 
+    $visibleScheduleText = implode(' ', [
+      (string) ($candidate['deal_title'] ?? ''),
+      (string) ($candidate['deal_body'] ?? ''),
+      (string) ($candidate['deal_offer_text'] ?? ''),
+    ]);
+    $visibleWeekdays = $this->explicitWeekdaysFromText($visibleScheduleText);
+    if (!empty($visibleWeekdays) && !in_array($today, $visibleWeekdays, TRUE)) {
+      // Visible offer text is the strongest signal. Some deals have a broad or
+      // empty field_day_of_week value, while the actual offer clearly says
+      // something like "Taco Tuesdaze" or "Pint Tuesday". Treat those as
+      // wrong-day results before falling back to the structured day field.
+      return -520;
+    }
+
+    if (empty($weekdays)) {
+      if (empty($visibleWeekdays)) {
+        return 0;
+      }
+      $weekdays = $visibleWeekdays;
+    }
+
     if (!in_array($today, $weekdays, TRUE)) {
       $daysUntilNext = $this->daysUntilNextDealDay($today, $weekdays);
       if ($daysUntilNext === 1) {
@@ -637,16 +667,7 @@ final class NearMeRanker {
       return -300;
     }
 
-    $titleWeekdays = $this->explicitWeekdaysFromText((string) ($candidate['deal_title'] ?? ''));
-    if (!empty($titleWeekdays) && !in_array($today, $titleWeekdays, TRUE)) {
-      // A broad field_day_of_week value like "Weekday" can make a deal look
-      // technically active today, while the visible deal title is clearly tied
-      // to another day, such as "Taco Tuesday" on Wednesday. Push those below
-      // deals whose visible offer is actually for today.
-      return -260;
-    }
-
-    $titleHasToday = !empty($titleWeekdays) && in_array($today, $titleWeekdays, TRUE);
+    $titleHasToday = !empty($visibleWeekdays) && in_array($today, $visibleWeekdays, TRUE);
 
     $start = $this->parseScheduleTime((string) ($candidate['deal_start_time'] ?? ''), TRUE);
     $end = $this->parseScheduleTime((string) ($candidate['deal_end_time'] ?? ''), FALSE);
@@ -707,19 +728,44 @@ final class NearMeRanker {
   /**
    * Converts a time relevance score into a broad sorting group.
    *
-   * Positive scores are valid today, zero means unknown/neutral schedule, and
-   * negative scores are wrong-day or already-ended deals. Distance sorting
-   * happens inside each group.
+   * Active-now, later-today, unknown, already-ended today, and wrong-day deals
+   * are separated into broad groups. Distance sorting happens inside each group.
    */
   private function timeRelevanceGroup(int $score): int {
+    if ($score >= 200) {
+      return 4;
+    }
     if ($score > 0) {
-      return 2;
+      return 3;
     }
     if ($score === 0) {
+      return 2;
+    }
+    if ($score === -180) {
       return 1;
     }
 
     return 0;
+  }
+
+  /**
+   * Determines whether the ranked set has anything better than wrong-day deals.
+   *
+   * Wrong-day deals remain as a fallback only when every keyword match is
+   * wrong-day. This keeps "Try again" from cycling into Tuesday-only deals on
+   * Thursday when valid-today, neutral, or already-ended today results exist.
+   *
+   * @param array<int,array<string,int|float|string>> $ranked
+   *   Ranked candidate rows before final sorting.
+   */
+  private function hasUsableScheduleCandidates(array $ranked): bool {
+    foreach ($ranked as $row) {
+      if ((int) ($row['time_relevance_group'] ?? 0) > 0) {
+        return TRUE;
+      }
+    }
+
+    return FALSE;
   }
 
   /**
@@ -776,6 +822,26 @@ final class NearMeRanker {
       return [];
     }
 
+    $weekdays = [];
+    foreach (self::WEEKDAY_MAP as $label => $weekday) {
+      if (preg_match('/\b' . preg_quote($label, '/') . '\b/', $text) === 1) {
+        $weekdays[] = $weekday;
+      }
+    }
+
+    foreach (self::WEEKDAY_ALIAS_MAP as $alias => $weekday) {
+      if (preg_match('/\b' . preg_quote($alias, '/') . '\b/', $text) === 1) {
+        $weekdays[] = $weekday;
+      }
+    }
+
+    if (!empty($weekdays)) {
+      $weekdays = array_values(array_unique($weekdays));
+      sort($weekdays);
+
+      return $weekdays;
+    }
+
     if (str_contains($text, 'daily') || str_contains($text, 'every day') || str_contains($text, 'all days') || str_contains($text, 'monday sunday') || str_contains($text, 'monday to sunday')) {
       return [1, 2, 3, 4, 5, 6, 7];
     }
@@ -788,17 +854,7 @@ final class NearMeRanker {
       return [6, 7];
     }
 
-    $weekdays = [];
-    foreach (self::WEEKDAY_MAP as $label => $weekday) {
-      if (preg_match('/\b' . preg_quote($label, '/') . '\b/', $text) === 1) {
-        $weekdays[] = $weekday;
-      }
-    }
-
-    $weekdays = array_values(array_unique($weekdays));
-    sort($weekdays);
-
-    return $weekdays;
+    return [];
   }
 
   /**
