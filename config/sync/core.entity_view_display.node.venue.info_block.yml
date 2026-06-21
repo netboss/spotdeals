@@ -24,6 +24,12 @@ dependencies:
     - field.field.node.venue.field_tags
     - field.field.node.venue.field_venue_type
     - field.field.node.venue.field_website
+    - field.field.node.venue.field_yelp_business_id
+    - field.field.node.venue.field_yelp_last_synced
+    - field.field.node.venue.field_yelp_match_status
+    - field.field.node.venue.field_yelp_rating
+    - field.field.node.venue.field_yelp_review_count
+    - field.field.node.venue.field_yelp_url
     - node.type.venue
   module:
     - address
@@ -91,5 +97,11 @@ hidden:
   field_primary_owner_user: true
   field_tags: true
   field_venue_type: true
+  field_yelp_business_id: true
+  field_yelp_last_synced: true
+  field_yelp_match_status: true
+  field_yelp_rating: true
+  field_yelp_review_count: true
+  field_yelp_url: true
   langcode: true
   search_api_excerpt: true

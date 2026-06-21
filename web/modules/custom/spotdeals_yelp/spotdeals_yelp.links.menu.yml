@@ -1,0 +1,17 @@
+spotdeals_yelp.settings:
+  title: 'SpotDeals Yelp'
+  description: 'Configure Yelp matching and sync settings.'
+  route_name: spotdeals_yelp.settings
+  parent: system.admin_config_services
+
+spotdeals_yelp.review:
+  title: 'Yelp review queue'
+  description: 'Review unmatched and ambiguous Yelp venue matches.'
+  route_name: spotdeals_yelp.review
+  parent: system.admin_content
+
+spotdeals_yelp.status:
+  title: 'Yelp status'
+  description: 'View SpotDeals Yelp sync counts and stale venues.'
+  route_name: spotdeals_yelp.status
+  parent: system.admin_content

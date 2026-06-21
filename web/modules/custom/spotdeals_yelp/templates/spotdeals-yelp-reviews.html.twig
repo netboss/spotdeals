@@ -1,0 +1,26 @@
+<div class="spotdeals-yelp-reviews">
+  <h3 class="spotdeals-yelp-reviews__title">What people are saying</h3>
+
+  {% if reviews %}
+    {% for review in reviews %}
+      <div class="spotdeals-yelp-review">
+        {% if review.text %}
+          <div class="spotdeals-yelp-review__text">“{{ review.text }}”</div>
+        {% endif %}
+        {% if review.user.name %}
+          <div class="spotdeals-yelp-review__author">— {{ review.user.name }}</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="spotdeals-yelp-review">No Yelp review excerpts are cached yet.</div>
+  {% endif %}
+
+  {% if business_url %}
+    <div class="spotdeals-yelp-link"><a href="{{ business_url }}" target="_blank" rel="noopener noreferrer">Read more on Yelp</a></div>
+  {% endif %}
+
+  {% if show_attribution %}
+    <div class="spotdeals-yelp-attribution">Powered by Yelp</div>
+  {% endif %}
+</div>

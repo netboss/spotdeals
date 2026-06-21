@@ -1,0 +1,8 @@
+administer spotdeals yelp settings:
+  title: 'Administer SpotDeals Yelp settings'
+
+review spotdeals yelp matches:
+  title: 'Review SpotDeals Yelp venue matches'
+
+run spotdeals yelp sync:
+  title: 'Run SpotDeals Yelp sync operations'

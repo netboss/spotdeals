@@ -1,0 +1,21 @@
+uuid: 3b3e1d17-4dac-4ee1-acd6-2790074be1de
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_yelp_last_synced
+    - node.type.venue
+  module:
+    - datetime
+id: node.venue.field_yelp_last_synced
+field_name: field_yelp_last_synced
+entity_type: node
+bundle: venue
+label: 'yelp last synced'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

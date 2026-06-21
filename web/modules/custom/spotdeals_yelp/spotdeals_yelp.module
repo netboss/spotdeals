@@ -1,0 +1,74 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * SpotDeals Yelp integration helpers.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_theme().
+ */
+function spotdeals_yelp_theme(): array {
+  return [
+    'spotdeals_yelp_summary' => [
+      'variables' => [
+        'rating' => NULL,
+        'review_count' => NULL,
+        'business_url' => '',
+        'show_attribution' => TRUE,
+      ],
+      'template' => 'spotdeals-yelp-summary',
+    ],
+    'spotdeals_yelp_reviews' => [
+      'variables' => [
+        'rating' => NULL,
+        'review_count' => NULL,
+        'business_url' => '',
+        'reviews' => [],
+        'show_attribution' => TRUE,
+      ],
+      'template' => 'spotdeals-yelp-reviews',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_help().
+ */
+function spotdeals_yelp_help(string $route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match): ?string {
+  if ($route_name !== 'help.page.spotdeals_yelp') {
+    return NULL;
+  }
+
+  return '<p>' . t('SpotDeals Yelp adds Yelp venue matching, background sync, and lightweight display helpers for venue trust signals.') . '</p>';
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function spotdeals_yelp_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void {
+  if ($form_id === 'node_venue_form' || $form_id === 'node_venue_edit_form') {
+    if (isset($form['field_yelp_business_id'])) {
+      $form['field_yelp_business_id']['widget'][0]['value']['#description'] = t('Stores the matched Yelp business ID. This can be backfilled by the SpotDeals Yelp Drush commands.');
+    }
+  }
+}
+
+/**
+ * Cron callback for light queueing only.
+ */
+function spotdeals_yelp_cron(): void {
+  $config = \Drupal::config('spotdeals_yelp.settings');
+  if (!$config->get('enabled') || !$config->get('sync_enabled')) {
+    return;
+  }
+
+  /** @var \Drupal\spotdeals_yelp\Service\YelpVenueSyncManager $sync_manager */
+  $sync_manager = \Drupal::service('spotdeals_yelp.venue_sync_manager');
+  $limit = (int) $config->get('sync_batch_size');
+  $sync_manager->enqueueStaleVenues($limit > 0 ? $limit : 25);
+}
