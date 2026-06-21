@@ -944,6 +944,7 @@ final class NearMeRanker {
     $venueDescription = (string) ($candidate['venue_description'] ?? '');
     $venueCuisine = (string) ($candidate['venue_cuisine'] ?? '');
     $venueTags = (string) ($candidate['venue_tags'] ?? '');
+    $isTacoIntent = $this->isTacoIntent($keywords, $tokens);
 
     // "Happy hour" is a deal-intent phrase. Keep it strict so venue tags like
     // "bar food burgers grill happy hour wings" cannot qualify unrelated deals.
@@ -982,10 +983,10 @@ final class NearMeRanker {
       $dealScore += 300;
     }
     if ($body !== '' && str_contains($body, $keywords)) {
-      $dealScore += 140;
+      $dealScore += $isTacoIntent ? 150 : 140;
     }
     if ($offerText !== '' && str_contains($offerText, $keywords)) {
-      $dealScore += 170;
+      $dealScore += $isTacoIntent ? 90 : 170;
     }
 
     foreach ($tokens as $token) {
@@ -1021,7 +1022,12 @@ final class NearMeRanker {
         }
 
         if (str_contains($offerText, $variant)) {
-          $dealScore += $variant === $token ? 32 : 26;
+          if ($isTacoIntent) {
+            $dealScore += $variant === $token ? 14 : 10;
+          }
+          else {
+            $dealScore += $variant === $token ? 32 : 26;
+          }
           break;
         }
       }
@@ -1107,7 +1113,7 @@ final class NearMeRanker {
           $dealScore += $alias === $keywords ? 30 : 18;
         }
         if ($offerText !== '' && str_contains($offerText, $alias)) {
-          $dealScore += $alias === $keywords ? 40 : 24;
+          $dealScore += $isTacoIntent ? ($alias === $keywords ? 18 : 12) : ($alias === $keywords ? 40 : 24);
         }
 
         if ($venueTitle !== '' && str_contains($venueTitle, $alias)) {
@@ -1125,11 +1131,26 @@ final class NearMeRanker {
       }
     }
 
+    if ($isTacoIntent && $dealScore > 0) {
+      $supportingCuisineScore = $this->supportingCuisineScoreForTacoIntent(
+        $venueTitle,
+        $venueCuisine,
+        $venueTags,
+        $venueDescription,
+      );
+      $cuisineVenueScore += $supportingCuisineScore;
+    }
+
+    if ($isTacoIntent && $dealScore > 0 && $this->hasDessertTacoContext($candidate) && !$this->isDessertTacoSearch($keywords, $tokens)) {
+      return 0;
+    }
+
     // Deal-intent searches must match deal-owned text. Cuisine-intent searches
-    // are different: "mexican", "thai", "pizza", "burger", etc. should return
-    // active deals at matching venues, even when the individual deal title is
-    // generic. Deal-owned matches still receive a large lead so specific offers
-    // like "Taco Tuesday" rank above venue-only cuisine matches.
+    // can qualify active deals at matching venues, but taco/tacos is stricter:
+    // generic Mexican/Tex-Mex venue matches should not qualify unless there is
+    // also a taco-specific deal or venue signal. Deal-owned matches still
+    // receive a large lead so specific offers like "Taco Tuesday" rank above
+    // venue-only cuisine matches.
     if ($dealScore <= 0) {
       if (!$isCuisineIntent || ($venueScore + $cuisineVenueScore) <= 0) {
         return 0;
@@ -1167,6 +1188,137 @@ final class NearMeRanker {
   }
 
   /**
+   * Returns whether the current keyword search is specifically for tacos.
+   *
+   * Taco searches are stricter than broad cuisine searches. A generic Mexican
+   * or Tex-Mex venue should not qualify a margarita or queso deal for a user
+   * who searched for tacos.
+   *
+   * @param array<int,string> $tokens
+   *   Query tokens.
+   */
+  private function isTacoIntent(string $keywords, array $tokens): bool {
+    $candidates = array_filter(array_merge([$keywords], $tokens));
+
+    foreach ($candidates as $candidate) {
+      $candidate = $this->normalize($candidate);
+      if ($candidate === 'taco' || $candidate === 'tacos') {
+        return TRUE;
+      }
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * Returns whether the user explicitly searched for dessert/ice-cream tacos.
+   *
+   * Plain taco searches should not surface waffle/ice-cream/dessert taco novelty
+   * results. Those only qualify when the user includes a dessert modifier.
+   *
+   * @param array<int,string> $tokens
+   *   Query tokens.
+   */
+  private function isDessertTacoSearch(string $keywords, array $tokens): bool {
+    $haystack = $this->normalize(implode(' ', array_filter(array_merge([$keywords], $tokens))));
+
+    foreach ([
+      'ice cream',
+      'dessert',
+      'desserts',
+      'frozen',
+      'gelato',
+      'sorbet',
+      'sundae',
+      'sweet',
+      'sweets',
+      'yogurt',
+      'waffle',
+    ] as $alias) {
+      if (str_contains($haystack, $alias)) {
+        return TRUE;
+      }
+    }
+
+    return FALSE;
+  }
+
+  /**
+   * Returns a supporting venue score for taco searches that already match tacos.
+   *
+   * This lets a taco deal at a Mexican/Tex-Mex venue beat a novelty dessert
+   * taco match, without letting a generic Mexican venue qualify unrelated deals.
+   */
+  private function supportingCuisineScoreForTacoIntent(
+    string $venueTitle,
+    string $venueCuisine,
+    string $venueTags,
+    string $venueDescription,
+  ): int {
+    $score = 0;
+
+    foreach (['mexican', 'tex mex', 'tex-mex'] as $alias) {
+      if ($venueTitle !== '' && str_contains($venueTitle, $alias)) {
+        $score += 20;
+      }
+      if ($venueCuisine !== '' && str_contains($venueCuisine, $alias)) {
+        $score += 55;
+      }
+      if ($venueTags !== '' && str_contains($venueTags, $alias)) {
+        $score += 35;
+      }
+      if ($venueDescription !== '' && str_contains($venueDescription, $alias)) {
+        $score += 12;
+      }
+    }
+
+    return min($score, 80);
+  }
+
+  /**
+   * Returns whether a taco match is probably a dessert/ice-cream novelty item.
+   *
+   * These results can still appear for taco searches because the offer is taco
+   * related, but they should rank below food-taco intent matches unless the user
+   * explicitly searches for an ice cream/dessert taco.
+   *
+   * @param array<string,int|float|string> $candidate
+   *   Candidate row.
+   */
+  private function hasDessertTacoContext(array $candidate): bool {
+    $haystack = implode(' ', [
+      (string) ($candidate['deal_title'] ?? ''),
+      (string) ($candidate['deal_body'] ?? ''),
+      (string) ($candidate['deal_offer_text'] ?? ''),
+      (string) ($candidate['venue_title'] ?? ''),
+      (string) ($candidate['venue_description'] ?? ''),
+      (string) ($candidate['venue_cuisine'] ?? ''),
+      (string) ($candidate['venue_tags'] ?? ''),
+    ]);
+    $haystack = $this->normalize($haystack);
+
+    foreach ([
+      'ice cream',
+      'dessert',
+      'desserts',
+      'frozen',
+      'gelato',
+      'sorbet',
+      'sundae',
+      'sweet',
+      'sweets',
+      'yogurt',
+      'waffle',
+    ] as $alias) {
+      if (str_contains($haystack, $alias)) {
+        return TRUE;
+      }
+    }
+
+    return FALSE;
+  }
+
+  /**
    * Returns cuisine-intent aliases for searches where venue cuisine/tags may qualify a deal.
    *
    * @param array<int,string> $tokens
@@ -1195,8 +1347,6 @@ final class NearMeRanker {
       'italian' => ['italian', 'pizza', 'pasta'],
       'japanese' => ['japanese', 'sushi', 'ramen', 'hibachi', 'asian'],
       'mexican' => ['mexican', 'tex mex', 'tex-mex', 'burrito', 'burritos', 'quesadilla', 'quesadillas', 'enchilada', 'enchiladas'],
-      'taco' => ['taco', 'tacos'],
-      'tacos' => ['taco', 'tacos'],
       'pasta' => ['pasta', 'italian'],
       'pizza' => ['pizza', 'italian'],
       'ramen' => ['ramen', 'japanese', 'asian'],
@@ -1204,8 +1354,8 @@ final class NearMeRanker {
       'sandwiches' => ['sandwiches', 'sandwich', 'deli'],
       'seafood' => ['seafood', 'oyster', 'oysters', 'raw bar'],
       'sushi' => ['sushi', 'japanese', 'asian'],
-      'taco' => ['taco', 'tacos', 'mexican', 'tex mex', 'tex-mex'],
-      'tacos' => ['tacos', 'taco', 'mexican', 'tex mex', 'tex-mex'],
+      'taco' => ['taco', 'tacos'],
+      'tacos' => ['tacos', 'taco'],
       'thai' => ['thai', 'pad thai', 'thai curry', 'asian'],
       'tex mex' => ['tex mex', 'tex-mex', 'mexican', 'taco', 'tacos'],
       'tex-mex' => ['tex-mex', 'tex mex', 'mexican', 'taco', 'tacos'],
