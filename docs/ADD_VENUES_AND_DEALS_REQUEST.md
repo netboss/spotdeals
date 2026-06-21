@@ -1,6 +1,21 @@
 Replace CITY with the city added/specified in the chat, e.g.: CITY = CITY
 Replace STATE with the state added/specified in the chat, e.g.: STATE = Florida
 
+SPOTDEALS REVIEW CHECKLIST
+
+Before responding:
+
+1. Check for duplicates by title and address.
+2. All CSV fields must be wrapped in quotes.
+3. Never modify existing rows unless requested.
+4. Return venues together.
+5. Return deals together.
+6. ALWAYS include rollback/import/reindex drush commands.
+7. Include git commands when reviewing commits.
+8. Do not suggest deleting user data.
+9. Validate venue title format: "Venue Name - Location".
+10. No menu/order links as deals.
+
 Let's explore these venues and see if there are deals and add them:
 
 New rule: do not add street address using this format: #123 Thisstreet St, use this format instead: 123 Thisstreet St -- note the removal of the number symbol (#) before the 123. This is causing the editor to interpret these #123 as hex colors and that's wrong.
