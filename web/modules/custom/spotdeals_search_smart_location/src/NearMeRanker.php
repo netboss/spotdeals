@@ -101,23 +101,10 @@ final class NearMeRanker {
     $keywords = $this->normalize($keywords);
     $tokens = $this->tokens($keywords);
 
-    $cacheKey = $this->buildCacheKey($originLat, $originLon);
+    $cacheKey = $this->buildCacheKey($originLat, $originLon, $radiusKm);
     $cacheHit = isset($this->nearbyDealCandidateCache[$cacheKey]);
 
-    $allCandidates = $this->getAllDealCandidatesForOrigin($originLat, $originLon);
-    if (empty($allCandidates)) {
-      $this->logTiming(sprintf(
-        'SMART LOCATION near-me ranking timing: total_ms="%s" radius_km="%s" keywords="%s" tokens_count="%d" cache_hit="%s" candidate_count="0" ranked_count="0"',
-        $this->formatMs($startedAt),
-        (string) $radiusKm,
-        $keywords,
-        count($tokens),
-        $cacheHit ? '1' : '0',
-      ));
-      return [];
-    }
-
-    $candidates = $this->filterCandidatesByRadius($allCandidates, $radiusKm);
+    $candidates = $this->getDealCandidatesForOriginWithinRadius($originLat, $originLon, $radiusKm);
     if (empty($candidates)) {
       $this->logTiming(sprintf(
         'SMART LOCATION near-me ranking timing: total_ms="%s" radius_km="%s" keywords="%s" tokens_count="%d" cache_hit="%s" candidate_count="0" ranked_count="0"',
@@ -230,16 +217,17 @@ final class NearMeRanker {
   }
 
   /**
-   * Returns cached deal candidates for one origin, across all distances.
+   * Returns cached deal candidates for one origin inside the requested radius.
    *
    * @return array<int,array<string,int|float|string>>
    *   Candidate rows.
    */
-  private function getAllDealCandidatesForOrigin(
+  private function getDealCandidatesForOriginWithinRadius(
     float $originLat,
     float $originLon,
+    float $radiusKm,
   ): array {
-    $cacheKey = $this->buildCacheKey($originLat, $originLon);
+    $cacheKey = $this->buildCacheKey($originLat, $originLon, $radiusKm);
 
     if (isset($this->nearbyDealCandidateCache[$cacheKey])) {
       return $this->nearbyDealCandidateCache[$cacheKey];
@@ -259,15 +247,21 @@ final class NearMeRanker {
         continue;
       }
 
+      $distance = $this->haversineKm(
+        $originLat,
+        $originLon,
+        (float) $venueMetadata['lat'],
+        (float) $venueMetadata['lon'],
+      );
+
+      if ($distance > $radiusKm) {
+        continue;
+      }
+
       $candidates[] = [
         'nid' => (int) $dealRow['nid'],
-        'distance' => $this->haversineKm(
-          $originLat,
-          $originLon,
-          (float) $venueMetadata['lat'],
-          (float) $venueMetadata['lon'],
-        ),
-        'position' => (int) $dealRow['position'],
+        'distance' => $distance,
+        'position' => count($candidates),
         'deal_title' => (string) $dealRow['deal_title'],
         'deal_body' => (string) $dealRow['deal_body'],
         'deal_offer_text' => (string) ($dealRow['deal_offer_text'] ?? ''),
@@ -336,59 +330,95 @@ final class NearMeRanker {
     }
 
     $dealPositions = array_flip(array_values($dealNids));
-    $deals = $this->loadNodesSafely($nodeStorage, $dealNids, 'deal');
-    if (empty($deals)) {
-      $this->storeBaseCaches();
-      $this->logBaseDatasetBuild($buildStartedAt);
-      return;
-    }
-
+    $pendingDealRows = [];
     $venueNids = [];
-    foreach ($deals as $deal) {
-      if (!$deal->hasField('field_venue') || $deal->get('field_venue')->isEmpty()) {
+
+    foreach (array_chunk(array_values($dealNids), 200) as $dealNidChunk) {
+      $deals = $this->loadNodesSafely($nodeStorage, $dealNidChunk, 'deal');
+      if (empty($deals)) {
         continue;
       }
 
-      $venueNid = (int) $deal->get('field_venue')->target_id;
-      if ($venueNid > 0) {
+      foreach ($deals as $deal) {
+        if (!$deal->hasField('field_venue') || $deal->get('field_venue')->isEmpty()) {
+          continue;
+        }
+
+        $venueNid = (int) $deal->get('field_venue')->target_id;
+        if ($venueNid <= 0) {
+          continue;
+        }
+
+        $dealNid = (int) $deal->id();
         $venueNids[$venueNid] = $venueNid;
+        $pendingDealRows[$dealNid] = [
+          'nid' => $dealNid,
+          'venue_nid' => $venueNid,
+          'position' => (int) ($dealPositions[$dealNid] ?? PHP_INT_MAX),
+          'deal_title' => $this->normalize((string) $deal->label()),
+          'deal_body' => $this->normalize(
+            $deal->hasField('body') && !$deal->get('body')->isEmpty()
+              ? (string) $deal->get('body')->value
+              : ''
+          ),
+          'deal_offer_text' => $this->normalize(
+            $deal->hasField('field_price_offer_text') && !$deal->get('field_price_offer_text')->isEmpty()
+              ? (string) $deal->get('field_price_offer_text')->value
+              : ''
+          ),
+          'deal_day_labels' => $this->normalize($this->dealDayLabelsText($deal)),
+          'deal_start_time' => $this->normalize(
+            $deal->hasField('field_start_time') && !$deal->get('field_start_time')->isEmpty()
+              ? (string) $deal->get('field_start_time')->value
+              : ''
+          ),
+          'deal_end_time' => $this->normalize(
+            $deal->hasField('field_end_time') && !$deal->get('field_end_time')->isEmpty()
+              ? (string) $deal->get('field_end_time')->value
+              : ''
+          ),
+        ];
       }
+
+      unset($deals);
     }
 
-    if (empty($venueNids)) {
+    if (empty($venueNids) || empty($pendingDealRows)) {
       $this->storeBaseCaches();
       $this->logBaseDatasetBuild($buildStartedAt);
       return;
     }
 
-    $venues = $this->loadNodesSafely($nodeStorage, array_values($venueNids), 'venue');
-    if (empty($venues)) {
-      $this->storeBaseCaches();
-      $this->logBaseDatasetBuild($buildStartedAt);
-      return;
-    }
-
-    foreach ($venues as $venue) {
-      $coords = $this->resultExtractor->extractVenueCoords($venue);
-      if ($coords === NULL) {
+    foreach (array_chunk(array_values($venueNids), 200) as $venueNidChunk) {
+      $venues = $this->loadNodesSafely($nodeStorage, $venueNidChunk, 'venue');
+      if (empty($venues)) {
         continue;
       }
 
-      [$lat, $lon] = $coords;
-      $venueNid = (int) $venue->id();
+      foreach ($venues as $venue) {
+        $coords = $this->resultExtractor->extractVenueCoords($venue);
+        if ($coords === NULL) {
+          continue;
+        }
 
-      $this->activeVenueMetadataCache[$venueNid] = [
-        'lat' => $lat,
-        'lon' => $lon,
-        'title' => $this->normalize((string) $venue->label()),
-        'description' => $this->normalize(
-          $venue->hasField('field_short_description') && !$venue->get('field_short_description')->isEmpty()
-            ? (string) $venue->get('field_short_description')->value
-            : ''
-        ),
-        'cuisine' => $this->normalize($this->venueCuisineText($venue)),
-        'tags' => $this->normalize($this->venueTagsText($venue)),
-      ];
+        [$lat, $lon] = $coords;
+        $venueNid = (int) $venue->id();
+
+        $this->activeVenueMetadataCache[$venueNid] = [
+          'lat' => $lat,
+          'lon' => $lon,
+          'title' => $this->normalize((string) $venue->label()),
+          'description' => $this->normalize(
+            $venue->hasField('field_short_description') && !$venue->get('field_short_description')->isEmpty()
+              ? (string) $venue->get('field_short_description')->value
+              : ''
+          ),
+          'cuisine' => $this->normalize($this->venueCuisineText($venue)),
+          'tags' => $this->normalize($this->venueTagsText($venue)),
+        ];
+      }
+
+      unset($venues);
     }
 
     if (empty($this->activeVenueMetadataCache)) {
@@ -398,44 +428,13 @@ final class NearMeRanker {
       return;
     }
 
-    foreach ($deals as $deal) {
-      if (!$deal->hasField('field_venue') || $deal->get('field_venue')->isEmpty()) {
+    foreach ($pendingDealRows as $dealNid => $dealRow) {
+      $venueNid = (int) $dealRow['venue_nid'];
+      if (!isset($this->activeVenueMetadataCache[$venueNid])) {
         continue;
       }
 
-      $venueNid = (int) $deal->get('field_venue')->target_id;
-      if ($venueNid <= 0 || !isset($this->activeVenueMetadataCache[$venueNid])) {
-        continue;
-      }
-
-      $dealNid = (int) $deal->id();
-      $this->activeDealRowCache[$dealNid] = [
-        'nid' => $dealNid,
-        'venue_nid' => $venueNid,
-        'position' => (int) ($dealPositions[$dealNid] ?? PHP_INT_MAX),
-        'deal_title' => $this->normalize((string) $deal->label()),
-        'deal_body' => $this->normalize(
-          $deal->hasField('body') && !$deal->get('body')->isEmpty()
-            ? (string) $deal->get('body')->value
-            : ''
-        ),
-        'deal_offer_text' => $this->normalize(
-          $deal->hasField('field_price_offer_text') && !$deal->get('field_price_offer_text')->isEmpty()
-            ? (string) $deal->get('field_price_offer_text')->value
-            : ''
-        ),
-        'deal_day_labels' => $this->normalize($this->dealDayLabelsText($deal)),
-        'deal_start_time' => $this->normalize(
-          $deal->hasField('field_start_time') && !$deal->get('field_start_time')->isEmpty()
-            ? (string) $deal->get('field_start_time')->value
-            : ''
-        ),
-        'deal_end_time' => $this->normalize(
-          $deal->hasField('field_end_time') && !$deal->get('field_end_time')->isEmpty()
-            ? (string) $deal->get('field_end_time')->value
-            : ''
-        ),
-      ];
+      $this->activeDealRowCache[(int) $dealNid] = $dealRow;
     }
 
     $this->storeBaseCaches();
@@ -1383,11 +1382,17 @@ final class NearMeRanker {
   /**
    * Builds a request-local cache key.
    */
-  private function buildCacheKey(float $originLat, float $originLon): string {
-    return implode(':', [
+  private function buildCacheKey(float $originLat, float $originLon, ?float $radiusKm = NULL): string {
+    $parts = [
       number_format($originLat, 6, '.', ''),
       number_format($originLon, 6, '.', ''),
-    ]);
+    ];
+
+    if ($radiusKm !== NULL) {
+      $parts[] = number_format($radiusKm, 2, '.', '');
+    }
+
+    return implode(':', $parts);
   }
 
   /**

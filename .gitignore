@@ -159,6 +159,7 @@ nbproject/*
 
 # DDev
 web/sites/default/settings.ddev.php
+.ddev/php/*
 
 # Exports
 *.gz
