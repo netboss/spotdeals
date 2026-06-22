@@ -257,6 +257,17 @@ Continue improving:
 * Venue diversity
 * Recommendation sequencing
 
+## Performance and Scalability Guardrails
+
+To avoid near-me memory exhaustion and slow live requests:
+
+* Never build full-site candidate arrays inside live requests.
+* Filter as early as possible, especially by radius/location before storing candidates.
+* Load entities in chunks instead of bulk-loading thousands of nodes at once.
+* Cache compact rows, not full entities.
+* Add memory and timing logs around expensive ranking paths.
+* Test geo search locally with `128M` and `256M` PHP memory limits before deploy.
+
 ## Do NOT Suggest
 
 * Rebuilding the entire near-me system

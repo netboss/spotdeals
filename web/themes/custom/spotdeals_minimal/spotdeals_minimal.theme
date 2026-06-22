@@ -64,20 +64,157 @@ function spotdeals_minimal_preprocess_page(array &$variables): void {
   }
 
   $venue = $node->get('field_venue')->entity;
+  if (!$venue instanceof NodeInterface) {
+    return;
+  }
 
-  $variables['spotdeals_deal_sidebar_venue'] = $node->get('field_venue')->view([
-    'label' => 'above',
-    'type' => 'entity_reference_label',
-    'settings' => [
-      'link' => TRUE,
-    ],
+  $variables['spotdeals_deal_sidebar_venue'] = _spotdeals_minimal_build_deal_page_venue_summary($venue);
+  $variables['spotdeals_deal_primary_ctas'] = _spotdeals_minimal_build_deal_page_ctas($node, $venue);
+  $variables['spotdeals_deal_related_deals'] = _spotdeals_minimal_build_deal_page_related_deals($node, $venue);
+}
+
+/**
+ * Implements hook_preprocess_node().
+ */
+function spotdeals_minimal_preprocess_node(array &$variables): void {
+  if (($variables['view_mode'] ?? '') !== 'full') {
+    return;
+  }
+
+  $node = $variables['node'] ?? NULL;
+  if (!$node instanceof NodeInterface || $node->bundle() !== 'deal') {
+    return;
+  }
+
+  $venue = NULL;
+  if ($node->hasField('field_venue') && !$node->get('field_venue')->isEmpty()) {
+    $candidate = $node->get('field_venue')->entity;
+    if ($candidate instanceof NodeInterface) {
+      $venue = $candidate;
+    }
+  }
+
+  $day_labels = _spotdeals_minimal_get_entity_reference_labels($node, ['field_day_of_week']);
+
+  $variables['spotdeals_deal_detail'] = [
+    'venue_label' => $venue instanceof NodeInterface ? $venue->label() : '',
+    'venue_url' => $venue instanceof NodeInterface ? $venue->toUrl() : NULL,
+    'address' => $venue instanceof NodeInterface ? _spotdeals_minimal_build_deal_page_address($venue) : '',
+    'category_labels' => _spotdeals_minimal_get_entity_reference_labels($node, ['field_deal_category']),
+    'day_labels' => $day_labels,
+    'day_summary' => _spotdeals_minimal_format_day_summary($day_labels),
+    'day_url' => _spotdeals_minimal_get_first_entity_reference_url($node, ['field_day_of_week']),
+    'time_summary' => _spotdeals_minimal_format_time_summary($node, ['field_start_time']),
+    'cuisine_labels' => $venue instanceof NodeInterface ? _spotdeals_minimal_get_entity_reference_labels($venue, ['field_cuisine', 'field_venue_type']) : [],
+  ];
+
+  $variables['spotdeals_deal_primary_ctas'] = $venue instanceof NodeInterface ? _spotdeals_minimal_build_deal_page_ctas($node, $venue) : [];
+}
+
+/**
+ * Builds the richer venue sidebar card for deal detail pages.
+ */
+function _spotdeals_minimal_build_deal_page_venue_summary(NodeInterface $venue): array {
+  $venue_url = $venue->toUrl();
+  $address = _spotdeals_minimal_build_deal_page_address($venue);
+  $phone = _spotdeals_minimal_get_first_field_text($venue, [
+    'field_phone',
+    'field_contact_phone',
+    'field_telephone',
+  ]);
+  $website = _spotdeals_minimal_get_first_link_field($venue, [
+    'field_website',
+    'field_url',
+    'field_official_website',
+  ]);
+  $cuisines = _spotdeals_minimal_get_entity_reference_labels($venue, [
+    'field_cuisine',
+    'field_venue_type',
   ]);
 
-  // The "Claim this listing" link is not stored in field_cta on these deal
-  // pages. It is generated from the referenced venue and uses the node claim
-  // form route that spotdeals_admin_form_alter() understands.
-  if ($venue instanceof NodeInterface) {
-    $variables['spotdeals_deal_sidebar_claim'] = [
+  $items = [];
+
+  if ($address !== '') {
+    $items[] = [
+      '#type' => 'html_tag',
+      '#tag' => 'div',
+      '#attributes' => ['class' => ['spotdeals-deal-venue-card__meta-item']],
+      'icon' => [
+        '#type' => 'html_tag',
+        '#tag' => 'span',
+        '#value' => '📍',
+        '#attributes' => ['class' => ['spotdeals-deal-venue-card__meta-icon'], 'aria-hidden' => 'true'],
+      ],
+      'text' => [
+        '#type' => 'html_tag',
+        '#tag' => 'span',
+        '#value' => $address,
+      ],
+    ];
+  }
+
+  if ($phone !== '') {
+    $items[] = [
+      '#type' => 'html_tag',
+      '#tag' => 'div',
+      '#attributes' => ['class' => ['spotdeals-deal-venue-card__meta-item']],
+      'icon' => [
+        '#type' => 'html_tag',
+        '#tag' => 'span',
+        '#value' => '☎',
+        '#attributes' => ['class' => ['spotdeals-deal-venue-card__meta-icon'], 'aria-hidden' => 'true'],
+      ],
+      'text' => [
+        '#type' => 'html_tag',
+        '#tag' => 'span',
+        '#value' => $phone,
+      ],
+    ];
+  }
+
+  if (!empty($cuisines)) {
+    $items[] = [
+      '#type' => 'html_tag',
+      '#tag' => 'div',
+      '#attributes' => ['class' => ['spotdeals-deal-venue-card__meta-item']],
+      'icon' => [
+        '#type' => 'html_tag',
+        '#tag' => 'span',
+        '#value' => '🍽',
+        '#attributes' => ['class' => ['spotdeals-deal-venue-card__meta-icon'], 'aria-hidden' => 'true'],
+      ],
+      'text' => [
+        '#type' => 'html_tag',
+        '#tag' => 'span',
+        '#value' => implode(', ', $cuisines),
+      ],
+    ];
+  }
+
+  $actions = _spotdeals_minimal_build_deal_page_ctas(NULL, $venue);
+
+  return [
+    '#type' => 'container',
+    '#attributes' => ['class' => ['spotdeals-deal-venue-card']],
+    'eyebrow' => [
+      '#type' => 'html_tag',
+      '#tag' => 'div',
+      '#value' => t('About this venue'),
+      '#attributes' => ['class' => ['spotdeals-deal-venue-card__eyebrow']],
+    ],
+    'title' => [
+      '#type' => 'link',
+      '#title' => $venue->label(),
+      '#url' => $venue_url,
+      '#attributes' => ['class' => ['spotdeals-deal-venue-card__title']],
+    ],
+    'meta' => [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['spotdeals-deal-venue-card__meta']],
+      'items' => $items,
+    ],
+    'actions' => $actions,
+    'claim' => [
       '#type' => 'link',
       '#title' => t('Claim this listing'),
       '#url' => Url::fromUserInput('/create/claim', [
@@ -86,11 +223,432 @@ function spotdeals_minimal_preprocess_page(array &$variables): void {
         ],
       ]),
       '#attributes' => [
-        'class' => ['claim-this-listing-link'],
+        'class' => ['spotdeals-deal-venue-card__claim', 'claim-this-listing-link'],
+      ],
+    ],
+  ];
+}
+
+/**
+ * Builds the main CTA row for deal detail pages.
+ */
+function _spotdeals_minimal_build_deal_page_ctas(?NodeInterface $deal, NodeInterface $venue): array {
+  $address = _spotdeals_minimal_build_deal_page_address($venue);
+  $phone = _spotdeals_minimal_get_first_field_text($venue, [
+    'field_phone',
+    'field_contact_phone',
+    'field_telephone',
+  ]);
+  $website = _spotdeals_minimal_get_first_link_field($venue, [
+    'field_website',
+    'field_url',
+    'field_official_website',
+  ]);
+
+  $links = [];
+
+  if ($address !== '') {
+    $links['directions'] = [
+      '#type' => 'link',
+      '#title' => t('Get Directions'),
+      '#url' => Url::fromUri('https://www.google.com/maps/search/?api=1&query=' . rawurlencode($address)),
+      '#attributes' => [
+        'class' => ['spotdeals-deal-cta-button', 'spotdeals-deal-cta-button--primary'],
+        'target' => '_blank',
+        'rel' => 'noopener noreferrer',
       ],
     ];
   }
+
+  $links['venue'] = [
+    '#type' => 'link',
+    '#title' => t('View Venue'),
+    '#url' => $venue->toUrl(),
+    '#attributes' => [
+      'class' => ['spotdeals-deal-cta-button'],
+    ],
+  ];
+
+  if (!empty($website['url'])) {
+    $links['website'] = [
+      '#type' => 'link',
+      '#title' => t('Visit Website'),
+      '#url' => $website['url'],
+      '#attributes' => [
+        'class' => ['spotdeals-deal-cta-button'],
+        'target' => '_blank',
+        'rel' => 'noopener noreferrer',
+      ],
+    ];
+  }
+
+  if ($phone !== '') {
+    $tel = preg_replace('/[^0-9+]/', '', $phone) ?? '';
+    if ($tel !== '') {
+      $links['phone'] = [
+        '#type' => 'link',
+        '#title' => t('Call @phone', ['@phone' => $phone]),
+        '#url' => Url::fromUri('tel:' . $tel),
+        '#attributes' => [
+          'class' => ['spotdeals-deal-cta-button'],
+        ],
+      ];
+    }
+  }
+
+  if (empty($links)) {
+    return [];
+  }
+
+  return [
+    '#type' => 'container',
+    '#attributes' => ['class' => ['spotdeals-deal-cta-panel']],
+    'heading' => [
+      '#type' => 'html_tag',
+      '#tag' => 'h2',
+      '#value' => t('Ready to go?'),
+      '#attributes' => ['class' => ['spotdeals-deal-cta-panel__title']],
+    ],
+    'description' => [
+      '#type' => 'html_tag',
+      '#tag' => 'p',
+      '#value' => t('Get directions, visit the venue page, or call ahead before you go.'),
+      '#attributes' => ['class' => ['spotdeals-deal-cta-panel__description']],
+    ],
+    'links' => [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['spotdeals-deal-cta-panel__links']],
+    ] + $links,
+  ];
 }
+
+/**
+ * Builds related deal links for other deals attached to the same venue.
+ */
+function _spotdeals_minimal_build_deal_page_related_deals(NodeInterface $deal, NodeInterface $venue): array {
+  $query = \Drupal::entityQuery('node')
+    ->accessCheck(TRUE)
+    ->condition('type', 'deal')
+    ->condition('status', 1)
+    ->condition('field_venue.target_id', $venue->id())
+    ->condition('nid', $deal->id(), '<>')
+    ->sort('changed', 'DESC')
+    ->range(0, 4);
+
+  $deal_field_definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', 'deal');
+  if (isset($deal_field_definitions['field_active'])) {
+    $query->condition('field_active', 1);
+  }
+
+  $ids = $query->execute();
+  if (empty($ids)) {
+    return [];
+  }
+
+  $nodes = \Drupal::entityTypeManager()->getStorage('node')->loadMultiple($ids);
+  $items = [];
+
+  foreach ($nodes as $related_deal) {
+    if (!$related_deal instanceof NodeInterface) {
+      continue;
+    }
+
+    $summary_parts = [];
+    $category_labels = _spotdeals_minimal_get_entity_reference_labels($related_deal, ['field_deal_category']);
+    if (!empty($category_labels)) {
+      $summary_parts[] = implode(', ', $category_labels);
+    }
+
+    $days = _spotdeals_minimal_get_entity_reference_labels($related_deal, ['field_day_of_week']);
+    if (!empty($days)) {
+      $summary_parts[] = implode(', ', $days);
+    }
+
+    $items[] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['spotdeals-related-deals__item']],
+      'link' => [
+        '#type' => 'link',
+        '#title' => $related_deal->label(),
+        '#url' => $related_deal->toUrl(),
+        '#attributes' => ['class' => ['spotdeals-related-deals__link']],
+      ],
+      'summary' => [
+        '#type' => 'html_tag',
+        '#tag' => 'div',
+        '#value' => implode(' · ', $summary_parts),
+        '#attributes' => ['class' => ['spotdeals-related-deals__summary']],
+        '#access' => !empty($summary_parts),
+      ],
+    ];
+  }
+
+  if (empty($items)) {
+    return [];
+  }
+
+  return [
+    '#type' => 'container',
+    '#attributes' => ['class' => ['spotdeals-related-deals']],
+    'heading' => [
+      '#type' => 'html_tag',
+      '#tag' => 'h2',
+      '#value' => t('More deals at @venue', ['@venue' => $venue->label()]),
+      '#attributes' => ['class' => ['spotdeals-related-deals__title']],
+    ],
+    'items' => [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['spotdeals-related-deals__items']],
+    ] + $items,
+  ];
+}
+
+/**
+ * Builds a compact single-line venue address from common address fields.
+ */
+function _spotdeals_minimal_build_deal_page_address(NodeInterface $venue): string {
+  foreach (['field_address', 'field_location', 'field_venue_address'] as $field_name) {
+    if (!$venue->hasField($field_name) || $venue->get($field_name)->isEmpty()) {
+      continue;
+    }
+
+    $item = $venue->get($field_name)->first();
+    if ($item === NULL) {
+      continue;
+    }
+
+    $parts = [];
+    foreach (['address_line1', 'address_line2', 'locality', 'administrative_area', 'postal_code'] as $property) {
+      if (isset($item->{$property}) && trim((string) $item->{$property}) !== '') {
+        $parts[] = trim((string) $item->{$property});
+      }
+    }
+
+    if (!empty($parts)) {
+      return implode(', ', $parts);
+    }
+
+    if (isset($item->value) && trim((string) $item->value) !== '') {
+      return trim((string) $item->value);
+    }
+  }
+
+  return '';
+}
+
+/**
+ * Returns the first plain text value from a list of candidate fields.
+ */
+function _spotdeals_minimal_get_first_field_text(NodeInterface $node, array $field_names): string {
+  foreach ($field_names as $field_name) {
+    if (!$node->hasField($field_name) || $node->get($field_name)->isEmpty()) {
+      continue;
+    }
+
+    $item = $node->get($field_name)->first();
+    if ($item === NULL) {
+      continue;
+    }
+
+    foreach (['value', 'uri', 'title'] as $property) {
+      if (isset($item->{$property}) && trim((string) $item->{$property}) !== '') {
+        return trim((string) $item->{$property});
+      }
+    }
+  }
+
+  return '';
+}
+
+/**
+ * Returns the first link field value from a list of candidate fields.
+ */
+function _spotdeals_minimal_get_first_link_field(NodeInterface $node, array $field_names): array {
+  foreach ($field_names as $field_name) {
+    if (!$node->hasField($field_name) || $node->get($field_name)->isEmpty()) {
+      continue;
+    }
+
+    $item = $node->get($field_name)->first();
+    if ($item === NULL || empty($item->uri)) {
+      continue;
+    }
+
+    $uri = trim((string) $item->uri);
+    if ($uri === '') {
+      continue;
+    }
+
+    try {
+      return [
+        'url' => Url::fromUri($uri),
+        'title' => trim((string) ($item->title ?? '')),
+      ];
+    }
+    catch (\InvalidArgumentException) {
+      continue;
+    }
+  }
+
+  return [];
+}
+
+/**
+ * Returns labels from the first populated entity reference field.
+ */
+function _spotdeals_minimal_get_entity_reference_labels(NodeInterface $node, array $field_names): array {
+  foreach ($field_names as $field_name) {
+    if (!$node->hasField($field_name) || $node->get($field_name)->isEmpty()) {
+      continue;
+    }
+
+    $labels = [];
+    foreach ($node->get($field_name) as $item) {
+      if (!empty($item->entity) && $item->entity instanceof EntityInterface) {
+        $labels[] = $item->entity->label();
+      }
+      elseif (isset($item->value) && trim((string) $item->value) !== '') {
+        $labels[] = trim((string) $item->value);
+      }
+    }
+
+    if (!empty($labels)) {
+      return $labels;
+    }
+  }
+
+  return [];
+}
+
+/**
+ * Formats deal days into a compact readable summary.
+ */
+/**
+ * Gets the first referenced entity URL from the provided fields.
+ */
+function _spotdeals_minimal_get_first_entity_reference_url(NodeInterface $node, array $field_names): ?Url {
+  foreach ($field_names as $field_name) {
+    if (!$node->hasField($field_name) || $node->get($field_name)->isEmpty()) {
+      continue;
+    }
+
+    foreach ($node->get($field_name) as $item) {
+      if (!empty($item->entity) && $item->entity instanceof EntityInterface && $item->entity->hasLinkTemplate('canonical')) {
+        return $item->entity->toUrl();
+      }
+    }
+  }
+
+  return NULL;
+}
+
+function _spotdeals_minimal_format_day_summary(array $labels): string {
+  $normalized_labels = [];
+
+  foreach ($labels as $label) {
+    $label = html_entity_decode(strip_tags((string) $label), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $label = preg_replace('/\s+/', ' ', $label) ?? $label;
+    $label = trim($label);
+
+    if ($label === '') {
+      continue;
+    }
+
+    foreach (preg_split('/\s*,\s*/', $label) ?: [] as $part) {
+      $part = trim($part);
+      if ($part !== '') {
+        $normalized_labels[] = $part;
+      }
+    }
+  }
+
+  $labels = array_values(array_unique($normalized_labels));
+
+  if (empty($labels)) {
+    return '';
+  }
+
+  $weekdays = [
+    'monday' => 'Monday',
+    'tuesday' => 'Tuesday',
+    'wednesday' => 'Wednesday',
+    'thursday' => 'Thursday',
+    'friday' => 'Friday',
+    'saturday' => 'Saturday',
+    'sunday' => 'Sunday',
+  ];
+
+  $weekday_keys = array_keys($weekdays);
+  $indexes = [];
+  foreach ($labels as $label) {
+    $key = strtolower($label);
+    $key = preg_replace('/[^a-z]/', '', $key) ?? $key;
+    if (!array_key_exists($key, $weekdays)) {
+      return implode(', ', $labels);
+    }
+
+    $indexes[] = array_search($key, $weekday_keys, TRUE);
+  }
+
+  $indexes = array_values(array_unique($indexes));
+  sort($indexes);
+
+  // Common weekday deal pattern. Keep mobile/UI copy compact and readable.
+  if ($indexes === [0, 1, 2, 3, 4]) {
+    return (string) t('Monday to Friday');
+  }
+
+  $is_consecutive = count($indexes) >= 3;
+  for ($i = 1; $i < count($indexes); $i++) {
+    if ($indexes[$i] !== $indexes[$i - 1] + 1) {
+      $is_consecutive = FALSE;
+      break;
+    }
+  }
+
+  if ($is_consecutive) {
+    $ordered_days = array_values($weekdays);
+    return (string) t('@start to @end', [
+      '@start' => $ordered_days[$indexes[0]],
+      '@end' => $ordered_days[end($indexes)],
+    ]);
+  }
+
+  return implode(', ', $labels);
+}
+
+/**
+ * Formats deal time fields as a 12-hour public-facing summary.
+ */
+function _spotdeals_minimal_format_time_summary(NodeInterface $node, array $field_names): string {
+  foreach ($field_names as $field_name) {
+    if (!$node->hasField($field_name) || $node->get($field_name)->isEmpty()) {
+      continue;
+    }
+
+    $times = [];
+    foreach ($node->get($field_name) as $item) {
+      $value = trim((string) ($item->value ?? ''));
+      if ($value === '') {
+        continue;
+      }
+
+      $timestamp = strtotime($value);
+      if ($timestamp === FALSE) {
+        $timestamp = strtotime('1970-01-01 ' . $value);
+      }
+
+      $times[] = $timestamp === FALSE ? $value : date('g:i A', $timestamp);
+    }
+
+    if (!empty($times)) {
+      return implode(', ', array_unique($times));
+    }
+  }
+
+  return '';
+}
+
 
 /**
  * Implements hook_theme_suggestions_views_view_alter().

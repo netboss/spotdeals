@@ -1,7 +1,7 @@
 {#
 /**
  * @file
- * Olivero's theme implementation to display a node.
+ * Theme implementation to display a SpotDeals deal node.
  */
 #}
 
@@ -44,9 +44,139 @@
     {% endif %}
   </header>
 
-  <div{{ content_attributes.addClass('node__content', layout) }}>
-    {{ content|without('comment')|without('field_venue') }}
-  </div>
+  {% if view_mode == 'full' %}
+    {% set has_deal_body = node.body is defined and node.body.value is not empty %}
+    <div{{ content_attributes.addClass('node__content', 'spotdeals-deal-detail') }}>
+      <section class="spotdeals-deal-detail__hero" aria-label="{{ 'Deal summary'|t }}">
+        <div class="spotdeals-deal-detail__meta-row">
+          {% if spotdeals_deal_detail.address %}
+            <span class="spotdeals-deal-detail__location">{{ spotdeals_deal_detail.address }}</span>
+          {% endif %}
+
+          {% if spotdeals_deal_detail.venue_label %}
+            <span class="spotdeals-deal-detail__venue">
+              {% if spotdeals_deal_detail.venue_url %}
+                <a href="{{ spotdeals_deal_detail.venue_url }}">{{ spotdeals_deal_detail.venue_label }}</a>
+              {% else %}
+                {{ spotdeals_deal_detail.venue_label }}
+              {% endif %}
+            </span>
+          {% endif %}
+        </div>
+
+        {% if content.field_deal_category %}
+          <div class="spotdeals-deal-detail__category">
+            {{ content.field_deal_category }}
+          </div>
+        {% endif %}
+
+        {% if content.field_price_offer_text %}
+          <div class="spotdeals-deal-detail__offer">
+            {{ content.field_price_offer_text }}
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="spotdeals-deal-facts" aria-label="{{ 'Deal facts'|t }}">
+        {% if content.field_day_of_week %}
+          <div class="spotdeals-deal-fact">
+            <div class="spotdeals-deal-fact__icon" aria-hidden="true">📅</div>
+            <div class="spotdeals-deal-fact__label">{{ 'When'|t }}</div>
+            <div class="spotdeals-deal-fact__value">
+              {% set day_text = spotdeals_deal_detail.day_summary ?: spotdeals_deal_detail.day_labels|join(', ') %}
+              {% if spotdeals_deal_detail.day_url %}
+                <a href="{{ spotdeals_deal_detail.day_url }}">{{ day_text }}</a>
+              {% else %}
+                {{ day_text }}
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if content.field_start_time %}
+          <div class="spotdeals-deal-fact">
+            <div class="spotdeals-deal-fact__icon" aria-hidden="true">⏰</div>
+            <div class="spotdeals-deal-fact__label">{{ 'Time'|t }}</div>
+            <div class="spotdeals-deal-fact__value">
+              {{ spotdeals_deal_detail.time_summary ?: content.field_start_time }}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if spotdeals_deal_detail.cuisine_labels %}
+          <div class="spotdeals-deal-fact">
+            <div class="spotdeals-deal-fact__icon" aria-hidden="true">🍽</div>
+            <div class="spotdeals-deal-fact__label">{{ 'Cuisine'|t }}</div>
+            <div class="spotdeals-deal-fact__value">{{ spotdeals_deal_detail.cuisine_labels|join(', ') }}</div>
+          </div>
+        {% endif %}
+
+        {% if spotdeals_deal_detail.category_labels %}
+          <div class="spotdeals-deal-fact">
+            <div class="spotdeals-deal-fact__icon" aria-hidden="true">🏷</div>
+            <div class="spotdeals-deal-fact__label">{{ 'Deal type'|t }}</div>
+            <div class="spotdeals-deal-fact__value">{{ spotdeals_deal_detail.category_labels|join(', ') }}</div>
+          </div>
+        {% endif %}
+      </section>
+
+      {% if spotdeals_deal_primary_ctas %}
+        <div class="spotdeals-deal-detail__primary-cta">
+          {{ spotdeals_deal_primary_ctas }}
+        </div>
+      {% endif %}
+
+      {#
+      Deal details is intentionally kept commented out for now.
+      Some deal nodes expose an empty body render array, which created an empty
+      card on the public deal page. Keep this markup here for a future phase
+      when deal body/details content is consistently populated.
+
+      {% if has_deal_body %}
+        <section class="spotdeals-deal-about" aria-label="{{ 'Deal details'|t }}">
+          <h2 class="spotdeals-deal-about__title">{{ 'Deal details'|t }}</h2>
+          {{ content.body }}
+        </section>
+      {% endif %}
+      #}
+
+      {% if content['spotdeals_vote'] %}
+        <section class="spotdeals-deal-feedback" aria-label="{{ 'Deal feedback'|t }}">
+          {{ content['spotdeals_vote'] }}
+        </section>
+      {% elseif content['spotdeals_vote_deal'] %}
+        <section class="spotdeals-deal-feedback" aria-label="{{ 'Deal feedback'|t }}">
+          {{ content['spotdeals_vote_deal'] }}
+        </section>
+      {% elseif content['spotdeals-vote'] %}
+        <section class="spotdeals-deal-feedback" aria-label="{{ 'Deal feedback'|t }}">
+          {{ content['spotdeals-vote'] }}
+        </section>
+      {% endif %}
+
+      {{ content|without(
+        'comment',
+        'field_venue',
+        'field_active',
+        'field_recurring',
+        'field_featured',
+        'field_deal_category',
+        'field_price_offer_text',
+        'field_day_of_week',
+        'field_start_time',
+        'body',
+        'field_cta',
+        'field_image',
+        'spotdeals_vote',
+        'spotdeals_vote_deal',
+        'spotdeals-vote'
+      ) }}
+    </div>
+  {% else %}
+    <div{{ content_attributes.addClass('node__content', layout) }}>
+      {{ content|without('comment')|without('field_venue') }}
+    </div>
+  {% endif %}
 
   {% if content.comment %}
     <div id="comments" class="{{ layout }}">
