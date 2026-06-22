@@ -9,7 +9,7 @@
  */
 #}
 {% set has_sidebar_left = page.sidebar_left ? true : false %}
-{% set has_sidebar_right = (page.sidebar or spotdeals_deal_sidebar_venue) ? true : false %}
+{% set has_sidebar_right = (page.sidebar or spotdeals_deal_sidebar_venue or spotdeals_deal_related_deals) ? true : false %}
 {% set main_classes = [
   'spotdeals-page-main',
   has_sidebar_left ? 'spotdeals-page-main--has-left-sidebar',
@@ -89,24 +89,24 @@
               <main class="spotdeals-main-content">
                 {{ page.content_above }}
                 {{ page.content }}
+
                 {{ page.content_below }}
               </main>
 
-              {% if page.sidebar or spotdeals_deal_sidebar_venue %}
+              {% if page.sidebar or spotdeals_deal_sidebar_venue or spotdeals_deal_related_deals %}
                 <aside class="region region--sidebar layout-sidebar-second spotdeals-sidebar-right" role="complementary" aria-label="{{ 'Deal venue'|t }}">
                   {% if spotdeals_deal_sidebar_venue %}
                     <div class="spotdeals-deal-sidebar-venue">
                       {{ spotdeals_deal_sidebar_venue }}
-                      {% if spotdeals_deal_sidebar_claim %}
-                        <div class="spotdeals-deal-sidebar-claim">
-                          {{ spotdeals_deal_sidebar_claim }}
-                        </div>
-                      {% endif %}
                     </div>
                   {% endif %}
 
                   {% if page.sidebar %}
                     {{ page.sidebar }}
+                  {% endif %}
+
+                  {% if spotdeals_deal_related_deals %}
+                    {{ spotdeals_deal_related_deals }}
                   {% endif %}
                 </aside>
               {% endif %}
