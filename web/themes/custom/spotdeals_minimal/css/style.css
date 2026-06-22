@@ -1,27 +1,4 @@
-:root {
-  --spotdeals-content-max-width: 1180px;
-  --spotdeals-reading-width: 760px;
-  --spotdeals-surface: #ffffff;
-  --spotdeals-surface-soft: #f7f9fc;
-  --spotdeals-border: #d9e0ea;
-  --spotdeals-text: #111827;
-  --spotdeals-text-soft: #5b6472;
-  --spotdeals-accent: #8db61f;
-  --spotdeals-accent-dark: #6f9117;
-  --spotdeals-sidebar-heading-bg: linear-gradient(180deg, #f7fbeb 0%, #eef6d9 100%);
-  --spotdeals-sidebar-heading-border: #d6e4ad;
-  --spotdeals-radius: 5px;
-  --spotdeals-radius-sm: 4px;
-  --spotdeals-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-  --spotdeals-shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.035);
-  --spotdeals-space-1: 0.5rem;
-  --spotdeals-space-2: 0.75rem;
-  --spotdeals-space-3: 1rem;
-  --spotdeals-space-4: 1.25rem;
-  --spotdeals-space-5: 1.5rem;
-  --spotdeals-space-6: 2rem;
-  --spotdeals-space-7: 2.5rem;
-}
+@import 'variables.css';
 
 html {
   scroll-behavior: smooth;
@@ -1302,6 +1279,8 @@ h1.page-title {
     width: min(calc(100% - 1rem), 100%);
     gap: 1rem;
     padding-block: 1rem 2rem;
+    grid-template-columns: none;
+    margin-inline: unset;
   }
 }
 
@@ -4465,5 +4444,23 @@ h1.page-title {
     min-width: 2.65rem;
     padding-inline: 0.55rem;
     font-size: 0.78rem;
+  }
+}
+
+/* Mobile RSS/feed row */
+@media (max-width: 767px) {
+  .spotdeals-page-main {
+    width: 100%;
+    grid-template-columns: none;
+    margin-inline: unset;
+  }
+
+  .spotdeals-main-content {
+    grid-area: unset;
+  }
+
+  .feed-icon__label {
+    flex-shrink: unset;
+    line-height: 1.5;
   }
 }

@@ -1,0 +1,95 @@
+{#
+/**
+ * @file
+ * Theme implementation for SpotDeals taxonomy term landing pages.
+ */
+#}
+{% set landing = spotdeals_taxonomy_landing|default({}) %}
+{% set has_landing = landing.title is defined %}
+
+{% if has_landing %}
+  <section{{ attributes.addClass('spotdeals-taxonomy-landing', 'spotdeals-taxonomy-landing--' ~ landing.vocabulary|clean_class) }}>
+    <header class="spotdeals-taxonomy-landing__hero">
+      {% if landing.eyebrow %}
+        <div class="spotdeals-taxonomy-landing__eyebrow">{{ landing.eyebrow }}</div>
+      {% endif %}
+
+      {{ title_prefix }}
+      <h2 class="spotdeals-taxonomy-landing__hero-title">{{ landing.title }}</h2>
+      {{ title_suffix }}
+
+      {% if landing.intro %}
+        <div class="spotdeals-taxonomy-landing__intro">{{ landing.intro }}</div>
+      {% endif %}
+
+      {% if landing.stats %}
+        <div class="spotdeals-seo-summary spotdeals-taxonomy-landing__summary" aria-label="{{ 'Page summary'|t }}">
+          {% for stat in landing.stats %}
+            <div class="spotdeals-seo-summary__card">
+              {% if stat.icon %}
+                <div class="spotdeals-seo-summary__icon" aria-hidden="true">{{ stat.icon }}</div>
+              {% endif %}
+              <div class="spotdeals-seo-summary__value">{{ stat.value }}</div>
+              <div class="spotdeals-seo-summary__label">{{ stat.label }}</div>
+              {% if stat.description %}
+                <div class="spotdeals-seo-summary__description">{{ stat.description }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </header>
+
+    {{ content|without('description') }}
+
+    {% if landing.related_links %}
+      <section class="spotdeals-seo-related spotdeals-taxonomy-landing__related" aria-labelledby="spotdeals-taxonomy-related-title">
+        <h2 id="spotdeals-taxonomy-related-title" class="spotdeals-seo-section-title">{{ 'Related deal pages'|t }}</h2>
+        <div class="spotdeals-seo-related__links">
+          {% for link in landing.related_links %}
+            <a class="spotdeals-seo-related__link" href="{{ link.url }}">
+              <span class="spotdeals-seo-related__icon" aria-hidden="true">🏷</span>
+              <span>
+                {{ link.title }}
+                {% if link.subtitle %}
+                  <small>{{ link.subtitle }}</small>
+                {% endif %}
+              </span>
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if landing.faq %}
+      <section class="spotdeals-taxonomy-faq" aria-labelledby="spotdeals-taxonomy-faq-title">
+        <h2 id="spotdeals-taxonomy-faq-title" class="spotdeals-seo-section-title">{{ 'Frequently asked questions'|t }}</h2>
+        <div class="spotdeals-taxonomy-faq__items">
+          {% for item in landing.faq %}
+            <details class="spotdeals-taxonomy-faq__item">
+              <summary>{{ item.question }}</summary>
+              <p>{{ item.answer }}</p>
+            </details>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    <section class="spotdeals-seo-cta spotdeals-taxonomy-landing__cta" aria-label="{{ 'Search more deals'|t }}">
+      <div>
+        <h2>{{ 'Want to search another way?'|t }}</h2>
+        <p>{{ 'Browse all current deals by keyword, cuisine, city, category, or nearby location.'|t }}</p>
+      </div>
+      <a class="spotdeals-seo-cta__button" href="{{ landing.browse_url }}">{{ 'Browse all deals'|t }}</a>
+    </section>
+  </section>
+{% else %}
+  <article{{ attributes }}>
+    {{ title_prefix }}
+    {% if name and not page %}
+      <h2>{{ name }}</h2>
+    {% endif %}
+    {{ title_suffix }}
+    {{ content }}
+  </article>
+{% endif %}

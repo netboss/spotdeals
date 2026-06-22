@@ -1,3 +1,5 @@
+@import 'variables.css';
+
 .spotdeals-page-main--deals-landing {
   align-items: start;
 }
@@ -726,3 +728,348 @@
   display: none;
 }
 
+
+/* Taxonomy term landing pages. */
+.spotdeals-taxonomy-landing {
+  --spotdeals-taxonomy-green: var(--spotdeals-seo-green, #8db61f);
+  --spotdeals-taxonomy-green-dark: var(--spotdeals-seo-green-dark, #6f9117);
+  --spotdeals-taxonomy-border: var(--spotdeals-seo-border, #d9e0ea);
+  --spotdeals-taxonomy-text: var(--spotdeals-seo-text, #111827);
+  --spotdeals-taxonomy-muted: var(--spotdeals-seo-muted, #5b6472);
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.spotdeals-taxonomy-landing__hero {
+  margin-bottom: 1.75rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--spotdeals-taxonomy-border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbef 100%);
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.05);
+}
+
+.spotdeals-taxonomy-landing__eyebrow {
+  margin-bottom: 0.55rem;
+  color: var(--spotdeals-taxonomy-green-dark);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spotdeals-taxonomy-landing__title {
+  margin: 0;
+  color: var(--spotdeals-taxonomy-text);
+  font-size: clamp(2rem, 6vw, 3.8rem);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.spotdeals-taxonomy-landing__intro {
+  max-width: 760px;
+  margin-top: 1rem;
+  color: var(--spotdeals-taxonomy-muted);
+  font-size: clamp(1rem, 2.4vw, 1.12rem);
+  line-height: 1.65;
+}
+
+.spotdeals-taxonomy-landing__intro p {
+  margin: 0;
+}
+
+.spotdeals-taxonomy-landing__summary.spotdeals-seo-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+
+.spotdeals-taxonomy-landing .view-taxonomy-term,
+.spotdeals-taxonomy-landing .view-id-taxonomy_term {
+  max-width: 760px;
+}
+
+.spotdeals-taxonomy-landing .view-content {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.spotdeals-taxonomy-landing .views-row + .views-row {
+  margin-top: 0;
+}
+
+.spotdeals-taxonomy-landing .node--type-deal.node--view-mode-teaser {
+  margin: 0;
+}
+
+.spotdeals-deal-teaser-card {
+  margin: 0;
+}
+
+.spotdeals-deal-card--taxonomy-teaser .spotdeals-deal-card__venue-title > a,
+.spotdeals-deal-card--taxonomy-teaser .spotdeals-deal-card__deal-title > a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.spotdeals-deal-card--taxonomy-teaser .spotdeals-deal-card__venue-title > a:hover,
+.spotdeals-deal-card--taxonomy-teaser .spotdeals-deal-card__venue-title > a:focus,
+.spotdeals-deal-card--taxonomy-teaser .spotdeals-deal-card__deal-title > a:hover,
+.spotdeals-deal-card--taxonomy-teaser .spotdeals-deal-card__deal-title > a:focus {
+  text-decoration: underline;
+}
+
+.spotdeals-taxonomy-faq {
+  max-width: 760px;
+  margin: 2rem 0;
+}
+
+.spotdeals-taxonomy-faq__items {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.spotdeals-taxonomy-faq__item {
+  border: 1px solid var(--spotdeals-taxonomy-border);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.035);
+}
+
+.spotdeals-taxonomy-faq__item summary {
+  cursor: pointer;
+  padding: 1rem 1.1rem;
+  color: var(--spotdeals-taxonomy-text);
+  font-weight: 900;
+}
+
+.spotdeals-taxonomy-faq__item p {
+  margin: 0;
+  padding: 0 1.1rem 1rem;
+  color: var(--spotdeals-taxonomy-muted);
+  line-height: 1.55;
+}
+
+.spotdeals-taxonomy-landing__related,
+.spotdeals-taxonomy-landing__cta {
+  max-width: 760px;
+}
+
+@media (max-width: 700px) {
+  .spotdeals-taxonomy-landing {
+    max-width: 100%;
+  }
+
+  .spotdeals-taxonomy-landing__hero {
+    border-radius: 10px;
+  }
+
+  .spotdeals-taxonomy-landing__summary.spotdeals-seo-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .spotdeals-taxonomy-landing__summary .spotdeals-seo-summary__card {
+    border-right: 0;
+  }
+
+  .spotdeals-taxonomy-landing__cta.spotdeals-seo-cta {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .spotdeals-taxonomy-landing__cta .spotdeals-seo-cta__button {
+    text-align: center;
+  }
+}
+
+/* SD taxonomy landing final alignment pass.
+ * Keeps taxonomy pages out of the wider /deals landing transforms and centers
+ * the header/results stack on mobile.
+ */
+.path-taxonomy .view-taxonomy-term,
+.path-taxonomy .view-id-taxonomy_term {
+  width: 100%;
+  max-width: none;
+}
+
+.path-taxonomy .view-taxonomy-term > .view-header,
+.path-taxonomy .view-id-taxonomy_term > .view-header,
+.path-taxonomy .view-taxonomy-term > .view-content,
+.path-taxonomy .view-id-taxonomy_term > .view-content,
+.path-taxonomy .view-taxonomy-term > .pager,
+.path-taxonomy .view-id-taxonomy_term > .pager,
+.path-taxonomy .view-taxonomy-term > .feed-icons,
+.path-taxonomy .view-id-taxonomy_term > .feed-icons {
+  width: 100%;
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+.spotdeals-taxonomy-landing {
+  width: 100%;
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  transform: none;
+}
+
+.spotdeals-taxonomy-landing__hero,
+.spotdeals-taxonomy-landing__related,
+.spotdeals-taxonomy-faq,
+.spotdeals-taxonomy-landing__cta {
+  width: 100%;
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  transform: none;
+}
+
+.spotdeals-taxonomy-landing__hero-title {
+  margin: 0 0 0.75rem;
+  color: var(--spotdeals-taxonomy-text);
+  font-size: clamp(2.35rem, 3.35vw, 3rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.spotdeals-taxonomy-landing__summary.spotdeals-seo-summary {
+  width: 100%;
+  max-width: 100%;
+  margin: 1.35rem 0 0;
+  transform: none;
+}
+
+@media (min-width: 1280px) {
+  .path-taxonomy .spotdeals-taxonomy-landing__summary.spotdeals-seo-summary {
+    margin-left: 0;
+    margin-right: 0;
+    transform: none;
+  }
+}
+
+@media (min-width: 1460px) {
+  .path-taxonomy .spotdeals-taxonomy-landing,
+  .path-taxonomy .spotdeals-taxonomy-landing__hero,
+  .path-taxonomy .spotdeals-taxonomy-landing__related,
+  .path-taxonomy .spotdeals-taxonomy-faq,
+  .path-taxonomy .spotdeals-taxonomy-landing__cta,
+  .path-taxonomy .spotdeals-taxonomy-landing__summary.spotdeals-seo-summary {
+    transform: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .path-taxonomy .view-taxonomy-term > .view-header,
+  .path-taxonomy .view-id-taxonomy_term > .view-header,
+  .path-taxonomy .view-taxonomy-term > .view-content,
+  .path-taxonomy .view-id-taxonomy_term > .view-content,
+  .path-taxonomy .view-taxonomy-term > .pager,
+  .path-taxonomy .view-id-taxonomy_term > .pager,
+  .path-taxonomy .view-taxonomy-term > .feed-icons,
+  .path-taxonomy .view-id-taxonomy_term > .feed-icons,
+  .spotdeals-taxonomy-landing,
+  .spotdeals-taxonomy-landing__hero,
+  .spotdeals-taxonomy-landing__related,
+  .spotdeals-taxonomy-faq,
+  .spotdeals-taxonomy-landing__cta {
+    width: min(100%, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
+    margin-left: auto;
+    margin-right: auto;
+    gap: 0rem;
+  }
+
+  .spotdeals-taxonomy-landing__hero {
+    margin-bottom: 1rem;
+    text-align: left;
+    border-radius: 10px;
+  }
+
+  .spotdeals-taxonomy-landing__hero-title {
+    font-size: clamp(1.65rem, 7.5vw, 2.15rem);
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+  }
+
+  .spotdeals-taxonomy-landing__summary.spotdeals-seo-summary {
+    width: 100%;
+    max-width: 100%;
+    grid-template-columns: 1fr;
+    margin-left: 0;
+    margin-right: 0;
+    transform: none;
+  }
+
+  .spotdeals-taxonomy-landing__summary .spotdeals-seo-summary__card {
+    border-right: 1px solid var(--spotdeals-seo-border);
+  }
+
+  .spotdeals-seo-related,
+  .spotdeals-taxonomy-faq,
+  .spotdeals-seo-cta {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .spotdeals-seo-related__link {
+    min-height: 0;
+    padding: 0.75rem;
+  }
+
+  .spotdeals-taxonomy-landing__cta.spotdeals-seo-cta {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .spotdeals-taxonomy-landing__cta .spotdeals-seo-cta__button {
+    text-align: center;
+  }
+}
+
+/* Taxonomy page: let the page title/header region use the full wrapper width. */
+.path-taxonomy .region--content-above,
+.path-taxonomy .region--content-above>*,
+.path-taxonomy #block-spotdeals-minimal-page-title {
+  width: 100%;
+  max-width: none;
+}
+
+/* Taxonomy page: let the main content block use the full wrapper width. */
+.path-taxonomy #block-spotdeals-minimal-content,
+.path-taxonomy #block-spotdeals-minimal-content>.block__content,
+.path-taxonomy #block-spotdeals-minimal-content .views-element-container,
+.path-taxonomy #block-spotdeals-minimal-content .view-taxonomy-term {
+  width: 100%;
+  max-width: none;
+}
+
+@media (min-width: 43.75rem) {
+  .path-taxonomy #block-spotdeals-minimal-content {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Taxonomy page: expand page title/header block to full content wrapper. */
+@media (min-width: 43.75rem) {
+  .path-taxonomy .spotdeals-main-content {
+    display: grid;
+  }
+
+  .path-taxonomy .region--content-above,
+  .path-taxonomy .region--content-above>*,
+  .path-taxonomy .region--content-above #block-spotdeals-minimal-page-title,
+  .path-taxonomy .region--content-above #block-spotdeals-minimal-page-title>* {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: none;
+  }
+
+  .path-taxonomy .region--content-above .page-title {
+    width: 100%;
+    max-width: none;
+  }
+}
