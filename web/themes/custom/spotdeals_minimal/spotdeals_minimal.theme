@@ -3,6 +3,7 @@
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
+use Drupal\taxonomy\TermInterface;
 use Drupal\views\ViewExecutable;
 
 /**
@@ -30,6 +31,10 @@ function spotdeals_minimal_preprocess_page(array &$variables): void {
   $node = \Drupal::routeMatch()->getParameter('node');
 
   if (str_starts_with($route_name, 'spotdeals_seo_landing.deals_')) {
+    $variables['#attached']['library'][] = 'spotdeals_minimal/seo_landing';
+  }
+
+  if ($route_name === 'entity.taxonomy_term.canonical') {
     $variables['#attached']['library'][] = 'spotdeals_minimal/seo_landing';
   }
 
@@ -77,12 +82,17 @@ function spotdeals_minimal_preprocess_page(array &$variables): void {
  * Implements hook_preprocess_node().
  */
 function spotdeals_minimal_preprocess_node(array &$variables): void {
-  if (($variables['view_mode'] ?? '') !== 'full') {
+  $node = $variables['node'] ?? NULL;
+  if (!$node instanceof NodeInterface || $node->bundle() !== 'deal') {
     return;
   }
 
-  $node = $variables['node'] ?? NULL;
-  if (!$node instanceof NodeInterface || $node->bundle() !== 'deal') {
+  if (($variables['view_mode'] ?? '') === 'teaser') {
+    $variables['spotdeals_deal_teaser_card'] = _spotdeals_minimal_build_deal_teaser_card($node);
+    return;
+  }
+
+  if (($variables['view_mode'] ?? '') !== 'full') {
     return;
   }
 
@@ -109,6 +119,312 @@ function spotdeals_minimal_preprocess_node(array &$variables): void {
   ];
 
   $variables['spotdeals_deal_primary_ctas'] = $venue instanceof NodeInterface ? _spotdeals_minimal_build_deal_page_ctas($node, $venue) : [];
+}
+
+/**
+ * Implements hook_preprocess_taxonomy_term().
+ */
+function spotdeals_minimal_preprocess_taxonomy_term(array &$variables): void {
+  $term = $variables['term'] ?? NULL;
+  if (!$term instanceof TermInterface) {
+    return;
+  }
+
+  $vocabulary = $term->bundle();
+  $term_label = $term->label();
+  $landing_title = _spotdeals_minimal_build_taxonomy_landing_title($term);
+  $description = trim((string) ($variables['content']['description'][0]['#context']['value'] ?? ''));
+
+  $variables['spotdeals_taxonomy_landing'] = [
+    'vocabulary' => $vocabulary,
+    'eyebrow' => _spotdeals_minimal_build_taxonomy_landing_eyebrow($vocabulary),
+    'title' => $landing_title,
+    'intro' => $description !== '' ? $description : _spotdeals_minimal_build_taxonomy_landing_intro($term, $landing_title),
+    'stats' => _spotdeals_minimal_build_taxonomy_landing_stats($term),
+    'related_links' => _spotdeals_minimal_build_taxonomy_related_links($term),
+    'faq' => _spotdeals_minimal_build_taxonomy_landing_faq($term, $landing_title),
+    'browse_url' => Url::fromUserInput('/deals'),
+    'term_label' => $term_label,
+  ];
+}
+
+/**
+ * Builds a taxonomy landing title that reads like a page headline.
+ */
+function _spotdeals_minimal_build_taxonomy_landing_title(TermInterface $term): string {
+  $label = trim($term->label());
+  $vocabulary = $term->bundle();
+
+  if ($vocabulary === 'day_of_week') {
+    $day_summary = _spotdeals_minimal_format_day_summary([$label]);
+    if ($day_summary === (string) t('Monday to Friday')) {
+      return (string) t('Weekday Deals');
+    }
+    return (string) t('@day Deals', ['@day' => $day_summary ?: $label]);
+  }
+
+  if ($vocabulary === 'deal_category') {
+    return (string) t('@category Deals', ['@category' => $label]);
+  }
+
+  if ($vocabulary === 'cuisine') {
+    return (string) t('@cuisine Deals', ['@cuisine' => $label]);
+  }
+
+  if ($vocabulary === 'venue_type') {
+    return (string) t('@type Deals', ['@type' => $label]);
+  }
+
+  if ($vocabulary === 'neighborhood') {
+    return (string) t('Deals in @place', ['@place' => $label]);
+  }
+
+  return (string) t('@term Deals', ['@term' => $label]);
+}
+
+/**
+ * Builds a short eyebrow for taxonomy landing pages.
+ */
+function _spotdeals_minimal_build_taxonomy_landing_eyebrow(string $vocabulary): string {
+  return match ($vocabulary) {
+    'day_of_week' => (string) t('Deals by day'),
+    'deal_category' => (string) t('Deals by category'),
+    'cuisine' => (string) t('Deals by cuisine'),
+    'venue_type' => (string) t('Deals by venue type'),
+    'neighborhood' => (string) t('Local deals'),
+    default => (string) t('SpotDeals discovery'),
+  };
+}
+
+/**
+ * Builds fallback intro copy when the taxonomy term description is empty.
+ */
+function _spotdeals_minimal_build_taxonomy_landing_intro(TermInterface $term, string $landing_title): string {
+  $label = $term->label();
+
+  return match ($term->bundle()) {
+    'day_of_week' => (string) t('Find active @title including lunch specials, happy hours, dining deals, and nightlife promotions from local venues.', ['@title' => strtolower($landing_title)]),
+    'deal_category' => (string) t('Browse @category deals from local restaurants, bars, cafes, and nearby venues.', ['@category' => strtolower($label)]),
+    'cuisine' => (string) t('Discover @cuisine food and drink deals, specials, and local offers from nearby venues.', ['@cuisine' => $label]),
+    'venue_type' => (string) t('Explore current deals from @type venues and find a good place to go next.', ['@type' => strtolower($label)]),
+    'neighborhood' => (string) t('Find local deals, specials, and promotions available in @place.', ['@place' => $label]),
+    default => (string) t('Browse current SpotDeals results for @term and discover nearby offers worth checking out.', ['@term' => $label]),
+  };
+}
+
+/**
+ * Builds lightweight stats for the taxonomy term page hero.
+ */
+function _spotdeals_minimal_build_taxonomy_landing_stats(TermInterface $term): array {
+  $connection = \Drupal::database();
+  $tid = (int) $term->id();
+
+  $deal_count_query = $connection->select('taxonomy_index', 'ti')
+    ->condition('ti.tid', $tid)
+    ->condition('nfd.type', 'deal')
+    ->condition('nfd.status', 1)
+    ->fields('ti', ['nid'])
+    ->distinct();
+  $deal_count_query->join('node_field_data', 'nfd', 'nfd.nid = ti.nid');
+  $deal_count = (int) $deal_count_query
+    ->countQuery()
+    ->execute()
+    ->fetchField();
+
+  $venue_ids = [];
+  $query = $connection->select('taxonomy_index', 'ti')
+    ->condition('ti.tid', $tid)
+    ->condition('nfd.type', 'deal')
+    ->condition('nfd.status', 1);
+  $query->join('node_field_data', 'nfd', 'nfd.nid = ti.nid');
+  $query->leftJoin('node__field_venue', 'venue_ref', 'venue_ref.entity_id = ti.nid');
+  $query->fields('venue_ref', ['field_venue_target_id']);
+  foreach ($query->execute()->fetchCol() as $venue_id) {
+    if (!empty($venue_id)) {
+      $venue_ids[(int) $venue_id] = TRUE;
+    }
+  }
+
+  return [
+    [
+      'icon' => '🏷',
+      'value' => (string) $deal_count,
+      'label' => t('Active deals'),
+      'description' => t('Current matching offers'),
+    ],
+    [
+      'icon' => '📍',
+      'value' => (string) count($venue_ids),
+      'label' => t('Venues'),
+      'description' => t('Local places with deals'),
+    ],
+    [
+      'icon' => '🔎',
+      'value' => t('Updated'),
+      'label' => t('Discoverable'),
+      'description' => t('Browse and compare results'),
+    ],
+  ];
+}
+
+/**
+ * Builds related taxonomy links from the same vocabulary.
+ */
+function _spotdeals_minimal_build_taxonomy_related_links(TermInterface $term): array {
+  $storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+  $terms = $storage->loadTree($term->bundle(), 0, 1, TRUE);
+  $links = [];
+
+  foreach ($terms as $related_term) {
+    if (!$related_term instanceof TermInterface || (int) $related_term->id() === (int) $term->id()) {
+      continue;
+    }
+
+    $links[] = [
+      'title' => _spotdeals_minimal_build_taxonomy_landing_title($related_term),
+      'url' => $related_term->toUrl(),
+      'subtitle' => _spotdeals_minimal_build_taxonomy_landing_eyebrow($related_term->bundle()),
+    ];
+
+    if (count($links) >= 6) {
+      break;
+    }
+  }
+
+  return $links;
+}
+
+/**
+ * Builds default FAQ copy for taxonomy landing pages.
+ */
+function _spotdeals_minimal_build_taxonomy_landing_faq(TermInterface $term, string $landing_title): array {
+  $label = $term->label();
+
+  return [
+    [
+      'question' => t('What can I find on this page?'),
+      'answer' => t('This page collects SpotDeals results related to @term, including local specials, discounts, and promotions from nearby venues.', ['@term' => $label]),
+    ],
+    [
+      'question' => t('Are these deals available every day?'),
+      'answer' => t('Deal availability depends on each venue and promotion. Always check the listed day, time, and source details before you go.'),
+    ],
+    [
+      'question' => t('Can I search beyond @title?', ['@title' => $landing_title]),
+      'answer' => t('Yes. Use the main deals search to combine keywords, cities, cuisines, categories, and nearby discovery.'),
+    ],
+  ];
+}
+
+/**
+ * Builds deal-card component data for regular deal teasers.
+ */
+function _spotdeals_minimal_build_deal_teaser_card(NodeInterface $deal): array {
+  $venue = _spotdeals_minimal_get_first_referenced_node($deal, ['field_venue']);
+  $venue_url = $venue instanceof NodeInterface ? $venue->toUrl() : NULL;
+  $deal_url = $deal->toUrl();
+  $category_labels = _spotdeals_minimal_get_entity_reference_labels($deal, ['field_deal_category']);
+  $day_labels = _spotdeals_minimal_get_entity_reference_labels($deal, ['field_day_of_week']);
+  $cuisine_labels = $venue instanceof NodeInterface ? _spotdeals_minimal_get_entity_reference_labels($venue, ['field_cuisine', 'field_venue_type']) : [];
+
+  return [
+    'variant' => 'taxonomy-teaser',
+    'image' => _spotdeals_minimal_build_deal_teaser_image($deal),
+    'venue_title' => $venue instanceof NodeInterface ? [
+      '#type' => 'link',
+      '#title' => $venue->label(),
+      '#url' => $venue_url,
+    ] : [
+      '#type' => 'link',
+      '#title' => $deal->label(),
+      '#url' => $deal_url,
+    ],
+    'venue_meta' => $venue instanceof NodeInterface ? _spotdeals_minimal_build_deal_page_address($venue) : '',
+    'cuisine' => implode(', ', $cuisine_labels),
+    'venue_description' => '',
+    'venue_distance' => '',
+    'deal_title' => [
+      '#type' => 'link',
+      '#title' => $deal->label(),
+      '#url' => $deal_url,
+    ],
+    'deal_category' => implode(', ', $category_labels),
+    'offer' => _spotdeals_minimal_get_first_field_text($deal, ['field_price_offer_text']),
+    'schedule' => _spotdeals_minimal_build_deal_teaser_schedule($deal, $day_labels),
+    'cta' => '',
+    'activity_badges' => [],
+    'claim_link' => $venue instanceof NodeInterface ? _spotdeals_minimal_build_claim_link($venue) : '',
+    'venue_vote_summary' => '',
+    'deal_vote_summary' => '',
+  ];
+}
+
+/**
+ * Gets the first referenced node from a list of candidate fields.
+ */
+function _spotdeals_minimal_get_first_referenced_node(NodeInterface $node, array $field_names): ?NodeInterface {
+  foreach ($field_names as $field_name) {
+    if (!$node->hasField($field_name) || $node->get($field_name)->isEmpty()) {
+      continue;
+    }
+
+    $entity = $node->get($field_name)->entity;
+    if ($entity instanceof NodeInterface) {
+      return $entity;
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Builds a compact teaser image render array for the deal card component.
+ */
+function _spotdeals_minimal_build_deal_teaser_image(NodeInterface $deal): array|string {
+  if (!$deal->hasField('field_image') || $deal->get('field_image')->isEmpty()) {
+    return '';
+  }
+
+  return [
+    '#theme' => 'image_formatter',
+    '#item' => $deal->get('field_image')->first(),
+    '#image_style' => 'medium',
+    '#url' => $deal->toUrl(),
+  ];
+}
+
+/**
+ * Builds a compact public-facing schedule for deal teaser cards.
+ */
+function _spotdeals_minimal_build_deal_teaser_schedule(NodeInterface $deal, array $day_labels): string {
+  $parts = [];
+  $day_summary = _spotdeals_minimal_format_day_summary($day_labels);
+  $time_summary = _spotdeals_minimal_format_time_summary($deal, ['field_start_time']);
+
+  if ($day_summary !== '') {
+    $parts[] = $day_summary;
+  }
+  if ($time_summary !== '') {
+    $parts[] = $time_summary;
+  }
+
+  return implode(' · ', $parts);
+}
+
+/**
+ * Builds a claim listing link for reusable deal cards.
+ */
+function _spotdeals_minimal_build_claim_link(NodeInterface $venue): array {
+  return [
+    '#type' => 'link',
+    '#title' => t('Claim this listing'),
+    '#url' => Url::fromUserInput('/create/claim', [
+      'query' => ['venue' => $venue->id()],
+    ]),
+    '#attributes' => [
+      'class' => ['claim-this-listing-link'],
+    ],
+  ];
 }
 
 /**

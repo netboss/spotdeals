@@ -172,6 +172,10 @@
         'spotdeals-vote'
       ) }}
     </div>
+  {% elseif view_mode == 'teaser' and spotdeals_deal_teaser_card %}
+    <div{{ content_attributes.addClass('node__content', layout, 'spotdeals-deal-teaser-card') }}>
+      {{ include('spotdeals_minimal:deal-card', spotdeals_deal_teaser_card, with_context = false) }}
+    </div>
   {% else %}
     <div{{ content_attributes.addClass('node__content', layout) }}>
       {{ content|without('comment')|without('field_venue') }}
