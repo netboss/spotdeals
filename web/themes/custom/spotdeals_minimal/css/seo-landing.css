@@ -731,11 +731,6 @@
 
 /* Taxonomy term landing pages. */
 .spotdeals-taxonomy-landing {
-  --spotdeals-taxonomy-green: var(--spotdeals-seo-green, #8db61f);
-  --spotdeals-taxonomy-green-dark: var(--spotdeals-seo-green-dark, #6f9117);
-  --spotdeals-taxonomy-border: var(--spotdeals-seo-border, #d9e0ea);
-  --spotdeals-taxonomy-text: var(--spotdeals-seo-text, #111827);
-  --spotdeals-taxonomy-muted: var(--spotdeals-seo-muted, #5b6472);
   max-width: 960px;
   margin: 0 auto;
 }
@@ -1011,8 +1006,8 @@
   .spotdeals-seo-related,
   .spotdeals-taxonomy-faq,
   .spotdeals-seo-cta {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
   .spotdeals-seo-related__link {
@@ -1030,13 +1025,23 @@
   }
 }
 
+.views-row:last-child .spotdeals-deal-teaser-card {
+  padding-bottom: 0;
+
+  .spotdeals-deal-card {
+    margin-bottom: 0;
+  }
+}
+
 /* Taxonomy page: let the page title/header region use the full wrapper width. */
+/*
 .path-taxonomy .region--content-above,
 .path-taxonomy .region--content-above>*,
 .path-taxonomy #block-spotdeals-minimal-page-title {
   width: 100%;
   max-width: none;
 }
+*/
 
 /* Taxonomy page: let the main content block use the full wrapper width. */
 .path-taxonomy #block-spotdeals-minimal-content,
@@ -1072,4 +1077,172 @@
     width: 100%;
     max-width: none;
   }
+}
+
+/* Taxonomy landing content architecture: show real deal results before the
+ * supporting internal-link and FAQ blocks. The taxonomy term template renders
+ * inside the View header, so display: contents lets the View own the vertical
+ * ordering without changing the View configuration.
+ */
+.path-taxonomy .view-taxonomy-term,
+.path-taxonomy .view-id-taxonomy_term {
+  display: flex;
+  flex-direction: column;
+}
+
+.path-taxonomy .view-taxonomy-term > .view-header,
+.path-taxonomy .view-id-taxonomy_term > .view-header,
+.path-taxonomy .spotdeals-taxonomy-landing {
+  display: contents;
+}
+
+.path-taxonomy .spotdeals-taxonomy-landing__hero {
+  order: 10;
+}
+
+.path-taxonomy .view-taxonomy-term > .view-content,
+.path-taxonomy .view-id-taxonomy_term > .view-content {
+  order: 20;
+}
+
+.path-taxonomy .spotdeals-taxonomy-landing__related {
+  order: 30;
+}
+
+.path-taxonomy .spotdeals-taxonomy-faq {
+  order: 40;
+}
+
+.path-taxonomy .spotdeals-taxonomy-landing__cta {
+  order: 50;
+}
+
+.path-taxonomy .view-taxonomy-term > .pager,
+.path-taxonomy .view-id-taxonomy_term > .pager,
+.path-taxonomy .view-taxonomy-term > .feed-icons,
+.path-taxonomy .view-id-taxonomy_term > .feed-icons {
+  order: 60;
+}
+
+/* Desktop keeps the FAQ expanded visually; mobile turns the whole FAQ section
+ * into one closed accordion while preserving the existing per-question details.
+ */
+.path-taxonomy .spotdeals-taxonomy-faq__accordion-summary {
+  display: none;
+}
+
+.path-taxonomy .spotdeals-taxonomy-faq__accordion > .spotdeals-taxonomy-faq__items {
+  display: grid;
+}
+
+@media (max-width: 700px) {
+  .path-taxonomy .spotdeals-taxonomy-landing__hero {
+    padding: 1rem;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-landing__intro {
+    margin-top: 0.65rem;
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-landing__summary.spotdeals-seo-summary {
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+    margin-bottom: 0;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-landing__summary .spotdeals-seo-summary__card {
+    min-height: 0;
+    padding: 0.65rem 0.75rem;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-landing__summary .spotdeals-seo-summary__icon {
+    flex-basis: 1.9rem;
+    width: 1.9rem;
+    height: 1.9rem;
+    font-size: 0.95rem;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-landing__summary .spotdeals-seo-summary__value,
+  .path-taxonomy .spotdeals-taxonomy-landing__summary .spotdeals-seo-summary__label {
+    font-size: 0.95rem;
+    line-height: 1.15;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-faq > .spotdeals-seo-section-title {
+    display: none;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-faq__accordion {
+    border: 1px solid var(--spotdeals-taxonomy-border);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 8px 18px rgba(17, 24, 39, 0.035);
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-faq__accordion-summary {
+    display: block;
+    cursor: pointer;
+    padding: 1rem 1.1rem;
+    color: var(--spotdeals-taxonomy-text);
+    font-weight: 900;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-faq__accordion > .spotdeals-taxonomy-faq__items {
+    padding: 0 0.75rem 0.75rem;
+  }
+}
+
+/* Taxonomy FAQ responsive architecture fix:
+ * desktop shows the existing question list; mobile shows one closed accordion.
+ */
+.path-taxonomy .spotdeals-taxonomy-faq__accordion--mobile {
+  display: none;
+}
+
+.path-taxonomy .spotdeals-taxonomy-faq__items--desktop {
+  display: grid;
+}
+
+@media (max-width: 700px) {
+  .path-taxonomy .spotdeals-taxonomy-faq__items--desktop {
+    display: none;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-faq__accordion--mobile {
+    display: block;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-faq__accordion-summary {
+    position: relative;
+    padding-right: 3rem;
+    list-style: none;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-faq__accordion-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-faq__accordion-summary::after {
+    content: '+';
+    position: absolute;
+    top: 50%;
+    right: 1.1rem;
+    transform: translateY(-50%);
+    color: var(--spotdeals-taxonomy-green-dark);
+    font-size: 1.4rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .path-taxonomy .spotdeals-taxonomy-faq__accordion[open] > .spotdeals-taxonomy-faq__accordion-summary::after {
+    content: '−';
+  }
+}
+
+/* Temporarily hide related taxonomy links until duplicate/empty term URLs are cleaned up. */
+.path-taxonomy .spotdeals-taxonomy-landing__related,
+.path-taxonomy .spotdeals-seo-related {
+  display: none;
 }

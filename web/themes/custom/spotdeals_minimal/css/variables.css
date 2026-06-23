@@ -22,4 +22,9 @@
   --spotdeals-space-6: 2rem;
   --spotdeals-space-7: 2.5rem;
   --spotdeals-seo-green: #6b9f18;
+  --spotdeals-taxonomy-green: var(--spotdeals-seo-green, #8db61f);
+  --spotdeals-taxonomy-green-dark: var(--spotdeals-seo-green-dark, #6f9117);
+  --spotdeals-taxonomy-border: var(--spotdeals-seo-border, #d9e0ea);
+  --spotdeals-taxonomy-text: var(--spotdeals-seo-text, #111827);
+  --spotdeals-taxonomy-muted: var(--spotdeals-seo-muted, #5b6472);
 }
