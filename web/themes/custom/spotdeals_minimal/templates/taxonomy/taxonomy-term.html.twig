@@ -64,7 +64,8 @@
     {% if landing.faq %}
       <section class="spotdeals-taxonomy-faq" aria-labelledby="spotdeals-taxonomy-faq-title">
         <h2 id="spotdeals-taxonomy-faq-title" class="spotdeals-seo-section-title">{{ 'Frequently asked questions'|t }}</h2>
-        <div class="spotdeals-taxonomy-faq__items">
+
+        <div class="spotdeals-taxonomy-faq__items spotdeals-taxonomy-faq__items--desktop">
           {% for item in landing.faq %}
             <details class="spotdeals-taxonomy-faq__item">
               <summary>{{ item.question }}</summary>
@@ -72,6 +73,18 @@
             </details>
           {% endfor %}
         </div>
+
+        <details class="spotdeals-taxonomy-faq__accordion spotdeals-taxonomy-faq__accordion--mobile">
+          <summary class="spotdeals-taxonomy-faq__accordion-summary">{{ 'Frequently asked questions'|t }}</summary>
+          <div class="spotdeals-taxonomy-faq__items">
+            {% for item in landing.faq %}
+              <details class="spotdeals-taxonomy-faq__item">
+                <summary>{{ item.question }}</summary>
+                <p>{{ item.answer }}</p>
+              </details>
+            {% endfor %}
+          </div>
+        </details>
       </section>
     {% endif %}
 
