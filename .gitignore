@@ -226,3 +226,6 @@ test_search_api_id.php
 
 # Ignore BAK
 *BAK*
+
+# Ignored scripts
+scripts/spotdeals_geocode_missing.csv
