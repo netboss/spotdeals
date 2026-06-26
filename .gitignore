@@ -229,3 +229,5 @@ test_search_api_id.php
 
 # Ignored scripts
 scripts/spotdeals_geocode_missing.csv
+scripts/venue_title_normalization_audit.csv
+scripts/deal_venue_reference_audit.csv
