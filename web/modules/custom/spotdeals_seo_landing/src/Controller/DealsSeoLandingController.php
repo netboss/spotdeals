@@ -107,6 +107,13 @@ final class DealsSeoLandingController extends ControllerBase {
   private KillSwitch $seoLandingPageCacheKillSwitch;
 
   /**
+   * View total-row counts keyed by view/display/args/query for this request.
+   *
+   * @var array<string, int|null>
+   */
+  private array $viewTotalRowsCache = [];
+
+  /**
    * Constructs the controller.
    */
   public function __construct(
@@ -152,7 +159,8 @@ final class DealsSeoLandingController extends ControllerBase {
    */
   public function cityTitle(string $city): string|\Stringable {
     $city_label = $this->resolveCityLabel($city) ?? $this->slugToLikelyLabel($city);
-    $deal_count = $this->countDeals($city_label);
+    $deal_count = $this->countViewRows(self::DEALS_VIEW_ID, self::DEALS_CITY_DISPLAY_ID, [$city_label])
+      ?? $this->countDeals($city_label);
 
     return $this->t('@count Deals in @city', [
       '@count' => $deal_count,
@@ -166,7 +174,8 @@ final class DealsSeoLandingController extends ControllerBase {
   public function cityCategoryTitle(string $city, string $category): string|\Stringable {
     $city_label = $this->resolveCityLabel($city) ?? $this->slugToLikelyLabel($city);
     $category_label = $this->resolveDealCategoryLabel($category) ?? $this->slugToLikelyLabel($category);
-    $deal_count = $this->countDeals($city_label, $category_label);
+    $deal_count = $this->countViewRows(self::DEALS_VIEW_ID, self::DEALS_CITY_CATEGORY_DISPLAY_ID, [$city_label, $category_label])
+      ?? $this->countDeals($city_label, $category_label);
 
     return $this->t('@count @category in @city', [
       '@count' => $deal_count,
@@ -356,8 +365,15 @@ final class DealsSeoLandingController extends ControllerBase {
     ?string $categorySlug,
     ?string $categoryLabel,
   ): array {
-    $total_deals = $this->countDeals($cityLabel, $categoryLabel);
     $venue_count = $this->countVenuesWithDeals($cityLabel, $categoryLabel);
+    $display_id = $categoryLabel !== NULL
+      ? self::DEALS_CITY_CATEGORY_DISPLAY_ID
+      : self::DEALS_CITY_DISPLAY_ID;
+    $arguments = $categoryLabel !== NULL
+      ? [$cityLabel, $categoryLabel]
+      : [$cityLabel];
+    $total_deals = $this->countViewRows(self::DEALS_VIEW_ID, $display_id, $arguments)
+      ?? $this->countDeals($cityLabel, $categoryLabel);
     $related_categories = $this->buildRelatedCategoryData($citySlug, $categorySlug, $cityLabel);
     $nearby_areas = $this->buildNearbyAreaData($citySlug);
     $primary_stat_label = $categoryLabel !== NULL ? $categoryLabel : 'Local Deals';
@@ -1096,6 +1112,57 @@ final class DealsSeoLandingController extends ControllerBase {
     }
 
     return (int) $query->execute()->fetchField();
+  }
+
+  /**
+   * Counts rows using the same View display used to render SEO landing results.
+   *
+   * This keeps page titles and summary-card counts aligned with the visible
+   * results, including View filters, exposed query arguments, and contextual
+   * arguments applied by the display.
+   *
+   * @param array<int, string> $arguments
+   *   View contextual arguments.
+   */
+  private function countViewRows(string $viewId, string $displayId, array $arguments): ?int {
+    $query_args = \Drupal::request()->query->all();
+    ksort($query_args);
+    $cache_key = hash('sha256', json_encode([$viewId, $displayId, $arguments, $query_args]));
+
+    if (array_key_exists($cache_key, $this->viewTotalRowsCache)) {
+      return $this->viewTotalRowsCache[$cache_key];
+    }
+
+    $view = Views::getView($viewId);
+    if (!$view instanceof ViewExecutable) {
+      $this->viewTotalRowsCache[$cache_key] = NULL;
+      return NULL;
+    }
+
+    $view->setDisplay($displayId);
+    $view->setArguments($arguments);
+
+    try {
+      $view->preExecute($arguments);
+      $view->execute($displayId);
+    }
+    catch (\Throwable) {
+      $this->viewTotalRowsCache[$cache_key] = NULL;
+      return NULL;
+    }
+
+    if (isset($view->total_rows)) {
+      $this->viewTotalRowsCache[$cache_key] = (int) $view->total_rows;
+      return $this->viewTotalRowsCache[$cache_key];
+    }
+
+    if (is_array($view->result)) {
+      $this->viewTotalRowsCache[$cache_key] = count($view->result);
+      return $this->viewTotalRowsCache[$cache_key];
+    }
+
+    $this->viewTotalRowsCache[$cache_key] = NULL;
+    return NULL;
   }
 
   /**
