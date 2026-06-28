@@ -12,7 +12,7 @@ bundle: deal
 label: 'Price / Offer Text'
 description: 'Example of Price / Offer Text: <strong>$2 tacos</strong>, or <strong>50% off sushi rolls</strong>, or <strong>$10 lunch combo</strong>, etc.'
 required: true
-translatable: false
+translatable: true
 default_value: {  }
 default_value_callback: ''
 settings: {  }

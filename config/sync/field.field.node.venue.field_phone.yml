@@ -12,7 +12,7 @@ bundle: venue
 label: Phone
 description: 'Please add phone in this format: (000)-123-4567'
 required: false
-translatable: false
+translatable: true
 default_value: {  }
 default_value_callback: ''
 settings: {  }

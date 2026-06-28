@@ -14,7 +14,7 @@ bundle: venue
 label: 'Call to action'
 description: "Add the venue’s main action link where users can order or book.<br>\r\nExamples: Toast, DoorDash, OpenTable, Resy.<br>\r\nDo not use menu links or the venue homepage."
 required: false
-translatable: false
+translatable: true
 default_value: {  }
 default_value_callback: ''
 settings:

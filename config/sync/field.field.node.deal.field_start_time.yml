@@ -12,7 +12,7 @@ bundle: deal
 label: 'Deal Time / Hours'
 description: 'Examples of Deal Time format: <strong>11am – 2pm</strong>, or <strong>4pm – 6pm</strong>, or <strong>All day</strong>, or <strong>After 8pm</strong>, or <strong>11am – 2pm weekdays</strong>, or <strong>Late night</strong>, or <strong>Happy hour (4–7pm)</strong>'
 required: false
-translatable: false
+translatable: true
 default_value: {  }
 default_value_callback: ''
 settings: {  }
