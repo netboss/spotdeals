@@ -29,6 +29,7 @@ $disable_mail = !$has_option('--allow-mail');
 $limit = (int) ($get_option_value('--limit', '100') ?? 100);
 $chunk_size = (int) ($get_option_value('--chunk-size', '25') ?? 25);
 $progress_every = (int) ($get_option_value('--progress-every', '25') ?? 25);
+$binlog_maintenance_every = (int) ($get_option_value('--binlog-maintenance-every', '0') ?? 0);
 $start_after = (int) ($get_option_value('--start-after', '0') ?? 0);
 $type = $get_option_value('--type');
 
@@ -42,6 +43,10 @@ if ($chunk_size < 1 || $chunk_size > 100) {
 
 if ($progress_every < 1) {
   $progress_every = 25;
+}
+
+if ($binlog_maintenance_every < 0) {
+  $binlog_maintenance_every = 0;
 }
 
 if ($type !== NULL && !in_array($type, ['deal', 'venue'], TRUE)) {
@@ -97,6 +102,24 @@ $restore_state = static function () use (
 
 register_shutdown_function($restore_state);
 
+$run_binlog_maintenance = static function () use ($binlog_maintenance_every): void {
+  if ($binlog_maintenance_every < 1) {
+    return;
+  }
+
+  echo "Running MySQL binlog maintenance...\n";
+
+  $command = 'mysql -e ' . escapeshellarg('FLUSH BINARY LOGS; PURGE BINARY LOGS BEFORE NOW();');
+  passthru($command, $exit_code);
+
+  if ($exit_code === 0) {
+    echo "MySQL binlog maintenance completed.\n";
+  }
+  else {
+    echo "WARNING: MySQL binlog maintenance failed with exit code {$exit_code}. Continuing.\n";
+  }
+};
+
 $count_query = $database->select('node_field_data', 'n');
 $count_query->leftJoin('node_field_data', 'e', 'e.nid = n.nid AND e.langcode = :target_langcode', [
   ':target_langcode' => $target_langcode,
@@ -147,6 +170,7 @@ echo "Type filter: " . ($type ?? 'all') . "\n";
 echo "Start after nid: {$start_after}\n";
 echo "Limit: {$limit}\n";
 echo "Chunk size: {$chunk_size}\n";
+echo "Binlog maintenance every: {$binlog_maintenance_every} processed node(s)\n";
 echo "Total missing before this run: {$total_missing}\n";
 echo "Selected for this run: {$total_selected}\n\n";
 
@@ -241,6 +265,10 @@ foreach (array_chunk($nids, $chunk_size) as $chunk) {
     if ($processed % $progress_every === 0) {
       $elapsed = max(1, (int) (microtime(TRUE) - $started_at));
       echo "PROGRESS {$processed}/{$total_selected} processed; created={$created}; skipped={$skipped}; failed={$failed}; elapsed={$elapsed}s\n";
+    }
+
+    if (!$dry_run && $binlog_maintenance_every > 0 && $processed % $binlog_maintenance_every === 0) {
+      $run_binlog_maintenance();
     }
   }
 
