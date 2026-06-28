@@ -14,7 +14,7 @@ bundle: deal
 label: 'Call to action'
 description: "Add a direct action link for this deal (e.g. order, reserve, or book this offer).<br>\r\nIf left empty, the venue’s main action link will be used instead."
 required: false
-translatable: false
+translatable: true
 default_value: {  }
 default_value_callback: ''
 settings:

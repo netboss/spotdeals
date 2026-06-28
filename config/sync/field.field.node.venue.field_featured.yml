@@ -12,7 +12,7 @@ bundle: venue
 label: 'Featured venue'
 description: 'Marks this venue as eligible for featured placement in landing pages and other curated sections.'
 required: false
-translatable: false
+translatable: true
 default_value:
   -
     value: 0
