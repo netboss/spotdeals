@@ -327,8 +327,14 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     $request->attributes->set('spotdeals_search_smart_location.city', $nearest_city ?? '');
     $request->attributes->set('spotdeals_search_smart_location.zip', '');
 
+    $__spotdeals_perf_start = _spotdeals_search_smart_location_perf_start();
     $ranked_nids = \Drupal::service('spotdeals_search_smart_location.near_me_ranker')
       ->rankDealNids((float) $origin_lat, (float) $origin_lon, $keywords);
+    _spotdeals_search_smart_location_perf_log('browser_rankDealNids', $__spotdeals_perf_start, [
+      'count' => count($ranked_nids),
+      'keywords' => $keywords,
+      'display' => $display_id,
+    ]);
 
     $request->attributes->set('spotdeals_search_smart_location.ranked_deal_nids', $ranked_nids);
 
@@ -357,6 +363,7 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
 
     $recommended_nids = [];
     if ($recommendation_mode) {
+      $__spotdeals_perf_start = _spotdeals_search_smart_location_perf_start();
       $recommended_nids = \Drupal::service('spotdeals_search_smart_location.recommendation_service')
         ->recommendDealNids(
           (float) $origin_lat,
@@ -367,6 +374,11 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
           $excluded_venue_nids,
           $excluded_deal_nids
         );
+      _spotdeals_search_smart_location_perf_log('browser_recommendDealNids', $__spotdeals_perf_start, [
+        'count' => count($recommended_nids),
+        'cuisines' => implode(' ', $effective_recommendation_cuisines),
+        'display' => $display_id,
+      ]);
       $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', $recommended_nids);
       $request->attributes->set(
         'spotdeals_search_smart_location.direct_recommendation_deal_nid',
@@ -394,8 +406,14 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     ]);
 
     if (!$recommendation_mode && $keywords !== '' && empty($ranked_nids)) {
+      $__spotdeals_perf_start = _spotdeals_search_smart_location_perf_start();
       $broader_ranked_nids = \Drupal::service('spotdeals_search_smart_location.near_me_ranker')
         ->rankDealNids((float) $origin_lat, (float) $origin_lon, $keywords, 1000.0);
+      _spotdeals_search_smart_location_perf_log('browser_broader_rankDealNids', $__spotdeals_perf_start, [
+        'count' => count($broader_ranked_nids),
+        'keywords' => $keywords,
+        'display' => $display_id,
+      ]);
 
       if (!empty($broader_ranked_nids)) {
         $request->attributes->set('spotdeals_search_smart_location.fallback_broader_search', TRUE);
@@ -570,12 +588,19 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
     $location_keywords = _spotdeals_search_smart_location_expand_keywords($location_keywords);
 
     if (!$recommendation_mode) {
+      $__spotdeals_perf_start = _spotdeals_search_smart_location_perf_start();
       $ranked_nids = \Drupal::service('spotdeals_search_smart_location.near_me_ranker')
         ->rankDealNids((float) $origin['lat'], (float) $origin['lon'], $location_keywords);
+      _spotdeals_search_smart_location_perf_log('explicit_rankDealNids', $__spotdeals_perf_start, [
+        'count' => count($ranked_nids),
+        'keywords' => $location_keywords,
+        'display' => $display_id,
+      ]);
       $request->attributes->set('spotdeals_search_smart_location.ranked_deal_nids', $ranked_nids);
     }
 
     if ($recommendation_mode) {
+      $__spotdeals_perf_start = _spotdeals_search_smart_location_perf_start();
       $recommended_nids = \Drupal::service('spotdeals_search_smart_location.recommendation_service')
         ->recommendDealNids(
           (float) $origin['lat'],
@@ -586,6 +611,11 @@ function spotdeals_search_smart_location_views_pre_view(ViewExecutable $view, st
           $excluded_venue_nids,
           $excluded_deal_nids
         );
+      _spotdeals_search_smart_location_perf_log('explicit_recommendDealNids', $__spotdeals_perf_start, [
+        'count' => count($recommended_nids),
+        'cuisines' => implode(' ', $effective_recommendation_cuisines),
+        'display' => $display_id,
+      ]);
       $request->attributes->set('spotdeals_search_smart_location.recommended_deal_nids', $recommended_nids);
       $request->attributes->set(
         'spotdeals_search_smart_location.direct_recommendation_deal_nid',
@@ -630,6 +660,7 @@ function spotdeals_search_smart_location_views_pre_render(ViewExecutable $view):
     return;
   }
 
+  $__spotdeals_perf_start = _spotdeals_search_smart_location_perf_start();
   $request = \Drupal::request();
   $recommendation_mode = (bool) $request->attributes->get('spotdeals_search_smart_location.recommendation_mode', FALSE);
 
@@ -653,6 +684,10 @@ function spotdeals_search_smart_location_views_pre_render(ViewExecutable $view):
   }
 
   _spotdeals_search_smart_location_commit_search_insight($view);
+  _spotdeals_search_smart_location_perf_log('views_pre_render', $__spotdeals_perf_start, [
+    'display' => (string) $view->current_display,
+    'recommendation_mode' => $recommendation_mode ? 1 : 0,
+  ]);
 }
 
 /**
@@ -834,6 +869,7 @@ function _spotdeals_search_smart_location_get_direct_recommendation_deal_nid(): 
  *   A render array for the recommended deal card.
  */
 function _spotdeals_search_smart_location_build_direct_recommendation_render(int $deal_nid): array {
+  $__spotdeals_perf_start = _spotdeals_search_smart_location_perf_start();
   if ($deal_nid <= 0) {
     return [];
   }
@@ -983,6 +1019,11 @@ function _spotdeals_search_smart_location_build_direct_recommendation_render(int
   //    '@vote' => (!empty($venue_vote_summary) || !empty($deal_vote_summary)) ? '1' : '0',
   //  ]
   //);
+
+  _spotdeals_search_smart_location_perf_log('direct_recommendation_render_build', $__spotdeals_perf_start, [
+    'deal_nid' => $deal_nid,
+    'venue_nid' => $venue instanceof NodeInterface ? (int) $venue->id() : 0,
+  ]);
 
   return $build;
 }
@@ -3026,6 +3067,38 @@ function spotdeals_search_smart_location_entity_view_alter(array &$build, \Drupa
   }
 
   $build['spotdeals_vote']['#weight'] = -999;
+}
+
+
+/**
+ * Starts a lightweight request timer for temporary production diagnosis.
+ *
+ * Enable by adding spotdeals_perf=1 to the request URL.
+ */
+function _spotdeals_search_smart_location_perf_start(): float {
+  return microtime(TRUE);
+}
+
+/**
+ * Logs a temporary performance timing entry when spotdeals_perf=1 is present.
+ */
+function _spotdeals_search_smart_location_perf_log(string $label, float $start, array $context = []): void {
+  $request = \Drupal::request();
+  if ((string) $request->query->get('spotdeals_perf', '') !== '1') {
+    return;
+  }
+
+  $elapsed_ms = round((microtime(TRUE) - $start) * 1000, 2);
+  $context_json = $context === [] ? '{}' : json_encode($context, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+  \Drupal::logger('spotdeals_search_perf')->notice(
+    'SPOTDEALS PERF label="@label" total_ms="@total_ms" context=@context',
+    [
+      '@label' => $label,
+      '@total_ms' => (string) $elapsed_ms,
+      '@context' => $context_json === FALSE ? '{}' : $context_json,
+    ]
+  );
 }
 
 /**
