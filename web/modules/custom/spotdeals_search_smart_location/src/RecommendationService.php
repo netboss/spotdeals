@@ -24,6 +24,11 @@ final class RecommendationService {
   private const CANDIDATE_LIMIT = 50;
 
   /**
+   * Maximum distance treated as immediate local area before nearby-city choices.
+   */
+  private const LOCAL_FIRST_RADIUS_KM = 20.0;
+
+  /**
    * Maximum number of top ties to randomize across.
    */
   private const RANDOM_TIE_LIMIT = 7;
@@ -261,7 +266,6 @@ final class RecommendationService {
     return [];
   }
 
-
   /**
    * Returns one recommended deal from an already-localized result set.
    *
@@ -379,14 +383,25 @@ final class RecommendationService {
         continue;
       }
 
+      // Keep broad recommendation searches local-first before applying vote
+      // quality. Otherwise a farther positive-vote venue can remove closer
+      // unrated same-city candidates before locality preference gets a chance
+      // to run.
+      $candidates = $this->preferLocalRadiusCandidates($candidates);
+
+      // Choose the nearest available locality before vote-quality filtering.
+      // Without this, a positive-vote Port Orange deal can beat an unrated New
+      // Smyrna Beach deal even when the user is physically in New Smyrna Beach.
+      $localityPreferenceOrder = $this->localityPreferenceOrder($candidates, $preferredLocalities);
+      $candidates = $this->preferLocalityCandidatesByQuality($candidates, $localityPreferenceOrder);
+
+      $beforeQuality = $candidates;
       $candidates = $this->filterRecommendationCandidatesByVoteQuality($candidates);
       if (empty($candidates)) {
         continue;
       }
 
       usort($candidates, fn(array $a, array $b): int => $this->compareCandidates($a, $b));
-      $localityPreferenceOrder = $this->localityPreferenceOrder($candidates, $preferredLocalities);
-      $candidates = $this->preferLocalityCandidates($candidates, $localityPreferenceOrder);
 
       $top = $candidates[0];
       $topTier = array_values(array_filter(
@@ -459,7 +474,6 @@ final class RecommendationService {
       array_filter($radii, static fn(float $radius): bool => $radius >= $baseRadiusKm)
     )));
   }
-
 
   /**
    * Builds scored candidates from a fixed local set of deal node IDs.
@@ -769,6 +783,7 @@ final class RecommendationService {
 
     $preferenceMode = !empty($cuisines);
     if ($preferenceMode && $this->hasBreweryPreference($cuisines) && !$this->venueMatchesBreweryPreference($haystacks)) {
+      // \$this->logTiming('RECOMMENDATION FILTER brewery_preference deal_nid="' . (string) $deal->id() . '"');
       return NULL;
     }
 
@@ -831,6 +846,7 @@ final class RecommendationService {
       }
 
       if ($overlapCount === 0) {
+        // \$this->logTiming('RECOMMENDATION FILTER no_overlap deal_nid="' . (string) $deal->id() . '" title="' . (string) $deal->label() . '"');
         return NULL;
       }
 
@@ -888,7 +904,6 @@ final class RecommendationService {
       'preference_mode' => $preferenceMode,
     ];
   }
-
 
   /**
    * Checks one normalized preference token against normalized text.
@@ -1011,7 +1026,6 @@ final class RecommendationService {
     return FALSE;
   }
 
-
   /**
    * Keeps recommendation results intuitive by vote quality.
    *
@@ -1120,6 +1134,33 @@ final class RecommendationService {
   }
 
   /**
+   * Keeps recommendation candidates in the immediate local area when available.
+   *
+   * This runs before vote-quality filtering so a farther positive-vote venue
+   * does not discard closer unrated local candidates for broad searches such as
+   * tacos. Nearby-city venues remain eligible only when no immediate-local
+   * candidates exist.
+   *
+   * @param array<int,array<string,int|float|string|bool>> $candidates
+   *   Candidate rows.
+   *
+   * @return array<int,array<string,int|float|string|bool>>
+   *   Immediate-local candidates when available, otherwise the original set.
+   */
+  private function preferLocalRadiusCandidates(array $candidates): array {
+    if (empty($candidates)) {
+      return $candidates;
+    }
+
+    $localCandidates = array_values(array_filter(
+      $candidates,
+      static fn(array $candidate): bool => (float) ($candidate['distance_km'] ?? PHP_FLOAT_MAX) <= self::LOCAL_FIRST_RADIUS_KM
+    ));
+
+    return !empty($localCandidates) ? $localCandidates : $candidates;
+  }
+
+  /**
    * Returns the ordered localities the recommendation picker should exhaust.
    *
    * Previously shown localities are honored first. On the first pick, there is
@@ -1199,6 +1240,47 @@ final class RecommendationService {
       ));
 
       if (!empty($localCandidates)) {
+        return $localCandidates;
+      }
+    }
+
+    return $candidates;
+  }
+
+  /**
+   * Restricts candidates to the first locality that still has an eligible quality tier.
+   *
+   * This preserves local-first behavior without letting a locality that only has
+   * explicitly negative candidates block nearby acceptable candidates.
+   *
+   * @param array<int,array<string,int|float|string|bool>> $candidates
+   *   Candidate rows.
+   * @param array<int,string> $preferredLocalities
+   *   Ordered normalized localities to exhaust first.
+   *
+   * @return array<int,array<string,int|float|string|bool>>
+   *   Candidate rows restricted to the best available locality when possible.
+   */
+  private function preferLocalityCandidatesByQuality(array $candidates, array $preferredLocalities): array {
+    if (empty($candidates) || empty($preferredLocalities)) {
+      return $candidates;
+    }
+
+    foreach ($preferredLocalities as $preferredLocality) {
+      if ($preferredLocality === '') {
+        continue;
+      }
+
+      $localCandidates = array_values(array_filter(
+        $candidates,
+        static fn(array $candidate): bool => ($candidate['venue_locality'] ?? '') === $preferredLocality
+      ));
+
+      if (empty($localCandidates)) {
+        continue;
+      }
+
+      if (!empty($this->filterRecommendationCandidatesByVoteQuality($localCandidates))) {
         return $localCandidates;
       }
     }
@@ -1438,6 +1520,10 @@ final class RecommendationService {
       'arepitas' => ['arepa', 'arepas', 'arepita', 'arepitas', 'venezuelan', 'venezolana'],
       'venezuelan' => ['venezuelan', 'venezolana', 'arepa', 'arepas'],
       'venezolana' => ['venezuelan', 'venezolana', 'arepa', 'arepas'],
+      'taco' => ['taco', 'tacos'],
+      'tacos' => ['taco', 'tacos'],
+      'burrito' => ['burrito', 'burritos'],
+      'burritos' => ['burrito', 'burritos'],
       'wine' => ['wine', 'wines', 'winery'],
       'wines' => ['wine', 'wines', 'winery'],
       'winery' => ['wine', 'wines', 'winery'],
