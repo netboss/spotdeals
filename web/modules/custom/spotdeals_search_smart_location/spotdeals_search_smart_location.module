@@ -3083,11 +3083,6 @@ function _spotdeals_search_smart_location_perf_start(): float {
  * Logs a temporary performance timing entry when spotdeals_perf=1 is present.
  */
 function _spotdeals_search_smart_location_perf_log(string $label, float $start, array $context = []): void {
-  $request = \Drupal::request();
-  if ((string) $request->query->get('spotdeals_perf', '') !== '1') {
-    return;
-  }
-
   $elapsed_ms = round((microtime(TRUE) - $start) * 1000, 2);
   $context_json = $context === [] ? '{}' : json_encode($context, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
