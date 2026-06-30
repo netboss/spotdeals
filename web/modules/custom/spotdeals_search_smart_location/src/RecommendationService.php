@@ -106,35 +106,89 @@ final class RecommendationService {
     $candidateSets = [];
     $candidateAttemptMeta = [];
 
-    foreach ($radiusAttempts as $attemptRadiusKm) {
-      $candidateSets[] = $this->buildCandidates(
-        $originLat,
-        $originLon,
-        $cuisines,
-        $attemptRadiusKm,
-        $excludedCuisines,
-        $excludedVenueNids,
-        $excludedDealNids
-      );
-      $candidateAttemptMeta[] = [
-        'radius_km' => $attemptRadiusKm,
-        'recycled' => FALSE,
-      ];
+    $tryCandidateSet = function (array $candidateSet, array $attemptMeta) use (
+      &$candidateSets,
+      &$candidateAttemptMeta,
+      $preferredLocalities,
+      $startedAt,
+      $cuisines,
+      $excludedCuisines,
+      $excludedVenueNids,
+      $excludedDealNids,
+      $radiusKm
+    ): ?array {
+      $candidateSets[] = $candidateSet;
+      $candidateAttemptMeta[] = $attemptMeta;
 
-      if (!empty($excludedCuisines)) {
-        $candidateSets[] = $this->buildCandidates(
+      $picked = $this->pickFromCandidateSets([$candidateSet], $preferredLocalities);
+      if ($picked === NULL) {
+        return NULL;
+      }
+
+      $setSizes = array_map(static fn(array $set): int => count($set), $candidateSets);
+      $attemptSizesJson = json_encode($setSizes, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]';
+      $selectedAttempt = count($candidateSets);
+
+      $this->logTiming(sprintf(
+        'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" excluded_deals_count="%d" requested_radius_km="%s" selected_radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="%d" top_tier_count="%d" picked_deal_nid="%d" picked_venue_nid="%d" recycled="%s"',
+        $this->formatMs($startedAt),
+        count($cuisines),
+        count($excludedCuisines),
+        count($excludedVenueNids),
+        count($excludedDealNids),
+        (string) $radiusKm,
+        (string) ($attemptMeta['radius_km'] ?? $radiusKm),
+        count($candidateSets),
+        $attemptSizesJson,
+        $selectedAttempt,
+        (int) $picked['top_tier_count'],
+        (int) $picked['candidate']['deal_nid'],
+        (int) $picked['candidate']['venue_nid'],
+        !empty($attemptMeta['recycled']) ? '1' : '0',
+      ));
+
+      return [(int) $picked['candidate']['deal_nid']];
+    };
+
+    foreach ($radiusAttempts as $attemptRadiusKm) {
+      $pickedDealNids = $tryCandidateSet(
+        $this->buildCandidates(
           $originLat,
           $originLon,
           $cuisines,
           $attemptRadiusKm,
-          [],
+          $excludedCuisines,
           $excludedVenueNids,
           $excludedDealNids
-        );
-        $candidateAttemptMeta[] = [
+        ),
+        [
           'radius_km' => $attemptRadiusKm,
           'recycled' => FALSE,
-        ];
+        ]
+      );
+      if ($pickedDealNids !== NULL) {
+        return $pickedDealNids;
+      }
+
+      if (!empty($excludedCuisines)) {
+        $pickedDealNids = $tryCandidateSet(
+          $this->buildCandidates(
+            $originLat,
+            $originLon,
+            $cuisines,
+            $attemptRadiusKm,
+            [],
+            $excludedVenueNids,
+            $excludedDealNids
+          ),
+          [
+            'radius_km' => $attemptRadiusKm,
+            'recycled' => FALSE,
+          ]
+        );
+        if ($pickedDealNids !== NULL) {
+          return $pickedDealNids;
+        }
       }
     }
 
@@ -147,65 +201,50 @@ final class RecommendationService {
       $recentDealNid = (int) end($excludedDealNids);
       $recycleExcludedDealNids = $recentDealNid > 0 ? [$recentDealNid] : [];
       foreach ($radiusAttempts as $attemptRadiusKm) {
-        $candidateSets[] = $this->buildCandidates(
-          $originLat,
-          $originLon,
-          $cuisines,
-          $attemptRadiusKm,
-          $excludedCuisines,
-          [],
-          $recycleExcludedDealNids
-        );
-        $candidateAttemptMeta[] = [
-          'radius_km' => $attemptRadiusKm,
-          'recycled' => TRUE,
-        ];
-
-        if (!empty($excludedCuisines)) {
-          $candidateSets[] = $this->buildCandidates(
+        $pickedDealNids = $tryCandidateSet(
+          $this->buildCandidates(
             $originLat,
             $originLon,
             $cuisines,
             $attemptRadiusKm,
-            [],
+            $excludedCuisines,
             [],
             $recycleExcludedDealNids
-          );
-          $candidateAttemptMeta[] = [
+          ),
+          [
             'radius_km' => $attemptRadiusKm,
             'recycled' => TRUE,
-          ];
+          ]
+        );
+        if ($pickedDealNids !== NULL) {
+          return $pickedDealNids;
+        }
+
+        if (!empty($excludedCuisines)) {
+          $pickedDealNids = $tryCandidateSet(
+            $this->buildCandidates(
+              $originLat,
+              $originLon,
+              $cuisines,
+              $attemptRadiusKm,
+              [],
+              [],
+              $recycleExcludedDealNids
+            ),
+            [
+              'radius_km' => $attemptRadiusKm,
+              'recycled' => TRUE,
+            ]
+          );
+          if ($pickedDealNids !== NULL) {
+            return $pickedDealNids;
+          }
         }
       }
     }
 
     $setSizes = array_map(static fn(array $set): int => count($set), $candidateSets);
     $attemptSizesJson = json_encode($setSizes, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '[]';
-
-    $picked = $this->pickFromCandidateSets($candidateSets, $preferredLocalities);
-    if ($picked !== NULL) {
-      $attemptIndex = max(0, ((int) $picked['attempt_index']) - 1);
-      $attemptMeta = $candidateAttemptMeta[$attemptIndex] ?? ['radius_km' => $radiusKm, 'recycled' => FALSE];
-      $this->logTiming(sprintf(
-        'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" excluded_deals_count="%d" requested_radius_km="%s" selected_radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="%d" top_tier_count="%d" picked_deal_nid="%d" picked_venue_nid="%d" recycled="%s"',
-        $this->formatMs($startedAt),
-        count($cuisines),
-        count($excludedCuisines),
-        count($excludedVenueNids),
-        count($excludedDealNids),
-        (string) $radiusKm,
-        (string) ($attemptMeta['radius_km'] ?? $radiusKm),
-        count($candidateSets),
-        $attemptSizesJson,
-        (int) $picked['attempt_index'],
-        (int) $picked['top_tier_count'],
-        (int) $picked['candidate']['deal_nid'],
-        (int) $picked['candidate']['venue_nid'],
-        !empty($attemptMeta['recycled']) ? '1' : '0',
-      ));
-
-      return [(int) $picked['candidate']['deal_nid']];
-    }
 
     $this->logTiming(sprintf(
       'SMART LOCATION recommendation timing: total_ms="%s" cuisines_count="%d" excluded_cuisines_count="%d" excluded_venues_count="%d" excluded_deals_count="%d" requested_radius_km="%s" attempts_built="%d" attempt_sizes="%s" selected_attempt="0" top_tier_count="0" picked_deal_nid="" picked_venue_nid=""',
@@ -221,7 +260,6 @@ final class RecommendationService {
 
     return [];
   }
-
 
 
   /**
