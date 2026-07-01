@@ -3,7 +3,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Early Dining Menu","From $25",Daily,4pm–6pm,"Early Bird","Chart House - Daytona Beach",1.0,1,,,
 "Wing Night","$0.75 wings",Monday,"All day","Daily Special","Oyster Pub - Daytona Beach",1.0,1,,,
 "Happy Hour Drinks","$5 cocktails",Daily,3pm–6pm,"Happy Hour","Racing’s North Turn - Ponce Inlet",1.0,1,,,
-"Breakfast Combo",$9.99,Daily,Morning,"Breakfast Special","Peach Valley Café - Ormond Beach",1.0,1,,,
 "Happy Hour","$5 drinks",Weekdays,4pm–6pm,"Happy Hour","Rose Villa Restaurant - Ormond Beach",1.0,1,,,
 "Lunch Basket Special",$12.99,Weekdays,11am–3pm,"Lunch Special","Hull’s Seafood Restaurant - Ormond Beach",1.0,1,,,
 "Craft Beer Happy Hour","$5 beers",Daily,4pm–7pm,"Happy Hour","Grind Gastropub - Ormond Beach",1.0,1,,,
@@ -190,7 +189,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Happy Hour","Sharable bites, wine, cocktails, and beer specials",Daily,5pm–7pm,"Happy Hour","Haven - Tampa",1.0,1,,,
 "Social Hour","Wine, cocktails, beer, and light bites",Weekdays,11am–7pm,"Happy Hour","Timpano Hyde Park - Tampa",1.0,1,,,
 "Happy Hour","$5 drinks",Daily,3pm–6pm,"Happy Hour","The Hampton Social Orlando - Orlando",1.0,1,,,
-"Tapas Specials","Discounted tapas",Daily,"Happy Hour","Happy Hour","Cafe Tu Tu Tango - Orlando",1.0,1,,,
 "Live Music Happy Hour","Drink specials",Daily,"Happy Hour","Happy Hour","Tin Roof Orlando - Orlando",1.0,1,,,
 "Margarita Specials","$6 margaritas",Daily,"Happy Hour","Happy Hour","El Patron Restaurante Mexicano - Orlando",1.0,1,,,
 "Taco Tuesday","$2 tacos",Tuesday,"All day","Daily Special","Rocco's Tacos Orlando - Orlando",1.0,1,,,
@@ -202,8 +200,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Sunset Happy Hour","Drink specials",Daily,"Happy Hour","Happy Hour","The Wharf at Sunset Walk - Kissimmee",1.0,1,,,
 "Cuban Happy Hour","Drink specials",Daily,"Happy Hour","Happy Hour","Estefan Kitchen Orlando - Kissimmee",1.0,1,,,
 "Taco & Tequila Specials","Discount tacos and tequila",Daily,"Happy Hour","Happy Hour","El Jefe Tequilas Taco Cantina - Kissimmee",1.0,1,,,
-"Happy Hour","Two-for-one drinks and $5 bar bites",Weekdays,12pm–7pm,"Happy Hour","Mia's Italian Kitchen Orlando - Orlando",1.0,1,,,
-"Happy Hour","2-for-1 drinks · 1/2 off house beer, wine, sangria, and cocktail pitchers",Daily,3pm–6pm,"Happy Hour","Tapa Toro Orlando - Orlando",1.0,1,,,
 "Happy Hour","$5 pints · $5 Mai Tai · $5 sangria",Weekdays,4pm–6pm,"Happy Hour","Kings Dining & Entertainment Orlando - Orlando",1.0,1,,,
 "Happy Hour","Happy hour specials",Weekdays,5pm–7pm,"Happy Hour","Sports & Social Orlando - Orlando",1.0,1,,,
 "Happy Hour","Buy One Get One tacos · $7 margaritas · $5 mocktails · $4 drafts, wells, and wines",Weekdays,2pm–6pm,"Happy Hour","Nueva Cantina Tampa - Tampa",1.0,1,,,
@@ -212,7 +208,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Taco + Tequila Tuesday","$1 off tacos · $5 casa margaritas · $5 off casa pitchers",Tuesday,"All day","Daily Special","Barrio Ybor City - Tampa",1.0,1,,,
 "Happy Hour","$5 tacos & apps · $5 bottles, drafts, wine, liquors, and select margaritas",Daily,4pm–7pm,"Happy Hour","Rocco's Tacos Tampa - Tampa",1.0,1,,,
 "Taco Tuesday","All-you-can-eat tacos $27.99 · $7 house margaritas · $5 cervezas",Tuesday,Open–Close,"Daily Special","Rocco's Tacos Tampa - Tampa",1.0,1,,,
-"Bottomless Brunch","$34.25 per person",Saturday|Sunday,11am–3pm,"Brunch Special","Mia's Italian Kitchen - Orlando",1.0,1,,,
 "Sunday Paella Brunch","All-you-can-eat paella $25 · unlimited sangria and mimosas $18 with entrée or paella purchase",Sunday,11am–3pm,"Brunch Special","Tapa Toro - Orlando",1.0,1,,,
 "Weekend Brunch","Brunch menu served weekends",Saturday|Sunday,11am–2:30pm,"Brunch Special","Kavas Tacos + Tequila - Orlando",1.0,1,,,
 "Taco Tuesday Board","$36 taco board · half-off select premium tequilas · half-off house pitchers",Tuesday,"Regular hours","Daily Special","Kavas Tacos + Tequila - Orlando",1.0,1,,,
@@ -307,7 +302,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Coffee Special","$5 coffee drink",Daily,Morning,"Daily Special","Buddy Brew Coffee Tampa - Tampa",1.0,1,,,
 "Coffee + Pastry","$6 combo",Daily,Morning,"Breakfast Special","Blind Tiger Cafe Tampa - Tampa",1.0,1,,,
 "Brunch Special","$14 brunch menu",Weekends,Morning,"Brunch Special","Datz Tampa - Tampa",1.0,1,,,
-"Lunch Special","$12 lunch plate",Weekdays,Lunch,"Lunch Special","On Swann Tampa - Tampa",1.0,1,,,
 "Pizza Combo","$10 pizza + drink",Daily,Lunch,Combo,"Eddie & Sam's NY Pizza Tampa - Tampa",1.0,1,,,
 "Ramen Special","$13 ramen bowl",Daily,Lunch,"Daily Special","Ichicoro Ramen Tampa - Tampa",1.0,1,,,
 "Sushi Combo","$15 sushi lunch",Daily,Lunch,"Lunch Special","Noble Rice Tampa - Tampa",1.0,1,,,
@@ -358,7 +352,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Brunch Special","$12 brunch plates",Weekends,Morning,"Brunch Special","Toasted Orlando - Orlando",1.0,1,,,
 "Breakfast Combo","$9 breakfast + coffee",Daily,Morning,"Breakfast Special","Toasted Orlando - Orlando",1.0,1,,,
 "Lunch Special","$15 steak lunch",Weekdays,Lunch,"Lunch Special","Kres Chophouse Orlando - Orlando",1.0,1,,,
-"Brunch Special","$14 brunch menu",Weekends,Morning,"Brunch Special","Cafe Tu Tu Tango Orlando - Orlando",1.0,1,,,
 "Food Hall Combo","$12 meal combo",Daily,Lunch,Combo,"Armature Works Tampa - Tampa",1.0,1,,,
 "Lunch Special","$13 meal",Daily,Lunch,"Lunch Special","Armature Works Tampa - Tampa",1.0,1,,,
 "Seafood Plate","$16 seafood combo",Daily,Dinner,"Daily Special","Ulele Tampa - Tampa",1.0,1,,,
@@ -779,7 +772,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "The Chateau Anna Maria Early Dinner Special","Early dinner food special",Monday-Friday,"4:00 PM","Dinner Special","The Chateau Anna Maria - Holmes Beach",1.0,1,"6:00 PM",,
 "Beach Bistro Early Dinner Special","Early dinner food special",Monday-Friday,"4:00 PM","Dinner Special","Beach Bistro - Holmes Beach",1.0,1,"6:00 PM",,
 "Mean Deans Local Kitchen Early Dinner Special","Early dinner food special",Monday-Friday,"4:00 PM","Dinner Special","Mean Deans Local Kitchen - Bradenton",1.0,1,"6:00 PM",,
-"On Swann Early Dinner Special","Early dinner food special",Monday-Friday,"4:00 PM","Dinner Special","On Swann - Tampa",1.0,1,"6:00 PM",,
 "Datz Lunch Special","Weekday lunch special",Monday-Friday,"11:00 AM","Lunch Special","Datz - Tampa",1.0,1,"3:00 PM",,
 "Ella's Americana Folk Art Cafe Early Dinner Special","Early dinner food special",Monday-Friday,"4:00 PM","Dinner Special","Ella's Americana Folk Art Cafe - Tampa",1.0,1,"6:00 PM",,
 "Goody Goody Burgers Early Dinner Special","Early dinner food special",Monday-Friday,"4:00 PM","Dinner Special","Goody Goody Burgers - Tampa",1.0,1,"6:00 PM",,
@@ -1071,7 +1063,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Seafood Lunch Deal","Discounted seafood lunch plates","Mon,Tue,Wed,Thu,Fri",11:00,"Lunch Special","St. John’s River Steak & Seafood - Sanford",1,1,15:00,,
 "Burger & Beer Special","Burger and craft beer combo","Mon,Tue,Wed,Thu",11:00,"Combo Deal","Buster’s Bistro - Sanford",1,1,16:00,,
 "Brunch Special","Weekend brunch specials with mimosas","Sat,Sun",10:00,Brunch,"The Breezeway Restaurant & Bar - Sanford",1,1,14:00,,
-"Southern Comfort Lunch","Classic southern lunch special","Mon,Tue,Wed,Thu,Fri",11:00,"Lunch Special","The Colonial Room Restaurant - Sanford",1,1,15:00,,
 "Sushi Lunch Special","Select sushi rolls at lunch pricing","Mon,Tue,Wed,Thu,Fri",11:00,"Lunch Special","Sushi & Seoul at Celery City Craft - Sanford",1,1,15:00,,
 "Bayou Happy Hour","Cajun bites and drink specials","Mon,Tue,Wed,Thu,Fri",16:00,"Happy Hour","The Bayou Kitchen & Lounge - Sanford",1,1,19:00,,
 "BBQ Family Pack","Family-sized BBQ platter bundle","Sat,Sun",12:00,"Family Deal","Fuel BBQ - Sanford",1,1,20:00,,
@@ -1618,7 +1609,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Jason's Deli Deli Favorites","Fresh sandwiches, salads, soups, potatoes, pasta, desserts and catering.","Every day",,"Deli Special","Jason's Deli - Pensacola",1,1,,https://www.jasonsdeli.com/locations/fl/pensacola/1540-airport-blvd/,"Order Online"
 "Jason's Deli Deli Favorites","Fresh sandwiches, salads, soups, potatoes, pasta, desserts and catering.","Every day",,"Deli Special","Jason's Deli - Tallahassee",1,1,,https://www.jasonsdeli.com/locations/fl/tallahassee/2335-apalachee-pkwy/,"Order Online"
 "Jason's Deli Deli Favorites","Fresh sandwiches, salads, soups, potatoes, pasta, desserts and catering.","Every day",,"Deli Special","Jason's Deli - Tampa",1,1,,https://www.jasonsdeli.com/locations/fl/tampa/2702-east-fowler/,"Order Online"
-"Brunch Favorites","Pancakes, omelets, breakfast platters and brunch classics.","Every day",,Brunch,"Peach Valley Cafe - Ormond Beach",1,1,,https://www.peachvalleycafe.com/,"View Menu"
 "Fresh Donuts & Breakfast","Fresh donuts and breakfast bites daily.","Every day",,Breakfast,"Donnie's Donuts - Daytona Beach",1,1,,https://donniesdonuts.com/,"View Menu"
 "Classic Breakfast Plates","Hearty breakfast and brunch menu served daily.","Every day",,Breakfast,"Wake Up Cafe - Daytona Beach",1,1,,https://wakeupcafensb.com/,"View Menu"
 "Cozy Brunch Menu","Breakfast, brunch and comfort food options.","Every day",,Brunch,"The Red Bud Cafe - Daytona Beach",1,1,,https://theredbudcafe.com/,"View Menu"
@@ -2574,7 +2564,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Zeno's Boardwalk Sweetshop Daytona Featured Venue","Featured Daytona Beach Boardwalk sweet shop serving taffy, ice cream, chocolates, candy, and sweet treats.","Every day",,"Featured Venue","Zeno's Boardwalk Sweetshop Daytona Beach - Daytona Beach",1,1,,https://worldsmostfamoustaffy.com/pages/retail-locations,"View venue"
 "Zeno's Boardwalk Sweetshop NSB Featured Venue","Featured Flagler Avenue sweet shop serving taffy, ice cream, chocolates, candy, and sweet treats.","Every day",,"Featured Venue","Zeno's Boardwalk Sweetshop New Smyrna Beach - New Smyrna Beach",1,1,,https://worldsmostfamoustaffy.com/pages/retail-locations,"View venue"
 "Better Jerk Jamaican Restaurant Featured Venue","Featured Daytona Beach Jamaican restaurant serving jerk chicken, curry goat, patties, rice and peas, oxtail, and Caribbean comfort food.","Every day",,"Featured Venue","Better Jerk Jamaican Restaurant - Daytona Beach",1,1,,https://www.daytonabeach.com/listings/better-jerk-jamaican-restaurant/3468/,"View venue"
-"Frozen Gold Ice Cream Shop Featured Venue","Featured New Smyrna Beach ice cream shop serving soft serve, sundaes, shakes, floats, frozen treats, burgers, hot dogs, chicken tenders, fish and chips.","Every day",,"Featured Venue","Frozen Gold Ice Cream Shop - New Smyrna Beach",1,1,,https://www.toasttab.com/local/order/frozen-gold-104-eddie-rd,"View venue"
 "Cool Treats for NSB Featured Venue","Featured New Smyrna Beach ice cream shop serving homemade ice cream, waffle cones, shakes, Italian ice, vegan options, and adult ice cream flavors.","Every day",,"Featured Venue","Cool Treats for NSB - New Smyrna Beach",1,1,,https://www.facebook.com/IcecreamNSB/,"View venue"
 "Treats on the Beach Featured Venue","Featured Flagler Avenue ice cream and dessert shop serving ice cream, frozen treats, and beachside sweets.","Every day",,"Featured Venue","Treats on the Beach - New Smyrna Beach",1,1,,https://treatsonthebeach.com/,"View venue"
 "Twistee Treat New Smyrna Featured Venue","Featured cone-shaped New Smyrna Beach ice cream shop serving soft serve, shakes, malts, twirls, slushies, banana splits, waffle tacos, and frozen treats.","Every day",,"Featured Venue","Twistee Treat New Smyrna Beach - New Smyrna Beach",1,1,,https://order.online/store/TwisteeTreat-1257673,"View venue"
@@ -2954,7 +2943,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "ARDEN Happy Hour - Ivanhoe Village","ARDEN happy hour runs Wednesday through Saturday from 5PM to 7PM with bubbles cocktails martinis wine and appetizer specials.",Wednesday|Thursday|Friday|Saturday,17:00,"Happy Hour","ARDEN - Ivanhoe Village - Orlando",1,1,19:00,https://www.goldenbuzz.social/orlando/happyhour/arden/,"View Happy Hour"
 "Gravity Taproom Happy Hour - Ivanhoe Village","Gravity Taproom weekday happy hour runs Monday through Friday from 3PM to 6PM with beer cocktail and food specials.",Monday|Tuesday|Wednesday|Thursday|Friday,15:00,"Happy Hour","Gravity Taproom - Ivanhoe Village - Orlando",1,1,18:00,https://www.goldenbuzz.social/orlando/happyhour/area/ivanhoe/,"View Happy Hour"
 "AC Skybar Wine Down Wednesday - Downtown Orlando","Wine Down Wednesday at AC Skybar features $25 for 3 reds 3 whites and 1 sparkling wine tasting special.",Wednesday,17:00,"Daily Special","AC Skybar - Downtown Orlando - Orlando",1,1,23:00,https://www.goldenbuzz.social/orlando/specials/ac-sky-bar/,"View Special"
-"Cafe Tu Tu Tango Happy Hour","Cafe Tu Tu Tango happy hour runs Monday through Friday from 3PM to 6PM with beer cocktails sangria well drinks wine and food specials including apps and tacos.",Monday|Tuesday|Wednesday|Thursday|Friday,15:00,"Happy Hour","Cafe Tu Tu Tango - Orlando",1,1,18:00,https://www.goldenbuzz.social/orlando/happyhour/cafe-tu-tu-tango/,"View Happy Hour"
 "Quesa Loco Taco Tuesday - Orlando","Quesa Loco Taco Tuesday runs from 3PM to 8PM with $2 tacos.",Tuesday,15:00,"Taco Tuesday","Quesa Loco Orlando - Orlando",1,1,20:00,https://www.goldenbuzz.social/orlando/specials/quesa-loco/,"View Specials"
 "Quesa Loco Loco Wednesday - Orlando","Quesa Loco Wednesday special runs from 3PM to 8PM with $3 Quesa or Birria tacos.",Wednesday,15:00,"Daily Special","Quesa Loco Orlando - Orlando",1,1,20:00,https://www.goldenbuzz.social/orlando/specials/quesa-loco/,"View Specials"
 "Quesa Loco Thirsty Thursday - Orlando","Quesa Loco Thursday special includes $3 aguas frescas and bottled beer $6 house margaritas and $7 micheladas.",Thursday,15:00,"Daily Special","Quesa Loco Orlando - Orlando",1,1,20:00,https://www.goldenbuzz.social/orlando/specials/quesa-loco/,"View Specials"
@@ -3020,7 +3008,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Bar Italia Martini Wednesday - Winter Park","Wednesday special at Bar Italia Winter Park features $8 select martinis at the bar.",Wednesday,11:00,"Daily Special","Bar Italia Winter Park - Winter Park",1,1,22:00,https://www.goldenbuzz.social/orlando/specials/day/wednesday/,"View Specials"
 "Bar Italia Wine Night Thursday - Winter Park","Thursday special at Bar Italia Winter Park features half off all wine bottles.",Thursday,11:00,"Daily Special","Bar Italia Winter Park - Winter Park",1,1,22:00,https://www.goldenbuzz.social/orlando/specials/day/thursday/,"View Specials"
 "Primrose Lanes Two for Twenty Martinis","Primrose Lanes weekly special features 2 for $20 martinis Tuesday through Sunday.",Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday,15:00,"Daily Special","Primrose Lanes - Orlando",1,1,23:59,https://www.goldenbuzz.social/orlando/specials/day/sunday/,"View Specials"
-"Mia's Italian Kitchen Bottomless Brunch","Weekend brunch at Mia's Italian Kitchen features $34.25 bottomless food brunch and $24 bottomless sparkles Bloody Marys and mimosas.",Saturday|Sunday,11:00,Brunch,"Mia's Italian Kitchen Orlando - Orlando",1,1,15:00,https://www.goldenbuzz.social/orlando/specials/day/sunday/,"View Specials"
 "Quesa Loco Shrimp Friday - Orlando","Friday special at Quesa Loco features $3 shrimp tacos $4 shrimp Quesa tacos $11 shrimp micheladas and $12 ceviche.",Friday,15:00,"Daily Special","Quesa Loco Orlando - Orlando",1,1,20:00,https://www.goldenbuzz.social/orlando/specials/day/friday/,"View Specials"
 "Quesa Loco Beer Bucket Saturday - Orlando","Saturday special at Quesa Loco features $18 beer buckets.",Saturday,15:00,"Daily Special","Quesa Loco Orlando - Orlando",1,1,20:00,https://www.goldenbuzz.social/orlando/specials/day/saturday/,"View Specials"
 "Quesa Loco Quesa Birria Sunday - Orlando","Sunday special at Quesa Loco features $35 for 10 Quesa Birria tacos.",Sunday,15:00,"Daily Special","Quesa Loco Orlando - Orlando",1,1,20:00,https://www.goldenbuzz.social/orlando/specials/day/sunday/,"View Specials"
@@ -3794,7 +3781,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Mangoni Weekday Social Hour","Monday through Friday social hour at Mangoni Italian Market Pizza in Winter Garden from 2 PM to 6 PM with $5 draft beers, $6 wine, $6 mimosas and bellinis, and buy-one-get-one 50% off pizza.","Monday, Tuesday, Wednesday, Thursday, Friday",14:00,"Happy Hour","Mangoni Italian Market Pizza - Winter Garden",1,1,18:00,https://mangoniwg.com/happy-hour/,"View Happy Hour"
 "The Yardery Happy Hour","Tuesday through Friday happy hour at The Yardery in Sanford with exclusive discounts on food and drinks, including drink deals and signature Yardery bites.","Tuesday, Wednesday, Thursday, Friday",15:00,"Happy Hour","The Yardery - Sanford",1,1,18:00,https://www.theyardery.com/happy-hour,"View Happy Hour"
 "Cassis Sunday-Thursday Happy Hour","Sunday through Thursday happy hour at Cassis in downtown St. Petersburg from 3 PM to 7 PM with special pricing on cocktails, pizza, and light bites.","Sunday, Monday, Tuesday, Wednesday, Thursday",15:00,"Happy Hour","Cassis - St. Petersburg",1,1,19:00,https://cassisstpete.com/events-specials/happy-hour-daily/,"View Happy Hour"
-"Buster's Sanford Happy Hour","Monday through Friday happy hour at Buster's Sanford from 3 PM to 6 PM with a variety of food and drink items available for $5.","Monday, Tuesday, Wednesday, Thursday, Friday",15:00,"Happy Hour","Buster's Sanford - Sanford",1,1,18:00,https://busterssanford.com/,"View Happy Hour"
 "West End Daily Happy Hour","Daily happy hour at West End Trading Co. in Sanford with drink specials, craft beer, cocktails, live music energy, and bar deals.","Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday",,"Happy Hour","West End Trading Co. - Sanford",1,1,,https://drinkatwestend.com/,"View Happy Hour"
 "The Crafty Squirrel Happy Hour","Happy hour at The Crafty Squirrel in downtown St. Petersburg with weekday and weekend drink specials, including Monday-Friday 3 PM to 7 PM and Saturday-Sunday 3 PM to 6 PM.","Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday",15:00,"Happy Hour","The Crafty Squirrel - St. Petersburg",1,1,,https://craftysquirrel.com/,"View Happy Hour"
 "Cheeky's Daily Happy Hour","Daily happy hour at Cheeky's in St. Petersburg from 3 PM to 6 PM with seafood, raw bar, cocktail, beer, and drink specials.","Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday",15:00,"Happy Hour","Cheeky's - St. Petersburg",1,1,18:00,https://www.cheekys.net/,"View Happy Hour"
@@ -3897,3 +3883,16 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Tommy Bahama Winter Park Island Time","Daily Island Time happy hour at Tommy Bahama Marlin Bar in Winter Park from 3 PM to 6 PM with tropical drinks, wines, cocktails, martinis, and island-inspired bites.","Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday",15:00,"Happy Hour","Tommy Bahama Marlin Bar - Winter Park",1,1,18:00,https://www.tommybahama.com/restaurants-and-marlin-bars/locations/winter-park,"View Happy Hour"
 "$2 Refrescas - Taco Bell New Smyrna Beach","$2 Refrescas beverage special available daily from 2:00 PM to 5:00 PM at participating Taco Bell locations.",Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday,14:00,"Beverage Special","Taco Bell New Smyrna Beach - New Smyrna Beach",1,1,17:00,https://www.tacobell.com/promotions/happier-hour,"View beverage special"
 "$2 Refrescas - Taco Bell Port Orange","$2 Refrescas beverage special available daily from 2:00 PM to 5:00 PM at participating Taco Bell locations.",Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday,14:00,"Beverage Special","Taco Bell Port Orange - Port Orange",1,1,17:00,https://www.tacobell.com/promotions/happier-hour,"View beverage special"
+"Brunch Favorites","Pancakes, omelets, breakfast platters and brunch classics.","Every day",,Brunch,"Peach Valley Cafe - Ormond Beach",1,1,,https://www.peachvalleycafe.com/,"View Menu"
+"Breakfast Combo","$9.99 breakfast combo available daily during morning hours.","Daily","Morning","Breakfast Special","Peach Valley Cafe - Ormond Beach",1,1,,https://www.peachvalleycafe.com/,"View Menu"
+"Cafe Tu Tu Tango Happy Hour","Cafe Tu Tu Tango happy hour runs Monday through Friday from 3PM to 6PM with beer cocktails sangria well drinks wine and food specials including apps and tacos.",Monday|Tuesday|Wednesday|Thursday|Friday,15:00,"Happy Hour","Cafe Tu Tu Tango - Orlando",1,1,18:00,https://www.goldenbuzz.social/orlando/happyhour/cafe-tu-tu-tango/,"View Happy Hour"
+"Brunch Special","$14 brunch menu available weekends during morning hours.","Weekends","Morning","Brunch Special","Cafe Tu Tu Tango - Orlando",1,1,,https://www.cafetututango.com/menu,"View Menu"
+"Tapas Specials","Discounted tapas available daily during happy hour.","Daily","Happy Hour","Happy Hour","Cafe Tu Tu Tango - Orlando",1,1,,https://www.cafetututango.com/menu,"View Menu"
+"Mia's Italian Kitchen Bottomless Brunch","Weekend brunch at Mia's Italian Kitchen features $34.25 bottomless food brunch and $24 bottomless sparkles Bloody Marys and mimosas.",Saturday|Sunday,11:00,Brunch,"Mia's Italian Kitchen - Orlando",1,1,15:00,https://www.goldenbuzz.social/orlando/specials/day/sunday/,"View Specials"
+"Happy Hour","Two-for-one drinks and $5 bar bites available weekdays from 12 PM to 7 PM.","Weekdays","12:00","Happy Hour","Mia's Italian Kitchen - Orlando",1,1,"19:00",https://orlando-fl.miasitalian.com/,"View Menu"
+"Lunch Special","$12 lunch plate available weekdays during lunch hours.","Weekdays","Lunch","Lunch Special","On Swann - Tampa",1,1,,https://onswann.com/,"View Menu"
+"On Swann Early Dinner Special","Early dinner food special available Monday through Friday from 4 PM to 6 PM.","Monday-Friday","16:00","Dinner Special","On Swann - Tampa",1,1,"18:00",https://onswann.com/,"View Menu"
+"Buster’s Bistro - Sanford Happy Hour","Monday through Friday happy hour at Buster's Sanford from 3 PM to 6 PM with a variety of food and drink items available for $5.","Monday, Tuesday, Wednesday, Thursday, Friday",15:00,"Happy Hour","Buster’s Bistro - Sanford",1,1,18:00,https://busterssanford.com/,"View Happy Hour"
+"Southern Comfort Lunch","Classic Southern lunch special available Monday through Friday from 11 AM to 3 PM.","Monday-Friday","11:00","Lunch Special","Colonial Room Restaurant - Sanford",1,1,"15:00",https://colonialroomsanford.com/,"View Menu"
+"Happy Hour","2-for-1 drinks plus half-off house beer, wine, sangria, and cocktail pitchers available daily from 3 PM to 6 PM.","Daily","15:00","Happy Hour","Tapa Toro - Orlando",1,1,"18:00",https://www.tapatoro.restaurant/menus,"View Menu"
+"Mama Cannoli Featured Venue","Featured South Daytona cannoli shop serving fresh-filled cannoli, Italian pastries, cookies, coffee, and Italian ice.","Every day",,"Featured Venue","Mama Cannoli - South Daytona",1,1,,https://www.mamacannoli.com/menu,"View Menu"

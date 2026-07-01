@@ -187,7 +187,7 @@ function readCsvFile(string $path, array $expectedHeader, string $label, array &
 function validateVenues(array $rows, array &$errors, array &$warnings, array &$review): void {
   $seenExactVenue = [];
   $seenTitle = [];
-  $seenAddress = [];
+  $seenBrandCity = [];
 
   foreach ($rows as $row) {
     $line = (int) $row['_line'];
@@ -224,8 +224,19 @@ function validateVenues(array $rows, array &$errors, array &$warnings, array &$r
       $seenTitle[$titleKey][] = [$line, $title, $addressKey];
     }
 
-    if ($addressKey !== '') {
-      $seenAddress[$addressKey][] = [$line, $title, $titleKey];
+    $brandKey = normalizeVenueBrandKey($title, $city);
+    $cityKey = normalizeStrictKey($city);
+    $stateKey = normalizeStrictKey($state);
+    $streetAddressKey = normalizeStrictKey($address);
+    if ($brandKey !== '' && $cityKey !== '' && !isIgnoredDuplicateBrandKey($brandKey)) {
+      $seenBrandCity[$stateKey . '|' . $cityKey . '|' . $brandKey][] = [
+        $line,
+        $title,
+        $addressKey,
+        $titleKey,
+        $streetAddressKey,
+        $address,
+      ];
     }
 
     if ($lat === '' || $lon === '') {
@@ -250,10 +261,25 @@ function validateVenues(array $rows, array &$errors, array &$warnings, array &$r
     }
   }
 
-  foreach ($seenAddress as $items) {
-    $titleKeys = array_unique(array_column($items, 2));
-    if (count($items) > 1 && count($titleKeys) > 1) {
-      $review[] = 'venues.csv: same address with multiple titles: ' . summarizeReviewItems($items);
+  foreach ($seenBrandCity as $brandCityKey => $items) {
+    if (count($items) <= 1) {
+      continue;
+    }
+
+    $titleKeys = array_unique(array_column($items, 3));
+    $streetAddressKeys = array_unique(array_filter(array_column($items, 4)));
+
+    if (count($titleKeys) <= 1) {
+      continue;
+    }
+
+    if (count($streetAddressKeys) === 1) {
+      $review[] = 'venues.csv: possible same-business duplicate in same city and same street address: ' . summarizeReviewItemsWithAddress($items);
+      continue;
+    }
+
+    if (count($streetAddressKeys) > 1) {
+      $review[] = 'venues.csv: possible same-business duplicate in same city with different street addresses: ' . summarizeReviewItemsWithAddress($items);
     }
   }
 }
@@ -369,11 +395,149 @@ function removeBom(array $header): array {
 }
 
 function normalizeStrictKey(string $value): string {
-  $value = mb_strtolower(trim($value));
+  $value = trim($value);
+  if ($value === '') {
+    return '';
+  }
+
+  // Make duplicate detection accent-insensitive:
+  // "Café" and "Cafe" must compare as the same value.
+  $transliterated = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+  if ($transliterated !== false) {
+    $value = $transliterated;
+  }
+
+  $value = mb_strtolower($value);
   $value = str_replace(['&', '+'], ' and ', $value);
-  $value = preg_replace('/[^a-z0-9]+/u', ' ', $value);
-  $value = preg_replace('/\s+/', ' ', $value);
+  $value = preg_replace('/[^a-z0-9]+/', ' ', $value);
+  $value = preg_replace('/\s+/', ' ', (string) $value);
   return trim((string) $value);
+}
+
+function normalizeVenueBrandKey(string $title, string $city): string {
+  $value = normalizeStrictKey($title);
+  $cityKey = normalizeStrictKey($city);
+
+  if ($value === '') {
+    return '';
+  }
+
+  if ($cityKey !== '') {
+    $value = preg_replace('/(?:^| )' . preg_quote($cityKey, '/') . '$/', '', $value);
+  }
+
+  $tokens = preg_split('/\s+/', trim((string) $value));
+  if ($tokens === false || empty($tokens)) {
+    return '';
+  }
+
+  $cityTokens = $cityKey !== '' ? preg_split('/\s+/', $cityKey) : [];
+  if ($cityTokens === false) {
+    $cityTokens = [];
+  }
+
+  // Remove repeated trailing city/location words left behind by titles such as
+  // "Cafe Tu Tu Tango Orlando - Orlando" or "Frozen Gold NSB".
+  $locationTokens = array_merge($cityTokens, ['nsb']);
+  while (!empty($tokens) && in_array(end($tokens), $locationTokens, true)) {
+    array_pop($tokens);
+  }
+
+  if (($tokens[0] ?? '') === 'the') {
+    array_shift($tokens);
+  }
+
+  // Business-root suffixes are removed only for duplicate detection.
+  // They do not define the canonical title. Canonical titles should keep real
+  // business descriptors, such as "Bistro" in "Buster's Bistro - Sanford".
+  // This comparison layer exists to catch near-duplicate imports such as
+  // "Frozen Gold Ice Cream" vs "Frozen Gold Ice Cream Shop" and
+  // "Buster's Sanford" vs "Buster's Bistro - Sanford".
+  $suffixTokens = [
+    'restaurant', 'restaurants',
+    'cafe', 'cafes', 'caf',
+    'shop', 'shops',
+    'ice', 'cream',
+    'oceanfront',
+    'mexican',
+    'bar', 'bars',
+    'grill', 'grille',
+    'kitchen',
+    'pizzeria', 'pizza',
+    'pub', 'tavern',
+    'bistro',
+    'company', 'co',
+    'place',
+    'bakery', 'bakehouse',
+    'cantina',
+    'diner',
+    'eatery',
+    'food', 'foods',
+    'cuisine',
+    'lounge',
+    'sports',
+    'waterfront',
+  ];
+
+  while (!empty($tokens) && in_array(end($tokens), $suffixTokens, true)) {
+    array_pop($tokens);
+  }
+
+  // A second pass handles titles where a location word becomes trailing only
+  // after descriptor suffixes were removed.
+  while (!empty($tokens) && in_array(end($tokens), $locationTokens, true)) {
+    array_pop($tokens);
+  }
+
+  if (($tokens[0] ?? '') === 'the') {
+    array_shift($tokens);
+  }
+
+  $brandKey = implode(' ', array_values(array_filter($tokens)));
+
+  if (mb_strlen(str_replace(' ', '', $brandKey)) < 5) {
+    return '';
+  }
+
+  return $brandKey;
+}
+
+function isIgnoredDuplicateBrandKey(string $brandKey): bool {
+  static $ignored = [
+    '7 brew',
+    'applebee s',
+    'bob evans',
+    'burger king',
+    'cava',
+    'chick fil a',
+    'chipotle',
+    'cinnabon',
+    'cold stone',
+    'culver s',
+    'denny s',
+    'einstein bros bagels',
+    'firehouse subs',
+    'first watch',
+    'ihop',
+    'kfc',
+    'mcdonald s',
+    'miller s ale house',
+    'moe s southwest',
+    'panera bread',
+    'perkins bakery',
+    'playa bowls',
+    'popeyes',
+    'raising cane s',
+    'red lobster',
+    'taco bell',
+    'tijuana flats',
+    'tropical smoothie',
+    'waffle house',
+    'walmart bakery',
+    'wendy s',
+  ];
+
+  return in_array($brandKey, $ignored, true);
 }
 
 function normalizeAddressKey(string $address, string $city, string $state, string $zip): string {
@@ -450,6 +614,22 @@ function isRecognizedDayValue(string $value): bool {
   }
 
   return true;
+}
+
+
+function summarizeReviewItemsWithAddress(array $items): string {
+  $parts = [];
+  foreach (array_slice($items, 0, 5) as $item) {
+    $address = trim((string) ($item[5] ?? ''));
+    $suffix = $address !== '' ? ' @ ' . $address : '';
+    $parts[] = 'line ' . (int) $item[0] . ' (' . (string) $item[1] . $suffix . ')';
+  }
+
+  if (count($items) > 5) {
+    $parts[] = '+' . (count($items) - 5) . ' more';
+  }
+
+  return implode('; ', $parts);
 }
 
 function summarizeReviewItems(array $items): string {
