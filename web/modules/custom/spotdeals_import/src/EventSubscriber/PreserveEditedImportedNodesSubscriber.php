@@ -379,7 +379,12 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
   private function findExistingProtectedNodeForRow(string $migration_id, Row $row): ?int {
     if ($migration_id === 'spotdeals_venues') {
       $title = trim((string) $row->getSourceProperty('title'));
-      return $this->findExistingProtectedVenueNode($title);
+      $address = trim((string) $row->getSourceProperty('field_address_address_line1'));
+      $city = trim((string) $row->getSourceProperty('field_address_locality'));
+      $state = trim((string) $row->getSourceProperty('field_address_administrative_area'));
+      $zip = trim((string) $row->getSourceProperty('field_address_postal_code'));
+
+      return $this->findExistingProtectedVenueNode($title, $address, $city, $state, $zip);
     }
 
     if ($migration_id === 'spotdeals_deals') {
@@ -394,13 +399,25 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
   }
 
   /**
-   * Finds an existing protected venue node by source title.
+   * Finds an existing protected venue node by source identity.
    */
-  private function findExistingProtectedVenueNode(string $title): ?int {
+  private function findExistingProtectedVenueNode(string $title, string $address = '', string $city = '', string $state = '', string $zip = ''): ?int {
     if ($title === '') {
       return NULL;
     }
 
+    $exact_nid = $this->findExistingProtectedVenueNodeByExactTitle($title);
+    if ($exact_nid) {
+      return $exact_nid;
+    }
+
+    return $this->findExistingProtectedVenueNodeByCanonicalIdentity($title, $address, $city, $state, $zip);
+  }
+
+  /**
+   * Finds an existing protected venue node by exact title.
+   */
+  private function findExistingProtectedVenueNodeByExactTitle(string $title): ?int {
     $nids = $this->entityTypeManager
       ->getStorage('node')
       ->getQuery()
@@ -420,6 +437,82 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
     }
 
     return NULL;
+  }
+
+  /**
+   * Finds an existing protected venue node by canonical title/address identity.
+   */
+  private function findExistingProtectedVenueNodeByCanonicalIdentity(string $title, string $address, string $city, string $state, string $zip): ?int {
+    $source_brand_key = $this->normalizeVenueBrandKey($title, $city);
+    $source_city_key = $this->normalizeStrictKey($city);
+    $source_address_key = $this->normalizeAddressKey($address, $city, $state, $zip);
+
+    if ($source_brand_key === '') {
+      return NULL;
+    }
+
+    $query = $this->entityTypeManager
+      ->getStorage('node')
+      ->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('type', 'venue')
+      ->sort('nid', 'ASC');
+
+    $nids = $query->execute();
+    if (empty($nids)) {
+      return NULL;
+    }
+
+    $best_nid = NULL;
+    $best_score = 0;
+    $nodes = $this->entityTypeManager->getStorage('node')->loadMultiple($nids);
+
+    foreach ($nodes as $node) {
+      if (!$node instanceof NodeInterface) {
+        continue;
+      }
+
+      $nid = (int) $node->id();
+      if (!$this->isProtectedNode($nid, 'spotdeals_venues')) {
+        continue;
+      }
+
+      $node_address = $this->getNodeAddressParts($node);
+      $node_city = $node_address['city'];
+      $node_brand_key = $this->normalizeVenueBrandKey($node->label(), $node_city);
+
+      if ($node_brand_key !== $source_brand_key) {
+        continue;
+      }
+
+      $score = 10;
+      if ($source_city_key !== '' && $this->normalizeStrictKey($node_city) === $source_city_key) {
+        $score += 20;
+      }
+      elseif ($source_city_key !== '') {
+        continue;
+      }
+
+      if ($source_address_key !== '') {
+        $node_address_key = $this->normalizeAddressKey(
+          $node_address['address'],
+          $node_address['city'],
+          $node_address['state'],
+          $node_address['zip']
+        );
+
+        if ($node_address_key === $source_address_key) {
+          $score += 50;
+        }
+      }
+
+      if ($score > $best_score) {
+        $best_score = $score;
+        $best_nid = $nid;
+      }
+    }
+
+    return $best_nid;
   }
 
   /**
@@ -480,11 +573,149 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
       ->range(0, 1)
       ->execute();
 
-    if (empty($nids)) {
-      return NULL;
+    if (!empty($nids)) {
+      return (int) reset($nids);
     }
 
-    return (int) reset($nids);
+    return $this->findExistingProtectedVenueNode($title);
+  }
+
+  /**
+   * Extracts address field values from a venue node.
+   *
+   * @return array{address:string,city:string,state:string,zip:string}
+   *   Normalized address parts.
+   */
+  private function getNodeAddressParts(NodeInterface $node): array {
+    $parts = [
+      'address' => '',
+      'city' => '',
+      'state' => '',
+      'zip' => '',
+    ];
+
+    if (!$node->hasField('field_address') || $node->get('field_address')->isEmpty()) {
+      return $parts;
+    }
+
+    $value = $node->get('field_address')->first()?->getValue() ?? [];
+    $parts['address'] = trim((string) ($value['address_line1'] ?? ''));
+    $parts['city'] = trim((string) ($value['locality'] ?? ''));
+    $parts['state'] = trim((string) ($value['administrative_area'] ?? ''));
+    $parts['zip'] = trim((string) ($value['postal_code'] ?? ''));
+
+    return $parts;
+  }
+
+  /**
+   * Normalizes a value for identity comparison.
+   */
+  private function normalizeStrictKey(string $value): string {
+    $value = trim($value);
+    if ($value === '') {
+      return '';
+    }
+
+    $transliterated = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+    if ($transliterated !== false) {
+      $value = $transliterated;
+    }
+
+    $value = mb_strtolower($value);
+    $value = str_replace(['&', '+'], ' and ', $value);
+    $value = preg_replace('/[^a-z0-9]+/', ' ', $value);
+    $value = preg_replace('/\s+/', ' ', (string) $value);
+
+    return trim((string) $value);
+  }
+
+  /**
+   * Normalizes a venue title to a business-root key for duplicate protection.
+   */
+  private function normalizeVenueBrandKey(string $title, string $city): string {
+    $value = $this->normalizeStrictKey($title);
+    $city_key = $this->normalizeStrictKey($city);
+
+    if ($value === '') {
+      return '';
+    }
+
+    if ($city_key !== '') {
+      $value = preg_replace('/(?:^| )' . preg_quote($city_key, '/') . '$/', '', $value);
+    }
+
+    $tokens = preg_split('/\s+/', trim((string) $value));
+    if ($tokens === false || empty($tokens)) {
+      return '';
+    }
+
+    $city_tokens = $city_key !== '' ? preg_split('/\s+/', $city_key) : [];
+    if ($city_tokens === false) {
+      $city_tokens = [];
+    }
+
+    $location_tokens = array_merge($city_tokens, ['nsb']);
+    while (!empty($tokens) && in_array(end($tokens), $location_tokens, true)) {
+      array_pop($tokens);
+    }
+
+    if (($tokens[0] ?? '') === 'the') {
+      array_shift($tokens);
+    }
+
+    $suffix_tokens = [
+      'restaurant', 'restaurants',
+      'cafe', 'cafes', 'caf',
+      'shop', 'shops',
+      'ice', 'cream',
+      'oceanfront',
+      'mexican',
+      'bar', 'bars',
+      'grill', 'grille',
+      'kitchen',
+      'pizzeria', 'pizza',
+      'pub', 'tavern',
+      'bistro',
+      'company', 'co',
+      'place',
+      'bakery', 'bakehouse',
+      'cantina',
+      'diner',
+      'eatery',
+      'food', 'foods',
+      'cuisine',
+      'lounge',
+      'sports',
+      'waterfront',
+    ];
+
+    while (!empty($tokens) && in_array(end($tokens), $suffix_tokens, true)) {
+      array_pop($tokens);
+    }
+
+    while (!empty($tokens) && in_array(end($tokens), $location_tokens, true)) {
+      array_pop($tokens);
+    }
+
+    if (($tokens[0] ?? '') === 'the') {
+      array_shift($tokens);
+    }
+
+    $brand_key = implode(' ', array_values(array_filter($tokens)));
+
+    if (mb_strlen(str_replace(' ', '', $brand_key)) < 5) {
+      return '';
+    }
+
+    return $brand_key;
+  }
+
+  /**
+   * Builds a normalized address key.
+   */
+  private function normalizeAddressKey(string $address, string $city, string $state, string $zip): string {
+    $value = $this->normalizeStrictKey($address) . '|' . $this->normalizeStrictKey($city) . '|' . $this->normalizeStrictKey($state) . '|' . $this->normalizeStrictKey($zip);
+    return trim($value, '|');
   }
 
 }
