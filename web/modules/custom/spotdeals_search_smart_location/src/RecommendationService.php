@@ -24,9 +24,9 @@ final class RecommendationService {
   private const CANDIDATE_LIMIT = 50;
 
   /**
-   * Maximum distance treated as immediate local area before nearby-city choices.
+   * Distance bands to exhaust before broader nearby-city choices.
    */
-  private const LOCAL_FIRST_RADIUS_KM = 20.0;
+  private const DISTANCE_BAND_LIMITS_KM = [10.0, 15.0, 20.0, 25.0];
 
   /**
    * Maximum number of top ties to randomize across.
@@ -383,11 +383,11 @@ final class RecommendationService {
         continue;
       }
 
-      // Keep broad recommendation searches local-first before applying vote
-      // quality. Otherwise a farther positive-vote venue can remove closer
-      // unrated same-city candidates before locality preference gets a chance
-      // to run.
-      $candidates = $this->preferLocalRadiusCandidates($candidates);
+      // Keep broad recommendation searches distance-band-first before applying
+      // vote quality. Otherwise a farther positive-vote venue can remove
+      // closer unrated candidates before distance preference gets a chance to
+      // run.
+      $candidates = $this->preferDistanceBandCandidatesByQuality($candidates);
 
       // Choose the nearest available locality before vote-quality filtering.
       // Without this, a positive-vote Port Orange deal can beat an unrated New
@@ -1134,30 +1134,48 @@ final class RecommendationService {
   }
 
   /**
-   * Keeps recommendation candidates in the immediate local area when available.
+   * Restricts candidates to the nearest distance band with acceptable options.
    *
    * This runs before vote-quality filtering so a farther positive-vote venue
-   * does not discard closer unrated local candidates for broad searches such as
-   * tacos. Nearby-city venues remain eligible only when no immediate-local
-   * candidates exist.
+   * does not discard closer unrated candidates. The picker exhausts eligible
+   * candidates in distance bands before expanding outward. For example, a
+   * brewery search near New Smyrna Beach should try NSB/Edgewater, then Port
+   * Orange, then Daytona-area candidates before jumping to Ormond, Orange City,
+   * or Sanford.
    *
    * @param array<int,array<string,int|float|string|bool>> $candidates
    *   Candidate rows.
    *
    * @return array<int,array<string,int|float|string|bool>>
-   *   Immediate-local candidates when available, otherwise the original set.
+   *   Candidate rows restricted to the nearest useful distance band when one
+   *   exists.
    */
-  private function preferLocalRadiusCandidates(array $candidates): array {
+  private function preferDistanceBandCandidatesByQuality(array $candidates): array {
     if (empty($candidates)) {
       return $candidates;
     }
 
-    $localCandidates = array_values(array_filter(
-      $candidates,
-      static fn(array $candidate): bool => (float) ($candidate['distance_km'] ?? PHP_FLOAT_MAX) <= self::LOCAL_FIRST_RADIUS_KM
-    ));
+    $bands = self::DISTANCE_BAND_LIMITS_KM;
+    $bands[] = PHP_FLOAT_MAX;
+    $previousLimitKm = 0.0;
 
-    return !empty($localCandidates) ? $localCandidates : $candidates;
+    foreach ($bands as $bandLimitKm) {
+      $bandCandidates = array_values(array_filter(
+        $candidates,
+        static function (array $candidate) use ($previousLimitKm, $bandLimitKm): bool {
+          $distanceKm = (float) ($candidate['distance_km'] ?? PHP_FLOAT_MAX);
+          return $distanceKm > $previousLimitKm && $distanceKm <= $bandLimitKm;
+        }
+      ));
+
+      if (!empty($bandCandidates) && !empty($this->filterRecommendationCandidatesByVoteQuality($bandCandidates))) {
+        return $bandCandidates;
+      }
+
+      $previousLimitKm = $bandLimitKm;
+    }
+
+    return $candidates;
   }
 
   /**
@@ -1524,6 +1542,13 @@ final class RecommendationService {
       'tacos' => ['taco', 'tacos'],
       'burrito' => ['burrito', 'burritos'],
       'burritos' => ['burrito', 'burritos'],
+      'brewery' => ['brewery', 'breweries', 'brewing', 'brewpub', 'brew pub', 'taproom', 'tap room'],
+      'breweries' => ['brewery', 'breweries', 'brewing', 'brewpub', 'brew pub', 'taproom', 'tap room'],
+      'brewing' => ['brewery', 'breweries', 'brewing', 'brewpub', 'brew pub', 'taproom', 'tap room'],
+      'brewpub' => ['brewery', 'breweries', 'brewing', 'brewpub', 'brew pub'],
+      'taproom' => ['taproom', 'tap room', 'brewery', 'breweries', 'brewing'],
+      'beer' => ['beer', 'beers'],
+      'beers' => ['beer', 'beers'],
       'wine' => ['wine', 'wines', 'winery'],
       'wines' => ['wine', 'wines', 'winery'],
       'winery' => ['wine', 'wines', 'winery'],
