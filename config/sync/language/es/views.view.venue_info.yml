@@ -1,0 +1,10 @@
+label: 'Información del lugar'
+display:
+  default:
+    display_options:
+      title: 'Información del lugar'
+  block_1:
+    display_title: 'Bloque de Información del lugar'
+  block_2:
+    display_options:
+      title: 'Lugares destacados'

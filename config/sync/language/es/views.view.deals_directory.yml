@@ -1,0 +1,11 @@
+display:
+  default:
+    display_options:
+      empty:
+        area:
+          content:
+            value: "<p>We couldn't find any results matching your search. To improve your search results, you can try another keyword.</p>"
+            format: basic_html
+  block_1:
+    display_options:
+      title: 'Ofertas en este lugar'
