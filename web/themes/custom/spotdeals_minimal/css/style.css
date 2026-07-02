@@ -2520,6 +2520,11 @@ h1.page-title {
   line-height: 1.2;
 }
 
+[lang="es"] .page-node-type-venue .node__venue-content--body-wrapper .field--name-body::before,
+[lang="es"] .page-node-type-venue .node__venue-content--image-body-wrapper .field--name-body::before {
+  content: "Sobre este lugar";
+}
+
 .page-node-type-venue .node__venue-content--body-wrapper .field--name-body p:first-child,
 .page-node-type-venue .node__venue-content--image-body-wrapper .field--name-body p:first-child,
 .page-node-type-deal .node__content .field p:first-child {

@@ -82,6 +82,7 @@ final class VenueVoteRenderBuilder {
         'contexts' => [
           'user',
           'route',
+          'languages:language_interface',
         ],
       ],
     ];

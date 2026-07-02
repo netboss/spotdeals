@@ -78,6 +78,18 @@ final class DealVoteRenderBuilder {
           ],
         ],
       ],
+      '#cache' => [
+        'tags' => [
+          'node:' . $deal->id(),
+          'node:' . $venueNid,
+          'spotdeals_vote_deal:' . $deal->id(),
+        ],
+        'contexts' => [
+          'user',
+          'route',
+          'languages:language_interface',
+        ],
+      ],
     ];
 
     $build['content']['vote']['worth_it_group'] = $this->buildVoteGroup(

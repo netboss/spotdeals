@@ -23,6 +23,44 @@ function spotdeals_minimal_theme_suggestions_page_alter(array &$suggestions, arr
   }
 }
 
+
+/**
+ * Implements hook_theme_suggestions_block_alter().
+ */
+function spotdeals_minimal_theme_suggestions_block_alter(array &$suggestions, array $variables): void {
+  $elements = $variables['elements'] ?? [];
+  $plugin_id = (string) ($elements['#plugin_id'] ?? '');
+
+  foreach ($suggestions as $key => $suggestion) {
+    if (preg_match('/[^A-Za-z0-9_]/', (string) $suggestion)) {
+      unset($suggestions[$key]);
+    }
+  }
+
+  if ($plugin_id !== '') {
+    $safe_plugin_id = strtr($plugin_id, [
+      ':' => '__',
+      '-' => '_',
+    ]);
+    $safe_plugin_id = preg_replace('/[^A-Za-z0-9_]+/', '_', $safe_plugin_id);
+    $safe_plugin_id = trim((string) $safe_plugin_id, '_');
+
+    if ($safe_plugin_id !== '') {
+      $suggestions[] = 'block__plugin_id__' . $safe_plugin_id;
+
+      $region = (string) ($elements['#configuration']['region'] ?? '');
+      $safe_region = preg_replace('/[^A-Za-z0-9_]+/', '_', $region);
+      $safe_region = trim((string) $safe_region, '_');
+
+      if ($safe_region !== '') {
+        $suggestions[] = 'block__' . $safe_region . '__plugin_id__' . $safe_plugin_id;
+      }
+    }
+  }
+
+  $suggestions = array_values(array_unique($suggestions));
+}
+
 /**
  * Implements hook_preprocess_page().
  */
