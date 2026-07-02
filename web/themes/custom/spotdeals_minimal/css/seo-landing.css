@@ -567,7 +567,7 @@
     grid-column: 2 / 14;
   }
 
-  .path-deals h1.page-title {
+  .path-deals .block-page-title-block {
     margin-left: 1.8rem;
   }
 
