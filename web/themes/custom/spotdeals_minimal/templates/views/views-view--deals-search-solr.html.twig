@@ -41,6 +41,13 @@
       <p class="spotdeals-finder__description">
         {{ "Search by food type, or location to discover nearby deals."|t }}
       </p>
+      <div class="spotdeals-finder__suggestion-cta spotdeals-finder__suggestion-cta--intro">
+        <div class="spotdeals-finder__suggestion-cta-copy">
+          <strong>{{ "Know a venue or deal we are missing?"|t }}</strong>
+          <span>{{ "Send it to SpotDeals and we will review it."|t }}</span>
+        </div>
+        <a class="spotdeals-finder__suggestion-cta-button" href="{{ path('spotdeals_revenue.suggest') }}">{{ "Suggest a venue or deal"|t }}</a>
+      </div>
     </section>
   {% endif %}
 
@@ -78,9 +85,20 @@
       </div>
     {% endif %}
 
+    {% if spotdeals_promoted_search_slot %}
+      {{ spotdeals_promoted_search_slot }}
+    {% endif %}
+
     {% if spotdeals_direct_recommendation %}
       <div class="view-content spotdeals-finder__cards" data-result-count="1">
         {{ spotdeals_direct_recommendation }}
+      </div>
+      <div class="spotdeals-finder__suggestion-cta spotdeals-finder__suggestion-cta--after-results">
+        <div class="spotdeals-finder__suggestion-cta-copy">
+          <strong>{{ "Not the venue or deal you had in mind?"|t }}</strong>
+          <span>{{ "Suggest one and we will review it."|t }}</span>
+        </div>
+        <a class="spotdeals-finder__suggestion-cta-button" href="{{ path('spotdeals_revenue.suggest') }}">{{ "Suggest a venue or deal"|t }}</a>
       </div>
     {% elseif rows %}
       <div class="view-content spotdeals-finder__cards" data-result-count="{{ spotdeals_result_count }}">
@@ -89,6 +107,13 @@
     {% elseif empty %}
       <div class="view-empty" data-result-count="{{ spotdeals_result_count }}">
         {{ empty }}
+        <div class="spotdeals-finder__suggestion-cta spotdeals-finder__suggestion-cta--empty">
+          <div class="spotdeals-finder__suggestion-cta-copy">
+            <strong>{{ "Still not finding it?"|t }}</strong>
+            <span>{{ "Tell us what venue or deal is missing."|t }}</span>
+          </div>
+          <a class="spotdeals-finder__suggestion-cta-button" href="{{ path('spotdeals_revenue.suggest') }}">{{ "Suggest a venue or deal"|t }}</a>
+        </div>
       </div>
     {% endif %}
 

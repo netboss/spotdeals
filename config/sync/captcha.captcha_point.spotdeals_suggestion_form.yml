@@ -1,0 +1,7 @@
+uuid: 8fe49a79-d6c4-4f26-ae3b-e6e98fe6fabb
+langcode: en
+status: true
+dependencies: {  }
+formId: spotdeals_suggestion_form
+captchaType: default
+label: spotdeals_suggestion_form

@@ -1,0 +1,114 @@
+spotdeals_revenue.suggest:
+  path: '/suggest'
+  defaults:
+    _form: '\Drupal\spotdeals_revenue\Form\SpotdealsSuggestionForm'
+    _title: 'Suggest a venue or deal'
+  requirements:
+    _permission: 'access content'
+
+spotdeals_revenue.suggestions_admin:
+  path: '/admin/content/spotdeals-suggestions'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::overview'
+    _title: 'SpotDeals suggestions'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+
+spotdeals_revenue.suggestion_approve:
+  path: '/admin/content/spotdeals-suggestions/{suggestion_id}/approve'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::approve'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+    _csrf_token: 'TRUE'
+    suggestion_id: '\d+'
+
+spotdeals_revenue.suggestion_needs_verification:
+  path: '/admin/content/spotdeals-suggestions/{suggestion_id}/needs-verification'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::needsVerification'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+    _csrf_token: 'TRUE'
+    suggestion_id: '\d+'
+
+spotdeals_revenue.suggestion_create_venue:
+  path: '/admin/content/spotdeals-suggestions/{suggestion_id}/create-venue'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::createVenue'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+    _csrf_token: 'TRUE'
+    suggestion_id: '\d+'
+
+spotdeals_revenue.suggestion_create_venue_deal:
+  path: '/admin/content/spotdeals-suggestions/{suggestion_id}/create-venue-deal'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::createVenueAndDeal'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+    _csrf_token: 'TRUE'
+    suggestion_id: '\d+'
+
+spotdeals_revenue.suggestion_create_deal:
+  path: '/admin/content/spotdeals-suggestions/{suggestion_id}/create-deal'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::createDeal'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+    _csrf_token: 'TRUE'
+    suggestion_id: '\d+'
+
+
+spotdeals_revenue.suggestion_reindex:
+  path: '/admin/content/spotdeals-suggestions/{suggestion_id}/reindex'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::reindex'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+    _csrf_token: 'TRUE'
+    suggestion_id: '\d+'
+
+spotdeals_revenue.suggestion_publish:
+  path: '/admin/content/spotdeals-suggestions/{suggestion_id}/publish'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::publish'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+    _csrf_token: 'TRUE'
+    suggestion_id: '\d+'
+
+spotdeals_revenue.suggestion_reject:
+  path: '/admin/content/spotdeals-suggestions/{suggestion_id}/reject'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::reject'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+    _csrf_token: 'TRUE'
+    suggestion_id: '\d+'
+
+spotdeals_revenue.suggestion_archive:
+  path: '/admin/content/spotdeals-suggestions/{suggestion_id}/archive'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::archive'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+    _csrf_token: 'TRUE'
+    suggestion_id: '\d+'
+
+spotdeals_revenue.suggestion_delete:
+  path: '/admin/content/spotdeals-suggestions/{suggestion_id}/delete'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::delete'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+    _csrf_token: 'TRUE'
+    suggestion_id: '\d+'
+
+spotdeals_revenue.settings:
+  path: '/admin/config/spotdeals/revenue'
+  defaults:
+    _form: '\Drupal\spotdeals_revenue\Form\SpotdealsRevenueSettingsForm'
+    _title: 'SpotDeals revenue settings'
+  requirements:
+    _permission: 'administer spotdeals revenue'

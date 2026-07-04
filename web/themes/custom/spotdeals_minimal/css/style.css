@@ -4469,3 +4469,75 @@ h1.page-title {
     line-height: 1.5;
   }
 }
+
+.spotdeals-finder__suggestion-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.95rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #dce3ec;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  color: #4f5865;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.spotdeals-finder__suggestion-cta-copy {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.spotdeals-finder__suggestion-cta-copy strong {
+  color: var(--spotdeals-text);
+  font-size: 0.98rem;
+  line-height: 1.25;
+}
+
+.spotdeals-finder__suggestion-cta-copy span {
+  color: var(--spotdeals-text-soft);
+  font-size: 0.9rem;
+}
+
+.spotdeals-finder__suggestion-cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.55rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 999px;
+  background: var(--spotdeals-accent);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+}
+
+.spotdeals-finder__suggestion-cta-button:hover,
+.spotdeals-finder__suggestion-cta-button:focus {
+  background: var(--spotdeals-accent-dark);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.spotdeals-finder__suggestion-cta--after-results,
+.spotdeals-finder__suggestion-cta--empty {
+  margin-top: 1rem;
+}
+
+@media (max-width: 767px) {
+  .spotdeals-finder__suggestion-cta {
+    align-items: stretch;
+    padding: 0.85rem;
+  }
+
+  .spotdeals-finder__suggestion-cta-button {
+    width: 100%;
+  }
+}

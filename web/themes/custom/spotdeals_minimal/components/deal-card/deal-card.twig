@@ -12,6 +12,7 @@
 ] %}
 {% set component_attributes = attributes|default(create_attribute()) %}
 {% set primary_cuisine = cuisine|default('')|striptags|split(',')|first|trim %}
+{% set suggest_cta = suggest_cta|default('') %}
 {% set cuisine_slug = primary_cuisine|replace({
   '&amp;': 'and',
   '&': 'and',
@@ -111,10 +112,17 @@
       </div>
     </div>
 
-    {% if claim_link %}
+    {% if claim_link or suggest_cta %}
       <div class="spotdeals-deal-card__mobile-actions">
-        <span class="spotdeals-deal-card__claim-icon" aria-hidden="true"></span>
-        {{ claim_link }}
+        {% if claim_link %}
+          <span class="spotdeals-deal-card__claim-icon" aria-hidden="true"></span>
+          {{ claim_link }}
+        {% endif %}
+        {% if suggest_cta %}
+          <div class="spotdeals-deal-card__suggest-cta spotdeals-deal-card__suggest-cta--mobile">
+            {{ suggest_cta }}
+          </div>
+        {% endif %}
       </div>
     {% endif %}
 
@@ -149,9 +157,18 @@
               </div>
             {% endif %}
 
-            {% if claim_link %}
+            {% if claim_link or suggest_cta %}
               <div class="spotdeals-deal-card__actions">
-                {{ claim_link }}
+                {% if claim_link %}
+                  <div class="spotdeals-deal-card__claim-cta">
+                    {{ claim_link }}
+                  </div>
+                {% endif %}
+                {% if suggest_cta %}
+                  <div class="spotdeals-deal-card__suggest-cta">
+                    {{ suggest_cta }}
+                  </div>
+                {% endif %}
               </div>
             {% endif %}
 

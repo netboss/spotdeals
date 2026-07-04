@@ -1,0 +1,19 @@
+spotdeals_revenue.settings:
+  type: config_object
+  label: 'SpotDeals revenue settings'
+  mapping:
+    promoted_slot_enabled:
+      type: boolean
+      label: 'Promoted slot enabled'
+    promoted_slot_label:
+      type: string
+      label: 'Promoted slot label'
+    promoted_slot_markup:
+      type: text
+      label: 'Promoted slot markup'
+    free_deals_per_venue:
+      type: integer
+      label: 'Free suggested deals per venue'
+    owner_notifications_enabled:
+      type: boolean
+      label: 'Owner notifications enabled'

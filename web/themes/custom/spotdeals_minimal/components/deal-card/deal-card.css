@@ -1666,3 +1666,97 @@
     font-size: 0.95rem;
   }
 }
+
+/* SD-159: search-card claim/suggest actions.
+ * Keep the business-owner action and community suggestion action visible
+ * without making the card feel crowded.
+ */
+.spotdeals-deal-card__actions {
+  display: block;
+  margin-top: 0.85rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed var(--deal-card-border);
+  color: var(--deal-card-green);
+}
+
+.spotdeals-deal-card__actions a {
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.spotdeals-deal-card__actions .spotdeals-claim-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.15rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--deal-card-green);
+  border-radius: 999px;
+  background: var(--deal-card-green);
+  color: #fff;
+  font-size: 0.86rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+.spotdeals-deal-card__actions .spotdeals-claim-link:hover,
+.spotdeals-deal-card__actions .spotdeals-claim-link:focus {
+  border-color: var(--deal-card-green-dark);
+  background: var(--deal-card-green-dark);
+  color: #fff;
+  text-decoration: none;
+}
+
+.spotdeals-deal-card__actions .spotdeals-suggest-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--deal-card-green);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.spotdeals-deal-card__actions .spotdeals-suggest-link::before {
+  content: "+";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.spotdeals-deal-card__actions .spotdeals-suggest-link:hover,
+.spotdeals-deal-card__actions .spotdeals-suggest-link:focus {
+  color: var(--deal-card-green-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media screen and (min-width: 760px) {
+  .spotdeals-deal-card__actions {
+    margin-top: 1rem;
+  }
+}
+
+@media screen and (max-width: 759px) {
+  .spotdeals-deal-card__actions {
+    justify-items: stretch;
+    gap: 0.6rem;
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+  }
+
+  .spotdeals-deal-card__actions .spotdeals-claim-link {
+    width: 100%;
+  }
+
+  .spotdeals-deal-card__actions .spotdeals-suggest-link {
+    justify-content: center;
+  }
+}

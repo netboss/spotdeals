@@ -1,0 +1,58 @@
+.spotdeals-share-this {
+  margin-top: 1rem;
+}
+
+.spotdeals-share-this__details {
+  border: 1px solid #dce3ec;
+  border-radius: 0.85rem;
+  background: #fff;
+  box-shadow: 0 0.35rem 1.2rem rgba(15, 23, 42, 0.06);
+}
+
+.spotdeals-share-this__summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.85rem 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.spotdeals-share-this__summary::-webkit-details-marker {
+  display: none;
+}
+
+.spotdeals-share-this__summary::after {
+  content: "↗";
+  float: right;
+  color: #64748b;
+}
+
+.spotdeals-share-this__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
+}
+
+.spotdeals-share-this__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #dce3ec;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.spotdeals-share-this__link:hover,
+.spotdeals-share-this__link:focus {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #1d4ed8;
+  text-decoration: none;
+}
