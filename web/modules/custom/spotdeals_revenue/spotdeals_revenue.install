@@ -1,0 +1,480 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for SpotDeals Revenue.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function spotdeals_revenue_schema(): array {
+  $schema['spotdeals_suggestion'] = [
+    'description' => 'Stores user-submitted venue and deal suggestions.',
+    'fields' => [
+      'id' => [
+        'description' => 'Primary suggestion ID.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'type' => [
+        'description' => 'Suggestion type: venue, deal, or both.',
+        'type' => 'varchar',
+        'length' => 16,
+        'not null' => TRUE,
+        'default' => 'deal',
+      ],
+      'venue_name' => [
+        'description' => 'Suggested venue name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'address' => [
+        'description' => 'Suggested venue address.',
+        'type' => 'varchar',
+        'length' => 512,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'street_address' => [
+        'description' => 'Suggested venue street address.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'city' => [
+        'description' => 'Suggested venue city.',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'state' => [
+        'description' => 'Suggested venue state or province.',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'zip' => [
+        'description' => 'Suggested venue ZIP or postal code.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'country' => [
+        'description' => 'Suggested venue country.',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => 'US',
+      ],
+      'deal_location' => [
+        'description' => 'City or ZIP used to match deal suggestions to the correct venue location.',
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'website' => [
+        'description' => 'Suggested venue or deal website URL.',
+        'type' => 'varchar',
+        'length' => 512,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'deal_name' => [
+        'description' => 'Suggested deal name.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'deal_description' => [
+        'description' => 'Suggested deal details.',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ],
+      'days' => [
+        'description' => 'Suggested active days.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'times' => [
+        'description' => 'Suggested active times.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'notes' => [
+        'description' => 'Additional notes from the submitter.',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ],
+      'email' => [
+        'description' => 'Optional submitter email address.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'status' => [
+        'description' => 'Suggestion moderation status.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => 'new',
+      ],
+      'created_entity_type' => [
+        'description' => 'Entity type created from this suggestion, if any.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'created_entity_bundle' => [
+        'description' => 'Entity bundle created from this suggestion, if any.',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'created_entity_id' => [
+        'description' => 'Entity ID created from this suggestion, if any.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'matched_venue_nid' => [
+        'description' => 'Existing venue node ID matched during suggestion submission, if any.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'free_limit_blocked' => [
+        'description' => 'Whether this deal suggestion exceeded the free suggested-deal limit for the matched venue.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'owner_notified' => [
+        'description' => 'Whether a claimed venue owner was notified about this suggestion.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'owner_notified_time' => [
+        'description' => 'Unix timestamp when a claimed venue owner was notified.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'uid' => [
+        'description' => 'Submitting user ID, or 0 for anonymous users.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'created' => [
+        'description' => 'Unix timestamp when the suggestion was submitted.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'changed' => [
+        'description' => 'Unix timestamp when the suggestion was last changed.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'status_created' => ['status', 'created'],
+      'type_created' => ['type', 'created'],
+    ],
+  ];
+
+  return $schema;
+}
+
+
+/**
+ * Converts old reviewed suggestion statuses to approved.
+ */
+function spotdeals_revenue_update_9001(): void {
+  \Drupal::database()->update('spotdeals_suggestion')
+    ->fields(['status' => 'approved'])
+    ->condition('status', 'reviewed')
+    ->execute();
+}
+
+
+/**
+ * Adds created content tracking fields to suggestions.
+ */
+function spotdeals_revenue_update_9002(): void {
+  $schema = \Drupal::database()->schema();
+
+  $fields = [
+    'created_entity_type' => [
+      'description' => 'Entity type created from this suggestion, if any.',
+      'type' => 'varchar',
+      'length' => 32,
+      'not null' => TRUE,
+      'default' => '',
+    ],
+    'created_entity_bundle' => [
+      'description' => 'Entity bundle created from this suggestion, if any.',
+      'type' => 'varchar',
+      'length' => 64,
+      'not null' => TRUE,
+      'default' => '',
+    ],
+    'created_entity_id' => [
+      'description' => 'Entity ID created from this suggestion, if any.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+  ];
+
+  foreach ($fields as $field_name => $field_spec) {
+    if (!$schema->fieldExists('spotdeals_suggestion', $field_name)) {
+      $schema->addField('spotdeals_suggestion', $field_name, $field_spec);
+    }
+  }
+
+  \Drupal::database()->update('spotdeals_suggestion')
+    ->fields(['status' => 'added'])
+    ->condition('status', 'imported')
+    ->execute();
+}
+
+/**
+ * Normalizes suggestion statuses for the direct-create workflow.
+ */
+function spotdeals_revenue_update_9003(): void {
+  $connection = \Drupal::database();
+
+  $connection->update('spotdeals_suggestion')
+    ->fields(['status' => 'approved'])
+    ->condition('status', 'ready_to_import')
+    ->execute();
+
+  $connection->update('spotdeals_suggestion')
+    ->fields(['status' => 'published'])
+    ->condition('status', 'imported')
+    ->execute();
+
+  $connection->update('spotdeals_suggestion')
+    ->fields(['status' => 'published'])
+    ->condition('status', 'added')
+    ->condition('created_entity_id', 0, '>')
+    ->execute();
+}
+
+/**
+ * Adds owner-notification and deal-limit tracking fields to suggestions.
+ */
+function spotdeals_revenue_update_9004(): void {
+  $schema = \Drupal::database()->schema();
+
+  $fields = [
+    'matched_venue_nid' => [
+      'description' => 'Existing venue node ID matched during suggestion submission, if any.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+    'free_limit_blocked' => [
+      'description' => 'Whether this deal suggestion exceeded the free suggested-deal limit for the matched venue.',
+      'type' => 'int',
+      'size' => 'tiny',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+    'owner_notified' => [
+      'description' => 'Whether a claimed venue owner was notified about this suggestion.',
+      'type' => 'int',
+      'size' => 'tiny',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+    'owner_notified_time' => [
+      'description' => 'Unix timestamp when a claimed venue owner was notified.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+  ];
+
+  foreach ($fields as $field_name => $field_spec) {
+    if (!$schema->fieldExists('spotdeals_suggestion', $field_name)) {
+      $schema->addField('spotdeals_suggestion', $field_name, $field_spec);
+    }
+  }
+}
+
+/**
+ * Registers the public suggestion form with the existing CAPTCHA module.
+ */
+function spotdeals_revenue_update_9005(): void {
+  if (!\Drupal::moduleHandler()->moduleExists('captcha')) {
+    return;
+  }
+
+  $form_id = 'spotdeals_suggestion_form';
+
+  try {
+    $entity_type_manager = \Drupal::entityTypeManager();
+    if ($entity_type_manager->hasDefinition('captcha_point')) {
+      $storage = $entity_type_manager->getStorage('captcha_point');
+      $captcha_point = $storage->load($form_id);
+
+      if (!$captcha_point) {
+        $captcha_point = $storage->create([
+          'id' => $form_id,
+          'formId' => $form_id,
+          'captchaType' => 'default',
+          'label' => $form_id,
+          'status' => TRUE,
+        ]);
+      }
+      else {
+        $captcha_point->set('formId', $form_id);
+        $captcha_point->set('captchaType', 'default');
+        $captcha_point->set('status', TRUE);
+      }
+
+      $captcha_point->save();
+      return;
+    }
+  }
+  catch (\Throwable $e) {
+    \Drupal::logger('spotdeals_revenue')->warning('Could not create CAPTCHA point for @form_id using entity storage: @message', [
+      '@form_id' => $form_id,
+      '@message' => $e->getMessage(),
+    ]);
+  }
+
+  // Fallback for CAPTCHA versions that store points directly as config.
+  \Drupal::configFactory()->getEditable('captcha.captcha_point.' . $form_id)
+    ->set('formId', $form_id)
+    ->set('captchaType', 'default')
+    ->set('label', $form_id)
+    ->set('status', TRUE)
+    ->save();
+}
+
+/**
+ * Adds city/ZIP context for deal suggestion matching.
+ */
+function spotdeals_revenue_update_9006(): void {
+  $schema = \Drupal::database()->schema();
+
+  if (!$schema->fieldExists('spotdeals_suggestion', 'deal_location')) {
+    $schema->addField('spotdeals_suggestion', 'deal_location', [
+      'description' => 'City or ZIP used to match deal suggestions to the correct venue location.',
+      'type' => 'varchar',
+      'length' => 128,
+      'not null' => TRUE,
+      'default' => '',
+    ]);
+  }
+}
+
+
+/**
+ * Adds a separate deal name field for deal and venue+deal suggestions.
+ */
+function spotdeals_revenue_update_9007(): void {
+  $schema = \Drupal::database()->schema();
+
+  if (!$schema->fieldExists('spotdeals_suggestion', 'deal_name')) {
+    $schema->addField('spotdeals_suggestion', 'deal_name', [
+      'description' => 'Suggested deal name.',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    ]);
+  }
+}
+
+
+/**
+ * Adds structured location fields for suggestions.
+ */
+function spotdeals_revenue_update_9008(): void {
+  $schema = \Drupal::database()->schema();
+
+  $fields = [
+    'street_address' => [
+      'description' => 'Suggested venue street address.',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    ],
+    'city' => [
+      'description' => 'Suggested venue city.',
+      'type' => 'varchar',
+      'length' => 128,
+      'not null' => TRUE,
+      'default' => '',
+    ],
+    'state' => [
+      'description' => 'Suggested venue state or province.',
+      'type' => 'varchar',
+      'length' => 64,
+      'not null' => TRUE,
+      'default' => '',
+    ],
+    'zip' => [
+      'description' => 'Suggested venue ZIP or postal code.',
+      'type' => 'varchar',
+      'length' => 32,
+      'not null' => TRUE,
+      'default' => '',
+    ],
+    'country' => [
+      'description' => 'Suggested venue country.',
+      'type' => 'varchar',
+      'length' => 64,
+      'not null' => TRUE,
+      'default' => 'US',
+    ],
+  ];
+
+  foreach ($fields as $field_name => $field_spec) {
+    if (!$schema->fieldExists('spotdeals_suggestion', $field_name)) {
+      $schema->addField('spotdeals_suggestion', $field_name, $field_spec);
+    }
+  }
+}

@@ -38,6 +38,10 @@ props:
     claim_link:
       type: ['string', 'null']
       title: Claim link
+    suggest_cta:
+      type: ['string', 'null']
+      title: Suggest CTA
+      description: Optional rendered suggestion CTA for search result cards.
     activity_badges:
       type: array
       title: Activity badges

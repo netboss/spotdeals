@@ -1,0 +1,13 @@
+spotdeals_revenue.suggestions_admin:
+  title: 'SpotDeals suggestions'
+  description: 'Review user-submitted venue and deal suggestions.'
+  route_name: spotdeals_revenue.suggestions_admin
+  parent: system.admin_content
+  weight: 30
+
+spotdeals_revenue.settings:
+  title: 'SpotDeals revenue settings'
+  description: 'Configure search-only promoted slots.'
+  route_name: spotdeals_revenue.settings
+  parent: system.admin_config
+  weight: 90

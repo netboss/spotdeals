@@ -1,0 +1,21 @@
+.spotdeals-promoted-slot {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid #dce3ec;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 0.35rem 1.2rem rgba(15, 23, 42, 0.06);
+}
+
+.spotdeals-promoted-slot__label {
+  margin-bottom: 0.5rem;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spotdeals-promoted-slot__content > *:last-child {
+  margin-bottom: 0;
+}

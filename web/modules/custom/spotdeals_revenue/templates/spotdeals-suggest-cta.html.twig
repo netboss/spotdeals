@@ -1,0 +1,18 @@
+{#
+/**
+ * @file
+ * Suggestion CTA used on public venue/deal displays.
+ *
+ * Available variables:
+ * - eyebrow: Short helper text.
+ * - text: Link text.
+ * - url: Suggestion form URL.
+ * - variant: Optional display variant.
+ */
+#}
+<div class="spotdeals-suggest-cta{% if variant %} spotdeals-suggest-cta--{{ variant|clean_class }}{% endif %}">
+  {% if eyebrow %}
+    <div class="spotdeals-suggest-cta__eyebrow">{{ eyebrow }}</div>
+  {% endif %}
+  <a class="spotdeals-suggest-cta__link" href="{{ url }}">{{ text }}</a>
+</div>

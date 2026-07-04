@@ -25,9 +25,25 @@
     <div class="view-content" data-result-count="{{ data.result_count }}">
       {{ data.rows }}
     </div>
+    {% if data.is_recommendation_mode %}
+      <div class="spotdeals-finder__suggestion-cta spotdeals-finder__suggestion-cta--after-results">
+        <div class="spotdeals-finder__suggestion-cta-copy">
+          <strong>{{ "Not the venue or deal you had in mind?"|t }}</strong>
+          <span>{{ "Suggest one and we will review it."|t }}</span>
+        </div>
+        <a class="spotdeals-finder__suggestion-cta-button" href="{{ path('spotdeals_revenue.suggest') }}">{{ "Suggest a venue or deal"|t }}</a>
+      </div>
+    {% endif %}
   {% elseif data.empty %}
     <div class="view-empty" data-result-count="{{ data.result_count }}">
       {{ data.empty }}
+      <div class="spotdeals-finder__suggestion-cta spotdeals-finder__suggestion-cta--empty">
+        <div class="spotdeals-finder__suggestion-cta-copy">
+          <strong>{{ "Still not finding it?"|t }}</strong>
+          <span>{{ "Tell us what venue or deal is missing."|t }}</span>
+        </div>
+        <a class="spotdeals-finder__suggestion-cta-button" href="{{ path('spotdeals_revenue.suggest') }}">{{ "Suggest a venue or deal"|t }}</a>
+      </div>
     </div>
   {% endif %}
 

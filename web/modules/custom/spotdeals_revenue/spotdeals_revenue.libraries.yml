@@ -1,0 +1,17 @@
+share_this:
+  version: 1.x
+  css:
+    theme:
+      css/share-this.css: {}
+
+suggest:
+  version: 1.x
+  css:
+    theme:
+      css/suggest.css: {}
+
+promoted_slot:
+  version: 1.x
+  css:
+    theme:
+      css/promoted-slot.css: {}

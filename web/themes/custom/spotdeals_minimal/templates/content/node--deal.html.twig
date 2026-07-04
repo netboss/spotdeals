@@ -154,6 +154,10 @@
         </section>
       {% endif %}
 
+      {% if spotdeals_share_this %}
+        {{ spotdeals_share_this }}
+      {% endif %}
+
       {{ content|without(
         'comment',
         'field_venue',

@@ -1,0 +1,308 @@
+<?php
+
+/**
+ * @file
+ * SpotDeals Revenue hooks.
+ */
+
+use Drupal\Core\Url;
+use Drupal\node\NodeInterface;
+use Drupal\views\ViewExecutable;
+use Drupal\views\ResultRow;
+
+/**
+ * Implements hook_theme().
+ */
+function spotdeals_revenue_theme($existing, $type, $theme, $path): array {
+  return [
+    'spotdeals_share_this' => [
+      'variables' => [
+        'title' => '',
+        'url' => '',
+      ],
+    ],
+    'spotdeals_promoted_slot' => [
+      'variables' => [
+        'label' => '',
+        'markup' => '',
+      ],
+    ],
+    'spotdeals_suggest_cta' => [
+      'variables' => [
+        'eyebrow' => '',
+        'text' => '',
+        'url' => NULL,
+        'variant' => '',
+      ],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_node().
+ */
+function spotdeals_revenue_preprocess_node(array &$variables): void {
+  $node = $variables['node'] ?? NULL;
+  if (!$node instanceof NodeInterface) {
+    return;
+  }
+
+  if (($variables['view_mode'] ?? '') !== 'full') {
+    return;
+  }
+
+  if (!in_array($node->bundle(), ['deal', 'venue'], TRUE)) {
+    return;
+  }
+
+  $variables['#attached']['library'][] = 'spotdeals_revenue/share_this';
+  $variables['spotdeals_share_this'] = [
+    '#theme' => 'spotdeals_share_this',
+    '#title' => $node->label(),
+    '#url' => $node->toUrl('canonical', ['absolute' => TRUE])->toString(),
+  ];
+}
+
+
+/**
+ * Implements hook_node_view().
+ */
+function spotdeals_revenue_node_view(array &$build, NodeInterface $node, \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, $view_mode): void {
+  if (!in_array($node->bundle(), ['deal', 'venue'], TRUE)) {
+    return;
+  }
+
+  if (\Drupal::routeMatch()->getRouteName() === 'entity.node.preview') {
+    return;
+  }
+
+  $build['spotdeals_suggest_cta'] = spotdeals_revenue_build_suggest_cta($node, (string) $view_mode);
+}
+
+/**
+ * Builds the mobile-first public suggestion CTA for venue/deal displays.
+ */
+function spotdeals_revenue_build_suggest_cta(NodeInterface $node, string $view_mode): array {
+  $is_venue = $node->bundle() === 'venue';
+  $query = [
+    'type' => $is_venue ? 'deal' : 'both',
+    'venue' => $node->label(),
+  ];
+
+  if ($is_venue) {
+    $query['venue_nid'] = $node->id();
+  }
+
+  $eyebrow = $is_venue
+    ? t('Know a deal for this venue?')
+    : t('Know a venue or deal we are missing?');
+  $text = $is_venue
+    ? t('Suggest a deal')
+    : t('Suggest a venue or deal');
+
+  return [
+    '#theme' => 'spotdeals_suggest_cta',
+    '#eyebrow' => $eyebrow,
+    '#text' => $text,
+    '#url' => Url::fromRoute('spotdeals_revenue.suggest', [], ['query' => $query]),
+    '#variant' => $view_mode === 'full' ? '' : 'compact',
+    '#attached' => [
+      'library' => ['spotdeals_revenue/suggest'],
+    ],
+    '#weight' => $view_mode === 'full' ? 90 : 50,
+  ];
+}
+
+/**
+ * Implements hook_preprocess_views_view().
+ */
+function spotdeals_revenue_preprocess_views_view(array &$variables): void {
+  $view = $variables['view'] ?? NULL;
+  if (!$view instanceof ViewExecutable) {
+    return;
+  }
+
+  if ($view->id() !== 'deals_search_solr') {
+    return;
+  }
+
+  $slot = \Drupal::service('spotdeals_revenue.promoted_slot_builder')->buildSearchSlot();
+  if (!empty($slot)) {
+    $variables['#attached']['library'][] = 'spotdeals_revenue/promoted_slot';
+    $variables['spotdeals_promoted_search_slot'] = $slot;
+  }
+}
+
+
+/**
+ * Implements hook_preprocess_views_view_fields().
+ *
+ * Adds a compact suggestion CTA to each Deals Finder result card. The full
+ * venue/deal pages already receive their CTA through hook_node_view(), but the
+ * search results use a custom Views fields template, so they need a row-level
+ * CTA here.
+ */
+function spotdeals_revenue_preprocess_views_view_fields(array &$variables): void {
+  $view = $variables['view'] ?? NULL;
+  if (!$view instanceof ViewExecutable || $view->id() !== 'deals_search_solr') {
+    return;
+  }
+
+  $row = $variables['row'] ?? NULL;
+  if (!$row instanceof ResultRow) {
+    return;
+  }
+
+  $node = spotdeals_revenue_node_from_views_row($row);
+  if (!$node instanceof NodeInterface || !in_array($node->bundle(), ['deal', 'venue'], TRUE)) {
+    return;
+  }
+
+  $cta = spotdeals_revenue_build_search_result_suggest_cta($node);
+  if (empty($cta)) {
+    return;
+  }
+
+  $variables['#attached']['library'][] = 'spotdeals_revenue/suggest';
+
+  $field = new \stdClass();
+  $field->handler = NULL;
+  $field->inline = FALSE;
+  $field->separator = '';
+  $field->wrapper_element = 'div';
+  $field->wrapper_attributes = new \Drupal\Core\Template\Attribute(['class' => ['spotdeals-search-result-suggest']]);
+  $field->label = '';
+  $field->label_element = ''; 
+  $field->label_attributes = new \Drupal\Core\Template\Attribute();
+  $field->element_type = '';
+  $field->element_attributes = new \Drupal\Core\Template\Attribute();
+  $field->content = $cta;
+
+  $variables['fields']['spotdeals_suggest_cta'] = $field;
+}
+
+/**
+ * Builds the compact CTA used inside Deals Finder result cards.
+ */
+function spotdeals_revenue_build_search_result_suggest_cta(NodeInterface $node): array {
+  $query = [
+    'type' => 'deal',
+  ];
+
+  $venue = spotdeals_revenue_resolve_venue_for_suggestion($node);
+  if ($venue instanceof NodeInterface) {
+    $query['venue'] = $venue->label();
+    $query['venue_nid'] = $venue->id();
+  }
+  else {
+    $query['venue'] = $node->label();
+  }
+
+  return [
+    '#theme' => 'spotdeals_suggest_cta',
+    '#eyebrow' => '',
+    '#text' => t('Suggest another deal'),
+    '#url' => Url::fromRoute('spotdeals_revenue.suggest', [], ['query' => $query]),
+    '#variant' => 'compact',
+  ];
+}
+
+/**
+ * Resolves the venue node connected to a venue or deal result.
+ */
+function spotdeals_revenue_resolve_venue_for_suggestion(NodeInterface $node): ?NodeInterface {
+  if ($node->bundle() === 'venue') {
+    return $node;
+  }
+
+  if ($node->bundle() === 'deal' && $node->hasField('field_venue') && !$node->get('field_venue')->isEmpty()) {
+    $venue = $node->get('field_venue')->entity;
+    if ($venue instanceof NodeInterface && $venue->bundle() === 'venue') {
+      return $venue;
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Extracts the underlying node from a Search API/Views result row.
+ */
+function spotdeals_revenue_node_from_views_row(ResultRow $row): ?NodeInterface {
+  if (isset($row->_entity) && $row->_entity instanceof NodeInterface) {
+    return $row->_entity;
+  }
+
+  foreach (['_object', '_item'] as $property) {
+    if (!isset($row->{$property}) || !is_object($row->{$property})) {
+      continue;
+    }
+
+    $object = $row->{$property};
+    if (method_exists($object, 'getValue')) {
+      $value = $object->getValue();
+      if ($value instanceof NodeInterface) {
+        return $value;
+      }
+    }
+
+    if (method_exists($object, 'getOriginalObject')) {
+      $original = $object->getOriginalObject();
+      if (is_object($original) && method_exists($original, 'getValue')) {
+        $value = $original->getValue();
+        if ($value instanceof NodeInterface) {
+          return $value;
+        }
+      }
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Builds a safe share URL for an external service.
+ */
+function spotdeals_revenue_share_url(string $service, string $title, string $url): string {
+  $encoded_url = rawurlencode($url);
+  $encoded_title = rawurlencode($title);
+
+  return match ($service) {
+    'facebook' => 'https://www.facebook.com/sharer/sharer.php?u=' . $encoded_url,
+    'x' => 'https://twitter.com/intent/tweet?text=' . $encoded_title . '&url=' . $encoded_url,
+    'whatsapp' => 'https://wa.me/?text=' . $encoded_title . '%20' . $encoded_url,
+    'email' => 'mailto:?subject=' . $encoded_title . '&body=' . $encoded_url,
+    default => Url::fromUri($url)->toString(),
+  };
+}
+
+/**
+ * Implements hook_mail().
+ */
+function spotdeals_revenue_mail($key, &$message, $params): void {
+  if ($key !== 'deal_suggestion_owner_notice') {
+    return;
+  }
+
+  $message['subject'] = t('New deal suggestion for @venue', [
+    '@venue' => $params['venue_title'] ?? 'your venue',
+  ]);
+
+  $message['body'][] = t('Someone suggested a new deal for @venue on SpotDeals.', [
+    '@venue' => $params['venue_title'] ?? 'your venue',
+  ]);
+
+  if (!empty($params['deal_description'])) {
+    $message['body'][] = '';
+    $message['body'][] = t('Suggested deal:');
+    $message['body'][] = $params['deal_description'];
+  }
+
+  if (!empty($params['admin_url'])) {
+    $message['body'][] = '';
+    $message['body'][] = t('Review this suggestion: @url', ['@url' => $params['admin_url']]);
+  }
+
+  $message['body'][] = '';
+  $message['body'][] = t('If this deal is valid, log in to SpotDeals or contact us to add it to your listing.');
+}

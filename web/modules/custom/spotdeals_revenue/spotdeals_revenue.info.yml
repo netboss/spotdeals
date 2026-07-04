@@ -1,0 +1,5 @@
+name: SpotDeals Revenue
+package: SpotDeals
+core_version_requirement: ^10 || ^11
+type: module
+description: 'Adds share links, user suggestions, and search-only promoted slot foundations for SpotDeals.'

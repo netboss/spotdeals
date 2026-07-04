@@ -1,0 +1,55 @@
+.spotdeals-suggestion-form {
+  max-width: 46rem;
+  margin-block: 1rem 2rem;
+}
+
+.spotdeals-suggestion-form__intro {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid #dce3ec;
+  border-radius: 0.85rem;
+  background: #f8fafc;
+}
+
+.spotdeals-suggestion-form .form-actions {
+  margin-top: 1.25rem;
+}
+
+.spotdeals-suggest-cta {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid #dce3ec;
+  border-radius: 0.85rem;
+  background: #f8fafc;
+}
+
+.spotdeals-suggest-cta__eyebrow {
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.spotdeals-suggest-cta__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-weight: 700;
+}
+
+
+.spotdeals-suggest-cta--compact {
+  margin-block: 0.6rem 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.spotdeals-suggest-cta--compact .spotdeals-suggest-cta__link {
+  min-height: 2rem;
+  font-size: 0.9rem;
+}
+
+.spotdeals-search-result-suggest {
+  margin-top: 0.35rem;
+}

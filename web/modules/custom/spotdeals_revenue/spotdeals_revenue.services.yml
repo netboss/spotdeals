@@ -1,0 +1,4 @@
+services:
+  spotdeals_revenue.promoted_slot_builder:
+    class: Drupal\spotdeals_revenue\Service\PromotedSlotBuilder
+    arguments: ['@config.factory']
