@@ -144,6 +144,27 @@ class SuggestionAdminController extends ControllerBase {
   }
 
   /**
+   * Notifies the claimed venue owner about a gated suggestion.
+   */
+  public function notifyOwner(int $suggestion_id): RedirectResponse {
+    if (!function_exists('spotdeals_revenue_notify_suggestion_owner')) {
+      $this->messenger()->addError($this->t('Owner notification workflow is unavailable.'));
+      return $this->redirect('spotdeals_revenue.suggestions_admin');
+    }
+
+    $result = spotdeals_revenue_notify_suggestion_owner($suggestion_id);
+
+    if (!empty($result['success'])) {
+      $this->messenger()->addStatus($this->t($result['message']));
+    }
+    else {
+      $this->messenger()->addError($this->t($result['message']));
+    }
+
+    return $this->redirect('spotdeals_revenue.suggestions_admin');
+  }
+
+  /**
    * Creates a venue node from an approved suggestion.
    */
   public function createVenue(int $suggestion_id): RedirectResponse {
@@ -398,6 +419,7 @@ class SuggestionAdminController extends ControllerBase {
     return match ($status) {
       'approved', 'reviewed' => (string) $this->t('approved'),
       'needs_verification' => (string) $this->t('needs verification'),
+      'owner_notified' => (string) $this->t('owner notified'),
       'published' => (string) $this->t('published'),
       'added', 'imported' => (string) $this->t('added'),
       'rejected' => (string) $this->t('rejected'),
@@ -414,6 +436,7 @@ class SuggestionAdminController extends ControllerBase {
 
     if ($record->status === 'archived') {
       $operations[] = (string) $this->t('Archived');
+      $operations[] = $this->buildActionLink('Needs verification', 'spotdeals_revenue.suggestion_needs_verification', (int) $record->id);
     }
     elseif ($record->status === 'published') {
       $operations[] = (string) $this->t('Published');
@@ -449,9 +472,18 @@ class SuggestionAdminController extends ControllerBase {
       $operations[] = $this->buildActionLink('Archive', 'spotdeals_revenue.suggestion_archive', (int) $record->id);
     }
     elseif ($record->status === 'needs_verification') {
-      $operations[] = (string) $this->t('Needs verification');
+      if ($this->canNotifyClaimedOwner($record)) {
+        $operations[] = $this->buildActionLink('Claimed: Notify owner', 'spotdeals_revenue.suggestion_notify_owner', (int) $record->id);
+      }
+      else {
+        $operations[] = (string) $this->t('Needs verification');
+      }
       $operations[] = $this->buildActionLink('Approve', 'spotdeals_revenue.suggestion_approve', (int) $record->id);
       $operations[] = $this->buildActionLink('Reject', 'spotdeals_revenue.suggestion_reject', (int) $record->id);
+      $operations[] = $this->buildActionLink('Archive', 'spotdeals_revenue.suggestion_archive', (int) $record->id);
+    }
+    elseif ($record->status === 'owner_notified') {
+      $operations[] = (string) $this->t('Owner notified');
       $operations[] = $this->buildActionLink('Archive', 'spotdeals_revenue.suggestion_archive', (int) $record->id);
     }
     elseif ($record->status === 'rejected') {
@@ -470,6 +502,21 @@ class SuggestionAdminController extends ControllerBase {
     $operations[] = $this->buildActionLink('Delete', 'spotdeals_revenue.suggestion_delete', (int) $record->id);
 
     return implode(' | ', $operations);
+  }
+
+  /**
+   * Checks whether a gated suggestion can now notify a claimed owner.
+   */
+  private function canNotifyClaimedOwner(object $record): bool {
+    if (empty($record->free_limit_blocked) || !empty($record->owner_notified) || empty($record->matched_venue_nid)) {
+      return FALSE;
+    }
+
+    $venue = Node::load((int) $record->matched_venue_nid);
+    return $venue instanceof \Drupal\node\NodeInterface
+      && $venue->bundle() === 'venue'
+      && $venue->hasField('field_primary_owner_user')
+      && !$venue->get('field_primary_owner_user')->isEmpty();
   }
 
   /**

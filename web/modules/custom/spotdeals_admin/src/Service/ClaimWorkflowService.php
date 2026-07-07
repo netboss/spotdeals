@@ -155,6 +155,16 @@ class ClaimWorkflowService {
 
     $venue->save();
 
+    if (function_exists('spotdeals_revenue_notify_pending_suggestions_for_venue')) {
+      $notifiedSuggestions = spotdeals_revenue_notify_pending_suggestions_for_venue($venue);
+      if ($notifiedSuggestions > 0) {
+        $this->logger->notice('Notified claimed venue owner about @count pending gated suggestion(s) for venue @vid after claim approval.', [
+          '@count' => $notifiedSuggestions,
+          '@vid' => $venue->id(),
+        ]);
+      }
+    }
+
     $reloadedVenue = $this->entityTypeManager->getStorage('node')->load($venue->id());
     if ($reloadedVenue instanceof NodeInterface) {
       $this->logger->notice(

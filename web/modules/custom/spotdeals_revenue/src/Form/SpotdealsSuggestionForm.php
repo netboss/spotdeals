@@ -398,8 +398,10 @@ class SpotdealsSuggestionForm extends FormBase {
       'owner_notified_time' => 0,
     ];
 
+    $submitter_email = trim((string) $form_state->getValue('email'));
+
     if (in_array($type, ['deal', 'both'], TRUE)) {
-      $moderation = $this->buildDealSuggestionModerationData($venue_name, $deal_location, $deal_description, $now);
+      $moderation = $this->buildDealSuggestionModerationData($venue_name, $deal_location, $deal_description, $submitter_email, $now);
     }
 
     $this->database->insert('spotdeals_suggestion')
@@ -419,8 +421,8 @@ class SpotdealsSuggestionForm extends FormBase {
         'days' => trim((string) $form_state->getValue('days')),
         'times' => trim((string) $form_state->getValue('times')),
         'notes' => trim((string) $form_state->getValue('notes')),
-        'email' => trim((string) $form_state->getValue('email')),
-        'status' => 'new',
+        'email' => $submitter_email,
+        'status' => $moderation['status'],
         'matched_venue_nid' => $moderation['matched_venue_nid'],
         'free_limit_blocked' => $moderation['free_limit_blocked'],
         'owner_notified' => $moderation['owner_notified'],
@@ -573,12 +575,13 @@ class SpotdealsSuggestionForm extends FormBase {
   /**
    * Builds moderation metadata for a submitted deal suggestion.
    */
-  private function buildDealSuggestionModerationData(string $venue_name, string $deal_location, string $deal_description, int $now): array {
+  private function buildDealSuggestionModerationData(string $venue_name, string $deal_location, string $deal_description, string $submitter_email, int $now): array {
     $data = [
       'matched_venue_nid' => 0,
       'free_limit_blocked' => 0,
       'owner_notified' => 0,
       'owner_notified_time' => 0,
+      'status' => 'new',
     ];
 
     $venue = $this->findExistingVenueByTitleAndLocation($venue_name, $deal_location);
@@ -592,9 +595,15 @@ class SpotdealsSuggestionForm extends FormBase {
 
     if ($active_deal_count >= $free_limit) {
       $data['free_limit_blocked'] = 1;
-      if (\Drupal::config('spotdeals_revenue.settings')->get('owner_notifications_enabled') !== FALSE && $this->notifyClaimedVenueOwner($venue, $deal_description)) {
-        $data['owner_notified'] = 1;
-        $data['owner_notified_time'] = $now;
+      if (\Drupal::config('spotdeals_revenue.settings')->get('owner_notifications_enabled') !== FALSE) {
+        $notification_result = $this->notifyDealSuggestionRecipient($venue, $deal_description, $submitter_email);
+        if ($notification_result === 'sent') {
+          $data['owner_notified'] = 1;
+          $data['owner_notified_time'] = $now;
+        }
+        elseif ($notification_result === 'no_recipient') {
+          $data['status'] = 'needs_verification';
+        }
       }
     }
 
@@ -693,78 +702,70 @@ class SpotdealsSuggestionForm extends FormBase {
   }
 
   /**
-   * Attempts to notify the claimed venue owner about a gated deal suggestion.
+   * Attempts to notify the best available recipient for a gated deal suggestion.
+   *
+   * Recipient order:
+   * - Registered venue owner from field_primary_owner_user.
+   * - Claim contact email from field_claim_contact_email.
+   * - Suggestion submitter email.
+   *
+   * @return string
+   *   One of: sent, failed, or no_recipient.
    */
-  private function notifyClaimedVenueOwner(\Drupal\node\NodeInterface $venue, string $deal_description): bool {
-    if (!$this->isClaimedVenue($venue)) {
-      return FALSE;
-    }
-
-    $emails = $this->getVenueOwnerEmails($venue);
+  private function notifyDealSuggestionRecipient(\Drupal\node\NodeInterface $venue, string $deal_description, string $submitter_email): string {
+    $emails = $this->getDealSuggestionRecipientEmails($venue, $submitter_email);
     if (!$emails) {
-      return FALSE;
+      \Drupal::logger('spotdeals_revenue')->notice('Archived extra deal suggestion for venue @nid because no owner, claim contact, or submitter email was available.', [
+        '@nid' => $venue->id(),
+      ]);
+      return 'no_recipient';
     }
 
     $mail_manager = \Drupal::service('plugin.manager.mail');
     $langcode = \Drupal::languageManager()->getDefaultLanguage()->getId();
-    $admin_url = \Drupal\Core\Url::fromRoute('spotdeals_revenue.suggestions_admin', [], ['absolute' => TRUE])->toString();
     $sent = FALSE;
 
     foreach ($emails as $email) {
       $result = $mail_manager->mail('spotdeals_revenue', 'deal_suggestion_owner_notice', $email, $langcode, [
         'venue_title' => $venue->label(),
         'deal_description' => $deal_description,
-        'admin_url' => $admin_url,
       ]);
       $sent = $sent || !empty($result['result']);
     }
 
-    return $sent;
-  }
-
-  /**
-   * Determines whether a venue appears to be claimed.
-   */
-  private function isClaimedVenue(\Drupal\node\NodeInterface $venue): bool {
-    foreach (['field_claimed_listing', 'field_is_claimed', 'field_claimed'] as $field_name) {
-      if ($venue->hasField($field_name) && !$venue->get($field_name)->isEmpty() && (bool) $venue->get($field_name)->value) {
-        return TRUE;
-      }
+    if (!$sent) {
+      \Drupal::logger('spotdeals_revenue')->warning('Failed to send extra deal suggestion notification for venue @nid.', [
+        '@nid' => $venue->id(),
+      ]);
+      return 'failed';
     }
 
-    return FALSE;
+    return 'sent';
   }
 
   /**
-   * Gets possible owner email addresses from common owner reference fields.
+   * Gets notification recipient emails for a gated deal suggestion.
    */
-  private function getVenueOwnerEmails(\Drupal\node\NodeInterface $venue): array {
+  private function getDealSuggestionRecipientEmails(\Drupal\node\NodeInterface $venue, string $submitter_email): array {
     $emails = [];
-    $owner_field_names = [
-      'field_claimed_by',
-      'field_owner',
-      'field_business_owner',
-      'field_account_owner',
-      'field_claim_owner',
-    ];
 
-    foreach ($owner_field_names as $field_name) {
-      if (!$venue->hasField($field_name) || $venue->get($field_name)->isEmpty()) {
-        continue;
-      }
-
-      foreach ($venue->get($field_name)->referencedEntities() as $entity) {
+    if ($venue->hasField('field_primary_owner_user') && !$venue->get('field_primary_owner_user')->isEmpty()) {
+      foreach ($venue->get('field_primary_owner_user')->referencedEntities() as $entity) {
         if ($entity instanceof \Drupal\user\UserInterface && $entity->getEmail()) {
           $emails[] = $entity->getEmail();
         }
       }
     }
 
-    if (!$emails && (int) $venue->getOwnerId() > 0) {
-      $owner = $venue->getOwner();
-      if ($owner instanceof \Drupal\user\UserInterface && $owner->getEmail()) {
-        $emails[] = $owner->getEmail();
+    if (!$emails && $venue->hasField('field_claim_contact_email') && !$venue->get('field_claim_contact_email')->isEmpty()) {
+      $claim_contact_email = trim((string) $venue->get('field_claim_contact_email')->value);
+      if ($claim_contact_email !== '' && \Drupal::service('email.validator')->isValid($claim_contact_email)) {
+        $emails[] = $claim_contact_email;
       }
+    }
+
+    if (!$emails && $submitter_email !== '' && \Drupal::service('email.validator')->isValid($submitter_email)) {
+      $emails[] = $submitter_email;
     }
 
     return array_values(array_unique($emails));

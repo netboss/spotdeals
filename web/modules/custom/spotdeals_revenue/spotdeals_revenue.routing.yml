@@ -32,6 +32,15 @@ spotdeals_revenue.suggestion_needs_verification:
     _csrf_token: 'TRUE'
     suggestion_id: '\d+'
 
+spotdeals_revenue.suggestion_notify_owner:
+  path: '/admin/content/spotdeals-suggestions/{suggestion_id}/notify-owner'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::notifyOwner'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+    _csrf_token: 'TRUE'
+    suggestion_id: '\d+'
+
 spotdeals_revenue.suggestion_create_venue:
   path: '/admin/content/spotdeals-suggestions/{suggestion_id}/create-venue'
   defaults:
