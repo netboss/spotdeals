@@ -4532,6 +4532,12 @@ h1.page-title {
 }
 
 @media (max-width: 767px) {
+  .spotdeals-finder__intro {
+    .spotdeals-finder__suggestion-cta {
+      display: none;
+    }
+  }
+
   .spotdeals-finder__suggestion-cta {
     align-items: stretch;
     padding: 0.85rem;

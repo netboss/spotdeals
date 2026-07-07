@@ -310,7 +310,11 @@
   }
 }
 
-@media (max-width:767px){.spotdeals-home-feed__mobile-toggle,.spotdeals-home-feed__cards{display:none!important;}}
+@media (max-width:767px){
+  .spotdeals-home-feed__mobile-toggle,.spotdeals-home-feed__cards{
+    display:none;
+  }
+}
 
 
 /* SD-140 desktop recovery: keep mobile launcher compact while restoring richer desktop hero. */
@@ -356,9 +360,8 @@
  * to do, and the accordion blocks provide the discovery paths.
  */
 @media (max-width: 767px) {
-  .path-frontpage .spotdeals-finder__intro .spotdeals-finder__description,
-  .path-frontpage .spotdeals-finder__results .view-empty {
-    display: none !important;
+  .path-frontpage .spotdeals-finder__intro .spotdeals-finder__description {
+    display: none;
   }
 
   .path-frontpage .spotdeals-finder__intro {
@@ -380,7 +383,7 @@
  */
 @media (max-width: 767px) {
   .path-frontpage .spotdeals-mobile-discovery-block--hidden {
-    display: none !important;
+    display: none;
   }
 
   .path-frontpage .spotdeals-sidebar-right.spotdeals-mobile-discovery-blocks {
