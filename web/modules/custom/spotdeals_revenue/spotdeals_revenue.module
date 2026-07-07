@@ -298,11 +298,156 @@ function spotdeals_revenue_mail($key, &$message, $params): void {
     $message['body'][] = $params['deal_description'];
   }
 
-  if (!empty($params['admin_url'])) {
-    $message['body'][] = '';
-    $message['body'][] = t('Review this suggestion: @url', ['@url' => $params['admin_url']]);
-  }
+  $message['body'][] = '';
+  $message['body'][] = t('This venue may already have its complimentary deal listed. Additional deals may require owner review or a business upgrade before they are published.');
 
   $message['body'][] = '';
-  $message['body'][] = t('If this deal is valid, log in to SpotDeals or contact us to add it to your listing.');
+  $message['body'][] = t('If this deal is valid, please log in to SpotDeals or contact us to review options for adding it to your listing.');
+}
+
+/**
+ * Notifies the primary owner for one gated suggestion.
+ */
+function spotdeals_revenue_notify_suggestion_owner(int $suggestion_id): array {
+  $database = \Drupal::database();
+  $record = $database->select('spotdeals_suggestion', 's')
+    ->fields('s')
+    ->condition('id', $suggestion_id)
+    ->execute()
+    ->fetchObject();
+
+  if (!$record) {
+    return [
+      'success' => FALSE,
+      'message' => 'Suggestion not found.',
+    ];
+  }
+
+  if ((string) $record->status !== 'needs_verification') {
+    return [
+      'success' => FALSE,
+      'message' => 'Only suggestions needing verification can notify a claimed owner.',
+    ];
+  }
+
+  if (empty($record->free_limit_blocked) || !empty($record->owner_notified) || empty($record->matched_venue_nid)) {
+    return [
+      'success' => FALSE,
+      'message' => 'This suggestion is not eligible for claimed owner notification.',
+    ];
+  }
+
+  $venue = \Drupal::entityTypeManager()->getStorage('node')->load((int) $record->matched_venue_nid);
+  if (!$venue instanceof NodeInterface || $venue->bundle() !== 'venue') {
+    return [
+      'success' => FALSE,
+      'message' => 'Matched venue not found.',
+    ];
+  }
+
+  $result = spotdeals_revenue_send_owner_suggestion_notice($venue, trim((string) ($record->deal_description ?? '')));
+  if ($result !== 'sent') {
+    return [
+      'success' => FALSE,
+      'message' => 'No claimed owner could be notified for this suggestion.',
+    ];
+  }
+
+  $database->update('spotdeals_suggestion')
+    ->fields([
+      'status' => 'owner_notified',
+      'owner_notified' => 1,
+      'owner_notified_time' => \Drupal::time()->getRequestTime(),
+    ])
+    ->condition('id', $suggestion_id)
+    ->execute();
+
+  return [
+    'success' => TRUE,
+    'message' => 'Claimed venue owner notified.',
+  ];
+}
+
+/**
+ * Notifies owners for pending gated suggestions after a venue is claimed.
+ */
+function spotdeals_revenue_notify_pending_suggestions_for_venue(NodeInterface $venue): int {
+  if ($venue->bundle() !== 'venue') {
+    return 0;
+  }
+
+  if (!$venue->hasField('field_primary_owner_user') || $venue->get('field_primary_owner_user')->isEmpty()) {
+    return 0;
+  }
+
+  $database = \Drupal::database();
+  $suggestion_ids = $database->select('spotdeals_suggestion', 's')
+    ->fields('s', ['id'])
+    ->condition('matched_venue_nid', (int) $venue->id())
+    ->condition('status', 'needs_verification')
+    ->condition('free_limit_blocked', 1)
+    ->condition('owner_notified', 0)
+    ->execute()
+    ->fetchCol();
+
+  $notified = 0;
+  foreach ($suggestion_ids as $suggestion_id) {
+    $result = spotdeals_revenue_notify_suggestion_owner((int) $suggestion_id);
+    if (!empty($result['success'])) {
+      $notified++;
+    }
+  }
+
+  return $notified;
+}
+
+/**
+ * Sends the existing owner notification email to a claimed venue owner.
+ */
+function spotdeals_revenue_send_owner_suggestion_notice(NodeInterface $venue, string $deal_description): string {
+  $emails = spotdeals_revenue_get_primary_owner_emails($venue);
+  if (!$emails) {
+    \Drupal::logger('spotdeals_revenue')->notice('No primary owner email found for gated deal suggestion notification. Venue: @nid', [
+      '@nid' => $venue->id(),
+    ]);
+    return 'no_recipient';
+  }
+
+  $mail_manager = \Drupal::service('plugin.manager.mail');
+  $langcode = \Drupal::languageManager()->getDefaultLanguage()->getId();
+  $sent = FALSE;
+
+  foreach ($emails as $email) {
+    $result = $mail_manager->mail('spotdeals_revenue', 'deal_suggestion_owner_notice', $email, $langcode, [
+      'venue_title' => $venue->label(),
+      'deal_description' => $deal_description,
+    ]);
+    $sent = $sent || !empty($result['result']);
+  }
+
+  if (!$sent) {
+    \Drupal::logger('spotdeals_revenue')->warning('Failed to send gated deal suggestion notification for claimed venue @nid.', [
+      '@nid' => $venue->id(),
+    ]);
+    return 'failed';
+  }
+
+  return 'sent';
+}
+
+/**
+ * Gets email addresses for the venue primary owner field.
+ */
+function spotdeals_revenue_get_primary_owner_emails(NodeInterface $venue): array {
+  $emails = [];
+
+  if ($venue->hasField('field_primary_owner_user') && !$venue->get('field_primary_owner_user')->isEmpty()) {
+    foreach ($venue->get('field_primary_owner_user')->referencedEntities() as $entity) {
+      if ($entity instanceof \Drupal\user\UserInterface && $entity->getEmail()) {
+        $emails[] = $entity->getEmail();
+      }
+    }
+  }
+
+  return array_values(array_unique($emails));
 }

@@ -232,3 +232,7 @@ test_search_api_id.php
 /scripts/venue_title_normalization_audit.csv
 /scripts/deal_venue_reference_audit.csv
 /scripts/reports/
+
+# Ignored docs
+/docs/inprogress
+/docs/inprogress/*
