@@ -1,5 +1,34 @@
 <?php
 
+/**
+ * SpotDeals - Create missing Spanish node translations.
+ *
+ * Run AFTER importing venues and deals.
+ *
+ * Local (DDEV):
+ *   ddev drush php:script scripts/spotdeals_create_missing_es_node_translations.php
+ *
+ * Production:
+ *   drush php:script scripts/spotdeals_create_missing_es_node_translations.php
+ *
+ * Useful options:
+ *   --dry-run
+ *   --type=venue
+ *   --type=deal
+ *   --limit=100
+ *     Optional. When omitted, the script processes ALL missing translations.
+ *     Use this only when you intentionally want a smaller batch.
+ *   --start-after=<nid>
+ *   --allow-mail
+ *
+ * Recommended workflow:
+ *   1. Import venues.
+ *   2. Import deals.
+ *   3. Reindex Solr.
+ *   4. Run this script.
+ *   5. Reindex Solr again if translations were created.
+ */
+
 declare(strict_types=1);
 
 use Drupal\node\NodeInterface;
@@ -26,15 +55,16 @@ $get_option_value = static function (string $name, ?string $default = NULL) use 
 $dry_run = $has_option('--dry-run');
 $disable_mail = !$has_option('--allow-mail');
 
-$limit = (int) ($get_option_value('--limit', '100') ?? 100);
+$limit_option = $get_option_value('--limit');
+$limit = $limit_option === NULL ? NULL : (int) $limit_option;
 $chunk_size = (int) ($get_option_value('--chunk-size', '25') ?? 25);
 $progress_every = (int) ($get_option_value('--progress-every', '25') ?? 25);
 $binlog_maintenance_every = (int) ($get_option_value('--binlog-maintenance-every', '0') ?? 0);
 $start_after = (int) ($get_option_value('--start-after', '0') ?? 0);
 $type = $get_option_value('--type');
 
-if ($limit < 1) {
-  $limit = 100;
+if ($limit !== NULL && $limit < 1) {
+  throw new \InvalidArgumentException('Invalid --limit value. Use a positive integer, or omit --limit to process all missing translations.');
 }
 
 if ($chunk_size < 1 || $chunk_size > 100) {
@@ -147,8 +177,11 @@ $query
   ->condition('n.langcode', $source_langcode)
   ->isNull('e.nid')
   ->condition('n.nid', $start_after, '>')
-  ->orderBy('n.nid', 'ASC')
-  ->range(0, $limit);
+  ->orderBy('n.nid', 'ASC');
+
+if ($limit !== NULL) {
+  $query->range(0, $limit);
+}
 
 if ($type !== NULL) {
   $query->condition('n.type', $type);
@@ -168,7 +201,7 @@ echo "Target language: {$target_langcode}\n";
 echo "Dry run: " . ($dry_run ? 'yes' : 'no') . "\n";
 echo "Type filter: " . ($type ?? 'all') . "\n";
 echo "Start after nid: {$start_after}\n";
-echo "Limit: {$limit}\n";
+echo "Limit: " . ($limit === NULL ? 'all' : (string) $limit) . "\n";
 echo "Chunk size: {$chunk_size}\n";
 echo "Binlog maintenance every: {$binlog_maintenance_every} processed node(s)\n";
 echo "Total missing before this run: {$total_missing}\n";
