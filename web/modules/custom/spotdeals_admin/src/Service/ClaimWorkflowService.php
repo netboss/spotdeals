@@ -249,7 +249,7 @@ class ClaimWorkflowService {
     }
 
     if ($venue->hasField('field_claim_status')) {
-      $venue->set('field_claim_status', 'approved');
+      $venue->set('field_claim_status', 'claimed');
     }
 
     if ($venue->hasField('field_claimed_listing')) {
