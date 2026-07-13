@@ -174,6 +174,11 @@ class SuggestionAdminController extends ControllerBase {
       return $this->redirect('spotdeals_revenue.suggestions_admin');
     }
 
+    if (!empty($record->created_entity_id)) {
+      $this->messenger()->addError($this->t('Content has already been created from this suggestion.'));
+      return $this->redirect('spotdeals_revenue.suggestions_admin');
+    }
+
     if (!in_array((string) $record->type, ['venue', 'both'], TRUE)) {
       $this->messenger()->addError($this->t('This suggestion is not a venue suggestion.'));
       return $this->redirect('spotdeals_revenue.suggestions_admin');
@@ -228,6 +233,11 @@ class SuggestionAdminController extends ControllerBase {
     $record = $this->loadSuggestion($suggestion_id);
     if (!$record) {
       $this->messenger()->addError($this->t('Suggestion not found.'));
+      return $this->redirect('spotdeals_revenue.suggestions_admin');
+    }
+
+    if (!empty($record->created_entity_id)) {
+      $this->messenger()->addError($this->t('Content has already been created from this suggestion.'));
       return $this->redirect('spotdeals_revenue.suggestions_admin');
     }
 
@@ -295,6 +305,11 @@ class SuggestionAdminController extends ControllerBase {
     $record = $this->loadSuggestion($suggestion_id);
     if (!$record) {
       $this->messenger()->addError($this->t('Suggestion not found.'));
+      return $this->redirect('spotdeals_revenue.suggestions_admin');
+    }
+
+    if (!empty($record->created_entity_id)) {
+      $this->messenger()->addError($this->t('Content has already been created from this suggestion.'));
       return $this->redirect('spotdeals_revenue.suggestions_admin');
     }
 
@@ -484,6 +499,9 @@ class SuggestionAdminController extends ControllerBase {
     }
     elseif ($record->status === 'owner_notified') {
       $operations[] = (string) $this->t('Owner notified');
+      if ($this->canNotifyClaimedOwner($record)) {
+        $operations[] = $this->buildActionLink('Resend owner notification', 'spotdeals_revenue.suggestion_notify_owner', (int) $record->id);
+      }
       $operations[] = $this->buildActionLink('Archive', 'spotdeals_revenue.suggestion_archive', (int) $record->id);
     }
     elseif ($record->status === 'rejected') {
@@ -508,15 +526,15 @@ class SuggestionAdminController extends ControllerBase {
    * Checks whether a gated suggestion can now notify a claimed owner.
    */
   private function canNotifyClaimedOwner(object $record): bool {
-    if (empty($record->free_limit_blocked) || !empty($record->owner_notified) || empty($record->matched_venue_nid)) {
+    if (empty($record->free_limit_blocked) || empty($record->matched_venue_nid)) {
       return FALSE;
     }
 
     $venue = Node::load((int) $record->matched_venue_nid);
     return $venue instanceof \Drupal\node\NodeInterface
       && $venue->bundle() === 'venue'
-      && $venue->hasField('field_primary_owner_user')
-      && !$venue->get('field_primary_owner_user')->isEmpty();
+      && function_exists('spotdeals_revenue_resolve_owner_notification_recipient')
+      && spotdeals_revenue_resolve_owner_notification_recipient($venue) !== NULL;
   }
 
   /**
@@ -547,6 +565,25 @@ class SuggestionAdminController extends ControllerBase {
     }
     elseif (!empty($record->free_limit_blocked)) {
       $flags[] = (string) $this->t('Owner not notified');
+    }
+
+    if (!empty($record->owner_notification_recipient)) {
+      $flags[] = (string) $this->t('Notification recipient: @email (@type)', [
+        '@email' => (string) $record->owner_notification_recipient,
+        '@type' => (string) $record->owner_notification_recipient_type,
+      ]);
+    }
+
+    if (!empty($record->owner_notification_attempt_count)) {
+      $flags[] = (string) $this->t('Notification attempts: @count', [
+        '@count' => (int) $record->owner_notification_attempt_count,
+      ]);
+    }
+
+    if (!empty($record->owner_notification_failure_reason)) {
+      $flags[] = (string) $this->t('Last notification failure: @reason', [
+        '@reason' => (string) $record->owner_notification_failure_reason,
+      ]);
     }
 
     if (!empty($record->matched_venue_nid)) {

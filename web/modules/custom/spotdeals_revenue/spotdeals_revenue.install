@@ -186,6 +186,41 @@ function spotdeals_revenue_schema(): array {
         'not null' => TRUE,
         'default' => 0,
       ],
+      'owner_notification_recipient' => [
+        'description' => 'Email address used for the most recent owner notification attempt.',
+        'type' => 'varchar',
+        'length' => 254,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'owner_notification_recipient_type' => [
+        'description' => 'Source used to resolve the most recent owner notification recipient.',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'owner_notification_attempt_count' => [
+        'description' => 'Number of owner notification attempts for this suggestion.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'owner_notification_last_attempt' => [
+        'description' => 'Unix timestamp of the most recent owner notification attempt.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'owner_notification_failure_reason' => [
+        'description' => 'Failure reason from the most recent owner notification attempt.',
+        'type' => 'varchar',
+        'length' => 512,
+        'not null' => TRUE,
+        'default' => '',
+      ],
       'uid' => [
         'description' => 'Submitting user ID, or 0 for anonymous users.',
         'type' => 'int',
@@ -478,3 +513,55 @@ function spotdeals_revenue_update_9008(): void {
     }
   }
 }
+
+/**
+ * Adds audit fields for owner notification attempts.
+ */
+function spotdeals_revenue_update_9009(): void {
+  $schema = \Drupal::database()->schema();
+
+  $fields = [
+    'owner_notification_recipient' => [
+      'description' => 'Email address used for the most recent owner notification attempt.',
+      'type' => 'varchar',
+      'length' => 254,
+      'not null' => TRUE,
+      'default' => '',
+    ],
+    'owner_notification_recipient_type' => [
+      'description' => 'Source used to resolve the most recent owner notification recipient.',
+      'type' => 'varchar',
+      'length' => 64,
+      'not null' => TRUE,
+      'default' => '',
+    ],
+    'owner_notification_attempt_count' => [
+      'description' => 'Number of owner notification attempts for this suggestion.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+    'owner_notification_last_attempt' => [
+      'description' => 'Unix timestamp of the most recent owner notification attempt.',
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+    'owner_notification_failure_reason' => [
+      'description' => 'Failure reason from the most recent owner notification attempt.',
+      'type' => 'varchar',
+      'length' => 512,
+      'not null' => TRUE,
+      'default' => '',
+    ],
+  ];
+
+  foreach ($fields as $field_name => $field_spec) {
+    if (!$schema->fieldExists('spotdeals_suggestion', $field_name)) {
+      $schema->addField('spotdeals_suggestion', $field_name, $field_spec);
+    }
+  }
+}
+
