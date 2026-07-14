@@ -1,6 +1,6 @@
 # SpotDeals Project Status
 
-**Last Updated:** 2026-07-12
+**Last Updated:** 2026-07-14
 
 ------------------------------------------------------------------------
 
@@ -260,22 +260,12 @@ as part of Phase 1. The remaining Phase 1 work tests only how the new
 notification code falls back across existing venue ownership/contact
 fields.
 
-**Known separate Claim this listing bug discovered 2026-07-12**
+**Claim workflow follow-up (updated 2026-07-14)**
 
--   Production example: venue `Cane`.
--   The related claim record is `Approved`.
--   The venue edit form still shows the venue-level `Claim Status` as
-    `Unclaimed`.
--   Expected behavior: approving a claim must automatically synchronize
-    the claimed venue's `Claim Status` to `Claimed`.
--   This is a separate Claim this listing regression and is not part of
-    the current Suggest Phase 1 test pass.
--   Do not interrupt or expand the current Suggest testing to fix it.
--   After all remaining Suggest Phase 1 tests pass and local cleanup is
-    complete, audit and correct the claim-approval synchronization path.
--   The future fix must be tested for both the canonical/default
-    translation and translated venue edit forms so the displayed state
-    is consistent.
+-   The passive **Claimed business** indicator is now implemented on venue pages and deal cards.
+-   Legacy approved claims may require a one-time data correction if `field_primary_owner_user` was never populated.
+-   Production example: `Cane` required manually assigning `field_primary_owner_user`; once corrected, the indicator displayed correctly.
+-   Monitor the next newly approved claim to confirm the current approval workflow automatically populates `field_primary_owner_user` without manual intervention.
 
 **Claim-status rule for the remaining Suggest Phase 1 tests**
 
@@ -489,7 +479,7 @@ gated suggestion converts once when entitlement permits.
 3.  Then fix the separate Claim this listing synchronization bug where
     an approved claim leaves the venue-level `Claim Status` as
     `Unclaimed` instead of `Claimed`.
-3a. After the Phase 1 deployment, add a small UI enhancement: replace the hidden **Claim this listing** link on claimed venues with a passive **✓ Claimed** status indicator (not a button, do not expose owner identity).
+3a. [x] Replace the **Claim this listing** link on claimed venues with a passive **✓ Claimed business** status indicator. Implemented and deployed. Continue monitoring newly approved claims to verify `field_primary_owner_user` is populated automatically by the approval workflow.
 4.  Do not retest or modify Claim this listing during the current
     Suggest test pass.
 5.  Do not begin sponsored listings, owner analytics, referral revenue,
