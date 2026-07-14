@@ -450,9 +450,13 @@ function _spotdeals_minimal_build_deal_teaser_schedule(NodeInterface $deal, arra
 }
 
 /**
- * Builds a claim listing link for reusable deal cards.
+ * Builds a claim link or passive claimed-business status for deal cards.
  */
 function _spotdeals_minimal_build_claim_link(NodeInterface $venue): array {
+  if (spotdeals_admin_venue_is_claimed($venue)) {
+    return _spotdeals_minimal_build_claimed_business_status($venue);
+  }
+
   return [
     '#type' => 'link',
     '#title' => t('Claim this listing'),
@@ -461,6 +465,43 @@ function _spotdeals_minimal_build_claim_link(NodeInterface $venue): array {
     ]),
     '#attributes' => [
       'class' => ['claim-this-listing-link'],
+    ],
+    '#cache' => [
+      'tags' => $venue->getCacheTags(),
+    ],
+  ];
+}
+
+/**
+ * Builds the passive claimed-business status indicator.
+ */
+function _spotdeals_minimal_build_claimed_business_status(NodeInterface $venue, array $classes = []): array {
+  $classes[] = 'spotdeals-claimed-business-status';
+
+  return [
+    '#type' => 'container',
+    '#attributes' => [
+      'class' => array_values(array_unique($classes)),
+    ],
+    '#cache' => [
+      'tags' => $venue->getCacheTags(),
+    ],
+    'icon' => [
+      '#type' => 'html_tag',
+      '#tag' => 'span',
+      '#value' => '✓',
+      '#attributes' => [
+        'class' => ['spotdeals-claimed-business-status__icon'],
+        'aria-hidden' => 'true',
+      ],
+    ],
+    'label' => [
+      '#type' => 'html_tag',
+      '#tag' => 'span',
+      '#value' => t('Claimed business'),
+      '#attributes' => [
+        'class' => ['spotdeals-claimed-business-status__label'],
+      ],
     ],
   ];
 }
@@ -568,18 +609,23 @@ function _spotdeals_minimal_build_deal_page_venue_summary(NodeInterface $venue):
       'items' => $items,
     ],
     'actions' => $actions,
-    'claim' => [
-      '#type' => 'link',
-      '#title' => t('Claim this listing'),
-      '#url' => Url::fromUserInput('/create/claim', [
-        'query' => [
-          'venue' => $venue->id(),
+    'claim' => spotdeals_admin_venue_is_claimed($venue)
+      ? _spotdeals_minimal_build_claimed_business_status($venue, ['spotdeals-deal-venue-card__claim'])
+      : [
+        '#type' => 'link',
+        '#title' => t('Claim this listing'),
+        '#url' => Url::fromUserInput('/create/claim', [
+          'query' => [
+            'venue' => $venue->id(),
+          ],
+        ]),
+        '#attributes' => [
+          'class' => ['spotdeals-deal-venue-card__claim', 'claim-this-listing-link'],
         ],
-      ]),
-      '#attributes' => [
-        'class' => ['spotdeals-deal-venue-card__claim', 'claim-this-listing-link'],
+        '#cache' => [
+          'tags' => $venue->getCacheTags(),
+        ],
       ],
-    ],
   ];
 }
 
@@ -1091,6 +1137,19 @@ function spotdeals_minimal_preprocess_views_view_fields(array &$variables): void
   // and deal vote render arrays directly from their real render builders so
   // the card always receives both summary metrics. The JavaScript then
   // converts these full widgets into display-only summaries inside the card.
+  // Replace the Views NID field output with the real claim/status render array.
+  // The Views field is configured as a link and can produce an empty <a> tag
+  // when its text is suppressed. Supplying the render array here ensures that
+  // unclaimed venues show the full claim link and claimed venues show the
+  // passive claimed-business indicator.
+  if ($venue instanceof NodeInterface && isset($variables['fields']['nid'])) {
+    $variables['fields']['nid']->content = _spotdeals_minimal_build_claim_link($venue);
+    $variables['#cache']['tags'] = array_values(array_unique(array_merge(
+      $variables['#cache']['tags'] ?? [],
+      $venue->getCacheTags(),
+    )));
+  }
+
   if ($venue instanceof NodeInterface && \Drupal::hasService('spotdeals_vote_venue.render_builder')) {
     $variables['spotdeals_venue_vote_summary'] = \Drupal::service('spotdeals_vote_venue.render_builder')->build($venue, FALSE);
   }
