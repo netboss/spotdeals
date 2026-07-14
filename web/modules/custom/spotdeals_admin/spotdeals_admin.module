@@ -936,8 +936,36 @@ function spotdeals_admin_node_view_alter(array &$build, EntityInterface $entity,
       unset($build['field_featured']);
     }
 
-    // Already claimed by someone: do not show the claim CTA.
+    // Already claimed by someone: replace the claim CTA with a passive status.
     if (spotdeals_admin_venue_is_claimed($entity)) {
+      $build['claimed_business_status'] = [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['spotdeals-claimed-business-status'],
+        ],
+        '#weight' => 100,
+        '#cache' => [
+          'tags' => $entity->getCacheTags(),
+        ],
+        'icon' => [
+          '#type' => 'html_tag',
+          '#tag' => 'span',
+          '#value' => '✓',
+          '#attributes' => [
+            'class' => ['spotdeals-claimed-business-status__icon'],
+            'aria-hidden' => 'true',
+          ],
+        ],
+        'label' => [
+          '#type' => 'html_tag',
+          '#tag' => 'span',
+          '#value' => t('Claimed business'),
+          '#attributes' => [
+            'class' => ['spotdeals-claimed-business-status__label'],
+          ],
+        ],
+      ];
+
       return;
     }
 
