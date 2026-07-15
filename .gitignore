@@ -237,3 +237,7 @@ test_search_api_id.php
 # Ignored docs
 /docs/inprogress
 /docs/inprogress/*
+
+# Ignore appended new venues and deals
+.append
+.append/*
