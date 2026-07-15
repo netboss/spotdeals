@@ -3,8 +3,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2026-07-08 20:11-0400\n"
-"PO-Revision-Date: 2026-07-08 20:11-0400\n"
+"POT-Creation-Date: 2026-07-15 18:24-0400\n"
+"PO-Revision-Date: 2026-07-15 18:24-0400\n"
 "Last-Translator: NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
@@ -49920,7 +49920,22 @@ msgstr ""
 msgid "No matching suggestions found for:"
 msgstr ""
 
-msgid "Remove group"
+msgid "Perform actions on the selected items in the %view_title view"
+msgstr ""
+
+msgid "Learn about submission value tokens"
+msgstr ""
+
+msgid "Learn about Webform settings tokens"
+msgstr ""
+
+msgid "Learn about element property tokens"
+msgstr ""
+
+msgid "Learn about handler response tokens"
+msgstr ""
+
+msgid "Learn about token suffixes"
 msgstr ""
 
 msgid "Venue Info"
@@ -49944,38 +49959,16 @@ msgstr "Los datos del voto están incompletos."
 msgid "Unable to save vote."
 msgstr "No se pudo guardar el voto."
 
-msgid "Learn about submission value tokens"
+msgid "@term Deals"
 msgstr ""
 
-msgid "Learn about Webform settings tokens"
+msgid "SpotDeals discovery"
 msgstr ""
 
-msgid "Learn about element property tokens"
+msgid ""
+"Browse current SpotDeals results for @term and discover nearby offers "
+"worth checking out."
 msgstr ""
-
-msgid "Learn about handler response tokens"
-msgstr ""
-
-msgid "Learn about token suffixes"
-msgstr ""
-
-msgid "Know a great deal we are missing?"
-msgstr "¿Conoces una oferta excelente que nos falta?"
-
-msgid "Suggest it"
-msgstr "Sugiérela"
-
-msgid "Know a venue or deal we are missing?"
-msgstr "¿Conoces un lugar u oferta que nos falta?"
-
-msgid "Send it to SpotDeals and we will review it."
-msgstr "Envíalo a SpotDeals y lo revisaremos."
-
-msgid "Suggest a venue or deal"
-msgstr "Sugerir un lugar u oferta"
-
-msgid "Suggest another deal"
-msgstr "Sugerir otra oferta"
 
 msgid "Know a deal for this venue?"
 msgstr "¿Conoces una oferta para este lugar?"
@@ -49995,6 +49988,128 @@ msgstr ""
 msgid "WhatsApp"
 msgstr ""
 
+msgid "Know a venue or deal we are missing?"
+msgstr "¿Conoces un lugar u oferta que nos falta?"
+
+msgid "Suggest a venue or deal"
+msgstr "Sugerir un lugar u oferta"
+
+msgid "Suggest another deal"
+msgstr "Sugerir otra oferta"
+
+msgid ""
+"Know a venue or deal SpotDeals is missing? Send it over and we will "
+"review it before publishing."
+msgstr ""
+
+msgid "A venue"
+msgstr ""
+
+msgid "A deal"
+msgstr ""
+
+msgid "Both a venue and a deal"
+msgstr ""
+
+msgid "What are you suggesting?"
+msgstr ""
+
+msgid "Venue name"
+msgstr ""
+
+msgid ""
+"For deal suggestions, enter the existing venue name so we can match "
+"the deal to the correct SpotDeals venue."
+msgstr ""
+
+msgid "Deal name"
+msgstr ""
+
+msgid "Example: Taco Tuesday, Happy Hour, Lunch Special."
+msgstr ""
+
+msgid "Example: 1100 Orlando Ave."
+msgstr ""
+
+msgid "City"
+msgstr ""
+
+msgid ""
+"For deal suggestions, this helps us match the deal to the correct "
+"existing venue."
+msgstr ""
+
+msgid "State or province"
+msgstr ""
+
+msgid "Example: Florida, or FL."
+msgstr ""
+
+msgid "ZIP or postal code"
+msgstr ""
+
+msgid "For deal suggestions, ZIP can be used instead of city."
+msgstr ""
+
+msgid "Website or source URL"
+msgstr ""
+
+msgid ""
+"A venue website, menu page, Instagram post, or another source that "
+"helps verify the suggestion."
+msgstr ""
+
+msgid "Deal details"
+msgstr ""
+
+msgid "Example: Half-price tacos every Tuesday from 4 PM to 7 PM."
+msgstr ""
+
+msgid "Example: Monday to Friday, Tuesday, weekends, daily."
+msgstr ""
+
+msgid "Times"
+msgstr ""
+
+msgid "Example: 4 PM to 7 PM, all day, late night."
+msgstr ""
+
+msgid "Notes"
+msgstr ""
+
+msgid "Anything else that would help us verify this suggestion."
+msgstr ""
+
+msgid "Your email"
+msgstr ""
+
+msgid "Optional. Only used if we need to ask a follow-up question."
+msgstr ""
+
+msgid "Submit suggestion"
+msgstr ""
+
+msgid "Send it to SpotDeals and we will review it."
+msgstr "Envíalo a SpotDeals y lo revisaremos."
+
+msgid "Still not finding it?"
+msgstr "¿Aún no lo encuentras?"
+
+msgid "Tell us what venue or deal is missing."
+msgstr "Cuéntanos qué lugar u oferta falta."
+
+msgid "Know a great deal we are missing?"
+msgstr "¿Conoces una oferta excelente que nos falta?"
+
+msgid "Suggest it"
+msgstr "Sugiérela"
+
+msgid "Not the venue or deal you had in mind?"
+msgstr ""
+
+msgid "Suggest one and we will review it."
+msgstr ""
+
 msgid "Review user-submitted venue and deal suggestions."
 msgstr ""
 
@@ -50007,9 +50122,45 @@ msgstr ""
 msgid "SpotDeals revenue settings"
 msgstr ""
 
-msgid "Still not finding it?"
-msgstr "¿Aún no lo encuentras?"
+msgid "owner notified"
+msgstr ""
 
-msgid "Tell us what venue or deal is missing."
-msgstr "Cuéntanos qué lugar u oferta falta."
+msgid "Free deal limit reached"
+msgstr ""
+
+msgid "Owner notified"
+msgstr ""
+
+msgid "Notification recipient: @email (@type)"
+msgstr ""
+
+msgid "Notification attempts: @count"
+msgstr ""
+
+msgid "Matched venue #@nid"
+msgstr ""
+
+msgid "Resend owner notification"
+msgstr ""
+
+msgid ""
+"Review user-submitted venue and deal suggestions. Approved suggestions "
+"can be created directly as SpotDeals venue or deal content after admin "
+"review."
+msgstr ""
+
+msgid "Submitted"
+msgstr ""
+
+msgid "Venue"
+msgstr ""
+
+msgid "City/ZIP"
+msgstr ""
+
+msgid "Deal"
+msgstr ""
+
+msgid "Flags"
+msgstr ""
 
