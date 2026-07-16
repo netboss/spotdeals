@@ -1,0 +1,2 @@
+# New sitemap
+Sitemap: https://spotdeals.app/sitemap.xml
