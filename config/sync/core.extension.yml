@@ -21,7 +21,6 @@ module:
   contextual: 0
   ctools: 0
   datetime: 0
-  dblog: 0
   devel: 0
   devel_generate: 0
   dynamic_page_cache: 0
@@ -78,6 +77,7 @@ module:
   spotdeals_vote: 0
   spotdeals_vote_deal: 0
   spotdeals_vote_venue: 0
+  syslog: 0
   system: 0
   tagify: 0
   taxonomy: 0
