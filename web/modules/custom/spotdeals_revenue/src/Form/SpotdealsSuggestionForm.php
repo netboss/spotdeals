@@ -396,6 +396,7 @@ class SpotdealsSuggestionForm extends FormBase {
       'free_limit_blocked' => 0,
       'owner_notified' => 0,
       'owner_notified_time' => 0,
+      'status' => 'new',
     ];
 
     $submitter_email = trim((string) $form_state->getValue('email'));
