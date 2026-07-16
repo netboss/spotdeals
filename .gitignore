@@ -234,6 +234,11 @@ test_search_api_id.php
 /scripts/reports/
 /scripts/local/
 
+# Ignored production helper scripts
+*-prod.sh
+reindex.sh
+update-url-alias.sh
+
 # Ignored docs
 /docs/inprogress
 /docs/inprogress/*
