@@ -1559,6 +1559,10 @@ final class RecommendationService {
    *   Log message.
    */
   private function logTiming(string $message): void {
+    if ((string) \Drupal::request()->query->get('spotdeals_perf', '') !== '1') {
+      return;
+    }
+
     \Drupal::logger('spotdeals_search_smart_location')->notice($message);
   }
 

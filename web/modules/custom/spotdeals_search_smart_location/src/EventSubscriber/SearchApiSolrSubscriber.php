@@ -58,6 +58,7 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
     }
 
     $request = \Drupal::request();
+    $debug_logging_enabled = (string) $request->query->get('spotdeals_debug_search', '') === '1';
 
     $recommendation_mode = (bool) $request->attributes->get(
       'spotdeals_search_smart_location.recommendation_mode',
@@ -110,22 +111,26 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
     }
 
     if ($lat === NULL || $lon === NULL) {
-      \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION subscriber found no geo origin to apply at PRE_QUERY.'
-      );
+      if ($debug_logging_enabled) {
+        \Drupal::logger('spotdeals_search_smart_location')->notice(
+          'SMART LOCATION subscriber found no geo origin to apply at PRE_QUERY.'
+        );
+      }
       return;
     }
 
     if (!$is_browser_near_me && !$is_explicit_location && !$is_browser_origin_request) {
-      \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION subscriber skipped geofilt at PRE_QUERY: source="@source" near_me="0" explicit_location="0" browser_origin_request="0" recommendation_mode="@recommendation_mode" lat="@lat" lon="@lon"',
-        [
-          '@source' => $source ?? '',
-          '@recommendation_mode' => $recommendation_mode ? '1' : '0',
-          '@lat' => (string) $lat,
-          '@lon' => (string) $lon,
-        ]
-      );
+      if ($debug_logging_enabled) {
+        \Drupal::logger('spotdeals_search_smart_location')->notice(
+          'SMART LOCATION subscriber skipped geofilt at PRE_QUERY: source="@source" near_me="0" explicit_location="0" browser_origin_request="0" recommendation_mode="@recommendation_mode" lat="@lat" lon="@lon"',
+          [
+            '@source' => $source ?? '',
+            '@recommendation_mode' => $recommendation_mode ? '1' : '0',
+            '@lat' => (string) $lat,
+            '@lon' => (string) $lon,
+          ]
+        );
+      }
       return;
     }
 
@@ -141,15 +146,17 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
       // before rendering.
       $ranked_nids = array_slice($ranked_nids, 0, self::MAX_RANKED_NIDS);
 
-      \Drupal::logger('spotdeals_search_smart_location')->notice(
-        'SMART LOCATION subscriber kept ranked deal IDs as soft ordering signal at PRE_QUERY: nids_count="@count"',
-        [
-          '@count' => (string) count($ranked_nids),
-        ]
-      );
+      if ($debug_logging_enabled) {
+        \Drupal::logger('spotdeals_search_smart_location')->notice(
+          'SMART LOCATION subscriber kept ranked deal IDs as soft ordering signal at PRE_QUERY: nids_count="@count"',
+          [
+            '@count' => (string) count($ranked_nids),
+          ]
+        );
+      }
     }
 
-    if ($recommendation_mode && !empty($recommended_nids)) {
+    if ($recommendation_mode && !empty($recommended_nids) && $debug_logging_enabled) {
       \Drupal::logger('spotdeals_search_smart_location')->notice(
         'SMART LOCATION subscriber left recommendation mode unconstrained at PRE_QUERY because direct recommendation rendering is active: source="@source" lat="@lat" lon="@lon" recommended_nids="@nids"',
         [
@@ -188,23 +195,25 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
     // Leaving Search API/Solr's normal relevance order intact gives the View a
     // more relevant page of candidates, while the pre-render layer still applies
     // the deterministic NearMeRanker order among returned rows.
-    \Drupal::logger('spotdeals_search_smart_location')->notice(
-      'SMART LOCATION subscriber applied PRE_QUERY geofilt without forced Solr distance sort: source="@source" near_me="@near_me" explicit_location="@explicit_location" recommendation_mode="@recommendation_mode" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq" sort="@sort" ranked_constraint_count="@ranked_count"',
-      [
-        '@source' => $source ?? '',
-        '@near_me' => ($is_browser_near_me || $is_browser_origin_request) ? '1' : '0',
-        '@explicit_location' => $is_explicit_location ? '1' : '0',
-        '@recommendation_mode' => $recommendation_mode ? '1' : '0',
-        '@lat' => (string) $lat,
-        '@lon' => (string) $lon,
-        '@radius' => (string) self::DEFAULT_RADIUS_KM,
-        '@search_api_geo_field' => self::SEARCH_API_GEO_FIELD,
-        '@solr_geo_field' => self::SOLR_GEO_FIELD,
-        '@fq' => $geo_filter,
-        '@sort' => 'unchanged',
-        '@ranked_count' => (string) count($ranked_nids),
-      ]
-    );
+    if ($debug_logging_enabled) {
+      \Drupal::logger('spotdeals_search_smart_location')->notice(
+        'SMART LOCATION subscriber applied PRE_QUERY geofilt without forced Solr distance sort: source="@source" near_me="@near_me" explicit_location="@explicit_location" recommendation_mode="@recommendation_mode" lat="@lat" lon="@lon" radius_km="@radius" search_api_geo_field="@search_api_geo_field" solr_geo_field="@solr_geo_field" fq="@fq" sort="@sort" ranked_constraint_count="@ranked_count"',
+        [
+          '@source' => $source ?? '',
+          '@near_me' => ($is_browser_near_me || $is_browser_origin_request) ? '1' : '0',
+          '@explicit_location' => $is_explicit_location ? '1' : '0',
+          '@recommendation_mode' => $recommendation_mode ? '1' : '0',
+          '@lat' => (string) $lat,
+          '@lon' => (string) $lon,
+          '@radius' => (string) self::DEFAULT_RADIUS_KM,
+          '@search_api_geo_field' => self::SEARCH_API_GEO_FIELD,
+          '@solr_geo_field' => self::SOLR_GEO_FIELD,
+          '@fq' => $geo_filter,
+          '@sort' => 'unchanged',
+          '@ranked_count' => (string) count($ranked_nids),
+        ]
+      );
+    }
   }
 
 }
