@@ -3071,20 +3071,35 @@ function spotdeals_search_smart_location_entity_view_alter(array &$build, \Drupa
 
 
 /**
+ * Returns TRUE when temporary performance logging is explicitly enabled.
+ */
+function _spotdeals_search_smart_location_perf_enabled(): bool {
+  return (string) \Drupal::request()->query->get('spotdeals_perf', '') === '1';
+}
+
+/**
  * Starts a lightweight request timer for temporary production diagnosis.
  *
  * Enable by adding spotdeals_perf=1 to the request URL.
  */
 function _spotdeals_search_smart_location_perf_start(): float {
-  return microtime(TRUE);
+  return _spotdeals_search_smart_location_perf_enabled()
+    ? microtime(TRUE)
+    : 0.0;
 }
 
 /**
  * Logs a temporary performance timing entry when spotdeals_perf=1 is present.
  */
 function _spotdeals_search_smart_location_perf_log(string $label, float $start, array $context = []): void {
+  if ($start <= 0.0 || !_spotdeals_search_smart_location_perf_enabled()) {
+    return;
+  }
+
   $elapsed_ms = round((microtime(TRUE) - $start) * 1000, 2);
-  $context_json = $context === [] ? '{}' : json_encode($context, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+  $context_json = $context === []
+    ? '{}'
+    : json_encode($context, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
   \Drupal::logger('spotdeals_search_perf')->notice(
     'SPOTDEALS PERF label="@label" total_ms="@total_ms" context=@context',
