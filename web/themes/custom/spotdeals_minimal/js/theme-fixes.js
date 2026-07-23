@@ -26,6 +26,10 @@
     return 'en';
   }
 
+  function getHomepagePath() {
+    return getCurrentLanguageId() === 'es' ? '/es' : '/';
+  }
+
   function getResultSummaryText(start, end, total) {
     if (getCurrentLanguageId() === 'es') {
       return 'Mostrando ' + start + ' - ' + end + ' de ' + total;
@@ -990,7 +994,7 @@
   function buildHomepageRecommendationUrl(searchValue, latitude, longitude, recommendationCuisines) {
     const keyword = (searchValue || '').trim();
     const cuisines = recommendationCuisines === undefined || recommendationCuisines === null ? keyword : recommendationCuisines;
-    const url = new URL('/', window.location.origin);
+    const url = new URL(getHomepagePath(), window.location.origin);
 
     url.searchParams.set('search_deals', keyword);
     url.searchParams.set('origin_lat', latitude || '');
@@ -1109,7 +1113,7 @@
 
 
   function buildHelpMeChooseUrl(latitude, longitude) {
-    const url = new URL('/', window.location.origin);
+    const url = new URL(getHomepagePath(), window.location.origin);
 
     url.searchParams.set('search_deals', '');
     url.searchParams.set('origin_lat', latitude || '');

@@ -3,8 +3,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2026-07-18 09:40-0400\n"
-"PO-Revision-Date: 2026-07-18 09:40-0400\n"
+"POT-Creation-Date: 2026-07-23 18:03-0400\n"
+"PO-Revision-Date: 2026-07-23 18:03-0400\n"
 "Last-Translator: NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
 "MIME-Version: 1.0\n"
@@ -50117,13 +50117,15 @@ msgid "Suggest it"
 msgstr "Sugiérela"
 
 msgid "Not the venue or deal you had in mind?"
-msgstr ""
+msgstr "¿No encuentras el lugar o la oferta que buscabas?"
 
 msgid "Suggest one and we will review it."
-msgstr ""
+msgstr "Sugiere uno y lo revisaremos."
 
 msgid "Use tags to group content on similar topics into categories."
 msgstr ""
+"Utilice etiquetas para agrupar artículos sobre temas similares en "
+"categorías."
 
 msgid "featured"
 msgstr ""
