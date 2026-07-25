@@ -11,3 +11,7 @@ services:
     class: Drupal\spotdeals_admin\Service\ClaimWorkflowService
     arguments: ['@entity_type.manager', '@current_user', '@logger.factory']
 
+  spotdeals_admin.claim_link_builder:
+    class: Drupal\spotdeals_admin\Service\ClaimLinkBuilderService
+    arguments: ['@current_user']
+
