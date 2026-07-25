@@ -457,30 +457,7 @@ function _spotdeals_minimal_build_claim_link(NodeInterface $venue, array $classe
     return _spotdeals_minimal_build_claimed_business_status($venue);
   }
 
-  $destination = '/create/claim?venue=' . $venue->id();
-  $current_user = \Drupal::currentUser();
-  $url = $current_user->isAnonymous()
-    ? Url::fromUri('internal:/user/login', [
-      'query' => [
-        'destination' => $destination,
-      ],
-    ])
-    : Url::fromUri('internal:' . $destination);
-
-  $classes[] = 'claim-this-listing-link';
-
-  return [
-    '#type' => 'link',
-    '#title' => t('Claim this listing'),
-    '#url' => $url,
-    '#attributes' => [
-      'class' => $classes,
-    ],
-    '#cache' => [
-      'contexts' => ['user'],
-      'tags' => $venue->getCacheTags(),
-    ],
-  ];
+  return \Drupal::service('spotdeals_admin.claim_link_builder')->build($venue, $classes);
 }
 
 /**
