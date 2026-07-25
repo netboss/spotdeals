@@ -124,6 +124,13 @@ class ClaimWorkflowService {
       ];
     }
 
+    // Ensure the approved claimant receives the role required by the custom
+    // venue access logic.
+    if (!$claimantUser->hasRole('venue_owner')) {
+      $claimantUser->addRole('venue_owner');
+      $claimantUser->save();
+    }
+
     // Canonical venue owner.
     $venue->set('field_primary_owner_user', $claimantUser->id());
 

@@ -452,21 +452,32 @@ function _spotdeals_minimal_build_deal_teaser_schedule(NodeInterface $deal, arra
 /**
  * Builds a claim link or passive claimed-business status for deal cards.
  */
-function _spotdeals_minimal_build_claim_link(NodeInterface $venue): array {
+function _spotdeals_minimal_build_claim_link(NodeInterface $venue, array $classes = []): array {
   if (spotdeals_admin_venue_is_claimed($venue)) {
     return _spotdeals_minimal_build_claimed_business_status($venue);
   }
 
+  $destination = '/create/claim?venue=' . $venue->id();
+  $current_user = \Drupal::currentUser();
+  $url = $current_user->isAnonymous()
+    ? Url::fromUri('internal:/user/login', [
+      'query' => [
+        'destination' => $destination,
+      ],
+    ])
+    : Url::fromUri('internal:' . $destination);
+
+  $classes[] = 'claim-this-listing-link';
+
   return [
     '#type' => 'link',
     '#title' => t('Claim this listing'),
-    '#url' => Url::fromUserInput('/create/claim', [
-      'query' => ['venue' => $venue->id()],
-    ]),
+    '#url' => $url,
     '#attributes' => [
-      'class' => ['claim-this-listing-link'],
+      'class' => $classes,
     ],
     '#cache' => [
+      'contexts' => ['user'],
       'tags' => $venue->getCacheTags(),
     ],
   ];
@@ -611,21 +622,7 @@ function _spotdeals_minimal_build_deal_page_venue_summary(NodeInterface $venue):
     'actions' => $actions,
     'claim' => spotdeals_admin_venue_is_claimed($venue)
       ? _spotdeals_minimal_build_claimed_business_status($venue, ['spotdeals-deal-venue-card__claim'])
-      : [
-        '#type' => 'link',
-        '#title' => t('Claim this listing'),
-        '#url' => Url::fromUserInput('/create/claim', [
-          'query' => [
-            'venue' => $venue->id(),
-          ],
-        ]),
-        '#attributes' => [
-          'class' => ['spotdeals-deal-venue-card__claim', 'claim-this-listing-link'],
-        ],
-        '#cache' => [
-          'tags' => $venue->getCacheTags(),
-        ],
-      ],
+      : _spotdeals_minimal_build_claim_link($venue, ['spotdeals-deal-venue-card__claim']),
   ];
 }
 
