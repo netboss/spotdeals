@@ -1,0 +1,4 @@
+administer spotdeals data ingestion:
+  title: 'Administer SpotDeals data ingestion'
+  description: 'Configure external venue-data providers and ingestion settings.'
+  restrict access: true

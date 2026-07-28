@@ -1,0 +1,34 @@
+services:
+  logger.channel.spotdeals_data_ingestion:
+    parent: logger.channel_base
+    arguments:
+      - 'spotdeals_data_ingestion'
+
+  Drupal\spotdeals_data_ingestion\Service\GeoapifyClient:
+    arguments:
+      - '@http_client'
+      - '@logger.channel.spotdeals_data_ingestion'
+
+  Drupal\spotdeals_data_ingestion\Service\VenueMapper: {}
+
+
+  Drupal\spotdeals_data_ingestion\Service\VenueCandidateValidator:
+    arguments:
+      - '@entity_type.manager'
+      - '%app.root%'
+
+  Drupal\spotdeals_data_ingestion\Service\VenueDuplicateChecker:
+    arguments:
+      - '@entity_type.manager'
+
+  spotdeals_data_ingestion.geoapify_client:
+    alias: Drupal\spotdeals_data_ingestion\Service\GeoapifyClient
+
+  spotdeals_data_ingestion.venue_mapper:
+    alias: Drupal\spotdeals_data_ingestion\Service\VenueMapper
+
+  spotdeals_data_ingestion.venue_duplicate_checker:
+    alias: Drupal\spotdeals_data_ingestion\Service\VenueDuplicateChecker
+
+  spotdeals_data_ingestion.venue_candidate_validator:
+    alias: Drupal\spotdeals_data_ingestion\Service\VenueCandidateValidator
