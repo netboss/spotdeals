@@ -1,0 +1,6 @@
+spotdeals_data_ingestion.settings:
+  title: 'SpotDeals Data Ingestion'
+  description: 'Configure Geoapify and venue-ingestion settings.'
+  route_name: spotdeals_data_ingestion.settings
+  parent: system.admin_config_services
+  weight: 50

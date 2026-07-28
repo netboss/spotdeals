@@ -1,0 +1,9 @@
+name: 'SpotDeals Data Ingestion'
+type: module
+description: 'Imports and validates external venue data for SpotDeals.'
+package: SpotDeals
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:address
+  - drupal:node
+  - drupal:taxonomy

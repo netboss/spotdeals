@@ -1,0 +1,7 @@
+spotdeals_data_ingestion.settings:
+  path: '/admin/config/services/spotdeals-data-ingestion'
+  defaults:
+    _form: '\Drupal\spotdeals_data_ingestion\Form\DataIngestionSettingsForm'
+    _title: 'SpotDeals Data Ingestion'
+  requirements:
+    _permission: 'administer spotdeals data ingestion'

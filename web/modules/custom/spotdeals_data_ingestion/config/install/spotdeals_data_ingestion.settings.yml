@@ -1,0 +1,3 @@
+page_size: 100
+max_pages: 50
+request_timeout: 30

@@ -1,0 +1,13 @@
+spotdeals_data_ingestion.settings:
+  type: config_object
+  label: 'SpotDeals data ingestion settings'
+  mapping:
+    page_size:
+      type: integer
+      label: 'Geoapify page size'
+    max_pages:
+      type: integer
+      label: 'Maximum Geoapify pages'
+    request_timeout:
+      type: integer
+      label: 'Geoapify request timeout'
