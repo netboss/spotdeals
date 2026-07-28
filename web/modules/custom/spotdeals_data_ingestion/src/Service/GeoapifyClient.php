@@ -20,6 +20,104 @@ final class GeoapifyClient {
     private readonly LoggerInterface $logger,
   ) {}
 
+
+  /**
+   * Searches one page of places for the hybrid venue-search endpoint.
+   *
+   * Exactly one geographic filter must be supplied: a Geoapify place ID or
+   * a latitude/longitude pair.
+   *
+   * @return array<int, array<string, mixed>>
+   *   GeoJSON feature records.
+   */
+  public function searchPlaces(
+    string $apiKey,
+    string $category,
+    ?string $placeId = NULL,
+    ?float $latitude = NULL,
+    ?float $longitude = NULL,
+    int $radius = 10000,
+    int $limit = 20,
+  ): array {
+    $apiKey = trim($apiKey);
+    $category = trim($category);
+    $placeId = trim((string) $placeId);
+
+    if ($apiKey === '') {
+      throw new \InvalidArgumentException('The Geoapify API key is required.');
+    }
+
+    if ($category === '') {
+      throw new \InvalidArgumentException('The Geoapify category is required.');
+    }
+
+    $hasPlaceFilter = $placeId !== '';
+    $hasCoordinateFilter = $latitude !== NULL && $longitude !== NULL;
+
+    if ($hasPlaceFilter === $hasCoordinateFilter) {
+      throw new \InvalidArgumentException(
+        'Provide either a Geoapify place ID or a latitude/longitude pair.',
+      );
+    }
+
+    $limit = max(1, min(50, $limit));
+    $radius = max(100, min(50000, $radius));
+
+    $filter = $hasPlaceFilter
+      ? 'place:' . $placeId
+      : sprintf('circle:%s,%s,%d', $longitude, $latitude, $radius);
+
+    $query = [
+      'categories' => $category,
+      'filter' => $filter,
+      'limit' => $limit,
+      'apiKey' => $apiKey,
+    ];
+
+    if ($hasCoordinateFilter) {
+      $query['bias'] = sprintf('proximity:%s,%s', $longitude, $latitude);
+    }
+
+    try {
+      $response = $this->httpClient->request('GET', self::PLACES_ENDPOINT, [
+        'query' => $query,
+        'headers' => [
+          'Accept' => 'application/json',
+        ],
+        'timeout' => 30,
+      ]);
+    }
+    catch (GuzzleException $exception) {
+      $this->logger->error(
+        'Geoapify hybrid search failed for category {category}: {message}',
+        [
+          'category' => $category,
+          'message' => $exception->getMessage(),
+        ],
+      );
+
+      throw new \RuntimeException(
+        'Geoapify venue search failed: ' . $exception->getMessage(),
+        0,
+        $exception,
+      );
+    }
+
+    $decoded = json_decode((string) $response->getBody(), TRUE);
+
+    if (!is_array($decoded)) {
+      throw new \RuntimeException('Geoapify returned invalid JSON.');
+    }
+
+    $features = $decoded['features'] ?? [];
+
+    if (!is_array($features)) {
+      throw new \RuntimeException('Geoapify returned an invalid features collection.');
+    }
+
+    return array_values(array_filter($features, 'is_array'));
+  }
+
   /**
    * Fetches all available venue pages for a place/category combination.
    *
