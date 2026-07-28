@@ -7,3 +7,4 @@ dependencies:
   - drupal:address
   - drupal:node
   - drupal:taxonomy
+  - pathauto:pathauto

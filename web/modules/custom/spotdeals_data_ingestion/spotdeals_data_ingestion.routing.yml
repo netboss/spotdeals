@@ -5,3 +5,13 @@ spotdeals_data_ingestion.settings:
     _title: 'SpotDeals Data Ingestion'
   requirements:
     _permission: 'administer spotdeals data ingestion'
+
+spotdeals_data_ingestion.venue_search:
+  path: '/api/spotdeals/venues/search'
+  defaults:
+    _controller: '\Drupal\spotdeals_data_ingestion\Controller\VenueSearchController::search'
+  requirements:
+    _access: 'TRUE'
+  methods: [GET]
+  options:
+    no_cache: TRUE

@@ -11,6 +11,10 @@ services:
 
   Drupal\spotdeals_data_ingestion\Service\VenueMapper: {}
 
+  Drupal\spotdeals_data_ingestion\Service\SpanishNodeTranslationCreator:
+    arguments:
+      - '@datetime.time'
+      - '@pathauto.generator'
 
   Drupal\spotdeals_data_ingestion\Service\VenueCandidateValidator:
     arguments:
@@ -21,6 +25,11 @@ services:
     arguments:
       - '@entity_type.manager'
 
+  Drupal\spotdeals_data_ingestion\Service\VenueLocalMatcher:
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+
   spotdeals_data_ingestion.geoapify_client:
     alias: Drupal\spotdeals_data_ingestion\Service\GeoapifyClient
 
@@ -29,6 +38,9 @@ services:
 
   spotdeals_data_ingestion.venue_duplicate_checker:
     alias: Drupal\spotdeals_data_ingestion\Service\VenueDuplicateChecker
+
+  spotdeals_data_ingestion.venue_local_matcher:
+    alias: Drupal\spotdeals_data_ingestion\Service\VenueLocalMatcher
 
   spotdeals_data_ingestion.venue_candidate_validator:
     alias: Drupal\spotdeals_data_ingestion\Service\VenueCandidateValidator

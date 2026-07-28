@@ -7,6 +7,7 @@ namespace Drupal\spotdeals_data_ingestion\Drush\Commands;
 use Drupal\Core\State\StateInterface;
 use Drupal\node\Entity\Node;
 use Drupal\spotdeals_data_ingestion\Service\GeoapifyClient;
+use Drupal\spotdeals_data_ingestion\Service\SpanishNodeTranslationCreator;
 use Drupal\spotdeals_data_ingestion\Service\VenueCandidateValidator;
 use Drupal\spotdeals_data_ingestion\Service\VenueMapper;
 use Drush\Attributes as CLI;
@@ -24,6 +25,7 @@ final class GeoapifyDrushCommands extends DrushCommands {
     private readonly GeoapifyClient $geoapifyClient,
     private readonly VenueMapper $venueMapper,
     private readonly VenueCandidateValidator $candidateValidator,
+    private readonly SpanishNodeTranslationCreator $spanishTranslationCreator,
     private readonly StateInterface $state,
   ) {
     parent::__construct();
@@ -326,6 +328,7 @@ final class GeoapifyDrushCommands extends DrushCommands {
 
         $node = Node::create($values);
         $node->save();
+        $this->spanishTranslationCreator->ensureSpanishTranslation($node);
 
         $statistics['created']++;
         $createdRows[] = [
