@@ -1,0 +1,21 @@
+uuid: de809434-f8fd-4000-a799-98755d383fa4
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_external_source
+    - node.type.venue
+  module:
+    - options
+id: node.venue.field_external_source
+field_name: field_external_source
+entity_type: node
+bundle: venue
+label: 'External source'
+description: 'Identifies the external provider that supplied the venue identifier. Leave empty for legacy or manually created venues without a confirmed external source.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

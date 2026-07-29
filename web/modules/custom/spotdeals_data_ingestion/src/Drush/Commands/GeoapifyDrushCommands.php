@@ -289,7 +289,6 @@ final class GeoapifyDrushCommands extends DrushCommands {
         break;
       }
 
-
       if (!$venue['valid']) {
         $statistics['invalid']++;
         continue;
@@ -312,6 +311,8 @@ final class GeoapifyDrushCommands extends DrushCommands {
           'field_latitude' => $venue['latitude'],
           'field_longitude' => $venue['longitude'],
           'field_venue_type' => ['target_id' => $venue['venue_type_tid']],
+          'field_external_source' => $venue['external_provider'],
+          'field_external_id' => $venue['external_id'],
         ];
 
         if ($venue['phone'] !== '') {
