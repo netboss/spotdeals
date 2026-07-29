@@ -69,6 +69,7 @@ module:
   spotdeals_admin: 0
   spotdeals_analytics: 0
   spotdeals_billing: 0
+  spotdeals_data_ingestion: 0
   spotdeals_import: 0
   spotdeals_revenue: 0
   spotdeals_search_insights: 0

@@ -13,6 +13,8 @@ dependencies:
     - field.field.node.venue.field_coordinates
     - field.field.node.venue.field_cta
     - field.field.node.venue.field_cuisine
+    - field.field.node.venue.field_external_id
+    - field.field.node.venue.field_external_source
     - field.field.node.venue.field_featured
     - field.field.node.venue.field_image
     - field.field.node.venue.field_latitude
@@ -132,6 +134,8 @@ hidden:
   field_claimed_listing: true
   field_coordinates: true
   field_cuisine: true
+  field_external_id: true
+  field_external_source: true
   field_latitude: true
   field_longitude: true
   field_phone: true
