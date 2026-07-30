@@ -30,6 +30,10 @@ services:
       - '@entity_type.manager'
       - '@entity_field.manager'
 
+  Drupal\spotdeals_data_ingestion\Service\VenueSearchResultBuilder:
+    arguments:
+      - '@entity_type.manager'
+
   spotdeals_data_ingestion.geoapify_client:
     alias: Drupal\spotdeals_data_ingestion\Service\GeoapifyClient
 
@@ -44,3 +48,6 @@ services:
 
   spotdeals_data_ingestion.venue_candidate_validator:
     alias: Drupal\spotdeals_data_ingestion\Service\VenueCandidateValidator
+
+  spotdeals_data_ingestion.venue_search_result_builder:
+    alias: Drupal\spotdeals_data_ingestion\Service\VenueSearchResultBuilder
