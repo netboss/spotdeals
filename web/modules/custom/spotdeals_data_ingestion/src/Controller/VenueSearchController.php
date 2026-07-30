@@ -9,6 +9,7 @@ use Drupal\Core\State\StateInterface;
 use Drupal\spotdeals_data_ingestion\Service\GeoapifyClient;
 use Drupal\spotdeals_data_ingestion\Service\VenueLocalMatcher;
 use Drupal\spotdeals_data_ingestion\Service\VenueMapper;
+use Drupal\spotdeals_data_ingestion\Service\VenueSearchResultBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,6 +19,8 @@ use Symfony\Component\HttpFoundation\Request;
  */
 final class VenueSearchController extends ControllerBase {
 
+  private const CONTRACT_VERSION = '1.0';
+
   private const API_KEY_STATE_NAME =
     'spotdeals_data_ingestion.geoapify_api_key';
 
@@ -25,6 +28,7 @@ final class VenueSearchController extends ControllerBase {
     private readonly GeoapifyClient $geoapifyClient,
     private readonly VenueMapper $venueMapper,
     private readonly VenueLocalMatcher $venueLocalMatcher,
+    private readonly VenueSearchResultBuilder $venueSearchResultBuilder,
     private readonly StateInterface $state,
   ) {}
 
@@ -33,6 +37,7 @@ final class VenueSearchController extends ControllerBase {
       $container->get('spotdeals_data_ingestion.geoapify_client'),
       $container->get('spotdeals_data_ingestion.venue_mapper'),
       $container->get('spotdeals_data_ingestion.venue_local_matcher'),
+      $container->get('spotdeals_data_ingestion.venue_search_result_builder'),
       $container->get('state'),
     );
   }
@@ -117,18 +122,27 @@ final class VenueSearchController extends ControllerBase {
         continue;
       }
 
-      $venue['spotdeals'] = $this->venueLocalMatcher->match($venue);
+      // Geoapify's place filter represents the containing place boundary and
+      // may return nearby venues. In place_id mode, expose only the exact
+      // requested venue so the public contract has deterministic semantics.
+      if ($hasPlaceFilter
+        && (string) ($venue['external_id'] ?? '') !== $placeId) {
+        continue;
+      }
 
-      if ($venue['spotdeals']['exists']) {
+      $match = $this->venueLocalMatcher->match($venue);
+
+      if ($match['exists']) {
         $matchedCount++;
       }
 
-      $results[] = $venue;
+      $results[] = $this->venueSearchResultBuilder->build($venue, $match);
     }
 
     return $this->response([
       'ok' => TRUE,
       'data' => [
+        'contract_version' => self::CONTRACT_VERSION,
         'results' => $results,
         'meta' => [
           'source' => 'geoapify',
