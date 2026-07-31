@@ -3,10 +3,11 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2026-07-23 18:03-0400\n"
-"PO-Revision-Date: 2026-07-23 18:03-0400\n"
+"POT-Creation-Date: 2026-07-31 11:48-0400\n"
+"PO-Revision-Date: 2026-07-31 11:48-0400\n"
 "Last-Translator: NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -3184,9 +3185,6 @@ msgstr "Texto"
 
 msgid "Text format"
 msgstr "Formato de texto"
-
-msgid "Display"
-msgstr "Presentación"
 
 msgid "Link text"
 msgstr "Texto del enlace"
@@ -7330,14 +7328,8 @@ msgstr "Despublicar"
 msgid "The parent comment"
 msgstr "El comentario padre"
 
-msgid "1 second"
-msgstr "1 segundo"
-
 msgid "@count seconds"
 msgstr "@count segundos"
-
-msgid "1 minute"
-msgstr "1 minuto"
 
 msgid "@count minutes"
 msgstr "@count minutos"
@@ -9851,9 +9843,6 @@ msgstr "Se ha encontrado un error en la instalación."
 
 msgid "Configure site"
 msgstr "Configurar sitio"
-
-msgid "Installed %module module."
-msgstr "Instalado el módulo %module."
 
 msgid "Choose profile"
 msgstr "Elegir perfil"
@@ -14820,16 +14809,6 @@ msgid ""
 msgstr ""
 "La presentación @display está configurada para usar un menú padre "
 "pero el texto del enlace del menú padre no está definido."
-
-msgid "@count item, skip @skip"
-msgid_plural "Paged, @count items, skip @skip"
-msgstr[0] "@count elemento, saltar @skip"
-msgstr[1] "Paginado, @count elementos, saltar @skip"
-
-msgid "@count item"
-msgid_plural "Paged, @count items"
-msgstr[0] "@count elemento"
-msgstr[1] "Paginado, @count elementos"
 
 msgid "Create a page"
 msgstr "Crear una página"
@@ -50122,38 +50101,126 @@ msgstr "¿No encuentras el lugar o la oferta que buscabas?"
 msgid "Suggest one and we will review it."
 msgstr "Sugiere uno y lo revisaremos."
 
+msgid "Review user-submitted venue and deal suggestions."
+msgstr "Revisar sugerencias de lugares y ofertas enviadas por los usuarios."
+
+msgid "Configure search-only promoted slots."
+msgstr "Configurar espacios promocionados exclusivos para búsquedas."
+
+msgid "SpotDeals suggestions"
+msgstr "Sugerencias de SpotDeals"
+
+msgid "SpotDeals revenue settings"
+msgstr "Configuración de ingresos de SpotDeals"
+
+msgid "Claimed business"
+msgstr "Negocio reclamado"
+
+msgid "Resolvable URI"
+msgstr "URI resoluble"
+
 msgid "Use tags to group content on similar topics into categories."
 msgstr ""
 "Utilice etiquetas para agrupar artículos sobre temas similares en "
 "categorías."
 
-msgid "featured"
+msgid "@type Deals"
+msgstr "Ofertas de @type"
+
+msgid "Deals by venue type"
+msgstr "Ofertas por tipo de lugar"
+
+msgid ""
+"Explore current deals from @type venues and find a good place to go "
+"next."
 msgstr ""
+"Explora las ofertas actuales de lugares de tipo @type y encuentra un buen "
+"lugar para ir después."
+
+msgid "featured"
+msgstr "destacado"
 
 msgid "button"
-msgstr ""
+msgstr "botón"
 
 msgid "recommended"
-msgstr ""
+msgstr "recomendado"
 
-msgid "Remove group"
-msgstr ""
+msgid "This permission is inherited from the authenticated user role."
+msgstr "Este permiso se hereda del rol de usuario autenticado."
 
-msgid "Review user-submitted venue and deal suggestions."
-msgstr ""
+msgid "1 permission is available in the modified list."
+msgid_plural "@count permissions are available in the modified list."
+msgstr[0] "Hay 1 permiso disponible en la lista modificada."
+msgstr[1] "Hay @count permisos disponibles en la lista modificada."
 
-msgid "Configure search-only promoted slots."
-msgstr ""
+msgid "Configure Geoapify and venue-ingestion settings."
+msgstr "Configurar Geoapify y las opciones de incorporación de lugares."
 
-msgid "SpotDeals suggestions"
-msgstr ""
+msgid "SpotDeals Data Ingestion"
+msgstr "Incorporación de datos de SpotDeals"
 
-msgid "SpotDeals revenue settings"
-msgstr ""
+msgid "Nearby venues"
+msgstr "Lugares cercanos"
 
-msgid "Resolvable URI"
+msgid ""
+"Places near your search area, including venues that may not have a "
+"SpotDeals promotion yet."
 msgstr ""
+"Lugares cercanos a tu búsqueda, incluyendo negocios que aún no "
+"tienen promociones en SpotDeals."
 
-msgid "Resolvable URI"
+msgid "Unnamed venue"
+msgstr "Lugar sin nombre"
+
+msgid "On SpotDeals"
+msgstr "En SpotDeals"
+
+msgid "Venue information"
+msgstr "Información del lugar"
+
+msgid "Claimed"
+msgstr "Reclamado"
+
+msgid "Visit website"
+msgstr "Visitar sitio web"
+
+msgid "Finding nearby venues…"
+msgstr "Buscando lugares cercanos…"
+
+msgid "No nearby venues were found for this search area."
+msgstr "No se encontraron lugares cercanos para esta zona de búsqueda."
+
+msgid ""
+"Nearby venues could not be loaded right now. Your deal results are "
+"still available above."
 msgstr ""
+"No se pudieron cargar los lugares cercanos en este momento. Los "
+"resultados de ofertas siguen disponibles arriba."
+
+msgid "1 venue"
+msgid_plural "@count venues"
+msgstr[0] "1 lugar"
+msgstr[1] "@count lugares"
+
+msgid "opens in a new window"
+msgstr "se abre en una ventana nueva"
+
+msgid "Not yet on SpotDeals"
+msgstr "Aún no está en SpotDeals"
+
+msgid "Know a promotion here? Help us add it."
+msgstr "¿Conoces una promoción aquí? Ayúdanos a agregarla."
+
+msgid "Open in Maps"
+msgstr "Abrir en Maps"
+
+msgid "External venue"
+msgstr "Negocio externo"
+
+msgid "No additional nearby venues were found for this search area."
+msgstr "No se encontraron más lugares cercanos para esta zona de búsqueda."
+
+msgid "Report closed or incorrect"
+msgstr "Reportar como cerrado o incorrecto"
 

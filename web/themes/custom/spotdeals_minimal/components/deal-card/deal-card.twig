@@ -11,6 +11,19 @@
   image ? 'spotdeals-deal-card--has-image' : 'spotdeals-deal-card--no-image'
 ] %}
 {% set component_attributes = attributes|default(create_attribute()) %}
+{% set venue_identity = venue_identity|default({}) %}
+{% if venue_identity %}
+  {% set component_attributes = component_attributes
+    .setAttribute('data-spotdeals-venue-title', venue_identity.title|default(''))
+    .setAttribute('data-spotdeals-venue-address', venue_identity.address_line1|default(''))
+    .setAttribute('data-spotdeals-venue-city', venue_identity.locality|default(''))
+    .setAttribute('data-spotdeals-venue-state', venue_identity.administrative_area|default(''))
+    .setAttribute('data-spotdeals-venue-postal-code', venue_identity.postal_code|default(''))
+    .setAttribute('data-spotdeals-venue-lat', venue_identity.latitude is not null ? venue_identity.latitude : '')
+    .setAttribute('data-spotdeals-venue-lon', venue_identity.longitude is not null ? venue_identity.longitude : '')
+    .setAttribute('data-spotdeals-venue-nid', venue_identity.nid|default(''))
+  %}
+{% endif %}
 {% set primary_cuisine = cuisine|default('')|striptags|split(',')|first|trim %}
 {% set suggest_cta = suggest_cta|default('') %}
 {% set cuisine_slug = primary_cuisine|replace({

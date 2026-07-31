@@ -4,3 +4,10 @@ spotdeals_data_ingestion.settings:
   route_name: spotdeals_data_ingestion.settings
   parent: system.admin_config_services
   weight: 50
+
+spotdeals_data_ingestion.external_venue_reports:
+  title: 'External venue reports'
+  description: 'Review reports about closed or incorrect external venues.'
+  route_name: spotdeals_data_ingestion.external_venue_reports
+  parent: system.admin_content
+  weight: 40

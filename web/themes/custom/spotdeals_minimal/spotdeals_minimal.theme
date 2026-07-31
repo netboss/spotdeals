@@ -1101,6 +1101,24 @@ function spotdeals_minimal_preprocess_views_view_fields(array &$variables): void
     }
   }
 
+  if ($venue instanceof NodeInterface) {
+    $address_value = [];
+    if ($venue->hasField('field_address') && !$venue->get('field_address')->isEmpty()) {
+      $address_value = $venue->get('field_address')->first()?->getValue() ?? [];
+    }
+
+    $variables['spotdeals_deal_card_venue_identity'] = [
+      'nid' => (string) $venue->id(),
+      'title' => $venue->label(),
+      'address_line1' => trim((string) ($address_value['address_line1'] ?? '')),
+      'locality' => trim((string) ($address_value['locality'] ?? '')),
+      'administrative_area' => trim((string) ($address_value['administrative_area'] ?? '')),
+      'postal_code' => trim((string) ($address_value['postal_code'] ?? '')),
+      'latitude' => _spotdeals_minimal_get_node_coordinate($venue, 'field_latitude'),
+      'longitude' => _spotdeals_minimal_get_node_coordinate($venue, 'field_longitude'),
+    ];
+  }
+
   $image = _spotdeals_minimal_build_deal_card_image($deal, $venue);
   if (!empty($image)) {
     $variables['spotdeals_deal_card_image'] = $image;

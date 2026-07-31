@@ -190,7 +190,12 @@ final class VenueLocalMatcher {
       $title = trim(substr($title, 0, -strlen($suffix)));
     }
 
-    return $title;
+    // Ignore a leading article so title variants such as "The General
+    // Public House" and "General Public House" can match conservatively
+    // when their normalized street address, city, and state also match.
+    $title = preg_replace('/^the\s+/u', '', $title) ?? $title;
+
+    return trim($title);
   }
 
   private function normalizeStreetAddress(string $address): string {

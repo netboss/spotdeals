@@ -21,3 +21,14 @@ deal_activity:
     - core/drupal
     - core/drupalSettings
     - core/once
+
+hybrid_venues:
+  css:
+    theme:
+      css/hybrid-venues.css: {}
+  js:
+    js/hybrid-venues.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/once

@@ -1,0 +1,6 @@
+langcode: en
+status: true
+dependencies: {}
+formId: spotdeals_external_venue_report_form
+captchaType: default
+label: spotdeals_external_venue_report_form

@@ -1,0 +1,341 @@
+.spotdeals-hybrid-venues {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border, #d9dfe7);
+  border-radius: 1rem;
+  background: var(--color-surface, #fff);
+  box-shadow: 0 4px 18px rgba(23, 31, 44, .06);
+}
+
+.spotdeals-hybrid-venues[hidden] {
+  display: none;
+}
+
+.spotdeals-hybrid-venues__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.spotdeals-hybrid-venues__title {
+  position: relative;
+  margin: 0 0 .4rem;
+  padding-left: 1.65rem;
+  font-size: clamp(1.3rem, 2vw, 1.65rem);
+  line-height: 1.2;
+}
+
+.spotdeals-hybrid-venues__title::before {
+  position: absolute;
+  top: .24em;
+  left: .12rem;
+  width: .82rem;
+  height: .82rem;
+  border-radius: 50% 50% 50% 0;
+  background: var(--color-primary, #78a900);
+  box-shadow: inset 0 0 0 .22rem #fff;
+  content: '';
+  transform: rotate(-45deg);
+  transform-origin: center;
+}
+
+.spotdeals-hybrid-venues__description,
+.spotdeals-hybrid-venues__status,
+.spotdeals-hybrid-venue-card__address {
+  margin: 0;
+  color: var(--color-text-muted, #5c6470);
+}
+
+.spotdeals-hybrid-venues__description {
+  max-width: 48rem;
+  line-height: 1.55;
+}
+
+.spotdeals-hybrid-venues__prompt {
+  margin: .3rem 0 0;
+  color: var(--color-primary, #6d9800);
+  font-size: .95rem;
+  font-weight: 700;
+}
+
+.spotdeals-hybrid-venues__count {
+  flex: 0 0 auto;
+  min-width: 5.25rem;
+  padding: .45rem .8rem;
+  border: 1px solid #e0e5eb;
+  border-radius: 999px;
+  background: #f5f7f9;
+  color: #1f2733;
+  font-size: .9rem;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.spotdeals-hybrid-venues__status:not(:empty) {
+  margin: 0 0 1rem;
+  padding: .75rem 1rem;
+  border-radius: .55rem;
+  background: #f6f8fa;
+}
+
+.spotdeals-hybrid-venues__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 1rem;
+}
+
+.spotdeals-hybrid-venue-card {
+  min-width: 0;
+  border: 1px solid #dce1e7;
+  border-radius: .85rem;
+  background: var(--color-surface, #fff);
+  box-shadow: 0 2px 8px rgba(23, 31, 44, .05);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.spotdeals-hybrid-venue-card:hover,
+.spotdeals-hybrid-venue-card:focus-within {
+  border-color: var(--color-primary, #83b500);
+  box-shadow: 0 8px 22px rgba(23, 31, 44, .11);
+  transform: translateY(-2px);
+}
+
+.spotdeals-hybrid-venue-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+  padding: 1rem;
+}
+
+.spotdeals-hybrid-venue-card__title {
+  margin: 0;
+  color: var(--color-text, #111820);
+  font-size: 1.08rem;
+  line-height: 1.28;
+}
+
+.spotdeals-hybrid-venue-card__metadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem .65rem;
+  font-size: .87rem;
+}
+
+.spotdeals-hybrid-venue-card__type {
+  color: #252d38;
+  font-weight: 700;
+}
+
+.spotdeals-hybrid-venue-card__distance {
+  position: relative;
+  padding-left: .9rem;
+  color: var(--color-primary, #6d9800);
+  font-weight: 700;
+}
+
+.spotdeals-hybrid-venue-card__distance::before {
+  position: absolute;
+  top: .47em;
+  left: 0;
+  width: .36rem;
+  height: .36rem;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+}
+
+.spotdeals-hybrid-venue-card__address {
+  min-height: 2.7em;
+  font-size: .94rem;
+  line-height: 1.45;
+}
+
+
+.spotdeals-hybrid-venue-card__address-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(109, 152, 0, .45);
+  text-decoration-thickness: .08em;
+  text-underline-offset: .18em;
+}
+
+.spotdeals-hybrid-venue-card__address-link:hover,
+.spotdeals-hybrid-venue-card__address-link:focus {
+  color: var(--color-primary-dark, #5f8700);
+  text-decoration-color: currentColor;
+}
+
+.spotdeals-hybrid-venue-card__badges,
+.spotdeals-hybrid-venue-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.spotdeals-hybrid-venue-card__badges {
+  margin-top: .15rem;
+}
+
+.spotdeals-hybrid-venue-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: .28rem .6rem;
+  border-radius: 999px;
+  background: #e8f4ea;
+  color: #1f5f2a;
+  font-size: .77rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.spotdeals-hybrid-venue-card__badge--external {
+  background: #fff2c9;
+  color: #655014;
+}
+
+.spotdeals-hybrid-venue-card__actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  margin-top: .15rem;
+}
+
+.spotdeals-hybrid-venue-card__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 2.55rem;
+  padding: .55rem .75rem;
+  border: 1px solid var(--color-primary, #78a900);
+  border-radius: .45rem;
+  font-size: .9rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+
+.spotdeals-hybrid-venue-card__action--maps {
+  background: #f1f8df;
+  color: var(--color-primary-dark, #5f8700);
+}
+
+.spotdeals-hybrid-venue-card__action--maps:hover,
+.spotdeals-hybrid-venue-card__action--maps:focus {
+  background: #e5f1c5;
+  color: var(--color-primary-dark, #5f8700);
+  box-shadow: 0 3px 10px rgba(95, 135, 0, .14);
+}
+
+.spotdeals-hybrid-venue-card__action--primary {
+  background: var(--color-primary, #78a900);
+  color: #fff;
+}
+
+.spotdeals-hybrid-venue-card__action--primary:hover,
+.spotdeals-hybrid-venue-card__action--primary:focus {
+  background: var(--color-primary-dark, #5f8700);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(95, 135, 0, .22);
+}
+
+.spotdeals-hybrid-venue-card__action--secondary {
+  background: transparent;
+  color: var(--color-primary-dark, #5f8700);
+}
+
+.spotdeals-hybrid-venue-card__action--secondary:hover,
+.spotdeals-hybrid-venue-card__action--secondary:focus {
+  background: #f1f8df;
+  color: var(--color-primary-dark, #5f8700);
+}
+
+.spotdeals-hybrid-venue-card__external-icon {
+  font-size: .95em;
+  line-height: 1;
+}
+
+.spotdeals-hybrid-venues.has-error .spotdeals-hybrid-venues__status {
+  background: #fff1f1;
+  color: #8a1c1c;
+}
+
+@media (max-width: 1100px) {
+  .spotdeals-hybrid-venues__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .spotdeals-hybrid-venues {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: .75rem;
+  }
+
+  .spotdeals-hybrid-venues__header {
+    flex-direction: column;
+    gap: .85rem;
+  }
+
+  .spotdeals-hybrid-venues__count {
+    min-width: 0;
+  }
+
+  .spotdeals-hybrid-venues__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spotdeals-hybrid-venue-card__address {
+    min-height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spotdeals-hybrid-venue-card,
+  .spotdeals-hybrid-venue-card__action {
+    transition: none;
+  }
+
+  .spotdeals-hybrid-venue-card:hover,
+  .spotdeals-hybrid-venue-card:focus-within {
+    transform: none;
+  }
+}
+
+.spotdeals-hybrid-venues__header h2.spotdeals-hybrid-venues__title {
+  padding-left: 1.5rem;
+}
+
+.spotdeals-hybrid-venue-card__action--report {
+  min-height: auto;
+  padding: .35rem .5rem;
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-text-muted, #5c6470);
+  font-size: .82rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  text-decoration: underline;
+  text-underline-offset: .18em;
+}
+
+.spotdeals-hybrid-venue-card__action--report:hover,
+.spotdeals-hybrid-venue-card__action--report:focus {
+  border-color: transparent;
+  background: #f5f7f9;
+  color: var(--color-text, #111820);
+  box-shadow: none;
+}

@@ -3,22 +3,24 @@ langcode: en
 status: true
 dependencies:
   config:
-    - filter.format.restricted_html
+  - filter.format.restricted_html
   module:
-    - comment
-    - contact
-    - filter
-    - media
-    - system
+  - comment
+  - contact
+  - filter
+  - media
+  - spotdeals_data_ingestion
+  - system
 _core:
   default_config_hash: xLG41YbRo2NP-0SgRNTkMzLEuaeibanGXgUTbdIcIIg
 id: anonymous
-label: 'Anonymous user'
+label: Anonymous user
 weight: 0
 is_admin: false
 permissions:
-  - 'access comments'
-  - 'access content'
-  - 'access site-wide contact form'
-  - 'use text format restricted_html'
-  - 'view media'
+- access comments
+- access content
+- access site-wide contact form
+- submit external venue reports
+- use text format restricted_html
+- view media

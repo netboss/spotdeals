@@ -30,6 +30,13 @@ services:
       - '@entity_type.manager'
       - '@entity_field.manager'
 
+  Drupal\spotdeals_data_ingestion\Service\VenueDealPresenceMatcher:
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+
+  Drupal\spotdeals_data_ingestion\Service\VenueSearchDeduplicator: {}
+
   Drupal\spotdeals_data_ingestion\Service\VenueSearchResultBuilder:
     arguments:
       - '@entity_type.manager'
@@ -49,5 +56,19 @@ services:
   spotdeals_data_ingestion.venue_candidate_validator:
     alias: Drupal\spotdeals_data_ingestion\Service\VenueCandidateValidator
 
+  spotdeals_data_ingestion.venue_deal_presence_matcher:
+    alias: Drupal\spotdeals_data_ingestion\Service\VenueDealPresenceMatcher
+
+  spotdeals_data_ingestion.venue_search_deduplicator:
+    alias: Drupal\spotdeals_data_ingestion\Service\VenueSearchDeduplicator
+
   spotdeals_data_ingestion.venue_search_result_builder:
     alias: Drupal\spotdeals_data_ingestion\Service\VenueSearchResultBuilder
+
+  Drupal\spotdeals_data_ingestion\Service\ExternalVenueReportStorage:
+    arguments:
+      - '@database'
+      - '@datetime.time'
+
+  spotdeals_data_ingestion.external_venue_report_storage:
+    alias: Drupal\spotdeals_data_ingestion\Service\ExternalVenueReportStorage

@@ -716,6 +716,61 @@ function spotdeals_search_smart_location_preprocess_views_view(array &$variables
   $view->element['#attached']['library'][] = 'spotdeals_vote/vote';
 
   $request = \Drupal::request();
+
+  // Phase 3B: expose the frozen hybrid venue endpoint to the existing Deals
+  // Finder without changing the Solr deal-results pipeline. Venue results are
+  // rendered as a separate progressive-enhancement section by JavaScript.
+  if ((string) $view->current_display === 'page_1') {
+    $origin = $request->attributes->get('spotdeals_search_smart_location.origin');
+
+    if (
+      !is_array($origin)
+      || !isset($origin['lat'], $origin['lon'])
+      || !is_numeric($origin['lat'])
+      || !is_numeric($origin['lon'])
+    ) {
+      $origin_lat = $request->query->get('origin_lat');
+      $origin_lon = $request->query->get('origin_lon');
+
+      if (is_numeric($origin_lat) && is_numeric($origin_lon)) {
+        $origin = [
+          'lat' => (float) $origin_lat,
+          'lon' => (float) $origin_lon,
+        ];
+      }
+    }
+
+    $raw_query = trim((string) $request->attributes->get(
+      'spotdeals_search_smart_location.raw_query',
+      (string) $request->query->get('search_raw', '')
+    ));
+
+    $view->element['#attached']['library'][] = 'spotdeals_search_smart_location/hybrid_venues';
+    $view->element['#attached']['drupalSettings']['spotdealsHybridVenues'] = [
+      'endpoint' => Url::fromRoute('spotdeals_data_ingestion.venue_search')->toString(),
+      'suggestUrl' => Url::fromRoute('spotdeals_revenue.suggest')->toString(),
+      'reportUrl' => Url::fromRoute('spotdeals_data_ingestion.external_venue_report')->toString(),
+      'origin' => (is_array($origin) && isset($origin['lat'], $origin['lon'])) ? [
+        'lat' => (float) $origin['lat'],
+        'lon' => (float) $origin['lon'],
+      ] : NULL,
+      'query' => $raw_query,
+      'radius' => 5000,
+      'limit' => 6,
+      'contractVersion' => '1.0',
+      'strings' => [
+        'title' => (string) t('Nearby venues'),
+        'description' => (string) t('Places near your search area, including venues that may not have a SpotDeals promotion yet.'),
+        'promotionPrompt' => (string) t('Know a promotion here? Help us add it.'),
+        'externalBadge' => (string) t('External venue'),
+        'distance' => (string) t('@distance miles away', ['@distance' => '@distance']),
+        'openInMaps' => (string) t('Open in Maps'),
+        'opensNewWindow' => (string) t('opens in a new window'),
+        'reportVenue' => (string) t('Report closed or incorrect'),
+        'loadError' => (string) t('Nearby venues could not be loaded right now. Your deal results are still available above.'),
+      ],
+    ];
+  }
   $recommendation_mode = (bool) $request->attributes->get('spotdeals_search_smart_location.recommendation_mode', FALSE);
   $fallback_broader_search = (bool) $request->attributes->get('spotdeals_search_smart_location.fallback_broader_search', FALSE);
 
@@ -2700,6 +2755,11 @@ function _spotdeals_search_smart_location_normalize_keywords(string $keywords): 
   $normalized = preg_replace('/\b(show\s+me|find|search\s+for)\b/u', ' ', $normalized) ?? '';
   $normalized = preg_replace('/\b(best|top|good)\b/u', ' ', $normalized) ?? '';
   $normalized = preg_replace('/\bbarbecue\b/u', 'bbq', $normalized) ?? '';
+  // Solr's English analyzer stems "restaurants", but that English plural is
+  // not reliably stemmed while browsing the Spanish interface. Canonicalize
+  // generic restaurant terms before they reach the language-specific index.
+  $normalized = preg_replace('/\brestaurants\b/u', 'restaurant', $normalized) ?? '';
+  $normalized = preg_replace('/\brestaurantes\b/u', 'restaurante', $normalized) ?? '';
   $normalized = preg_replace('/\s+/', ' ', $normalized) ?? '';
 
   return trim($normalized);

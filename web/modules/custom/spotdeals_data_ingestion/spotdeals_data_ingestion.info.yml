@@ -8,3 +8,5 @@ dependencies:
   - drupal:node
   - drupal:taxonomy
   - pathauto:pathauto
+  - captcha:captcha
+  - honeypot:honeypot
