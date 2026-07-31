@@ -121,6 +121,37 @@
       {{ pager }}
     {% endif %}
 
+    {% if display_id == 'page_1' %}
+      <section
+        class="spotdeals-hybrid-venues"
+        data-spotdeals-hybrid-venues
+        hidden
+        aria-labelledby="spotdeals-hybrid-venues-title"
+      >
+        <div class="spotdeals-hybrid-venues__header">
+          <div>
+            <h2
+              id="spotdeals-hybrid-venues-title"
+              class="spotdeals-hybrid-venues__title"
+              data-spotdeals-hybrid-venues-title
+            ></h2>
+            <p
+              class="spotdeals-hybrid-venues__description"
+              data-spotdeals-hybrid-venues-description
+            ></p>
+          </div>
+          <span class="spotdeals-hybrid-venues__count" data-spotdeals-hybrid-venues-count></span>
+        </div>
+        <div
+          class="spotdeals-hybrid-venues__status"
+          data-spotdeals-hybrid-venues-status
+          role="status"
+          aria-live="polite"
+        ></div>
+        <div class="spotdeals-hybrid-venues__grid" data-spotdeals-hybrid-venues-results></div>
+      </section>
+    {% endif %}
+
     {% if attachment_after %}
       <div class="attachment attachment-after">
         {{ attachment_after }}

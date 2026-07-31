@@ -1,0 +1,7 @@
+uuid: 32d1ac7c-2068-4a06-a097-5ae1bc6cd515
+langcode: en
+status: true
+dependencies: {}
+formId: spotdeals_external_venue_report_form
+captchaType: default
+label: spotdeals_external_venue_report_form

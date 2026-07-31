@@ -15,3 +15,30 @@ spotdeals_data_ingestion.venue_search:
   methods: [GET]
   options:
     no_cache: TRUE
+
+spotdeals_data_ingestion.external_venue_report:
+  path: '/external-venue/report'
+  defaults:
+    _form: '\Drupal\spotdeals_data_ingestion\Form\ExternalVenueReportForm'
+    _title: 'Report closed or incorrect venue'
+  requirements:
+    _permission: 'submit external venue reports'
+  options:
+    no_cache: TRUE
+
+spotdeals_data_ingestion.external_venue_reports:
+  path: '/admin/content/external-venue-reports'
+  defaults:
+    _controller: '\Drupal\spotdeals_data_ingestion\Controller\ExternalVenueReportAdminController::listing'
+    _title: 'External venue reports'
+  requirements:
+    _permission: 'review external venue reports'
+
+spotdeals_data_ingestion.external_venue_report_review:
+  path: '/admin/content/external-venue-reports/{report_id}'
+  defaults:
+    _form: '\Drupal\spotdeals_data_ingestion\Form\ExternalVenueReportReviewForm'
+    _title: 'Review external venue report'
+  requirements:
+    _permission: 'review external venue reports'
+    report_id: '\d+'

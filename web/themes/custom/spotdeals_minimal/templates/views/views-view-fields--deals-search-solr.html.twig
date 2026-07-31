@@ -39,6 +39,7 @@
 
 {{ include('spotdeals_minimal:deal-card', {
   variant: 'default',
+  venue_identity: spotdeals_deal_card_venue_identity|default({}),
   image: spotdeals_deal_card_image|default(''),
   venue_title: fields.title_1.content|default(''),
   venue_meta: fields.field_address.content|default(''),

@@ -3,36 +3,38 @@ langcode: en
 status: true
 dependencies:
   config:
-    - filter.format.basic_html
-    - filter.format.webform_default
-    - node.type.claim
+  - filter.format.basic_html
+  - filter.format.webform_default
+  - node.type.claim
   module:
-    - comment
-    - contact
-    - file
-    - filter
-    - media
-    - node
-    - shortcut
-    - spotdeals_vote
-    - system
+  - comment
+  - contact
+  - file
+  - filter
+  - media
+  - node
+  - shortcut
+  - spotdeals_data_ingestion
+  - spotdeals_vote
+  - system
 _core:
   default_config_hash: hcfESiA8tr3D1muRk2KF7tbcun16ZJlG1R5SzKGed6g
 id: authenticated
-label: 'Authenticated user'
+label: Authenticated user
 weight: 1
 is_admin: false
 permissions:
-  - 'access comments'
-  - 'access content'
-  - 'access shortcuts'
-  - 'access site-wide contact form'
-  - 'create claim content'
-  - 'delete own files'
-  - 'post comments'
-  - 'skip comment approval'
-  - 'submit spotdeals votes'
-  - 'use text format basic_html'
-  - 'use text format webform_default'
-  - 'view media'
-  - 'view the administration theme'
+- access comments
+- access content
+- access shortcuts
+- access site-wide contact form
+- create claim content
+- delete own files
+- post comments
+- skip comment approval
+- submit external venue reports
+- submit spotdeals votes
+- use text format basic_html
+- use text format webform_default
+- view media
+- view the administration theme

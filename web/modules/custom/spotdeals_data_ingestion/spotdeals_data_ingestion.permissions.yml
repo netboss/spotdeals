@@ -2,3 +2,12 @@ administer spotdeals data ingestion:
   title: 'Administer SpotDeals data ingestion'
   description: 'Configure external venue-data providers and ingestion settings.'
   restrict access: true
+
+submit external venue reports:
+  title: 'Submit external venue reports'
+  description: 'Report closed, duplicate, or incorrect external venue listings.'
+
+review external venue reports:
+  title: 'Review external venue reports'
+  description: 'Review reports and exclude or restore external venue listings.'
+  restrict access: true

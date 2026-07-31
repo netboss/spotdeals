@@ -1,0 +1,102 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Implements hook_schema().
+ */
+function spotdeals_data_ingestion_schema(): array {
+  $schema['spotdeals_external_venue_report'] = [
+    'description' => 'User reports about external venue listings.',
+    'fields' => [
+      'id' => ['type' => 'serial', 'not null' => TRUE],
+      'external_source' => ['type' => 'varchar', 'length' => 32, 'not null' => TRUE],
+      'external_id' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'venue_name' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'venue_address' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
+      'reason' => ['type' => 'varchar', 'length' => 64, 'not null' => TRUE],
+      'details' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
+      'email' => ['type' => 'varchar', 'length' => 254, 'not null' => FALSE],
+      'uid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'ip_hash' => ['type' => 'varchar', 'length' => 64, 'not null' => TRUE],
+      'status' => ['type' => 'varchar', 'length' => 32, 'not null' => TRUE, 'default' => 'pending'],
+      'admin_notes' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
+      'created' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      'changed' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      'reviewed_by' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'reviewed_at' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'external_venue' => ['external_source', 'external_id'],
+      'status_created' => ['status', 'created'],
+      'reporter' => ['uid', 'created'],
+      'ip_created' => ['ip_hash', 'created'],
+    ],
+  ];
+
+  $schema['spotdeals_external_venue_exclusion'] = [
+    'description' => 'External venue listings excluded from hybrid search.',
+    'fields' => [
+      'external_source' => ['type' => 'varchar', 'length' => 32, 'not null' => TRUE],
+      'external_id' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'venue_name' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'venue_address' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
+      'reason' => ['type' => 'varchar', 'length' => 64, 'not null' => TRUE],
+      'active' => ['type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1],
+      'created' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      'changed' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      'created_by' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+    ],
+    'primary key' => ['external_source', 'external_id'],
+    'indexes' => [
+      'active' => ['active'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Creates external venue report storage and CAPTCHA protection.
+ */
+function spotdeals_data_ingestion_update_10001(): void {
+  $schema = \Drupal::database()->schema();
+  foreach (spotdeals_data_ingestion_schema() as $table => $definition) {
+    if (!$schema->tableExists($table)) {
+      $schema->createTable($table, $definition);
+    }
+  }
+
+  if (\Drupal::moduleHandler()->moduleExists('captcha')) {
+    \Drupal::configFactory()->getEditable('captcha.captcha_point.spotdeals_external_venue_report_form')
+      ->set('formId', 'spotdeals_external_venue_report_form')
+      ->set('captchaType', 'default')
+      ->set('label', 'spotdeals_external_venue_report_form')
+      ->set('status', TRUE)
+      ->save();
+  }
+
+  _spotdeals_data_ingestion_grant_report_permission();
+}
+
+/**
+ * Implements hook_install().
+ */
+function spotdeals_data_ingestion_install(): void {
+  _spotdeals_data_ingestion_grant_report_permission();
+}
+
+/**
+ * Grants public report submission to anonymous and authenticated users.
+ */
+function _spotdeals_data_ingestion_grant_report_permission(): void {
+  $storage = \Drupal::entityTypeManager()->getStorage('user_role');
+  foreach (['anonymous', 'authenticated'] as $role_id) {
+    $role = $storage->load($role_id);
+    if ($role && !$role->hasPermission('submit external venue reports')) {
+      $role->grantPermission('submit external venue reports');
+      $role->save();
+    }
+  }
+}

@@ -6,9 +6,12 @@ namespace Drupal\spotdeals_data_ingestion\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\State\StateInterface;
+use Drupal\spotdeals_data_ingestion\Service\ExternalVenueReportStorage;
 use Drupal\spotdeals_data_ingestion\Service\GeoapifyClient;
+use Drupal\spotdeals_data_ingestion\Service\VenueDealPresenceMatcher;
 use Drupal\spotdeals_data_ingestion\Service\VenueLocalMatcher;
 use Drupal\spotdeals_data_ingestion\Service\VenueMapper;
+use Drupal\spotdeals_data_ingestion\Service\VenueSearchDeduplicator;
 use Drupal\spotdeals_data_ingestion\Service\VenueSearchResultBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -28,7 +31,10 @@ final class VenueSearchController extends ControllerBase {
     private readonly GeoapifyClient $geoapifyClient,
     private readonly VenueMapper $venueMapper,
     private readonly VenueLocalMatcher $venueLocalMatcher,
+    private readonly VenueDealPresenceMatcher $venueDealPresenceMatcher,
+    private readonly VenueSearchDeduplicator $venueSearchDeduplicator,
     private readonly VenueSearchResultBuilder $venueSearchResultBuilder,
+    private readonly ExternalVenueReportStorage $externalVenueReportStorage,
     private readonly StateInterface $state,
   ) {}
 
@@ -37,7 +43,10 @@ final class VenueSearchController extends ControllerBase {
       $container->get('spotdeals_data_ingestion.geoapify_client'),
       $container->get('spotdeals_data_ingestion.venue_mapper'),
       $container->get('spotdeals_data_ingestion.venue_local_matcher'),
+      $container->get('spotdeals_data_ingestion.venue_deal_presence_matcher'),
+      $container->get('spotdeals_data_ingestion.venue_search_deduplicator'),
       $container->get('spotdeals_data_ingestion.venue_search_result_builder'),
+      $container->get('spotdeals_data_ingestion.external_venue_report_storage'),
       $container->get('state'),
     );
   }
@@ -110,9 +119,10 @@ final class VenueSearchController extends ControllerBase {
       return $this->error('Venue search is temporarily unavailable.', 502);
     }
 
-    $results = [];
+    $candidates = [];
     $invalidCount = 0;
-    $matchedCount = 0;
+    $existingDealVenueCount = 0;
+    $excludedVenueCount = 0;
 
     foreach ($features as $feature) {
       $venue = $this->venueMapper->map($feature, $category);
@@ -130,13 +140,43 @@ final class VenueSearchController extends ControllerBase {
         continue;
       }
 
+      if ($this->externalVenueReportStorage->isExcluded(
+        (string) ($venue['source'] ?? 'geoapify'),
+        (string) ($venue['external_id'] ?? ''),
+      )) {
+        $excludedVenueCount++;
+        continue;
+      }
+
       $match = $this->venueLocalMatcher->match($venue);
 
-      if ($match['exists']) {
+      // Nearby venues supplement deal discovery. Do not return an external
+      // venue when a published SpotDeals deal already represents that
+      // business, even when provider and local titles/addresses vary.
+      if ($this->venueDealPresenceMatcher->isRepresentedByDeal($venue)) {
+        $existingDealVenueCount++;
+        continue;
+      }
+
+      $candidates[] = [
+        'venue' => $venue,
+        'match' => $match,
+      ];
+    }
+
+    $deduplication = $this->venueSearchDeduplicator->deduplicate($candidates);
+    $results = [];
+    $matchedCount = 0;
+
+    foreach ($deduplication['candidates'] as $candidate) {
+      if (!empty($candidate['match']['exists'])) {
         $matchedCount++;
       }
 
-      $results[] = $this->venueSearchResultBuilder->build($venue, $match);
+      $results[] = $this->venueSearchResultBuilder->build(
+        $candidate['venue'],
+        $candidate['match'],
+      );
     }
 
     return $this->response([
@@ -150,6 +190,9 @@ final class VenueSearchController extends ControllerBase {
           'category' => $category,
           'returned' => count($results),
           'discarded_invalid' => $invalidCount,
+          'discarded_duplicates' => $deduplication['discarded'],
+          'discarded_existing_deal_venues' => $existingDealVenueCount,
+          'discarded_excluded' => $excludedVenueCount,
           'matched_local' => $matchedCount,
           'unmatched_external' => count($results) - $matchedCount,
           'local_enrichment_applied' => TRUE,
