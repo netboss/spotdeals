@@ -1,3 +1,8 @@
 administer spotdeals revenue:
   title: 'Administer SpotDeals revenue settings'
   description: 'Manage SpotDeals promoted slots and submitted venue/deal suggestions.'
+
+skip spotdeals suggestion verification:
+  title: 'Skip SpotDeals suggestion verification'
+  description: 'Allow an administrator to bypass verification for a free-limit-blocked suggestion.'
+  restrict access: true
