@@ -144,6 +144,47 @@ class SuggestionAdminController extends ControllerBase {
   }
 
   /**
+   * Skips owner verification for a free-limit-blocked suggestion.
+   */
+  public function skipVerification(int $suggestion_id): RedirectResponse {
+    $record = $this->loadSuggestion($suggestion_id);
+    if (!$record) {
+      $this->messenger()->addError($this->t('Suggestion not found.'));
+      return $this->redirect('spotdeals_revenue.suggestions_admin');
+    }
+
+    if (empty($record->free_limit_blocked)) {
+      $this->messenger()->addError($this->t('This suggestion is not blocked by the free suggested-deal limit.'));
+      return $this->redirect('spotdeals_revenue.suggestions_admin');
+    }
+
+    if (!in_array((string) $record->status, ['needs_verification', 'owner_notified', 'approved', 'reviewed'], TRUE)) {
+      $this->messenger()->addError($this->t('Verification cannot be skipped from the current suggestion status.'));
+      return $this->redirect('spotdeals_revenue.suggestions_admin');
+    }
+
+    $now = \Drupal::time()->getRequestTime();
+    $updated = $this->database->update('spotdeals_suggestion')
+      ->fields([
+        'status' => 'approved',
+        'free_limit_blocked' => 0,
+        'changed' => $now,
+      ])
+      ->condition('id', $suggestion_id)
+      ->condition('free_limit_blocked', 1)
+      ->execute();
+
+    if ($updated) {
+      $this->messenger()->addStatus($this->t('Verification skipped. The suggestion is approved and can now be created.'));
+    }
+    else {
+      $this->messenger()->addError($this->t('The suggestion could not be updated.'));
+    }
+
+    return $this->redirect('spotdeals_revenue.suggestions_admin');
+  }
+
+  /**
    * Notifies the claimed venue owner about a gated suggestion.
    */
   public function notifyOwner(int $suggestion_id): RedirectResponse {
@@ -493,7 +534,12 @@ class SuggestionAdminController extends ControllerBase {
       else {
         $operations[] = (string) $this->t('Needs verification');
       }
-      $operations[] = $this->buildActionLink('Approve', 'spotdeals_revenue.suggestion_approve', (int) $record->id);
+      if (!empty($record->free_limit_blocked)) {
+        $operations[] = $this->buildActionLink('Skip verification', 'spotdeals_revenue.suggestion_skip_verification', (int) $record->id);
+      }
+      else {
+        $operations[] = $this->buildActionLink('Approve', 'spotdeals_revenue.suggestion_approve', (int) $record->id);
+      }
       $operations[] = $this->buildActionLink('Reject', 'spotdeals_revenue.suggestion_reject', (int) $record->id);
       $operations[] = $this->buildActionLink('Archive', 'spotdeals_revenue.suggestion_archive', (int) $record->id);
     }
@@ -501,6 +547,9 @@ class SuggestionAdminController extends ControllerBase {
       $operations[] = (string) $this->t('Owner notified');
       if ($this->canNotifyClaimedOwner($record)) {
         $operations[] = $this->buildActionLink('Resend owner notification', 'spotdeals_revenue.suggestion_notify_owner', (int) $record->id);
+      }
+      if (!empty($record->free_limit_blocked)) {
+        $operations[] = $this->buildActionLink('Skip verification', 'spotdeals_revenue.suggestion_skip_verification', (int) $record->id);
       }
       $operations[] = $this->buildActionLink('Archive', 'spotdeals_revenue.suggestion_archive', (int) $record->id);
     }

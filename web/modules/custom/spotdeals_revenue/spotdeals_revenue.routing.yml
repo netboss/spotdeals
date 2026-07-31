@@ -32,6 +32,15 @@ spotdeals_revenue.suggestion_needs_verification:
     _csrf_token: 'TRUE'
     suggestion_id: '\d+'
 
+spotdeals_revenue.suggestion_skip_verification:
+  path: '/admin/content/spotdeals-suggestions/{suggestion_id}/skip-verification'
+  defaults:
+    _controller: '\Drupal\spotdeals_revenue\Controller\SuggestionAdminController::skipVerification'
+  requirements:
+    _permission: 'administer spotdeals revenue'
+    _csrf_token: 'TRUE'
+    suggestion_id: '\d+'
+
 spotdeals_revenue.suggestion_notify_owner:
   path: '/admin/content/spotdeals-suggestions/{suggestion_id}/notify-owner'
   defaults:
