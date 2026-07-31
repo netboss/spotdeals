@@ -147,6 +147,11 @@ class SuggestionAdminController extends ControllerBase {
    * Skips owner verification for a free-limit-blocked suggestion.
    */
   public function skipVerification(int $suggestion_id): RedirectResponse {
+    if (!$this->currentUser()->hasPermission('skip spotdeals suggestion verification')) {
+      $this->messenger()->addError($this->t('You are not authorized to skip suggestion verification.'));
+      return $this->redirect('spotdeals_revenue.suggestions_admin');
+    }
+
     $record = $this->loadSuggestion($suggestion_id);
     if (!$record) {
       $this->messenger()->addError($this->t('Suggestion not found.'));
@@ -489,6 +494,7 @@ class SuggestionAdminController extends ControllerBase {
    */
   private function buildOperations(object $record, array $venue_matches): string {
     $operations = [];
+    $can_skip_verification = $this->currentUser()->hasPermission('skip spotdeals suggestion verification');
 
     if ($record->status === 'archived') {
       $operations[] = (string) $this->t('Archived');
@@ -535,7 +541,9 @@ class SuggestionAdminController extends ControllerBase {
         $operations[] = (string) $this->t('Needs verification');
       }
       if (!empty($record->free_limit_blocked)) {
-        $operations[] = $this->buildActionLink('Skip verification', 'spotdeals_revenue.suggestion_skip_verification', (int) $record->id);
+        if ($can_skip_verification) {
+          $operations[] = $this->buildActionLink('Skip verification', 'spotdeals_revenue.suggestion_skip_verification', (int) $record->id);
+        }
       }
       else {
         $operations[] = $this->buildActionLink('Approve', 'spotdeals_revenue.suggestion_approve', (int) $record->id);
@@ -548,7 +556,7 @@ class SuggestionAdminController extends ControllerBase {
       if ($this->canNotifyClaimedOwner($record)) {
         $operations[] = $this->buildActionLink('Resend owner notification', 'spotdeals_revenue.suggestion_notify_owner', (int) $record->id);
       }
-      if (!empty($record->free_limit_blocked)) {
+      if (!empty($record->free_limit_blocked) && $can_skip_verification) {
         $operations[] = $this->buildActionLink('Skip verification', 'spotdeals_revenue.suggestion_skip_verification', (int) $record->id);
       }
       $operations[] = $this->buildActionLink('Archive', 'spotdeals_revenue.suggestion_archive', (int) $record->id);
