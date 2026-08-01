@@ -145,6 +145,13 @@ final class VenueSearchDeduplicator {
   }
 
   private function normalizeStreetAddress(string $address): string {
+    // Secondary-unit details are not part of the base street address used for
+    // duplicate comparison. The original stored/displayed address is unchanged.
+    $address = preg_replace(
+      '/\s+(?:(?:suite|ste|unit|apt|apartment|room|rm|floor|fl)\b|#\s*)[^,]*$/iu',
+      '',
+      trim($address),
+    ) ?? $address;
     $address = $this->normalizeText($address);
 
     if ($address === '') {

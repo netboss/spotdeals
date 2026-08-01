@@ -203,6 +203,14 @@ final class VenueDealPresenceMatcher {
   }
 
   private function normalizeStreet(string $address): string {
+    // Secondary-unit details are not part of the base street address used for
+    // comparison. The original stored/displayed address remains unchanged.
+    $address = preg_replace(
+      '/\s+(?:(?:suite|ste|unit|apt|apartment|room|rm|floor|fl)\b|#\s*)[^,]*$/iu',
+      '',
+      trim($address),
+    ) ?? $address;
+
     $address = $this->normalizeText($address);
     $address = preg_replace('/\bstate\s+(?:road|rd)\s+(\d+)\b/u', '$1', $address) ?? $address;
     $address = preg_replace('/\b(?:sr|fl)\s*(\d+)\b/u', '$1', $address) ?? $address;
