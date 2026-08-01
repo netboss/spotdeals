@@ -4,4 +4,5 @@ tracking:
     js/spotdeals_analytics.js: {}
   dependencies:
     - core/drupal
+    - core/drupalSettings
     - core/once

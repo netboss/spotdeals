@@ -11,5 +11,27 @@ declare(strict_types=1);
  * Implements hook_page_attachments().
  */
 function spotdeals_analytics_page_attachments(array &$attachments): void {
+  $current_user = \Drupal::currentUser();
+  $roles = $current_user->getRoles();
+
+  $attachments['#cache']['contexts'][] = 'user.roles';
+
+  // Administrator activity is intentionally excluded from SpotDeals analytics.
+  // UID 1 is also excluded because it may not carry the administrator role.
+  if ((int) $current_user->id() === 1 || in_array('administrator', $roles, TRUE)) {
+    return;
+  }
+
+  $user_type = 'anonymous';
+  if ($current_user->isAuthenticated()) {
+    $user_type = in_array('venue_owner', $roles, TRUE)
+      ? 'venue_owner'
+      : 'authenticated';
+  }
+
   $attachments['#attached']['library'][] = 'spotdeals_analytics/tracking';
+  $attachments['#attached']['drupalSettings']['spotdealsAnalytics'] = [
+    'enabled' => TRUE,
+    'userType' => $user_type,
+  ];
 }
