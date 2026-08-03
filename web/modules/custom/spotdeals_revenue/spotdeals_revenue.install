@@ -74,6 +74,20 @@ function spotdeals_revenue_schema(): array {
         'not null' => TRUE,
         'default' => 'US',
       ],
+      'external_source' => [
+        'description' => 'External venue provider, such as geoapify.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'external_id' => [
+        'description' => 'External venue identifier, such as a Geoapify place_id.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ],
       'deal_location' => [
         'description' => 'City or ZIP used to match deal suggestions to the correct venue location.',
         'type' => 'varchar',
@@ -562,6 +576,33 @@ function spotdeals_revenue_update_9009(): void {
     if (!$schema->fieldExists('spotdeals_suggestion', $field_name)) {
       $schema->addField('spotdeals_suggestion', $field_name, $field_spec);
     }
+  }
+}
+
+/**
+ * Adds external venue identity to suggestions.
+ */
+function spotdeals_revenue_update_9010(): void {
+  $schema = \Drupal::database()->schema();
+
+  if (!$schema->fieldExists('spotdeals_suggestion', 'external_source')) {
+    $schema->addField('spotdeals_suggestion', 'external_source', [
+      'description' => 'External venue provider, such as geoapify.',
+      'type' => 'varchar',
+      'length' => 32,
+      'not null' => TRUE,
+      'default' => '',
+    ]);
+  }
+
+  if (!$schema->fieldExists('spotdeals_suggestion', 'external_id')) {
+    $schema->addField('spotdeals_suggestion', 'external_id', [
+      'description' => 'External venue identifier, such as a Geoapify place_id.',
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => TRUE,
+      'default' => '',
+    ]);
   }
 }
 

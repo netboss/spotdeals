@@ -66,7 +66,7 @@ venues.csv:
 title,field_address_address_line1,field_address_locality,field_address_administrative_area,field_address_postal_code,field_address_country_code,field_venue_type,field_short_description,field_phone,field_website_uri,field_website_title,field_cuisine,field_claimed_listing,field_image,image_search_hint,field_latitude,field_longitude,field_tags,field_address_line1,field_city,field_state,field_zip,field_country,field_description,field_website,field_source,field_menu_url,field_cta,field_cta_title
 
 deals.csv:
-title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_category,field_venue,field_active,field_recurring,field_end_time,field_cta,field_cta_title
+title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_category,field_venue,field_active,field_recurring,field_end_time,field_cta,field_cta_title,field_venue_external_source,field_venue_external_id,field_venue_geoapify_category
 
 Please add all the new data as copy/paste additions ALWAYS. Also, ALWAYS include the rollback/import and re-index ddev drush commands. And remember that for prod the drush commands are like this: drush cr, no need to prefix the command with the /vendor path.
 

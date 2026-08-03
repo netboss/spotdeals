@@ -1,4 +1,4 @@
-title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_category,field_venue,field_active,field_recurring,field_end_time,field_cta,field_cta_title
+title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_category,field_venue,field_active,field_recurring,field_end_time,field_cta,field_cta_title,field_venue_external_source,field_venue_external_id,field_venue_geoapify_category
 "Happy Hour Specials","$4 beers · $6 cocktails",Daily,3pm–6pm,"Happy Hour","Caribbean Jack’s - Daytona Beach",1.0,1,,,
 "Early Dining Menu","From $25",Daily,4pm–6pm,"Early Bird","Chart House - Daytona Beach",1.0,1,,,
 "Wing Night","$0.75 wings",Monday,"All day","Daily Special","Oyster Pub - Daytona Beach",1.0,1,,,

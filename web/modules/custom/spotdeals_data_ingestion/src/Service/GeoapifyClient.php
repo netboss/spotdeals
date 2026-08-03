@@ -15,6 +15,8 @@ final class GeoapifyClient {
 
   private const PLACES_ENDPOINT = 'https://api.geoapify.com/v2/places';
 
+  private const PLACE_DETAILS_ENDPOINT = 'https://api.geoapify.com/v2/place-details';
+
   public function __construct(
     private readonly ClientInterface $httpClient,
     private readonly LoggerInterface $logger,
@@ -116,6 +118,97 @@ final class GeoapifyClient {
     }
 
     return array_values(array_filter($features, 'is_array'));
+  }
+
+  /**
+   * Loads one exact Geoapify place by its unique place ID.
+   *
+   * @return array<string, mixed>
+   *   The exact GeoJSON feature.
+   */
+  public function getPlaceDetails(string $apiKey, string $placeId): array {
+    $apiKey = trim($apiKey);
+    $placeId = trim($placeId);
+
+    if ($apiKey === '') {
+      throw new \InvalidArgumentException('The Geoapify API key is required.');
+    }
+
+    if ($placeId === '') {
+      throw new \InvalidArgumentException('The Geoapify place ID is required.');
+    }
+
+    try {
+      $response = $this->httpClient->request('GET', self::PLACE_DETAILS_ENDPOINT, [
+        'query' => [
+          'id' => $placeId,
+          'features' => 'details',
+          'apiKey' => $apiKey,
+        ],
+        'headers' => [
+          'Accept' => 'application/json',
+        ],
+        'timeout' => 30,
+      ]);
+    }
+    catch (GuzzleException $exception) {
+      $this->logger->error(
+        'Geoapify place-details request failed for place ID {place_id}: {message}',
+        [
+          'place_id' => $placeId,
+          'message' => $exception->getMessage(),
+        ],
+      );
+
+      throw new \RuntimeException(
+        'Geoapify place-details request failed: ' . $exception->getMessage(),
+        0,
+        $exception,
+      );
+    }
+
+    $decoded = json_decode((string) $response->getBody(), TRUE);
+
+    if (!is_array($decoded)) {
+      throw new \RuntimeException('Geoapify returned invalid place-details JSON.');
+    }
+
+    $features = $decoded['features'] ?? [];
+
+    if (!is_array($features) || $features === []) {
+      throw new \RuntimeException('Geoapify did not return details for the requested place ID.');
+    }
+
+    foreach ($features as $feature) {
+      if (!is_array($feature)) {
+        continue;
+      }
+
+      $properties = $feature['properties'] ?? [];
+      if (!is_array($properties)) {
+        continue;
+      }
+
+      if (($properties['feature_type'] ?? '') !== 'details') {
+        continue;
+      }
+
+      $returnedId = trim((string) ($properties['place_id'] ?? ''));
+      if ($returnedId !== '' && $returnedId !== $placeId) {
+        $this->logger->warning(
+          'Geoapify place-details returned place ID {returned_id} for requested place ID {requested_id}. The requested ID will remain the canonical external identity.',
+          [
+            'returned_id' => $returnedId,
+            'requested_id' => $placeId,
+          ],
+        );
+      }
+
+      $feature['properties']['place_id'] = $placeId;
+      return $feature;
+    }
+
+    throw new \RuntimeException('Geoapify place-details response did not contain a details feature.');
   }
 
   /**

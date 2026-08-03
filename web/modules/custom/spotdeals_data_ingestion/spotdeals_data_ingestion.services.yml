@@ -72,3 +72,13 @@ services:
 
   spotdeals_data_ingestion.external_venue_report_storage:
     alias: Drupal\spotdeals_data_ingestion\Service\ExternalVenueReportStorage
+
+
+  Drupal\spotdeals_data_ingestion\Service\VenuePersistenceService:
+    arguments:
+      - '@entity_type.manager'
+      - '@Drupal\spotdeals_data_ingestion\Service\VenueLocalMatcher'
+      - '@Drupal\spotdeals_data_ingestion\Service\SpanishNodeTranslationCreator'
+
+  spotdeals_data_ingestion.venue_persistence:
+    alias: Drupal\spotdeals_data_ingestion\Service\VenuePersistenceService
