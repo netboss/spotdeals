@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * Install and update hooks for SpotDeals Import.
+ */
+
+/**
+ * Enables Geoapify venue resolution for deals whose venues are not imported.
+ */
+function spotdeals_import_update_9001(): void {
+  $config = \Drupal::configFactory()
+    ->getEditable('migrate_plus.migration.spotdeals_deals');
+
+  $process = $config->get('process') ?: [];
+  $process['field_venue/target_id'] = [
+    'plugin' => 'spotdeals_resolve_venue_reference',
+    'source' => '@field_venue_lookup',
+  ];
+
+  $config
+    ->set('process', $process)
+    ->save(TRUE);
+}

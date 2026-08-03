@@ -7,8 +7,12 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Access\CsrfTokenGenerator;
 use Drupal\Core\Link;
+use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
 use Drupal\node\Entity\Node;
+use Drupal\spotdeals_data_ingestion\Service\GeoapifyClient;
+use Drupal\spotdeals_data_ingestion\Service\VenueMapper;
+use Drupal\spotdeals_data_ingestion\Service\VenuePersistenceService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
@@ -39,12 +43,52 @@ class SuggestionAdminController extends ControllerBase {
   protected $csrfToken;
 
   /**
+   * The shared venue persistence service.
+   *
+   * @var \Drupal\spotdeals_data_ingestion\Service\VenuePersistenceService
+   */
+  protected $venuePersistence;
+
+  /**
+   * The state service.
+   *
+   * @var \Drupal\Core\State\StateInterface
+   */
+  protected $state;
+
+  /**
+   * The Geoapify client.
+   *
+   * @var \Drupal\spotdeals_data_ingestion\Service\GeoapifyClient
+   */
+  protected $geoapifyClient;
+
+  /**
+   * The Geoapify venue mapper.
+   *
+   * @var \Drupal\spotdeals_data_ingestion\Service\VenueMapper
+   */
+  protected $venueMapper;
+
+  /**
    * Constructs the controller.
    */
-  public function __construct(Connection $database, DateFormatterInterface $date_formatter, CsrfTokenGenerator $csrf_token) {
+  public function __construct(
+    Connection $database,
+    DateFormatterInterface $date_formatter,
+    CsrfTokenGenerator $csrf_token,
+    VenuePersistenceService $venue_persistence,
+    StateInterface $state,
+    GeoapifyClient $geoapify_client,
+    VenueMapper $venue_mapper,
+  ) {
     $this->database = $database;
     $this->dateFormatter = $date_formatter;
     $this->csrfToken = $csrf_token;
+    $this->venuePersistence = $venue_persistence;
+    $this->state = $state;
+    $this->geoapifyClient = $geoapify_client;
+    $this->venueMapper = $venue_mapper;
   }
 
   /**
@@ -54,7 +98,11 @@ class SuggestionAdminController extends ControllerBase {
     return new static(
       $container->get('database'),
       $container->get('date.formatter'),
-      $container->get('csrf_token')
+      $container->get('csrf_token'),
+      $container->get('spotdeals_data_ingestion.venue_persistence'),
+      $container->get('state'),
+      $container->get('spotdeals_data_ingestion.geoapify_client'),
+      $container->get('spotdeals_data_ingestion.venue_mapper')
     );
   }
 
@@ -231,44 +279,27 @@ class SuggestionAdminController extends ControllerBase {
     }
 
     $address = $this->getAddressParts($record);
-    $title = $this->buildVenueNodeTitle((string) $record->venue_name, $address['locality']);
+    $candidate = $this->buildVenueCandidate($record, $address);
+    $result = $this->venuePersistence->persist(
+      $candidate,
+      $this->buildVenueMatchData($record, $address),
+    );
+    $node = $result['node'];
 
-    $node = Node::create([
-      'type' => 'venue',
-      'title' => $title,
-      'status' => 1,
-      'uid' => (int) $this->currentUser()->id(),
-    ]);
-
-    $this->setFieldIfExists($node, 'field_short_description', [
-      'value' => $this->buildVenueDescription($record),
-      'format' => 'basic_html',
-    ]);
-    $this->setFieldIfExists($node, 'field_website', [
-      'uri' => (string) $record->website,
-      'title' => 'Website',
-    ]);
-    $this->setFieldIfExists($node, 'field_cta', [
-      'uri' => (string) $record->website,
-      'title' => 'Website',
-    ]);
-    $this->setFieldIfExists($node, 'field_address', [
-      'country_code' => $address['country_code'],
-      'address_line1' => $address['address_line1'],
-      'locality' => $address['locality'],
-      'administrative_area' => $address['administrative_area'],
-      'postal_code' => $address['postal_code'],
-    ]);
-    $this->setReferenceFieldIfExists($node, 'field_venue_type', $this->findTaxonomyTermId('venue_type', ['Restaurant']));
-    $this->setReferenceFieldIfExists($node, 'field_cuisine', $this->inferCuisineTermId($record));
-    $this->setFieldIfExists($node, 'field_claimed_listing', 0);
-    $this->populateVenueCoordinates($node, $address);
-
-    $node->save();
     $this->finalizeCreatedContent($node);
     $this->markPublished($suggestion_id, 'venue', (int) $node->id());
 
-    $this->messenger()->addStatus($this->t('Venue created and published: @title', ['@title' => $title]));
+    if ($result['created']) {
+      $this->messenger()->addStatus($this->t('Venue created and published: @title', [
+        '@title' => $node->label(),
+      ]));
+    }
+    else {
+      $this->messenger()->addStatus($this->t('Existing venue reused; no duplicate was created: @title', [
+        '@title' => $node->label(),
+      ]));
+    }
+
     return $this->redirect('entity.node.canonical', ['node' => $node->id()]);
   }
 
@@ -293,54 +324,35 @@ class SuggestionAdminController extends ControllerBase {
     }
 
     $address = $this->getAddressParts($record);
-    $venue_title = $this->buildVenueNodeTitle((string) $record->venue_name, $address['locality']);
+    $candidate = $this->buildVenueCandidate($record, $address);
+    $result = $this->venuePersistence->persist(
+      $candidate,
+      $this->buildVenueMatchData($record, $address),
+    );
+    $venue = $result['node'];
 
-    $venue = Node::create([
-      'type' => 'venue',
-      'title' => $venue_title,
-      'status' => 1,
-      'uid' => (int) $this->currentUser()->id(),
-    ]);
-
-    $this->setFieldIfExists($venue, 'field_short_description', [
-      'value' => $this->buildVenueDescription($record),
-      'format' => 'basic_html',
-    ]);
-    $this->setFieldIfExists($venue, 'field_website', [
-      'uri' => (string) $record->website,
-      'title' => 'Website',
-    ]);
-    $this->setFieldIfExists($venue, 'field_cta', [
-      'uri' => (string) $record->website,
-      'title' => 'Website',
-    ]);
-    $this->setFieldIfExists($venue, 'field_address', [
-      'country_code' => $address['country_code'],
-      'address_line1' => $address['address_line1'],
-      'locality' => $address['locality'],
-      'administrative_area' => $address['administrative_area'],
-      'postal_code' => $address['postal_code'],
-    ]);
-    $this->setReferenceFieldIfExists($venue, 'field_venue_type', $this->findTaxonomyTermId('venue_type', ['Restaurant']));
-    $this->setReferenceFieldIfExists($venue, 'field_cuisine', $this->inferCuisineTermId($record));
-    $this->setFieldIfExists($venue, 'field_claimed_listing', 0);
-    $this->populateVenueCoordinates($venue, $address);
-
-    $venue->save();
     $this->finalizeCreatedContent($venue);
 
-    $deal = $this->createDealNodeForVenue($record, (int) $venue->id(), $venue_title);
+    $deal = $this->createDealNodeForVenue(
+      $record,
+      (int) $venue->id(),
+      $venue->label(),
+    );
     $this->finalizeCreatedContent($deal);
 
-    // Keep the suggestion linked to the created venue because that is the
-    // primary content shown in the admin Venue column. The deal is created and
-    // attached to that venue in the same operation.
+    // Keep the suggestion linked to the venue because that is the primary
+    // content shown in the admin Venue column. The deal is attached to it.
     $this->markPublished($suggestion_id, 'venue', (int) $venue->id());
 
-    $this->messenger()->addStatus($this->t('Venue and deal created and published: @venue / @deal', [
-      '@venue' => $venue_title,
+    $message = $result['created']
+      ? 'Venue and deal created and published: @venue / @deal'
+      : 'Existing venue reused and deal created; no duplicate venue was created: @venue / @deal';
+
+    $this->messenger()->addStatus($this->t($message, [
+      '@venue' => $venue->label(),
       '@deal' => $deal->label(),
     ]));
+
     return $this->redirect('entity.node.canonical', ['node' => $venue->id()]);
   }
 
@@ -371,12 +383,31 @@ class SuggestionAdminController extends ControllerBase {
 
     $venue_matches = $this->buildVenueMatchIndex();
     $match = $this->getVenueMatch((string) $record->venue_name, $this->getSuggestionLocation($record), $venue_matches);
-    if (!$match) {
+
+    if ($match) {
+      $venue_nid = (int) $match['nid'];
+      $venue_title = (string) $match['title'];
+    }
+    elseif ($this->hasExternalGeoapifyIdentity($record)) {
+      try {
+        $venue_result = $this->persistExternalGeoapifyVenue($record);
+        $venue = $venue_result['node'];
+        $venue_nid = (int) $venue->id();
+        $venue_title = (string) $venue->label();
+      }
+      catch (\Throwable $exception) {
+        $this->messenger()->addError($this->t('The external venue could not be created or matched: @message', [
+          '@message' => $exception->getMessage(),
+        ]));
+        return $this->redirect('spotdeals_revenue.suggestions_admin');
+      }
+    }
+    else {
       $this->messenger()->addError($this->t('Create or match the venue before creating this deal.'));
       return $this->redirect('spotdeals_revenue.suggestions_admin');
     }
 
-    $node = $this->createDealNodeForVenue($record, (int) $match['nid'], $match['title']);
+    $node = $this->createDealNodeForVenue($record, $venue_nid, $venue_title);
     $this->finalizeCreatedContent($node);
     $this->markPublished($suggestion_id, 'deal', (int) $node->id());
 
@@ -514,6 +545,7 @@ class SuggestionAdminController extends ControllerBase {
       // Treat old reviewed rows as approved for backward compatibility.
       $operations[] = (string) $this->t('Approved');
       $has_match = (bool) $this->getVenueMatch((string) $record->venue_name, $this->getSuggestionLocation($record), $venue_matches);
+      $has_external_identity = $this->hasExternalGeoapifyIdentity($record);
       if ((string) $record->type === 'both' && !$has_match) {
         $operations[] = $this->buildActionLink('Create venue/deal', 'spotdeals_revenue.suggestion_create_venue_deal', (int) $record->id);
       }
@@ -521,7 +553,7 @@ class SuggestionAdminController extends ControllerBase {
         $operations[] = $this->buildActionLink('Create venue', 'spotdeals_revenue.suggestion_create_venue', (int) $record->id);
       }
 
-      if (in_array((string) $record->type, ['deal', 'both'], TRUE) && $has_match) {
+      if (in_array((string) $record->type, ['deal', 'both'], TRUE) && ($has_match || $has_external_identity)) {
         if (!empty($record->free_limit_blocked)) {
           $operations[] = (string) $this->t('Owner review needed');
           $operations[] = $this->buildActionLink('Needs verification', 'spotdeals_revenue.suggestion_needs_verification', (int) $record->id);
@@ -727,6 +759,79 @@ class SuggestionAdminController extends ControllerBase {
       ->execute();
   }
 
+
+  /**
+   * Builds an unsaved venue candidate from a suggestion.
+   */
+  private function buildVenueCandidate(object $record, array $address): Node {
+    $title = $this->buildVenueNodeTitle(
+      (string) $record->venue_name,
+      $address['locality'],
+    );
+
+    $venue = Node::create([
+      'type' => 'venue',
+      'title' => $title,
+      'status' => 1,
+      'uid' => (int) $this->currentUser()->id(),
+    ]);
+
+    $this->setFieldIfExists($venue, 'field_short_description', [
+      'value' => $this->buildVenueDescription($record),
+      'format' => 'basic_html',
+    ]);
+    $this->setFieldIfExists($venue, 'field_website', [
+      'uri' => (string) $record->website,
+      'title' => 'Website',
+    ]);
+    $this->setFieldIfExists($venue, 'field_cta', [
+      'uri' => (string) $record->website,
+      'title' => 'Website',
+    ]);
+    $this->setFieldIfExists($venue, 'field_address', [
+      'country_code' => $address['country_code'],
+      'address_line1' => $address['address_line1'],
+      'locality' => $address['locality'],
+      'administrative_area' => $address['administrative_area'],
+      'postal_code' => $address['postal_code'],
+    ]);
+    $this->setReferenceFieldIfExists(
+      $venue,
+      'field_venue_type',
+      $this->findTaxonomyTermId('venue_type', ['Restaurant']),
+    );
+    $this->setReferenceFieldIfExists(
+      $venue,
+      'field_cuisine',
+      $this->inferCuisineTermId($record),
+    );
+    $this->setFieldIfExists($venue, 'field_claimed_listing', 0);
+    $this->populateVenueCoordinates($venue, $address);
+
+    return $venue;
+  }
+
+  /**
+   * Builds normalized matching data for the shared persistence service.
+   */
+  private function buildVenueMatchData(object $record, array $address): array {
+    return [
+      'source_title' => trim((string) $record->venue_name),
+      'title' => $this->buildVenueNodeTitle(
+        (string) $record->venue_name,
+        $address['locality'],
+      ),
+      'address' => [
+        'country_code' => $address['country_code'],
+        'address_line1' => $address['address_line1'],
+        'locality' => $address['locality'],
+        'administrative_area' => $address['administrative_area'],
+        'postal_code' => $address['postal_code'],
+      ],
+      'external_provider' => trim((string) ($record->external_source ?? '')),
+      'external_id' => trim((string) ($record->external_id ?? '')),
+    ];
+  }
 
   /**
    * Creates and saves a deal node attached to the given venue.
@@ -1422,6 +1527,41 @@ class SuggestionAdminController extends ControllerBase {
     }
 
     return trim((string) ($record->address ?? ''));
+  }
+
+  /**
+   * Determines whether a suggestion identifies an external Geoapify venue.
+   */
+  private function hasExternalGeoapifyIdentity(object $record): bool {
+    return strtolower(trim((string) ($record->external_source ?? ''))) === 'geoapify'
+      && trim((string) ($record->external_id ?? '')) !== '';
+  }
+
+  /**
+   * Loads, maps, and persists the exact Geoapify venue from a suggestion.
+   *
+   * @return array{node: \Drupal\node\NodeInterface, created: bool, match_method: ?string}
+   *   The shared venue persistence result.
+   */
+  private function persistExternalGeoapifyVenue(object $record): array {
+    $external_id = trim((string) ($record->external_id ?? ''));
+    $api_key = trim((string) $this->state->get(
+      'spotdeals_data_ingestion.geoapify_api_key',
+      '',
+    ));
+
+    if ($api_key === '') {
+      throw new \RuntimeException('The Geoapify API key is not configured.');
+    }
+
+    $feature = $this->geoapifyClient->getPlaceDetails($api_key, $external_id);
+    $venue_data = $this->venueMapper->map($feature, 'catering.restaurant');
+
+    if (trim((string) ($venue_data['external_id'] ?? '')) !== $external_id) {
+      throw new \RuntimeException('Geoapify returned a different venue identity.');
+    }
+
+    return $this->venuePersistence->persistMappedVenue($venue_data);
   }
 
   /**

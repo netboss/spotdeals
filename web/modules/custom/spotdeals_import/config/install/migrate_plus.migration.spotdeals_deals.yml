@@ -62,12 +62,8 @@ process:
       no_stub: true
 
   field_venue/target_id:
-    - plugin: skip_on_empty
-      method: row
-      source: '@field_venue_lookup'
-      message: 'Skipping deal because referenced venue could not be resolved.'
-    - plugin: get
-      source: '@field_venue_lookup'
+    plugin: spotdeals_resolve_venue_reference
+    source: '@field_venue_lookup'
 
 destination:
   plugin: entity:node

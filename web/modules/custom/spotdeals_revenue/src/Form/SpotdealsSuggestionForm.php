@@ -50,11 +50,29 @@ class SpotdealsSuggestionForm extends FormBase {
     $requested_type = (string) $request->query->get('type', 'both');
     $allowed_types = ['venue', 'deal', 'both'];
     $default_type = in_array($requested_type, $allowed_types, TRUE) ? $requested_type : 'deal';
-    $default_venue_name = trim((string) $request->query->get('venue', ''));
-    $default_deal_name = trim((string) $request->query->get('deal', ''));
+    $default_venue_name = trim((string) (
+      $request->query->get('venue_name')
+      ?? $request->query->get('venue', '')
+    ));
+    $default_deal_name = trim((string) (
+      $request->query->get('deal_name')
+      ?? $request->query->get('deal', '')
+    ));
+    $default_external_source = trim((string) $request->query->get('external_source', ''));
+    $default_external_id = trim((string) $request->query->get('external_id', ''));
 
     $form['#attached']['library'][] = 'spotdeals_revenue/suggest';
     $form['#attributes']['class'][] = 'spotdeals-suggestion-form';
+
+    $form['external_source'] = [
+      '#type' => 'hidden',
+      '#default_value' => $default_external_source,
+    ];
+
+    $form['external_id'] = [
+      '#type' => 'hidden',
+      '#default_value' => $default_external_id,
+    ];
 
     $form['intro'] = [
       '#markup' => '<div class="spotdeals-suggestion-form__intro"><p>' . $this->t('Know a venue or deal SpotDeals is missing? Send it over and we will review it before publishing.') . '</p></div>',
@@ -366,7 +384,11 @@ class SpotdealsSuggestionForm extends FormBase {
       $form_state->setErrorByName('times', $this->t('Please enter valid times, for example 4 PM to 7 PM, all day, or late night.'));
     }
 
-    if ($type === 'deal' && $deal_location !== '') {
+    $external_source = strtolower(trim((string) $form_state->getValue('external_source')));
+    $external_id = trim((string) $form_state->getValue('external_id'));
+    $has_external_venue_identity = $external_source === 'geoapify' && $external_id !== '';
+
+    if ($type === 'deal' && $deal_location !== '' && !$has_external_venue_identity) {
       $matched_venue = $this->findExistingVenueByTitleAndLocation($venue_name, $deal_location);
       if (!$matched_venue) {
         $form_state->setErrorByName('type', $this->t('We could not find an existing SpotDeals venue matching this name and city/ZIP. Please choose "Both a venue and a deal" so we can review the venue and deal together.'));
@@ -416,6 +438,8 @@ class SpotdealsSuggestionForm extends FormBase {
         'state' => $state,
         'zip' => $zip,
         'country' => $country !== '' ? $country : 'US',
+        'external_source' => trim((string) $form_state->getValue('external_source')),
+        'external_id' => trim((string) $form_state->getValue('external_id')),
         'deal_name' => $deal_name,
         'website' => trim((string) $form_state->getValue('website')),
         'deal_description' => $deal_description,
