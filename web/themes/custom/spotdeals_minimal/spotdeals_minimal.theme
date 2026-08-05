@@ -242,7 +242,7 @@ function _spotdeals_minimal_build_taxonomy_landing_intro(TermInterface $term, st
 
   return match ($term->bundle()) {
     'day_of_week' => (string) t('Find active @title including lunch specials, happy hours, dining deals, and nightlife promotions from local venues.', ['@title' => strtolower($landing_title)]),
-    'deal_category' => (string) t('Browse @category deals from local restaurants, bars, cafes, and nearby venues.', ['@category' => strtolower($label)]),
+    'deal_category' => (string) t('Browse @category deals from local businesses and nearby venues.', ['@category' => strtolower($label)]),
     'cuisine' => (string) t('Discover @cuisine food and drink deals, specials, and local offers from nearby venues.', ['@cuisine' => $label]),
     'venue_type' => (string) t('Explore current deals from @type venues and find a good place to go next.', ['@type' => strtolower($label)]),
     'neighborhood' => (string) t('Find local deals, specials, and promotions available in @place.', ['@place' => $label]),
@@ -349,7 +349,7 @@ function _spotdeals_minimal_build_taxonomy_landing_faq(TermInterface $term, stri
     ],
     [
       'question' => t('Can I search beyond @title?', ['@title' => $landing_title]),
-      'answer' => t('Yes. Use the main deals search to combine keywords, cities, cuisines, categories, and nearby discovery.'),
+      'answer' => t('Yes. Use the main deals search to combine keywords, cities, business types, categories, and nearby discovery.'),
     ],
   ];
 }
@@ -1687,7 +1687,7 @@ function _spotdeals_minimal_translate_deals_seo_exposed_form(array &$form): void
   if (isset($form['search_deals_by_city']) && is_array($form['search_deals_by_city'])) {
     $form['search_deals_by_city']['#title'] = _spotdeals_minimal_translate_deals_seo_filter_string('Filter deals by keyword');
     $form['search_deals_by_city']['#placeholder'] = _spotdeals_minimal_translate_deals_seo_filter_string('Search tacos, burgers, happy hour...');
-    $form['search_deals_by_city']['#description'] = _spotdeals_minimal_translate_deals_seo_filter_string('Optional. Filter this local list by food, drink, venue, or deal type.');
+    $form['search_deals_by_city']['#description'] = _spotdeals_minimal_translate_deals_seo_filter_string('Optional. Filter this local list by keyword, category, venue, or deal type.');
 
     $form['search_deals_by_city']['#attributes']['placeholder'] = (string) _spotdeals_minimal_translate_deals_seo_filter_string('Search tacos, burgers, happy hour...');
     $form['search_deals_by_city']['#attributes']['aria-label'] = (string) _spotdeals_minimal_translate_deals_seo_filter_string('Filter deals by keyword');
@@ -1779,10 +1779,10 @@ function _spotdeals_minimal_translate_deals_seo_filter_string(string $label, str
     'Keyword' => 'Palabra clave',
     'Keywords' => 'Palabras clave',
     'Location' => 'Ubicación',
-    'Optional. Filter this local list by food, drink, venue, or deal type.' => 'Opcional. Filtra esta lista local por comida, bebida, lugar o tipo de oferta.',
+    'Optional. Filter this local list by keyword, category, venue, or deal type.' => 'Opcional. Filtra esta lista local por palabra clave, categoría, lugar o tipo de oferta.',
     'Reset' => 'Restablecer',
     'Search' => 'Buscar',
-    'Search by food type, or location to discover nearby deals.' => 'Busca por tipo de comida o ubicación para descubrir ofertas cercanas.',
+    'Search using keywords or location — or combine them' => 'Busca por palabras clave o ubicación, o combínalas.',
     'Search deals' => 'Buscar ofertas',
     'Search keywords' => 'Buscar palabras clave',
     'Search tacos, burgers, happy hour...' => 'Busca tacos, hamburguesas, happy hour...',

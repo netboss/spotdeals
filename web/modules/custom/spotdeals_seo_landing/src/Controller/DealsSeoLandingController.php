@@ -213,20 +213,20 @@ final class DealsSeoLandingController extends ControllerBase {
       : $this->t('Deals in @city', ['@city' => $city_label]);
 
     $intro_text = $category_label !== NULL
-      ? $this->t('Find @category in @city, including current local offers, food and drink specials, and nearby places worth checking out.', [
+      ? $this->t('Find @category in @city, including current local offers, nearby promotions, and places worth checking out.', [
         '@category' => $this->translateDisplayLabel($category_label),
         '@city' => $city_label,
       ])
-      : $this->t('Browse current local deals in @city, including restaurant specials, food offers, and nearby places worth checking out.', [
+      : $this->t('Browse current local deals in @city, including nearby offers, promotions, and places worth checking out.', [
         '@city' => $city_label,
       ]);
 
     $meta_description = $category_label !== NULL
-      ? $this->t('Find @category in @city on SpotDeals. Browse current local specials, restaurant deals, and nearby offers.', [
+      ? $this->t('Find @category in @city on SpotDeals. Browse current local deals, promotions, and nearby offers.', [
         '@category' => $this->translateDisplayLabel($category_label),
         '@city' => $city_label,
       ])
-      : $this->t('Find local deals in @city on SpotDeals. Browse current restaurant specials, food deals, and nearby offers.', [
+      : $this->t('Find local deals in @city on SpotDeals. Browse current offers, promotions, and nearby businesses.', [
         '@city' => $city_label,
       ]);
 
@@ -944,7 +944,7 @@ final class DealsSeoLandingController extends ControllerBase {
         'text' => [
           '#type' => 'html_tag',
           '#tag' => 'p',
-          '#value' => $this->t('Browse all restaurants in @city or use Deals Finder to discover more nearby specials.', ['@city' => $city_label]),
+          '#value' => $this->t('Browse all local businesses in @city or use Deals Finder to discover more nearby offers.', ['@city' => $city_label]),
         ],
       ],
       'action' => [
@@ -989,7 +989,7 @@ final class DealsSeoLandingController extends ControllerBase {
       'text' => [
         '#type' => 'html_tag',
         '#tag' => 'p',
-        '#value' => $this->t('SpotDeals tracks @count @category from @venues local restaurants, bars, cafes, breweries, and neighborhood dining spots in @city. Use this page to compare current offers, discover nearby places, and keep exploring more ways to save.', [
+        '#value' => $this->t('SpotDeals tracks @count @category from @venues local businesses and neighborhood venues in @city. Use this page to compare current offers, discover nearby places, and keep exploring more ways to save.', [
           '@count' => $total_deals,
           '@category' => mb_strtolower($category_label, 'UTF-8'),
           '@venues' => $venue_count,

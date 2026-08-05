@@ -5,23 +5,51 @@ display:
         area:
           content:
             value: '<p>No encontramos resultados para tu búsqueda. Intenta con otra palabra clave.</p>'
-            format: basic_html
+            format: full_html
       title: 'Buscador de ofertas'
       exposed_form:
         options:
           submit_button: 'Encuentra ofertas'
           reset_button_label: Resetea
           exposed_sorts_label: 'Sortear por'
-          text_input_required: "<h4>Busca por comida o ubicación — o combínalos</h4>\r\n<p>Prueba:</p>\r\n<ul>\r\n<li>tacos</li>\r\n<li>happy hour</li>\r\n<li>almuerzo port orange</li>\r\n<li>mexicana daytona beach</li>\r\n<li>bbq orlando</li>\r\n<li>arepas tampa</li>\r\n<li>cubana miami</li>\r\n</ul>\r\n\r\n<h4>¿No estás seguro de lo que quieres?</h4>\r\n<p>Selecciona <strong>¿No sabes qué comer? ¡Elegimos por ti!</strong> y (opcionalmente) ingresa algunos tipos de comida (por ejemplo: mexican thai bbq) — encontraremos algo cerca de ti.</p>"
+          text_input_required: "<h4>Busca por palabra clave o ubicación, o combínalas</h4>\r\n\r\n<p>Prueba:</p>\r\n\r\n<ul>\r\n<li>tacos</li>\r\n<li>happy hour</li>\r\n<li>corte de cabello</li>\r\n<li>masaje orlando</li>\r\n<li>cambio de aceite</li>\r\n<li>lavado de autos</li>\r\n<li>café cerca de mí</li>\r\n</ul>\r\n\r\n<h4>¿No estás seguro de lo que buscas?</h4>\r\n\r\n<p>Selecciona <strong>¿No estás seguro? ¡Elegimos por ti!</strong> y, de forma opcional, ingresa algunas categorías o palabras clave (por ejemplo: tacos, masaje, barbería, cambio de aceite). Te recomendaremos una excelente opción cerca de ti.</p>"
       header:
         result:
           content: 'Mostrando @start - @end de @total'
+      filters:
+        search_api_fulltext:
+          expose:
+            description: ''
+        name:
+          expose:
+            description: ''
+            min_placeholder: ''
+            max_placeholder: ''
+            placeholder: ''
+        name_1:
+          expose:
+            description: ''
+            min_placeholder: ''
+            max_placeholder: ''
+            placeholder: ''
   page_1:
     display_options:
       filters:
         search_api_fulltext:
           expose:
             label: 'Encuentra ofertas cerca de ti'
+        name:
+          expose:
+            description: ''
+            min_placeholder: ''
+            max_placeholder: ''
+            placeholder: ''
+        name_1:
+          expose:
+            description: ''
+            min_placeholder: ''
+            max_placeholder: ''
+            placeholder: ''
       pager:
         options:
           tags:

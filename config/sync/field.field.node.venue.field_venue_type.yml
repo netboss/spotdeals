@@ -10,7 +10,7 @@ id: node.venue.field_venue_type
 field_name: field_venue_type
 entity_type: node
 bundle: venue
-label: 'Venue Type'
+label: 'Venue or Business Type'
 description: ''
 required: true
 translatable: true

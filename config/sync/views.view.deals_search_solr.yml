@@ -784,7 +784,7 @@ display:
           expose_sort_order: true
           sort_asc_label: Asc
           sort_desc_label: Desc
-          text_input_required: "<h4>Search using food, or location — or combine them</h4>\r\n<p>Try:</p>\r\n<ul>\r\n<li>tacos</li>\r\n<li>happy hour</li>\r\n<li>lunch port orange</li>\r\n<li>mexican daytona beach</li>\r\n<li>bbq orlando</li>\r\n<li>arepas tampa</a>\r\n<li>cuban miami</li>\r\n</ul>\r\n<h4>Not sure what you want?</h4>\r\n<p>Select <strong>Not sure what to eat? We’ll pick for you!</strong> and (optional) enter a few cuisines (e.g. mexican thai bbq) — we’ll pick something for you nearby.</p>"
+          text_input_required: "<h4>Search by keyword or location, or combine them</h4>\r\n\r\n<p>Try:</p>\r\n\r\n<ul>\r\n<li>tacos</li>\r\n<li>happy hour</li>\r\n<li>haircut</li>\r\n<li>massage orlando</li>\r\n<li>oil change</li>\r\n<li>car wash</li>\r\n<li>coffee near me</li>\r\n</ul>\r\n\r\n<h4>Not sure what you're looking for?</h4>\r\n\r\n<p>Select <strong>Not sure? We'll pick for you!</strong> and, optionally, enter a few categories or keywords (for example: tacos, massage, barbershop, oil change). We'll recommend a great option near you.</p>"
           text_input_required_format: full_html
       access:
         type: none
