@@ -111,9 +111,9 @@ function spotdeals_search_smart_location_form_views_exposed_form_alter(array &$f
 
   $form['recommendation_cuisines'] = [
     '#type' => 'textfield',
-    '#title' => t('Cuisine preferences'),
+    '#title' => t('Category preferences'),
     '#default_value' => $recommendation_cuisines_value,
-    '#description' => t('Optional. Enter up to 5 cuisine ideas separated by spaces, or leave this empty and we’ll surprise you.'),
+    '#description' => t('Optional. Enter up to 5 category ideas separated by spaces, or leave this empty and we’ll surprise you.'),
     '#size' => 60,
     '#maxlength' => 255,
     '#weight' => 101,
@@ -2300,7 +2300,7 @@ function spotdeals_search_smart_location_recommendation_validate(array &$form, F
 
 
   if (count($cuisines) > 5) {
-    $form_state->setErrorByName('recommendation_cuisines', t('Please enter no more than 5 cuisine preferences for Help me choose.'));
+    $form_state->setErrorByName('recommendation_cuisines', t('Please enter no more than 5 category preferences for Help me choose.'));
   }
 }
 

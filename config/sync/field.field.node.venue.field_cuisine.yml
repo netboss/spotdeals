@@ -10,7 +10,7 @@ id: node.venue.field_cuisine
 field_name: field_cuisine
 entity_type: node
 bundle: venue
-label: Cuisine
+label: 'Cuisine / Category'
 description: ''
 required: false
 translatable: true
