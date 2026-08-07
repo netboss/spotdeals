@@ -9,6 +9,10 @@ services:
       - '@http_client'
       - '@logger.channel.spotdeals_data_ingestion'
 
+  Drupal\spotdeals_data_ingestion\Service\GeoapifyVenueResolver:
+    arguments:
+      - '@Drupal\spotdeals_data_ingestion\Service\GeoapifyClient'
+
   Drupal\spotdeals_data_ingestion\Service\VenueMapper: {}
 
   Drupal\spotdeals_data_ingestion\Service\SpanishNodeTranslationCreator:
@@ -43,6 +47,9 @@ services:
 
   spotdeals_data_ingestion.geoapify_client:
     alias: Drupal\spotdeals_data_ingestion\Service\GeoapifyClient
+
+  spotdeals_data_ingestion.geoapify_venue_resolver:
+    alias: Drupal\spotdeals_data_ingestion\Service\GeoapifyVenueResolver
 
   spotdeals_data_ingestion.venue_mapper:
     alias: Drupal\spotdeals_data_ingestion\Service\VenueMapper

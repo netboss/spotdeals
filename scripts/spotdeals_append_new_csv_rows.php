@@ -17,11 +17,21 @@ use Drupal\node\NodeInterface;
  * real migration mappings, then restores the original migration config.
  */
 
-const SPOTDEALS_VENUES_MIGRATION = 'spotdeals_venues';
-const SPOTDEALS_DEALS_MIGRATION = 'spotdeals_deals';
+$dataset = spotdeals_append_parse_dataset($argv ?? []);
+
+if ($dataset === 'non-food') {
+  $venues_migration = 'spotdeals_non_food_venues';
+  $deals_migration = 'spotdeals_non_food_deals';
+  $relative_data_dir = 'non_food';
+}
+else {
+  $venues_migration = 'spotdeals_venues';
+  $deals_migration = 'spotdeals_deals';
+  $relative_data_dir = '';
+}
 
 $root = dirname(__DIR__);
-$module_data_dir = spotdeals_append_find_data_dir($root);
+$module_data_dir = spotdeals_append_find_data_dir($root, $relative_data_dir);
 $append_dir = $module_data_dir . '/.append';
 
 if (!is_dir($append_dir) && !mkdir($append_dir, 0775, TRUE) && !is_dir($append_dir)) {
@@ -34,12 +44,12 @@ $deals_csv = $module_data_dir . '/deals.csv';
 $venues_append_csv = $append_dir . '/venues.append.csv';
 $deals_append_csv = $append_dir . '/deals.append.csv';
 
-print "SpotDeals append-only CSV import\n";
+print "SpotDeals append-only CSV import ({$dataset})\n";
 print "================================\n";
 print "Data directory: {$module_data_dir}\n\n";
 
-$venues_result = spotdeals_append_prepare_venues_csv($venues_csv, $venues_append_csv);
-$deals_result = spotdeals_append_prepare_deals_csv($deals_csv, $deals_append_csv);
+$venues_result = spotdeals_append_prepare_venues_csv($venues_csv, $venues_append_csv, $venues_migration);
+$deals_result = spotdeals_append_prepare_deals_csv($deals_csv, $deals_append_csv, $deals_migration);
 
 print "Prepared append files\n";
 print "---------------------\n";
@@ -61,21 +71,25 @@ $original_paths = [];
 
 try {
   if ($venues_result['append'] > 0) {
-    $original_paths[SPOTDEALS_VENUES_MIGRATION] = spotdeals_append_set_migration_source_path(
-      SPOTDEALS_VENUES_MIGRATION,
-      'modules/custom/spotdeals_import/data/.append/venues.append.csv'
+    $original_paths[$venues_migration] = spotdeals_append_set_migration_source_path(
+      $venues_migration,
+      $relative_data_dir === ''
+        ? 'modules/custom/spotdeals_import/data/.append/venues.append.csv'
+        : 'modules/custom/spotdeals_import/data/non_food/.append/venues.append.csv'
     );
 
-    spotdeals_append_run_migration(SPOTDEALS_VENUES_MIGRATION);
+    spotdeals_append_run_migration($venues_migration);
   }
 
   if ($deals_result['append'] > 0) {
-    $original_paths[SPOTDEALS_DEALS_MIGRATION] = spotdeals_append_set_migration_source_path(
-      SPOTDEALS_DEALS_MIGRATION,
-      'modules/custom/spotdeals_import/data/.append/deals.append.csv'
+    $original_paths[$deals_migration] = spotdeals_append_set_migration_source_path(
+      $deals_migration,
+      $relative_data_dir === ''
+        ? 'modules/custom/spotdeals_import/data/.append/deals.append.csv'
+        : 'modules/custom/spotdeals_import/data/non_food/.append/deals.append.csv'
     );
 
-    spotdeals_append_run_migration(SPOTDEALS_DEALS_MIGRATION);
+    spotdeals_append_run_migration($deals_migration);
   }
 }
 finally {
@@ -90,13 +104,32 @@ spotdeals_append_reindex_and_clear_cache();
 
 print "\nDone.\n";
 
+
+/**
+ * Parses the requested dataset.
+ */
+function spotdeals_append_parse_dataset(array $arguments): string {
+  foreach ($arguments as $argument) {
+    if ($argument === '--non-food' || $argument === '--dataset=non-food') {
+      return 'non-food';
+    }
+
+    if ($argument === '--food' || $argument === '--dataset=food') {
+      return 'food';
+    }
+  }
+
+  return 'food';
+}
+
 /**
  * Finds the SpotDeals import module data directory.
  */
-function spotdeals_append_find_data_dir(string $root): string {
+function spotdeals_append_find_data_dir(string $root, string $relative_data_dir = ''): string {
+  $suffix = $relative_data_dir === '' ? '' : '/' . trim($relative_data_dir, '/');
   $candidates = [
-    $root . '/web/modules/custom/spotdeals_import/data',
-    $root . '/modules/custom/spotdeals_import/data',
+    $root . '/web/modules/custom/spotdeals_import/data' . $suffix,
+    $root . '/modules/custom/spotdeals_import/data' . $suffix,
   ];
 
   foreach ($candidates as $candidate) {
@@ -105,7 +138,7 @@ function spotdeals_append_find_data_dir(string $root): string {
     }
   }
 
-  throw new RuntimeException('Unable to find spotdeals_import/data with venues.csv and deals.csv.');
+  throw new RuntimeException('Unable to find the requested SpotDeals data directory with venues.csv and deals.csv.');
 }
 
 /**
@@ -113,18 +146,18 @@ function spotdeals_append_find_data_dir(string $root): string {
  *
  * @return array{total:int,append:int,skipped:int}
  */
-function spotdeals_append_prepare_venues_csv(string $source_csv, string $append_csv): array {
+function spotdeals_append_prepare_venues_csv(string $source_csv, string $append_csv, string $migration_id): array {
   return spotdeals_append_filter_csv(
     $source_csv,
     $append_csv,
-    static function (array $row): bool {
+    static function (array $row) use ($migration_id): bool {
       $title = trim((string) ($row['title'] ?? ''));
 
       if ($title === '') {
         return FALSE;
       }
 
-      if (spotdeals_append_source_exists_in_map(SPOTDEALS_VENUES_MIGRATION, [$title])) {
+      if (spotdeals_append_source_exists_in_map($migration_id, [$title])) {
         return FALSE;
       }
 
@@ -142,11 +175,11 @@ function spotdeals_append_prepare_venues_csv(string $source_csv, string $append_
  *
  * @return array{total:int,append:int,skipped:int}
  */
-function spotdeals_append_prepare_deals_csv(string $source_csv, string $append_csv): array {
+function spotdeals_append_prepare_deals_csv(string $source_csv, string $append_csv, string $migration_id): array {
   return spotdeals_append_filter_csv(
     $source_csv,
     $append_csv,
-    static function (array $row): bool {
+    static function (array $row) use ($migration_id): bool {
       $title = trim((string) ($row['title'] ?? ''));
       $venue = trim((string) ($row['field_venue'] ?? ''));
       $day = trim((string) ($row['field_day_of_week'] ?? ''));
@@ -156,7 +189,7 @@ function spotdeals_append_prepare_deals_csv(string $source_csv, string $append_c
         return FALSE;
       }
 
-      if (spotdeals_append_source_exists_in_map(SPOTDEALS_DEALS_MIGRATION, [$title, $venue, $day, $start])) {
+      if (spotdeals_append_source_exists_in_map($migration_id, [$title, $venue, $day, $start])) {
         return FALSE;
       }
 
