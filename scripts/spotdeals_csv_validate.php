@@ -14,9 +14,16 @@ declare(strict_types=1);
  */
 
 $root = dirname(__DIR__);
-$venuesPath = $root . '/web/modules/custom/spotdeals_import/data/venues.csv';
-$dealsPath = $root . '/web/modules/custom/spotdeals_import/data/deals.csv';
-$strictFormat = in_array('--strict-format', $argv ?? [], true);
+$arguments = $argv ?? [];
+$dataset = in_array('--non-food', $arguments, true) || in_array('--dataset=non-food', $arguments, true)
+  ? 'non-food'
+  : 'food';
+$dataDirectory = $dataset === 'non-food'
+  ? $root . '/web/modules/custom/spotdeals_import/data/non_food'
+  : $root . '/web/modules/custom/spotdeals_import/data';
+$venuesPath = $dataDirectory . '/venues.csv';
+$dealsPath = $dataDirectory . '/deals.csv';
+$strictFormat = in_array('--strict-format', $arguments, true);
 
 $expectedVenuesHeader = [
   'title',
@@ -62,7 +69,14 @@ $expectedDealsHeader = [
   'field_end_time',
   'field_cta',
   'field_cta_title',
+  'field_venue_external_source',
+  'field_venue_external_id',
+  'field_venue_geoapify_category',
 ];
+
+$allowedDealColumnCounts = $dataset === 'food'
+  ? [11, 14]
+  : [14];
 
 $errors = [];
 $warnings = [];
@@ -70,12 +84,19 @@ $review = [];
 $format = [];
 
 [$venueRows, $venueTitles] = readCsvFile($venuesPath, $expectedVenuesHeader, 'venues.csv', $errors, $warnings);
-[$dealRows] = readCsvFile($dealsPath, $expectedDealsHeader, 'deals.csv', $errors, $warnings);
+[$dealRows] = readCsvFile(
+  $dealsPath,
+  $expectedDealsHeader,
+  'deals.csv',
+  $errors,
+  $warnings,
+  $allowedDealColumnCounts,
+);
 
 validateVenues($venueRows, $errors, $warnings, $review);
 validateDeals($dealRows, $venueTitles, $errors, $warnings, $review, $format, $strictFormat);
 
-print "\nSpotDeals CSV Validation\n";
+print "\nSpotDeals CSV Validation ({$dataset})\n";
 print "========================\n";
 print "venues.csv rows: " . count($venueRows) . "\n";
 print "deals.csv rows: " . count($dealRows) . "\n";
@@ -99,7 +120,14 @@ if ($errors) {
 print "CSV validation passed.\n";
 return 0;
 
-function readCsvFile(string $path, array $expectedHeader, string $label, array &$errors, array &$warnings): array {
+function readCsvFile(
+  string $path,
+  array $expectedHeader,
+  string $label,
+  array &$errors,
+  array &$warnings,
+  ?array $allowedColumnCounts = null,
+): array {
   if (!is_file($path)) {
     $errors[] = "{$label}: file not found at {$path}";
     return [[], []];
@@ -148,6 +176,7 @@ function readCsvFile(string $path, array $expectedHeader, string $label, array &
   }
 
   $expectedColumnCount = count($header);
+  $allowedColumnCounts ??= [$expectedColumnCount];
   $rows = [];
   $titles = [];
   $line = 1;
@@ -160,9 +189,15 @@ function readCsvFile(string $path, array $expectedHeader, string $label, array &
       continue;
     }
 
-    if (count($row) !== $expectedColumnCount) {
-      $errors[] = "{$label}: line {$line} has " . count($row) . " columns; expected {$expectedColumnCount}";
+    $columnCount = count($row);
+    if (!in_array($columnCount, $allowedColumnCounts, true)) {
+      $expectedCounts = implode(' or ', $allowedColumnCounts);
+      $errors[] = "{$label}: line {$line} has {$columnCount} columns; expected {$expectedCounts}";
       continue;
+    }
+
+    if ($columnCount < $expectedColumnCount) {
+      $row = array_pad($row, $expectedColumnCount, '');
     }
 
     $assoc = array_combine($header, $row);
@@ -302,6 +337,9 @@ function validateDeals(array $rows, array $venueTitles, array &$errors, array &$
     $end = trim((string) $row['field_end_time']);
     $cta = trim((string) $row['field_cta']);
     $ctaTitle = trim((string) $row['field_cta_title']);
+    $externalSource = strtolower(trim((string) ($row['field_venue_external_source'] ?? '')));
+    $externalId = trim((string) ($row['field_venue_external_id'] ?? ''));
+    $externalCategory = trim((string) ($row['field_venue_geoapify_category'] ?? ''));
 
     if ($title === '') {
       $errors[] = "deals.csv: line {$line} has empty title";
@@ -315,7 +353,22 @@ function validateDeals(array $rows, array $venueTitles, array &$errors, array &$
       $errors[] = "deals.csv: line {$line} has empty field_venue";
     }
     elseif (!isset($venueTitles[normalizeStrictKey($venue)])) {
-      $errors[] = "deals.csv: line {$line} references missing venue: {$venue}";
+      if ($externalSource === 'geoapify') {
+        if ($externalId === '') {
+          $review[] = "deals.csv: line {$line} references a Geoapify venue not present in venues.csv; the importer will resolve and create/reuse it automatically: {$venue}";
+        }
+      }
+      else {
+        $errors[] = "deals.csv: line {$line} references missing venue without Geoapify resolution metadata: {$venue}";
+      }
+    }
+
+    if ($externalSource !== '' && $externalSource !== 'geoapify') {
+      $warnings[] = "deals.csv: line {$line} has unsupported field_venue_external_source '{$externalSource}': {$title} / {$venue}";
+    }
+
+    if ($externalSource === 'geoapify' && $externalId === '' && $externalCategory === '') {
+      $warnings[] = "deals.csv: line {$line} relies on automatic Geoapify venue resolution without a category hint: {$title} / {$venue}";
     }
 
     $dealKey = normalizeStrictKey($title) . '|' . normalizeStrictKey($offer) . '|' . normalizeStrictKey($venue) . '|' . normalizeDayKey($day) . '|' . normalizeTimeKey($start) . '|' . normalizeStrictKey($category) . '|' . normalizeTimeKey($end);

@@ -5,12 +5,86 @@
  * Install and update hooks for SpotDeals Import.
  */
 
+use Drupal\Component\Serialization\Yaml;
+
 /**
  * Enables Geoapify venue resolution for deals whose venues are not imported.
  */
 function spotdeals_import_update_9001(): void {
   $config = \Drupal::configFactory()
     ->getEditable('migrate_plus.migration.spotdeals_deals');
+
+  $process = $config->get('process') ?: [];
+  $process['field_venue/target_id'] = [
+    'plugin' => 'spotdeals_resolve_venue_reference',
+    'source' => '@field_venue_lookup',
+  ];
+
+  $config
+    ->set('process', $process)
+    ->save(TRUE);
+}
+
+/**
+ * Installs the isolated non-food venue and deal migrations.
+ */
+function spotdeals_import_update_9002(): void {
+  $modulePath = \Drupal::service('extension.list.module')
+    ->getPath('spotdeals_import');
+
+  $migrationFiles = [
+    'migrate_plus.migration.spotdeals_non_food_venues',
+    'migrate_plus.migration.spotdeals_non_food_deals',
+  ];
+
+  $configFactory = \Drupal::configFactory();
+
+  foreach ($migrationFiles as $configName) {
+    if (!$configFactory->get($configName)->isNew()) {
+      continue;
+    }
+
+    $filePath = sprintf(
+      '%s/config/install/%s.yml',
+      $modulePath,
+      $configName,
+    );
+
+    if (!is_file($filePath)) {
+      throw new \RuntimeException(sprintf(
+        'Required migration configuration file was not found: %s',
+        $filePath,
+      ));
+    }
+
+    $data = Yaml::decode((string) file_get_contents($filePath));
+    if (!is_array($data)) {
+      throw new \RuntimeException(sprintf(
+        'Migration configuration file is invalid: %s',
+        $filePath,
+      ));
+    }
+
+    $configFactory
+      ->getEditable($configName)
+      ->setData($data)
+      ->save(TRUE);
+  }
+}
+
+/**
+ * Ensures the food/drink deal migration uses Geoapify venue resolution.
+ */
+function spotdeals_import_update_9003(): void {
+  $configName = 'migrate_plus.migration.spotdeals_deals';
+  $config = \Drupal::configFactory()->getEditable($configName);
+
+  if ($config->isNew()) {
+    throw new \RuntimeException(sprintf(
+      'Required migration configuration does not exist: %s',
+      $configName,
+    ));
+  }
 
   $process = $config->get('process') ?: [];
   $process['field_venue/target_id'] = [

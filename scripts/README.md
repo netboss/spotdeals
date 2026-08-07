@@ -771,3 +771,73 @@ Review items are informational. They often mean:
 
 Treat `Errors` as blockers. Treat `Warnings` as likely issues. Treat `Review` as manual verification.
 
+
+---
+
+## Non-food and drink import workflow
+
+The non-food dataset is isolated from the original food-and-drink CSVs and migrations.
+
+CSV files:
+
+```text
+web/modules/custom/spotdeals_import/data/non_food/venues.csv
+web/modules/custom/spotdeals_import/data/non_food/deals.csv
+```
+
+Migration IDs:
+
+```text
+spotdeals_non_food_venues
+spotdeals_non_food_deals
+```
+
+### Validate non-food CSVs
+
+```bash
+scripts/local/validate-non-food-local.sh
+```
+
+This command always includes strict formatting checks. No parameters are required.
+
+### Append only new non-food rows
+
+```bash
+scripts/local/append-non-food-local.sh
+```
+
+This uses the existing append-only importer with `--dataset=non-food`. It checks the non-food migration map tables and existing Drupal nodes before importing. It does not modify or roll back the original food-and-drink migrations.
+
+### Full non-food rollback and re-import
+
+```bash
+scripts/local/migrate-non-food-local.sh
+```
+
+This script rolls back and imports only:
+
+```text
+spotdeals_non_food_deals
+spotdeals_non_food_venues
+```
+
+It never rolls back:
+
+```text
+spotdeals_deals
+spotdeals_venues
+```
+
+### Direct commands
+
+Validate:
+
+```bash
+php scripts/spotdeals_csv_validate.php --dataset=non-food
+```
+
+Append:
+
+```bash
+ddev drush php:script scripts/spotdeals_append_new_csv_rows.php -- --dataset=non-food
+```

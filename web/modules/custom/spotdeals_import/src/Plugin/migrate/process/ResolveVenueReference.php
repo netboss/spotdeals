@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\spotdeals_import\Plugin\migrate\process;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\migrate\MigrateExecutableInterface;
@@ -11,12 +12,13 @@ use Drupal\migrate\MigrateSkipRowException;
 use Drupal\migrate\ProcessPluginBase;
 use Drupal\migrate\Row;
 use Drupal\spotdeals_data_ingestion\Service\GeoapifyClient;
+use Drupal\spotdeals_data_ingestion\Service\GeoapifyVenueResolver;
 use Drupal\spotdeals_data_ingestion\Service\VenueMapper;
 use Drupal\spotdeals_data_ingestion\Service\VenuePersistenceService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Resolves a deal venue through the venue migration or Geoapify.
+ * Resolves a deal venue through migration, Drupal, or Geoapify.
  *
  * @MigrateProcessPlugin(
  *   id = "spotdeals_resolve_venue_reference"
@@ -29,7 +31,9 @@ final class ResolveVenueReference extends ProcessPluginBase implements Container
     $plugin_id,
     $plugin_definition,
     private readonly StateInterface $state,
+    private readonly EntityTypeManagerInterface $entityTypeManager,
     private readonly GeoapifyClient $geoapifyClient,
+    private readonly GeoapifyVenueResolver $geoapifyVenueResolver,
     private readonly VenueMapper $venueMapper,
     private readonly VenuePersistenceService $venuePersistence,
   ) {
@@ -50,7 +54,9 @@ final class ResolveVenueReference extends ProcessPluginBase implements Container
       $plugin_id,
       $plugin_definition,
       $container->get('state'),
+      $container->get('entity_type.manager'),
       $container->get('spotdeals_data_ingestion.geoapify_client'),
+      $container->get('spotdeals_data_ingestion.geoapify_venue_resolver'),
       $container->get('spotdeals_data_ingestion.venue_mapper'),
       $container->get('spotdeals_data_ingestion.venue_persistence'),
     );
@@ -70,15 +76,15 @@ final class ResolveVenueReference extends ProcessPluginBase implements Container
       return $existingVenueId;
     }
 
+    $venueTitle = trim((string) $row->getSourceProperty('field_venue'));
+    $existingVenueId = $this->findExistingVenueByTitle($venueTitle);
+    if ($existingVenueId !== NULL) {
+      return $existingVenueId;
+    }
+
     $externalSource = strtolower(trim((string) $row->getSourceProperty('field_venue_external_source')));
     $externalId = trim((string) $row->getSourceProperty('field_venue_external_id'));
     $category = trim((string) $row->getSourceProperty('field_venue_geoapify_category'));
-
-    if ($externalId === '') {
-      throw new MigrateSkipRowException(
-        'Skipping deal because its venue was not found in Drupal and no Geoapify place ID was provided.',
-      );
-    }
 
     if ($externalSource !== '' && $externalSource !== 'geoapify') {
       throw new MigrateSkipRowException(
@@ -102,7 +108,28 @@ final class ResolveVenueReference extends ProcessPluginBase implements Container
     }
 
     try {
-      $feature = $this->geoapifyClient->getPlaceDetails($apiKey, $externalId);
+      if ($externalId !== '') {
+        $feature = $this->geoapifyClient->getPlaceDetails($apiKey, $externalId);
+      }
+      else {
+        if ($venueTitle === '') {
+          throw new \RuntimeException('The deal does not provide a venue title.');
+        }
+
+        $searchFeature = $this->geoapifyVenueResolver->resolve(
+          $apiKey,
+          $venueTitle,
+          $category,
+        );
+
+        $externalId = trim((string) ($searchFeature['properties']['place_id'] ?? ''));
+        if ($externalId === '') {
+          throw new \RuntimeException('The selected Geoapify venue has no place ID.');
+        }
+
+        $feature = $this->geoapifyClient->getPlaceDetails($apiKey, $externalId);
+      }
+
       $venueData = $this->venueMapper->map($feature, $category);
 
       if (trim((string) ($venueData['external_id'] ?? '')) !== $externalId) {
@@ -120,6 +147,30 @@ final class ResolveVenueReference extends ProcessPluginBase implements Container
         ),
       );
     }
+  }
+
+  /**
+   * Finds an existing Drupal venue using its exact stored title.
+   */
+  private function findExistingVenueByTitle(string $venueTitle): ?int {
+    if ($venueTitle === '') {
+      return NULL;
+    }
+
+    $nids = $this->entityTypeManager
+      ->getStorage('node')
+      ->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('type', 'venue')
+      ->condition('title', $venueTitle)
+      ->range(0, 2)
+      ->execute();
+
+    if (count($nids) !== 1) {
+      return NULL;
+    }
+
+    return (int) reset($nids);
   }
 
   /**

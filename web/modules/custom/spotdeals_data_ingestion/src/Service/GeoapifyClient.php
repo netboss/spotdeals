@@ -17,6 +17,8 @@ final class GeoapifyClient {
 
   private const PLACE_DETAILS_ENDPOINT = 'https://api.geoapify.com/v2/place-details';
 
+  private const GEOCODING_SEARCH_ENDPOINT = 'https://api.geoapify.com/v1/geocode/search';
+
   public function __construct(
     private readonly ClientInterface $httpClient,
     private readonly LoggerInterface $logger,
@@ -119,6 +121,92 @@ final class GeoapifyClient {
 
     return array_values(array_filter($features, 'is_array'));
   }
+
+  /**
+   * Searches Geoapify amenities by business name and city.
+   *
+   * @return array<int, array<string, mixed>>
+   *   GeoJSON feature records.
+   */
+  public function searchAmenities(
+    string $apiKey,
+    string $name,
+    string $city,
+    string $countryCode = 'US',
+    int $limit = 10,
+  ): array {
+    $apiKey = trim($apiKey);
+    $name = trim($name);
+    $city = trim($city);
+    $countryCode = strtolower(trim($countryCode));
+
+    if ($apiKey === '') {
+      throw new \InvalidArgumentException('The Geoapify API key is required.');
+    }
+
+    if ($name === '' || $city === '') {
+      throw new \InvalidArgumentException(
+        'Geoapify amenity search requires both a venue name and city.',
+      );
+    }
+
+    $limit = max(1, min(20, $limit));
+
+    $query = [
+      'name' => $name,
+      'city' => $city,
+      'type' => 'amenity',
+      'lang' => 'en',
+      'limit' => $limit,
+      'format' => 'geojson',
+      'apiKey' => $apiKey,
+    ];
+
+    if ($countryCode !== '') {
+      $query['filter'] = 'countrycode:' . $countryCode;
+    }
+
+    try {
+      $response = $this->httpClient->request('GET', self::GEOCODING_SEARCH_ENDPOINT, [
+        'query' => $query,
+        'headers' => [
+          'Accept' => 'application/json',
+        ],
+        'timeout' => 30,
+      ]);
+    }
+    catch (GuzzleException $exception) {
+      $this->logger->error(
+        'Geoapify amenity search failed for {name} in {city}: {message}',
+        [
+          'name' => $name,
+          'city' => $city,
+          'message' => $exception->getMessage(),
+        ],
+      );
+
+      throw new \RuntimeException(
+        'Geoapify amenity search failed: ' . $exception->getMessage(),
+        0,
+        $exception,
+      );
+    }
+
+    $decoded = json_decode((string) $response->getBody(), TRUE);
+    if (!is_array($decoded)) {
+      throw new \RuntimeException('Geoapify returned invalid amenity-search JSON.');
+    }
+
+    $features = $decoded['features'] ?? [];
+    if (!is_array($features)) {
+      throw new \RuntimeException(
+        'Geoapify returned an invalid amenity-search feature collection.',
+      );
+    }
+
+    return array_values(array_filter($features, 'is_array'));
+  }
+
 
   /**
    * Loads one exact Geoapify place by its unique place ID.
