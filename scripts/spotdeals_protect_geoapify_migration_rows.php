@@ -5,26 +5,24 @@
  * Protects Geoapify-backed migration rows during destructive rollbacks.
  *
  * Usage:
- *   SPOTDEALS_GEOAPIFY_PROTECTION_MODE=protect drush php:script scripts/spotdeals_protect_geoapify_migration_rows.php
- *   SPOTDEALS_GEOAPIFY_PROTECTION_MODE=restore drush php:script scripts/spotdeals_protect_geoapify_migration_rows.php
- *   SPOTDEALS_GEOAPIFY_PROTECTION_MODE=cleanup drush php:script scripts/spotdeals_protect_geoapify_migration_rows.php
+ *   drush php:script scripts/spotdeals_protect_geoapify_migration_rows.php -- protect
+ *   drush php:script scripts/spotdeals_protect_geoapify_migration_rows.php -- restore
+ *   drush php:script scripts/spotdeals_protect_geoapify_migration_rows.php -- cleanup
+ *
+ * Non-food dataset:
+ *   drush php:script scripts/spotdeals_protect_geoapify_migration_rows.php -- protect non-food
+ *   drush php:script scripts/spotdeals_protect_geoapify_migration_rows.php -- restore non-food
+ *   drush php:script scripts/spotdeals_protect_geoapify_migration_rows.php -- cleanup non-food
  */
 
 declare(strict_types=1);
 
 use Drupal\Core\Database\Connection;
 
-$argumentMode = '';
+$arguments = isset($extra) && is_array($extra) ? $extra : [];
 
-if (isset($extra) && is_array($extra) && isset($extra[0])) {
-  $argumentMode = trim((string) $extra[0]);
-}
-
-$mode = strtolower(
-  $argumentMode !== ''
-    ? $argumentMode
-    : trim((string) getenv('SPOTDEALS_GEOAPIFY_PROTECTION_MODE'))
-);
+$mode = strtolower(trim((string) ($arguments[0] ?? '')));
+$dataset = strtolower(trim((string) ($arguments[1] ?? 'food')));
 
 if (!in_array($mode, ['protect', 'restore', 'cleanup'], TRUE)) {
   throw new RuntimeException(
@@ -32,27 +30,50 @@ if (!in_array($mode, ['protect', 'restore', 'cleanup'], TRUE)) {
   );
 }
 
+if (!in_array($dataset, ['food', 'non-food'], TRUE)) {
+  throw new RuntimeException(
+    'The optional dataset argument must be food or non-food.'
+  );
+}
+
 /** @var \Drupal\Core\Database\Connection $database */
 $database = \Drupal::database();
 
-$tables = [
-  'venues' => [
-    'map' => 'migrate_map_spotdeals_venues',
-    'backup' => 'spotdeals_protected_map_spotdeals_venues',
-  ],
-  'deals' => [
-    'map' => 'migrate_map_spotdeals_deals',
-    'backup' => 'spotdeals_protected_map_spotdeals_deals',
-  ],
-];
+if ($dataset === 'non-food') {
+  $tables = [
+    'venues' => [
+      'migration' => 'spotdeals_non_food_venues',
+      'map' => 'migrate_map_spotdeals_non_food_venues',
+      'backup' => 'spotdeals_protected_map_spotdeals_non_food_venues',
+    ],
+    'deals' => [
+      'migration' => 'spotdeals_non_food_deals',
+      'map' => 'migrate_map_spotdeals_non_food_deals',
+      'backup' => 'spotdeals_protected_map_spotdeals_non_food_deals',
+    ],
+  ];
+}
+else {
+  $tables = [
+    'venues' => [
+      'migration' => 'spotdeals_venues',
+      'map' => 'migrate_map_spotdeals_venues',
+      'backup' => 'spotdeals_protected_map_spotdeals_venues',
+    ],
+    'deals' => [
+      'migration' => 'spotdeals_deals',
+      'map' => 'migrate_map_spotdeals_deals',
+      'backup' => 'spotdeals_protected_map_spotdeals_deals',
+    ],
+  ];
+}
 
 foreach ($tables as $definition) {
-  if (!$database->schema()->tableExists($definition['map'])) {
-    throw new RuntimeException(sprintf(
-      'Required migration map table does not exist: %s',
-      $definition['map'],
-    ));
-  }
+  ensureMigrationMapTable(
+    $database,
+    $definition['migration'],
+    $definition['map'],
+  );
 }
 
 switch ($mode) {
@@ -67,6 +88,55 @@ switch ($mode) {
   case 'cleanup':
     cleanupProtectionTables($database, $tables);
     break;
+}
+
+/**
+ * Ensures a migration's SQL map/message tables exist.
+ *
+ * A freshly restored database may contain the migration configuration but not
+ * its map tables if that migration has never run in that database. Initializing
+ * the SQL ID map is non-destructive and creates the missing tables.
+ */
+function ensureMigrationMapTable(
+  Connection $database,
+  string $migrationId,
+  string $mapTable,
+): void {
+  if ($database->schema()->tableExists($mapTable)) {
+    return;
+  }
+
+  $migration = \Drupal::service('plugin.manager.migration')
+    ->createInstance($migrationId);
+
+  if ($migration === NULL) {
+    throw new RuntimeException(sprintf(
+      'Required migration does not exist: %s',
+      $migrationId,
+    ));
+  }
+
+  $idMap = $migration->getIdMap();
+
+  if (method_exists($idMap, 'getDatabase')) {
+    $idMap->getDatabase();
+  }
+  else {
+    $idMap->processedCount();
+  }
+
+  if (!$database->schema()->tableExists($mapTable)) {
+    throw new RuntimeException(sprintf(
+      'Unable to initialize migration map table %s for migration %s.',
+      $mapTable,
+      $migrationId,
+    ));
+  }
+
+  print sprintf(
+    "Initialized missing migration map table %s.\n",
+    $mapTable,
+  );
 }
 
 /**

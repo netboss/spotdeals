@@ -25,6 +25,8 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
   private const PROTECTED_MIGRATIONS = [
     'spotdeals_venues' => 'venue',
     'spotdeals_deals' => 'deal',
+    'spotdeals_non_food_venues' => 'venue',
+    'spotdeals_non_food_deals' => 'deal',
   ];
 
   /**
@@ -219,6 +221,20 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
   }
 
   /**
+   * Checks whether this is a protected venue migration.
+   */
+  private function isVenueMigration(string $migration_id): bool {
+    return (self::PROTECTED_MIGRATIONS[$migration_id] ?? NULL) === 'venue';
+  }
+
+  /**
+   * Checks whether this is a protected deal migration.
+   */
+  private function isDealMigration(string $migration_id): bool {
+    return (self::PROTECTED_MIGRATIONS[$migration_id] ?? NULL) === 'deal';
+  }
+
+  /**
    * Gets the migrate map table name for a migration ID.
    */
   private function getMapTableName(string $migration_id): string {
@@ -287,12 +303,12 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
     $row->setDestinationProperty('nid', $nid);
     $row->setDestinationProperty('title', $node->label());
 
-    if ($migration_id === 'spotdeals_venues') {
+    if ($this->isVenueMigration($migration_id)) {
       $this->preserveVenueDestinationProperties($row, $node);
       return;
     }
 
-    if ($migration_id === 'spotdeals_deals') {
+    if ($this->isDealMigration($migration_id)) {
       $this->preserveDealDestinationProperties($row, $node);
     }
   }
@@ -345,11 +361,11 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
    * Checks whether a destination node has votes that must survive rollback.
    */
   private function hasProtectedVotes(int $nid, string $migration_id): bool {
-    if ($migration_id === 'spotdeals_deals') {
+    if ($this->isDealMigration($migration_id)) {
       return $this->tableHasMatchingRow('spotdeals_vote', 'deal_nid', $nid);
     }
 
-    if ($migration_id === 'spotdeals_venues') {
+    if ($this->isVenueMigration($migration_id)) {
       return $this->tableHasMatchingRow('spotdeals_vote_venue', 'venue_nid', $nid)
         || $this->tableHasMatchingRow('spotdeals_vote', 'venue_nid', $nid);
     }
@@ -377,22 +393,34 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
    * Finds an existing protected node matching the current source row.
    */
   private function findExistingProtectedNodeForRow(string $migration_id, Row $row): ?int {
-    if ($migration_id === 'spotdeals_venues') {
+    if ($this->isVenueMigration($migration_id)) {
       $title = trim((string) $row->getSourceProperty('title'));
       $address = trim((string) $row->getSourceProperty('field_address_address_line1'));
       $city = trim((string) $row->getSourceProperty('field_address_locality'));
       $state = trim((string) $row->getSourceProperty('field_address_administrative_area'));
       $zip = trim((string) $row->getSourceProperty('field_address_postal_code'));
 
-      return $this->findExistingProtectedVenueNode($title, $address, $city, $state, $zip);
+      return $this->findExistingProtectedVenueNode(
+        $title,
+        $address,
+        $city,
+        $state,
+        $zip,
+        $migration_id,
+      );
     }
 
-    if ($migration_id === 'spotdeals_deals') {
+    if ($this->isDealMigration($migration_id)) {
       $title = trim((string) $row->getSourceProperty('title'));
       $venue_title = trim((string) $row->getSourceProperty('field_venue'));
       $start_time = trim((string) $row->getSourceProperty('field_start_time'));
 
-      return $this->findExistingProtectedDealNode($title, $venue_title, $start_time);
+      return $this->findExistingProtectedDealNode(
+        $title,
+        $venue_title,
+        $start_time,
+        $migration_id,
+      );
     }
 
     return NULL;
@@ -401,23 +429,37 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
   /**
    * Finds an existing protected venue node by source identity.
    */
-  private function findExistingProtectedVenueNode(string $title, string $address = '', string $city = '', string $state = '', string $zip = ''): ?int {
+  private function findExistingProtectedVenueNode(
+    string $title,
+    string $address = '',
+    string $city = '',
+    string $state = '',
+    string $zip = '',
+    string $migration_id = 'spotdeals_venues',
+  ): ?int {
     if ($title === '') {
       return NULL;
     }
 
-    $exact_nid = $this->findExistingProtectedVenueNodeByExactTitle($title);
+    $exact_nid = $this->findExistingProtectedVenueNodeByExactTitle($title, $migration_id);
     if ($exact_nid) {
       return $exact_nid;
     }
 
-    return $this->findExistingProtectedVenueNodeByCanonicalIdentity($title, $address, $city, $state, $zip);
+    return $this->findExistingProtectedVenueNodeByCanonicalIdentity(
+      $title,
+      $address,
+      $city,
+      $state,
+      $zip,
+      $migration_id,
+    );
   }
 
   /**
    * Finds an existing protected venue node by exact title.
    */
-  private function findExistingProtectedVenueNodeByExactTitle(string $title): ?int {
+  private function findExistingProtectedVenueNodeByExactTitle(string $title, string $migration_id): ?int {
     $nids = $this->entityTypeManager
       ->getStorage('node')
       ->getQuery()
@@ -431,7 +473,7 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
     foreach ($nids as $nid) {
       $nid = (int) $nid;
 
-      if ($this->isProtectedNode($nid, 'spotdeals_venues')) {
+      if ($this->isProtectedNode($nid, $migration_id)) {
         return $nid;
       }
     }
@@ -442,7 +484,14 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
   /**
    * Finds an existing protected venue node by canonical title/address identity.
    */
-  private function findExistingProtectedVenueNodeByCanonicalIdentity(string $title, string $address, string $city, string $state, string $zip): ?int {
+  private function findExistingProtectedVenueNodeByCanonicalIdentity(
+    string $title,
+    string $address,
+    string $city,
+    string $state,
+    string $zip,
+    string $migration_id,
+  ): ?int {
     $source_brand_key = $this->normalizeVenueBrandKey($title, $city);
     $source_city_key = $this->normalizeStrictKey($city);
     $source_address_key = $this->normalizeAddressKey($address, $city, $state, $zip);
@@ -473,7 +522,7 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
       }
 
       $nid = (int) $node->id();
-      if (!$this->isProtectedNode($nid, 'spotdeals_venues')) {
+      if (!$this->isProtectedNode($nid, $migration_id)) {
         continue;
       }
 
@@ -518,7 +567,12 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
   /**
    * Finds an existing protected deal node by source identity.
    */
-  private function findExistingProtectedDealNode(string $title, string $venue_title, string $start_time): ?int {
+  private function findExistingProtectedDealNode(
+    string $title,
+    string $venue_title,
+    string $start_time,
+    string $migration_id,
+  ): ?int {
     if ($title === '') {
       return NULL;
     }
@@ -547,7 +601,7 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
     foreach ($nids as $nid) {
       $nid = (int) $nid;
 
-      if ($this->isProtectedNode($nid, 'spotdeals_deals')) {
+      if ($this->isProtectedNode($nid, $migration_id)) {
         return $nid;
       }
     }
@@ -577,7 +631,14 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
       return (int) reset($nids);
     }
 
-    return $this->findExistingProtectedVenueNode($title);
+    foreach (['spotdeals_venues', 'spotdeals_non_food_venues'] as $migration_id) {
+      $nid = $this->findExistingProtectedVenueNode($title, '', '', '', '', $migration_id);
+      if ($nid) {
+        return $nid;
+      }
+    }
+
+    return NULL;
   }
 
   /**

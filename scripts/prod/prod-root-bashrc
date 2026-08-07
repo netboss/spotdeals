@@ -88,7 +88,9 @@ alias drush='/var/www/spotdeals/vendor/bin/drush'
 
 # SpotDeals production scripts managed in Git.
 alias append-prod='/var/www/spotdeals/scripts/prod/append-prod.sh'
+alias append-non-food-prod='/var/www/spotdeals/scripts/prod/append-non-food-prod.sh'
 alias migrate-prod='/var/www/spotdeals/scripts/prod/migrate-prod.sh'
+alias migrate-non-food-prod='/var/www/spotdeals/scripts/prod/migrate-non-food-prod.sh'
 alias reindex-prod='/var/www/spotdeals/scripts/prod/reindex.sh'
 alias translate-prod='/var/www/spotdeals/scripts/prod/translate-prod.sh'
 alias translate-prod-purge='/var/www/spotdeals/scripts/prod/translate-prod-purge.sh'
