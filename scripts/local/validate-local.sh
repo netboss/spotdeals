@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(dirname "$0")/../.."
+APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-php scripts/spotdeals_csv_validate.php --dataset=food --strict-format
+exec "$APP_ROOT/scripts/local/validate-csv-local.sh"
