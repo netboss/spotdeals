@@ -3,48 +3,71 @@
 declare(strict_types=1);
 
 use Drupal\Core\Database\Connection;
-use Drupal\migrate\MigrateExecutable;
-use Drupal\migrate\MigrateMessage;
-use Drupal\migrate\Plugin\MigrationInterface;
 use Drupal\node\NodeInterface;
 
 /**
- * SpotDeals append-only CSV migration runner.
+ * SpotDeals append-only CSV preparation/restoration helper.
  *
- * Reads the canonical venues.csv/deals.csv files, creates temporary append-only
- * CSV files with only rows missing from the migrate map tables, temporarily
- * points the existing migrations to those append files, imports them using the
- * real migration mappings, then restores the original migration config.
+ * This script deliberately does NOT execute migrations. It prepares append-only
+ * CSV files, temporarily points the configured migrations at those files, and
+ * records the original source paths. The calling shell script then runs normal
+ * `drush migrate:import` commands in fresh PHP processes and finally calls this
+ * helper again with --action=restore.
  */
 
-$dataset = spotdeals_append_parse_dataset($argv ?? []);
+$arguments = isset($extra) && is_array($extra) ? $extra : ($argv ?? []);
+$dataset = spotdeals_append_parse_dataset($arguments);
+$action = spotdeals_append_parse_action($arguments);
 
 if ($dataset === 'non-food') {
   $venues_migration = 'spotdeals_non_food_venues';
   $deals_migration = 'spotdeals_non_food_deals';
   $relative_data_dir = 'non_food';
+  $canonical_venues_path = 'modules/custom/spotdeals_import/data/non_food/venues.csv';
+  $canonical_deals_path = 'modules/custom/spotdeals_import/data/non_food/deals.csv';
 }
 else {
   $venues_migration = 'spotdeals_venues';
   $deals_migration = 'spotdeals_deals';
   $relative_data_dir = '';
+  $canonical_venues_path = 'modules/custom/spotdeals_import/data/venues.csv';
+  $canonical_deals_path = 'modules/custom/spotdeals_import/data/deals.csv';
 }
 
 $root = dirname(__DIR__);
 $module_data_dir = spotdeals_append_find_data_dir($root, $relative_data_dir);
 $append_dir = $module_data_dir . '/.append';
+$plan_file = $append_dir . '/append-plan.json';
+$venues_ready_file = $append_dir . '/venues.ready';
+$deals_ready_file = $append_dir . '/deals.ready';
 
 if (!is_dir($append_dir) && !mkdir($append_dir, 0775, TRUE) && !is_dir($append_dir)) {
   throw new RuntimeException("Unable to create append directory: {$append_dir}");
 }
 
+if ($action === 'restore') {
+  spotdeals_append_restore_migration_source_paths(
+    $plan_file,
+    $venues_ready_file,
+    $deals_ready_file
+  );
+  return;
+}
+
 $venues_csv = $module_data_dir . '/venues.csv';
 $deals_csv = $module_data_dir . '/deals.csv';
-
 $venues_append_csv = $append_dir . '/venues.append.csv';
 $deals_append_csv = $append_dir . '/deals.append.csv';
 
-print "SpotDeals append-only CSV import ({$dataset})\n";
+@unlink($venues_ready_file);
+@unlink($deals_ready_file);
+@unlink($plan_file);
+
+// Recover from any previously interrupted append run before preparing a new one.
+spotdeals_append_set_migration_source_path($venues_migration, $canonical_venues_path);
+spotdeals_append_set_migration_source_path($deals_migration, $canonical_deals_path);
+
+print "SpotDeals append-only CSV preparation ({$dataset})\n";
 print "================================\n";
 print "Data directory: {$module_data_dir}\n\n";
 
@@ -60,50 +83,56 @@ print "Deals total rows: {$deals_result['total']}\n";
 print "Deals append rows: {$deals_result['append']}\n";
 print "Deals skipped existing: {$deals_result['skipped']}\n\n";
 
-if ($venues_result['append'] === 0 && $deals_result['append'] === 0) {
-  print "No new venue/deal rows found. Nothing to import.\n\n";
-  spotdeals_append_reindex_and_clear_cache();
-  print "\nDone.\n";
-  return;
+$plan = [
+  'dataset' => $dataset,
+  'migrations' => [],
+];
+
+if ($venues_result['append'] > 0) {
+  $plan['migrations'][$venues_migration] = $canonical_venues_path;
 }
 
-$original_paths = [];
+if ($deals_result['append'] > 0) {
+  $plan['migrations'][$deals_migration] = $canonical_deals_path;
+}
+
+spotdeals_append_write_plan($plan_file, $plan);
 
 try {
   if ($venues_result['append'] > 0) {
-    $original_paths[$venues_migration] = spotdeals_append_set_migration_source_path(
-      $venues_migration,
-      $relative_data_dir === ''
-        ? 'modules/custom/spotdeals_import/data/.append/venues.append.csv'
-        : 'modules/custom/spotdeals_import/data/non_food/.append/venues.append.csv'
-    );
+    $venues_append_path = $relative_data_dir === ''
+      ? 'modules/custom/spotdeals_import/data/.append/venues.append.csv'
+      : 'modules/custom/spotdeals_import/data/non_food/.append/venues.append.csv';
 
-    spotdeals_append_run_migration($venues_migration);
+    spotdeals_append_set_migration_source_path($venues_migration, $venues_append_path);
+    spotdeals_append_touch_ready_file($venues_ready_file);
   }
 
   if ($deals_result['append'] > 0) {
-    $original_paths[$deals_migration] = spotdeals_append_set_migration_source_path(
-      $deals_migration,
-      $relative_data_dir === ''
-        ? 'modules/custom/spotdeals_import/data/.append/deals.append.csv'
-        : 'modules/custom/spotdeals_import/data/non_food/.append/deals.append.csv'
-    );
+    $deals_append_path = $relative_data_dir === ''
+      ? 'modules/custom/spotdeals_import/data/.append/deals.append.csv'
+      : 'modules/custom/spotdeals_import/data/non_food/.append/deals.append.csv';
 
-    spotdeals_append_run_migration($deals_migration);
+    spotdeals_append_set_migration_source_path($deals_migration, $deals_append_path);
+    spotdeals_append_touch_ready_file($deals_ready_file);
   }
 }
-finally {
-  foreach ($original_paths as $migration_id => $original_path) {
-    spotdeals_append_set_migration_source_path($migration_id, $original_path);
-  }
-
-  spotdeals_append_clear_migration_plugin_cache();
+catch (Throwable $e) {
+  spotdeals_append_restore_migration_source_paths(
+    $plan_file,
+    $venues_ready_file,
+    $deals_ready_file
+  );
+  throw $e;
 }
 
-spotdeals_append_reindex_and_clear_cache();
-
-print "\nDone.\n";
-
+if ($venues_result['append'] === 0 && $deals_result['append'] === 0) {
+  print "No new venue/deal rows found. Nothing to import.\n";
+}
+else {
+  print "Append CSV preparation complete.\n";
+  print "Run the ready migrations in separate Drush processes, then restore the source paths.\n";
+}
 
 /**
  * Parses the requested dataset.
@@ -120,6 +149,23 @@ function spotdeals_append_parse_dataset(array $arguments): string {
   }
 
   return 'food';
+}
+
+/**
+ * Parses the requested helper action.
+ */
+function spotdeals_append_parse_action(array $arguments): string {
+  foreach ($arguments as $argument) {
+    if ($argument === '--restore' || $argument === '--action=restore') {
+      return 'restore';
+    }
+
+    if ($argument === '--prepare' || $argument === '--action=prepare') {
+      return 'prepare';
+    }
+  }
+
+  return 'prepare';
 }
 
 /**
@@ -439,9 +485,28 @@ function spotdeals_append_find_venue_nid_by_title(string $title): ?int {
 }
 
 /**
- * Temporarily changes a migration source path.
+ * Gets the configured migration source path.
  */
-function spotdeals_append_set_migration_source_path(string $migration_id, string $path): string {
+function spotdeals_append_get_migration_source_path(string $migration_id): string {
+  $config_name = 'migrate_plus.migration.' . $migration_id;
+  $source = \Drupal::config($config_name)->get('source') ?? [];
+
+  if (!is_array($source)) {
+    throw new RuntimeException("Migration {$migration_id} has invalid source config.");
+  }
+
+  $path = (string) ($source['path'] ?? '');
+  if ($path === '') {
+    throw new RuntimeException("Migration {$migration_id} does not have a source.path value.");
+  }
+
+  return $path;
+}
+
+/**
+ * Changes a migration source path.
+ */
+function spotdeals_append_set_migration_source_path(string $migration_id, string $path): void {
   $config_name = 'migrate_plus.migration.' . $migration_id;
   $config = \Drupal::configFactory()->getEditable($config_name);
   $source = $config->get('source') ?? [];
@@ -450,10 +515,9 @@ function spotdeals_append_set_migration_source_path(string $migration_id, string
     throw new RuntimeException("Migration {$migration_id} has invalid source config.");
   }
 
-  $original_path = (string) ($source['path'] ?? '');
-
-  if ($original_path === '') {
-    throw new RuntimeException("Migration {$migration_id} does not have a source.path value.");
+  if (($source['path'] ?? NULL) === $path) {
+    print "Migration {$migration_id} source path already set to {$path}\n";
+    return;
   }
 
   $source['path'] = $path;
@@ -463,36 +527,70 @@ function spotdeals_append_set_migration_source_path(string $migration_id, string
   spotdeals_append_clear_migration_plugin_cache();
 
   print "Set {$migration_id} source path to {$path}\n";
-
-  return $original_path;
 }
 
 /**
- * Runs a migration import through Drupal Migrate using the active config.
+ * Writes the source-path restoration plan.
  */
-function spotdeals_append_run_migration(string $migration_id): void {
-  $migration = \Drupal::service('plugin.manager.migration')->createInstance($migration_id);
-
-  if (!$migration instanceof MigrationInterface) {
-    throw new RuntimeException("Unable to load migration: {$migration_id}");
+function spotdeals_append_write_plan(string $plan_file, array $plan): void {
+  $json = json_encode($plan, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+  if ($json === FALSE) {
+    throw new RuntimeException('Unable to encode append restoration plan.');
   }
 
-  if ($migration->getStatus() !== MigrationInterface::STATUS_IDLE) {
-    print "Resetting {$migration_id} status to Idle.\n";
-    $migration->setStatus(MigrationInterface::STATUS_IDLE);
+  if (file_put_contents($plan_file, $json . PHP_EOL, LOCK_EX) === FALSE) {
+    throw new RuntimeException("Unable to write append restoration plan: {$plan_file}");
+  }
+}
+
+/**
+ * Creates a ready marker used by the shell wrapper.
+ */
+function spotdeals_append_touch_ready_file(string $ready_file): void {
+  if (file_put_contents($ready_file, "ready\n", LOCK_EX) === FALSE) {
+    throw new RuntimeException("Unable to write append ready marker: {$ready_file}");
+  }
+}
+
+/**
+ * Restores migration source paths and removes temporary control files.
+ */
+function spotdeals_append_restore_migration_source_paths(
+  string $plan_file,
+  string $venues_ready_file,
+  string $deals_ready_file
+): void {
+  if (!is_readable($plan_file)) {
+    @unlink($venues_ready_file);
+    @unlink($deals_ready_file);
+    print "No append restoration plan found. Nothing to restore.\n";
+    return;
   }
 
-  print "\nImporting {$migration_id} append rows...\n";
-
-  $executable = new MigrateExecutable($migration, new MigrateMessage());
-  $result = $executable->import();
-
-  if ($result !== MigrationInterface::RESULT_COMPLETED) {
-    print "Migration {$migration_id} finished with result code {$result}.\n";
+  $contents = file_get_contents($plan_file);
+  if ($contents === FALSE) {
+    throw new RuntimeException("Unable to read append restoration plan: {$plan_file}");
   }
-  else {
-    print "Migration {$migration_id} completed.\n";
+
+  $plan = json_decode($contents, TRUE);
+  if (!is_array($plan) || !isset($plan['migrations']) || !is_array($plan['migrations'])) {
+    throw new RuntimeException("Invalid append restoration plan: {$plan_file}");
   }
+
+  foreach ($plan['migrations'] as $migration_id => $original_path) {
+    if (!is_string($migration_id) || !is_string($original_path) || $original_path === '') {
+      continue;
+    }
+
+    spotdeals_append_set_migration_source_path($migration_id, $original_path);
+  }
+
+  @unlink($venues_ready_file);
+  @unlink($deals_ready_file);
+  @unlink($plan_file);
+
+  spotdeals_append_clear_migration_plugin_cache();
+  print "Migration source paths restored.\n";
 }
 
 /**
@@ -504,35 +602,6 @@ function spotdeals_append_clear_migration_plugin_cache(): void {
   if (method_exists($manager, 'clearCachedDefinitions')) {
     $manager->clearCachedDefinitions();
   }
-}
-
-/**
- * Reindexes Search API and rebuilds Drupal caches.
- */
-function spotdeals_append_reindex_and_clear_cache(): void {
-  print "\nReindexing deals_solr...\n";
-
-  try {
-    $index = \Drupal::entityTypeManager()
-      ->getStorage('search_api_index')
-      ->load('deals_solr');
-
-    if ($index && method_exists($index, 'indexItems')) {
-      $indexed = $index->indexItems();
-      $indexed_count = is_array($indexed) ? count($indexed) : 0;
-      print "Search API index triggered. Items processed now: {$indexed_count}\n";
-    }
-    else {
-      print "Search API index deals_solr not found; skipping.\n";
-    }
-  }
-  catch (Throwable $e) {
-    print "Search API reindex skipped: {$e->getMessage()}\n";
-  }
-
-  print "Rebuilding cache...\n";
-  drupal_flush_all_caches();
-  print "Cache rebuilt.\n";
 }
 
 /**
