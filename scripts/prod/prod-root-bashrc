@@ -92,6 +92,7 @@ alias append-non-food-prod='/var/www/spotdeals/scripts/prod/append-non-food-prod
 alias migrate-prod='/var/www/spotdeals/scripts/prod/migrate-prod.sh'
 alias migrate-non-food-prod='/var/www/spotdeals/scripts/prod/migrate-non-food-prod.sh'
 alias reindex-prod='/var/www/spotdeals/scripts/prod/reindex.sh'
+alias validate-csv-prod='/var/www/spotdeals/scripts/prod/validate-csv-prod.sh'
 alias translate-prod='/var/www/spotdeals/scripts/prod/translate-prod.sh'
 alias translate-prod-purge='/var/www/spotdeals/scripts/prod/translate-prod-purge.sh'
 alias update-url-alias='/var/www/spotdeals/scripts/prod/update-url-alias.sh'
