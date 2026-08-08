@@ -1,0 +1,9 @@
+name: SpotDeals Yelp
+type: module
+description: 'Yelp venue matching, sync, and display helpers for SpotDeals.'
+package: SpotDeals
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - drupal:link
+  - drupal:datetime

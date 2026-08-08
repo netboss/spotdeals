@@ -1,0 +1,23 @@
+uuid: 2dc5384c-2bc1-4e1f-bd19-d82dc990112f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_yelp_rating
+    - node.type.venue
+id: node.venue.field_yelp_rating
+field_name: field_yelp_rating
+entity_type: node
+bundle: venue
+label: 'Yelp rating'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: decimal

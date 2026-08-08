@@ -1,0 +1,36 @@
+services:
+  logger.channel.spotdeals_yelp:
+    parent: logger.channel_base
+    arguments: ['spotdeals_yelp']
+
+  spotdeals_yelp.api_client:
+    class: Drupal\spotdeals_yelp\Service\YelpApiClient
+    arguments:
+      - '@http_client'
+      - '@config.factory'
+      - '@logger.channel.spotdeals_yelp'
+      - '@datetime.time'
+
+  spotdeals_yelp.venue_matcher:
+    class: Drupal\spotdeals_yelp\Service\YelpVenueMatcher
+    arguments:
+      - '@spotdeals_yelp.api_client'
+      - '@logger.channel.spotdeals_yelp'
+
+  spotdeals_yelp.venue_sync_manager:
+    class: Drupal\spotdeals_yelp\Service\YelpVenueSyncManager
+    arguments:
+      - '@entity_type.manager'
+      - '@cache.default'
+      - '@queue'
+      - '@spotdeals_yelp.api_client'
+      - '@spotdeals_yelp.venue_matcher'
+      - '@config.factory'
+      - '@logger.channel.spotdeals_yelp'
+      - '@datetime.time'
+
+  spotdeals_yelp.display_builder:
+    class: Drupal\spotdeals_yelp\Service\YelpDisplayBuilder
+    arguments:
+      - '@cache.default'
+      - '@config.factory'
