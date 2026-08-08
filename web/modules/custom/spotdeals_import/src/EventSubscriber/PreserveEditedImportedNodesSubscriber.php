@@ -266,13 +266,14 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
    * Checks whether a destination node was manually edited after creation.
    */
   private function isEditedProtectedNode(int $nid, string $migration_id): bool {
-    $node = $this->loadProtectedNode($nid, $migration_id);
+    $query = $this->database->select('node_field_data', 'n');
+    $query->addField('n', 'nid');
+    $query->condition('n.nid', $nid);
+    $query->condition('n.type', self::PROTECTED_MIGRATIONS[$migration_id]);
+    $query->where('n.changed <> n.created');
+    $query->range(0, 1);
 
-    if (!$node) {
-      return FALSE;
-    }
-
-    return (int) $node->getChangedTime() !== (int) $node->getCreatedTime();
+    return (bool) $query->execute()->fetchField();
   }
 
   /**
@@ -500,12 +501,27 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
       return NULL;
     }
 
-    $query = $this->entityTypeManager
-      ->getStorage('node')
+    $storage = $this->entityTypeManager->getStorage('node');
+    $query = $storage
       ->getQuery()
       ->accessCheck(FALSE)
       ->condition('type', 'venue')
       ->sort('nid', 'ASC');
+
+    // Keep the canonical fallback bounded to the source location whenever
+    // possible. The previous implementation loaded every venue entity for
+    // every unmatched source row, which caused Drupal's entity static cache
+    // to grow until long-running migrations exhausted PHP memory.
+    if ($zip !== '') {
+      $query->condition('field_address.postal_code', $zip);
+    }
+    elseif ($city !== '') {
+      $query->condition('field_address.locality', $city);
+
+      if ($state !== '') {
+        $query->condition('field_address.administrative_area', $state);
+      }
+    }
 
     $nids = $query->execute();
     if (empty($nids)) {
@@ -514,15 +530,19 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
 
     $best_nid = NULL;
     $best_score = 0;
-    $nodes = $this->entityTypeManager->getStorage('node')->loadMultiple($nids);
 
-    foreach ($nodes as $node) {
-      if (!$node instanceof NodeInterface) {
+    foreach ($nids as $nid) {
+      $nid = (int) $nid;
+
+      // Check protection using lightweight database queries before loading
+      // the entity. In normal append imports almost all candidates are not
+      // protected, so they never enter the entity static cache.
+      if (!$this->isProtectedNode($nid, $migration_id)) {
         continue;
       }
 
-      $nid = (int) $node->id();
-      if (!$this->isProtectedNode($nid, $migration_id)) {
+      $node = $this->loadProtectedNode($nid, $migration_id);
+      if (!$node) {
         continue;
       }
 
@@ -530,35 +550,40 @@ final class PreserveEditedImportedNodesSubscriber implements EventSubscriberInte
       $node_city = $node_address['city'];
       $node_brand_key = $this->normalizeVenueBrandKey($node->label(), $node_city);
 
-      if ($node_brand_key !== $source_brand_key) {
-        continue;
-      }
+      if ($node_brand_key === $source_brand_key) {
+        $score = 10;
 
-      $score = 10;
-      if ($source_city_key !== '' && $this->normalizeStrictKey($node_city) === $source_city_key) {
-        $score += 20;
-      }
-      elseif ($source_city_key !== '') {
-        continue;
-      }
+        if ($source_city_key !== '' && $this->normalizeStrictKey($node_city) === $source_city_key) {
+          $score += 20;
+        }
+        elseif ($source_city_key !== '') {
+          $storage->resetCache([$nid]);
+          continue;
+        }
 
-      if ($source_address_key !== '') {
-        $node_address_key = $this->normalizeAddressKey(
-          $node_address['address'],
-          $node_address['city'],
-          $node_address['state'],
-          $node_address['zip']
-        );
+        if ($source_address_key !== '') {
+          $node_address_key = $this->normalizeAddressKey(
+            $node_address['address'],
+            $node_address['city'],
+            $node_address['state'],
+            $node_address['zip']
+          );
 
-        if ($node_address_key === $source_address_key) {
-          $score += 50;
+          if ($node_address_key === $source_address_key) {
+            $score += 50;
+          }
+        }
+
+        if ($score > $best_score) {
+          $best_score = $score;
+          $best_nid = $nid;
         }
       }
 
-      if ($score > $best_score) {
-        $best_score = $score;
-        $best_nid = $nid;
-      }
+      // This lookup only needs the current values during this iteration.
+      // Releasing the entity prevents protected candidates from accumulating
+      // in the static cache during a long migration process.
+      $storage->resetCache([$nid]);
     }
 
     return $best_nid;
