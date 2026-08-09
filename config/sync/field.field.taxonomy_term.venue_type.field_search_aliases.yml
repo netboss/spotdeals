@@ -10,7 +10,7 @@ field_name: field_search_aliases
 entity_type: taxonomy_term
 bundle: venue_type
 label: 'Search aliases'
-description: 'Optional search phrases that should resolve to this venue type, one alias per value.'
+description: 'Optional additional search phrases that should resolve to this venue type, one alias per value. The venue-type label is always matched automatically.'
 required: false
 translatable: true
 default_value: {  }
