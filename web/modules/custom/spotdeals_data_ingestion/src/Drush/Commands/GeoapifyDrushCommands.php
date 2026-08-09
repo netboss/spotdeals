@@ -6,10 +6,12 @@ namespace Drupal\spotdeals_data_ingestion\Drush\Commands;
 
 use Drupal\Core\State\StateInterface;
 use Drupal\node\Entity\Node;
+use Drupal\spotdeals_data_ingestion\Service\GeoapifyCategoryCatalog;
 use Drupal\spotdeals_data_ingestion\Service\GeoapifyClient;
 use Drupal\spotdeals_data_ingestion\Service\SpanishNodeTranslationCreator;
 use Drupal\spotdeals_data_ingestion\Service\VenueCandidateValidator;
 use Drupal\spotdeals_data_ingestion\Service\VenueMapper;
+use Drupal\spotdeals_data_ingestion\Service\VenueTypeMappingManager;
 use Drush\Attributes as CLI;
 use Drush\Commands\AutowireTrait;
 use Drush\Commands\DrushCommands;
@@ -23,6 +25,8 @@ final class GeoapifyDrushCommands extends DrushCommands {
 
   public function __construct(
     private readonly GeoapifyClient $geoapifyClient,
+    private readonly GeoapifyCategoryCatalog $geoapifyCategoryCatalog,
+    private readonly VenueTypeMappingManager $venueTypeMappingManager,
     private readonly VenueMapper $venueMapper,
     private readonly VenueCandidateValidator $candidateValidator,
     private readonly SpanishNodeTranslationCreator $spanishTranslationCreator,
@@ -376,6 +380,150 @@ final class GeoapifyDrushCommands extends DrushCommands {
     }
 
     $this->io()->success(sprintf('%d venue node(s) created.', $statistics['created']));
+    return 0;
+  }
+
+
+  /**
+   * Audits automatic Geoapify mappings for every SpotDeals venue type.
+   */
+  #[CLI\Command(
+    name: 'spotdeals:geoapify-mappings:audit',
+    aliases: ['sd:geoapify-mappings:audit'],
+  )]
+  #[CLI\Option(
+    name: 'refresh-catalog',
+    description: 'Refresh the provider category catalog before auditing.',
+  )]
+  public function auditMappings(
+    array $options = [
+      'refresh-catalog' => FALSE,
+    ],
+  ): int {
+    $refresh = (bool) $options['refresh-catalog'];
+
+    try {
+      $rows = $this->venueTypeMappingManager->audit($refresh);
+      $metadata = $this->geoapifyCategoryCatalog->metadata();
+    }
+    catch (\Throwable $exception) {
+      $this->io()->error($exception->getMessage());
+      return 1;
+    }
+
+    $this->io()->title('SpotDeals Geoapify Venue-Type Mapping Audit');
+    $this->io()->definitionList(
+      ['Catalog source' => $metadata['source_url'] !== '' ? $metadata['source_url'] : 'Not cached'],
+      ['Catalog categories' => (string) $metadata['count']],
+      ['Catalog fetched' => $metadata['fetched_at'] > 0 ? date(DATE_ATOM, $metadata['fetched_at']) : 'Never'],
+      ['Catalog stale' => $metadata['stale'] ? 'Yes' : 'No'],
+    );
+
+    $tableRows = [];
+    $counts = [];
+    foreach ($rows as $row) {
+      $counts[$row['status']] = ($counts[$row['status']] ?? 0) + 1;
+      $tableRows[] = [
+        (string) $row['tid'],
+        $row['name'],
+        $row['status'],
+        $row['manual_categories'] !== [] ? implode(', ', $row['manual_categories']) : '—',
+        $row['automatic_categories'] !== [] ? implode(', ', $row['automatic_categories']) : '—',
+        $row['suggested_categories'] !== [] ? implode(', ', $row['suggested_categories']) : '—',
+        number_format($row['score'], 4),
+      ];
+    }
+
+    $this->io()->table(
+      ['TID', 'Venue type', 'Status', 'Manual override', 'Automatic', 'Current suggestion', 'Score'],
+      $tableRows,
+    );
+
+    ksort($counts);
+    $summaryRows = [];
+    foreach ($counts as $status => $count) {
+      $summaryRows[] = [$status, (string) $count];
+    }
+
+    $this->io()->section('Summary');
+    $this->io()->table(['Status', 'Count'], $summaryRows);
+
+    return 0;
+  }
+
+  /**
+   * Synchronizes high-confidence Geoapify mappings for all venue types.
+   */
+  #[CLI\Command(
+    name: 'spotdeals:geoapify-mappings:sync',
+    aliases: ['sd:geoapify-mappings:sync'],
+  )]
+  #[CLI\Option(
+    name: 'refresh-catalog',
+    description: 'Refresh the provider category catalog before synchronizing.',
+  )]
+  public function syncMappings(
+    array $options = [
+      'refresh-catalog' => FALSE,
+    ],
+  ): int {
+    $refresh = (bool) $options['refresh-catalog'];
+
+    try {
+      $rows = $this->venueTypeMappingManager->syncAll($refresh);
+      $metadata = $this->geoapifyCategoryCatalog->metadata();
+    }
+    catch (\Throwable $exception) {
+      $this->io()->error($exception->getMessage());
+      return 1;
+    }
+
+    $this->io()->title('SpotDeals Geoapify Venue-Type Mapping Sync');
+    $this->io()->definitionList(
+      ['Catalog source' => $metadata['source_url'] !== '' ? $metadata['source_url'] : 'Not cached'],
+      ['Catalog categories' => (string) $metadata['count']],
+      ['Catalog fetched' => $metadata['fetched_at'] > 0 ? date(DATE_ATOM, $metadata['fetched_at']) : 'Never'],
+    );
+
+    $tableRows = [];
+    $counts = [];
+    $changed = 0;
+
+    foreach ($rows as $row) {
+      $counts[$row['status']] = ($counts[$row['status']] ?? 0) + 1;
+      if ($row['changed']) {
+        $changed++;
+      }
+
+      $tableRows[] = [
+        (string) $row['tid'],
+        $row['name'],
+        $row['status'],
+        $row['automatic_categories'] !== [] ? implode(', ', $row['automatic_categories']) : '—',
+        $row['manual_categories'] !== [] ? implode(', ', $row['manual_categories']) : '—',
+        number_format($row['score'], 4),
+        $row['changed'] ? 'Yes' : 'No',
+      ];
+    }
+
+    $this->io()->table(
+      ['TID', 'Venue type', 'Status', 'Automatic mapping', 'Manual override', 'Score', 'Changed'],
+      $tableRows,
+    );
+
+    ksort($counts);
+    $summaryRows = [['Terms changed', (string) $changed]];
+    foreach ($counts as $status => $count) {
+      $summaryRows[] = [$status, (string) $count];
+    }
+
+    $this->io()->section('Summary');
+    $this->io()->table(['Metric', 'Count'], $summaryRows);
+
+    $this->io()->success(
+      'High-confidence automatic mappings are synchronized. Manual overrides were preserved.',
+    );
+
     return 0;
   }
 

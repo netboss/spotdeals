@@ -1,22 +1,8 @@
 (function (Drupal, drupalSettings, once) {
   'use strict';
 
-  const CATEGORY_RULES = [
-    { pattern: /\b(coffee|cafe|caf[eé]|espresso|latte|starbucks)\b/i, category: 'catering.cafe' },
-    { pattern: /\b(bar|pub|cocktail|beer|brewery|wine)\b/i, category: 'catering.bar' },
-    { pattern: /\b(fast food|burger|pizza|sandwich|taco)\b/i, category: 'catering.fast_food' }
-  ];
-
   function text(value) {
     return value === null || value === undefined ? '' : String(value);
-  }
-
-  function categoryForQuery(query) {
-    const match = CATEGORY_RULES.find(function (rule) {
-      return rule.pattern.test(query || '');
-    });
-
-    return match ? match.category : 'catering.restaurant';
   }
 
   function element(tag, className, content) {
@@ -435,7 +421,7 @@
     status.textContent = Drupal.t('Finding nearby venues…');
 
     const url = new URL(settings.endpoint, window.location.origin);
-    url.searchParams.set('category', categoryForQuery(settings.query));
+    url.searchParams.set('query', text(settings.query));
     url.searchParams.set('lat', String(origin.lat));
     url.searchParams.set('lon', String(origin.lon));
     url.searchParams.set('radius', String(settings.radius || 5000));

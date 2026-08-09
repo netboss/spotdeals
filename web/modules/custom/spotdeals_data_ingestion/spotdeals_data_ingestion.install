@@ -85,6 +85,7 @@ function spotdeals_data_ingestion_update_10001(): void {
  */
 function spotdeals_data_ingestion_install(): void {
   _spotdeals_data_ingestion_grant_report_permission();
+  _spotdeals_data_ingestion_ensure_venue_type_metadata_fields();
 }
 
 /**
@@ -99,4 +100,147 @@ function _spotdeals_data_ingestion_grant_report_permission(): void {
       $role->save();
     }
   }
+}
+
+
+/**
+ * Adds taxonomy-owned Geoapify mappings and search aliases to venue types.
+ */
+function spotdeals_data_ingestion_update_10002(): void {
+  _spotdeals_data_ingestion_ensure_venue_type_metadata_fields();
+}
+
+/**
+ * Adds automatically managed Geoapify venue-type mappings.
+ */
+function spotdeals_data_ingestion_update_10003(): void {
+  _spotdeals_data_ingestion_ensure_venue_type_metadata_fields();
+
+  $config = \Drupal::configFactory()->getEditable('spotdeals_data_ingestion.settings');
+  $defaults = [
+    'category_catalog_url' => 'https://apidocs.geoapify.com/docs/places/',
+    'category_catalog_max_age' => 604800,
+    'category_catalog_minimum_size' => 100,
+    'mapping_min_score' => 0.90,
+    'mapping_ambiguity_delta' => 0.05,
+  ];
+
+  foreach ($defaults as $key => $value) {
+    if ($config->get($key) === NULL) {
+      $config->set($key, $value);
+    }
+  }
+
+  $config->save();
+}
+
+/**
+ * Ensures provider metadata fields exist on the venue-type vocabulary.
+ */
+function _spotdeals_data_ingestion_ensure_venue_type_metadata_fields(): void {
+  $entityFieldManager = \Drupal::service('entity_field.manager');
+  $definitions = $entityFieldManager->getFieldDefinitions('node', 'venue');
+  $venueTypeField = $definitions['field_venue_type'] ?? NULL;
+  if ($venueTypeField === NULL) {
+    throw new \RuntimeException('The venue content type does not expose field_venue_type.');
+  }
+
+  $settings = $venueTypeField->getSettings();
+  $handlerSettings = is_array($settings['handler_settings'] ?? NULL)
+    ? $settings['handler_settings']
+    : [];
+  $targetBundles = is_array($handlerSettings['target_bundles'] ?? NULL)
+    ? array_filter($handlerSettings['target_bundles'])
+    : [];
+  $vocabularyId = $targetBundles !== [] ? (string) array_key_first($targetBundles) : '';
+
+  if ($vocabularyId === '') {
+    throw new \RuntimeException('Unable to determine the vocabulary used by field_venue_type.');
+  }
+
+  $storageConfigStorage = \Drupal::entityTypeManager()->getStorage('field_storage_config');
+  $fieldConfigStorage = \Drupal::entityTypeManager()->getStorage('field_config');
+
+  $fields = [
+    'field_geoapify_categories' => [
+      'label' => 'Geoapify category overrides',
+      'description' => 'Optional manual overrides, one Geoapify Places API category per value. Leave empty to use the automatically managed mapping.',
+    ],
+    'field_geoapify_auto_categories' => [
+      'label' => 'Geoapify automatic categories',
+      'description' => 'Automatically managed provider categories. These values are synchronized from the current Geoapify category catalog and are not intended for manual editing.',
+    ],
+    'field_search_aliases' => [
+      'label' => 'Search aliases',
+      'description' => 'Optional additional search phrases that should resolve to this venue type, one alias per value. The venue-type label is always matched automatically.',
+    ],
+  ];
+
+  foreach ($fields as $fieldName => $fieldInfo) {
+    $storageId = 'taxonomy_term.' . $fieldName;
+    $fieldStorage = $storageConfigStorage->load($storageId);
+    if ($fieldStorage === NULL) {
+      $fieldStorage = $storageConfigStorage->create([
+        'field_name' => $fieldName,
+        'entity_type' => 'taxonomy_term',
+        'type' => 'string',
+        'cardinality' => -1,
+        'settings' => [
+          'max_length' => 255,
+          'is_ascii' => FALSE,
+          'case_sensitive' => FALSE,
+        ],
+      ]);
+      $fieldStorage->save();
+    }
+
+    $fieldId = 'taxonomy_term.' . $vocabularyId . '.' . $fieldName;
+    $fieldConfig = $fieldConfigStorage->load($fieldId);
+    if ($fieldConfig === NULL) {
+      $fieldConfig = $fieldConfigStorage->create([
+        'field_storage' => $fieldStorage,
+        'bundle' => $vocabularyId,
+        'label' => $fieldInfo['label'],
+        'description' => $fieldInfo['description'],
+        'required' => FALSE,
+      ]);
+    }
+    else {
+      $fieldConfig
+        ->set('label', $fieldInfo['label'])
+        ->set('description', $fieldInfo['description']);
+    }
+    $fieldConfig->save();
+  }
+
+  $formDisplayStorage = \Drupal::entityTypeManager()->getStorage('entity_form_display');
+  $formDisplayId = 'taxonomy_term.' . $vocabularyId . '.default';
+  $formDisplay = $formDisplayStorage->load($formDisplayId);
+  if ($formDisplay === NULL) {
+    $formDisplay = $formDisplayStorage->create([
+      'targetEntityType' => 'taxonomy_term',
+      'bundle' => $vocabularyId,
+      'mode' => 'default',
+      'status' => TRUE,
+    ]);
+  }
+
+  $formDisplay->setComponent('field_geoapify_categories', [
+    'type' => 'string_textfield',
+    'weight' => 20,
+    'settings' => [
+      'size' => 60,
+      'placeholder' => '',
+    ],
+  ]);
+  $formDisplay->setComponent('field_search_aliases', [
+    'type' => 'string_textfield',
+    'weight' => 21,
+    'settings' => [
+      'size' => 60,
+      'placeholder' => '',
+    ],
+  ]);
+  $formDisplay->removeComponent('field_geoapify_auto_categories');
+  $formDisplay->save();
 }

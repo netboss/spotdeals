@@ -36,7 +36,7 @@ final class GeoapifyClient {
    */
   public function searchPlaces(
     string $apiKey,
-    string $category,
+    string $categories,
     ?string $placeId = NULL,
     ?float $latitude = NULL,
     ?float $longitude = NULL,
@@ -44,15 +44,19 @@ final class GeoapifyClient {
     int $limit = 20,
   ): array {
     $apiKey = trim($apiKey);
-    $category = trim($category);
+    $categories = trim($categories);
     $placeId = trim((string) $placeId);
 
     if ($apiKey === '') {
       throw new \InvalidArgumentException('The Geoapify API key is required.');
     }
 
-    if ($category === '') {
-      throw new \InvalidArgumentException('The Geoapify category is required.');
+    if ($categories === '') {
+      throw new \InvalidArgumentException('At least one Geoapify category is required.');
+    }
+
+    if (preg_match('/^[a-z0-9_.,]+$/', $categories) !== 1) {
+      throw new \InvalidArgumentException('Geoapify categories contain invalid characters.');
     }
 
     $hasPlaceFilter = $placeId !== '';
@@ -72,7 +76,7 @@ final class GeoapifyClient {
       : sprintf('circle:%s,%s,%d', $longitude, $latitude, $radius);
 
     $query = [
-      'categories' => $category,
+      'categories' => $categories,
       'filter' => $filter,
       'limit' => $limit,
       'apiKey' => $apiKey,
@@ -93,9 +97,9 @@ final class GeoapifyClient {
     }
     catch (GuzzleException $exception) {
       $this->logger->error(
-        'Geoapify hybrid search failed for category {category}: {message}',
+        'Geoapify hybrid search failed for categories {categories}: {message}',
         [
-          'category' => $category,
+          'categories' => $categories,
           'message' => $exception->getMessage(),
         ],
       );

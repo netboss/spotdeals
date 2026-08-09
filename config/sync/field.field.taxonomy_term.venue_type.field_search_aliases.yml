@@ -1,0 +1,19 @@
+uuid: 81ed533e-79ee-4ec6-8c03-470158113bfc
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_search_aliases
+    - taxonomy.vocabulary.venue_type
+id: taxonomy_term.venue_type.field_search_aliases
+field_name: field_search_aliases
+entity_type: taxonomy_term
+bundle: venue_type
+label: 'Search aliases'
+description: 'Optional search phrases that should resolve to this venue type, one alias per value.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

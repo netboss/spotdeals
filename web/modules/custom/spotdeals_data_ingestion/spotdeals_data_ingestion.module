@@ -1,0 +1,136 @@
+<?php
+
+declare(strict_types=1);
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\taxonomy\TermInterface;
+
+/**
+ * Implements hook_cron().
+ *
+ * Refreshes the provider category catalog when stale and keeps safe automatic
+ * venue-type mappings synchronized. Failures are logged and do not interrupt
+ * the rest of cron.
+ */
+function spotdeals_data_ingestion_cron(): void {
+  try {
+    \Drupal::service('spotdeals_data_ingestion.venue_type_mapping_manager')
+      ->syncAll(FALSE);
+  }
+  catch (\Throwable $exception) {
+    \Drupal::logger('spotdeals_data_ingestion')->warning(
+      'Automatic Geoapify venue-type mapping sync failed during cron: {message}',
+      ['message' => $exception->getMessage()],
+    );
+  }
+}
+
+/**
+ * Implements hook_taxonomy_term_insert().
+ */
+function spotdeals_data_ingestion_taxonomy_term_insert(TermInterface $term): void {
+  _spotdeals_data_ingestion_sync_venue_type_term($term);
+}
+
+/**
+ * Implements hook_taxonomy_term_update().
+ */
+function spotdeals_data_ingestion_taxonomy_term_update(TermInterface $term): void {
+  _spotdeals_data_ingestion_sync_venue_type_term($term);
+}
+
+/**
+ * Synchronizes one venue-type term when a cached provider catalog is present.
+ */
+function _spotdeals_data_ingestion_sync_venue_type_term(TermInterface $term): void {
+  static $syncing = FALSE;
+
+  if ($syncing) {
+    return;
+  }
+
+  try {
+    $resolver = \Drupal::service('spotdeals_data_ingestion.venue_type_resolver');
+    if ($term->bundle() !== $resolver->venueTypeVocabularyId()) {
+      return;
+    }
+
+    $syncing = TRUE;
+    \Drupal::service('spotdeals_data_ingestion.venue_type_mapping_manager')
+      ->syncTerm($term);
+  }
+  catch (\Throwable $exception) {
+    \Drupal::logger('spotdeals_data_ingestion')->warning(
+      'Unable to synchronize automatic Geoapify mapping for venue type "{venue_type}": {message}',
+      [
+        'venue_type' => $term->label(),
+        'message' => $exception->getMessage(),
+      ],
+    );
+  }
+  finally {
+    $syncing = FALSE;
+  }
+}
+
+/**
+ * Implements hook_form_taxonomy_term_form_alter().
+ *
+ * Shows the current automatically managed mapping while keeping that field
+ * out of the editable form. Manual overrides remain available only when the
+ * automatic mapping needs correction.
+ */
+function spotdeals_data_ingestion_form_taxonomy_term_form_alter(
+  array &$form,
+  FormStateInterface $form_state,
+): void {
+  $term = $form_state->getFormObject()->getEntity();
+  if (!$term instanceof TermInterface) {
+    return;
+  }
+
+  try {
+    $resolver = \Drupal::service('spotdeals_data_ingestion.venue_type_resolver');
+    if ($term->bundle() !== $resolver->venueTypeVocabularyId()) {
+      return;
+    }
+  }
+  catch (\Throwable) {
+    return;
+  }
+
+  $automatic = [];
+  if (
+    $term->hasField('field_geoapify_auto_categories')
+    && !$term->get('field_geoapify_auto_categories')->isEmpty()
+  ) {
+    foreach ($term->get('field_geoapify_auto_categories') as $item) {
+      $value = trim((string) $item->value);
+      if ($value !== '') {
+        $automatic[] = $value;
+      }
+    }
+  }
+
+  $form['spotdeals_geoapify_automatic_mapping'] = [
+    '#type' => 'details',
+    '#title' => t('Geoapify automatic mapping'),
+    '#open' => TRUE,
+    '#weight' => 19,
+  ];
+
+  if ($automatic === []) {
+    $form['spotdeals_geoapify_automatic_mapping']['status'] = [
+      '#markup' => '<p>' . t('No high-confidence automatic mapping is currently stored for this venue type. Run the Geoapify mapping sync/audit commands to refresh provider mappings. Use the override field below only when an automatic mapping cannot be resolved safely.') . '</p>',
+    ];
+    return;
+  }
+
+  $form['spotdeals_geoapify_automatic_mapping']['intro'] = [
+    '#markup' => '<p>' . t('Automatically managed from the current Geoapify category catalog. The override field below should normally remain empty.') . '</p>',
+  ];
+  $form['spotdeals_geoapify_automatic_mapping']['categories'] = [
+    '#theme' => 'item_list',
+    '#items' => $automatic,
+  ];
+}

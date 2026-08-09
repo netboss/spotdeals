@@ -9,39 +9,23 @@ namespace Drupal\spotdeals_data_ingestion\Service;
  */
 final class VenueMapper {
 
-  /**
-   * Canonical SpotDeals venue type terms.
-   */
-  private const VENUE_TYPE_MAP = [
-    'catering.restaurant' => [
-      'tid' => 41,
-      'name' => 'Restaurant',
-    ],
-    'catering.bar' => [
-      'tid' => 42,
-      'name' => 'Bar',
-    ],
-    'production.brewery' => [
-      'tid' => 43,
-      'name' => 'Brewery',
-    ],
-    'catering.cafe' => [
-      'tid' => 44,
-      'name' => 'Cafe',
-    ],
-    'commercial.food_and_drink.bakery' => [
-      'tid' => 131,
-      'name' => 'Bakery',
-    ],
-  ];
+  public function __construct(
+    private readonly VenueTypeResolver $venueTypeResolver,
+  ) {}
 
   /**
    * Maps one Geoapify GeoJSON feature.
    *
+   * @param array<string, mixed> $feature
+   *   Geoapify GeoJSON feature.
+   * @param string|array<string, mixed> $intent
+   *   Either a legacy requested Geoapify category string or a resolved search
+   *   intent containing categories and preferred taxonomy term IDs.
+   *
    * @return array<string, mixed>
    *   Normalized venue data and validation information.
    */
-  public function map(array $feature, string $requestedCategory): array {
+  public function map(array $feature, string|array $intent): array {
     $properties = is_array($feature['properties'] ?? NULL)
       ? $feature['properties']
       : [];
@@ -120,8 +104,33 @@ final class VenueMapper {
     ));
 
     $placeId = trim((string) ($properties['place_id'] ?? ''));
+    $sourceCategories = is_array($properties['categories'] ?? NULL)
+      ? array_values(array_filter(array_map('strval', $properties['categories'])))
+      : [];
 
-    $venueType = $this->resolveVenueType($requestedCategory, $properties);
+    $requestedCategories = [];
+    $preferredTermIds = [];
+
+    if (is_string($intent)) {
+      $requestedCategories = array_values(array_filter(array_map(
+        'trim',
+        explode(',', $intent),
+      )));
+    }
+    else {
+      $requestedCategories = is_array($intent['categories'] ?? NULL)
+        ? array_values(array_filter(array_map('strval', $intent['categories'])))
+        : [];
+      $preferredTermIds = is_array($intent['term_ids'] ?? NULL)
+        ? array_values(array_map('intval', $intent['term_ids']))
+        : [];
+    }
+
+    $venueType = $this->venueTypeResolver->resolveVenueType(
+      $sourceCategories,
+      $preferredTermIds,
+      $requestedCategories,
+    );
 
     $errors = [];
 
@@ -148,6 +157,10 @@ final class VenueMapper {
       $errors[] = 'missing_coordinates';
     }
 
+    if ($venueType === NULL) {
+      $errors[] = 'unmapped_venue_type';
+    }
+
     return [
       'valid' => $errors === [],
       'errors' => $errors,
@@ -157,8 +170,8 @@ final class VenueMapper {
       'source_title' => $name,
       'neighborhood' => $neighborhood,
       'street' => $street,
-      'venue_type_tid' => $venueType['tid'],
-      'venue_type_name' => $venueType['name'],
+      'venue_type_tid' => $venueType['tid'] ?? NULL,
+      'venue_type_name' => $venueType['name'] ?? '',
       'address' => [
         'country_code' => $countryCode !== '' ? $countryCode : 'US',
         'administrative_area' => $stateCode,
@@ -176,38 +189,9 @@ final class VenueMapper {
       'phone' => $phone,
       'email' => $email,
       'formatted_address' => trim((string) ($properties['formatted'] ?? '')),
-      'source_categories' => is_array($properties['categories'] ?? NULL)
-        ? $properties['categories']
-        : [],
+      'source_categories' => $sourceCategories,
     ];
   }
-
-  /**
-   * Resolves a Geoapify category to a canonical SpotDeals venue type.
-   *
-   * @return array{tid: int, name: string}
-   */
-  private function resolveVenueType(
-    string $requestedCategory,
-    array $properties,
-  ): array {
-    if (isset(self::VENUE_TYPE_MAP[$requestedCategory])) {
-      return self::VENUE_TYPE_MAP[$requestedCategory];
-    }
-
-    $categories = is_array($properties['categories'] ?? NULL)
-      ? $properties['categories']
-      : [];
-
-    foreach (self::VENUE_TYPE_MAP as $category => $venueType) {
-      if (in_array($category, $categories, TRUE)) {
-        return $venueType;
-      }
-    }
-
-    return self::VENUE_TYPE_MAP['catering.restaurant'];
-  }
-
 
   /**
    * Checks whether a value resembles a usable street address.

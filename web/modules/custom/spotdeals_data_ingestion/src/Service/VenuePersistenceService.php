@@ -91,6 +91,11 @@ final class VenuePersistenceService {
       );
     }
 
+    $venueTypeTid = $venueData['venue_type_tid'] ?? NULL;
+    if (!is_numeric($venueTypeTid) || (int) $venueTypeTid <= 0) {
+      throw new \InvalidArgumentException('Cannot persist venue data without a resolved venue type.');
+    }
+
     $values = [
       'type' => 'venue',
       'title' => (string) ($venueData['title'] ?? ''),
@@ -100,7 +105,7 @@ final class VenuePersistenceService {
       'field_latitude' => $venueData['latitude'] ?? NULL,
       'field_longitude' => $venueData['longitude'] ?? NULL,
       'field_venue_type' => [
-        'target_id' => (int) ($venueData['venue_type_tid'] ?? 41),
+        'target_id' => (int) $venueTypeTid,
       ],
     ];
 

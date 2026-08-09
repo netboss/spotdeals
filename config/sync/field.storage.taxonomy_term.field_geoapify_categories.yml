@@ -1,0 +1,21 @@
+uuid: d0f5cd1c-4930-4ff8-8925-d6e15a2eda77
+langcode: en
+status: true
+dependencies:
+  module:
+    - taxonomy
+id: taxonomy_term.field_geoapify_categories
+field_name: field_geoapify_categories
+entity_type: taxonomy_term
+type: string
+settings:
+  max_length: 255
+  case_sensitive: false
+  is_ascii: false
+module: core
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

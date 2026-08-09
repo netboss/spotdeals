@@ -1,3 +1,8 @@
 page_size: 100
 max_pages: 50
 request_timeout: 30
+category_catalog_url: 'https://apidocs.geoapify.com/docs/places/'
+category_catalog_max_age: 604800
+category_catalog_minimum_size: 100
+mapping_min_score: 0.90
+mapping_ambiguity_delta: 0.05

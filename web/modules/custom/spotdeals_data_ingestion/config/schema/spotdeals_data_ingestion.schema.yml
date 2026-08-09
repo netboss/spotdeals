@@ -11,3 +11,18 @@ spotdeals_data_ingestion.settings:
     request_timeout:
       type: integer
       label: 'Geoapify request timeout'
+    category_catalog_url:
+      type: string
+      label: 'Geoapify category catalog URL'
+    category_catalog_max_age:
+      type: integer
+      label: 'Geoapify category catalog maximum cache age'
+    category_catalog_minimum_size:
+      type: integer
+      label: 'Minimum accepted Geoapify category catalog size'
+    mapping_min_score:
+      type: float
+      label: 'Minimum score for automatic venue-type mappings'
+    mapping_ambiguity_delta:
+      type: float
+      label: 'Minimum score gap required to avoid ambiguous mappings'

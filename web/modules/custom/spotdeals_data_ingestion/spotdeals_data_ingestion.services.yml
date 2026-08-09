@@ -13,7 +13,29 @@ services:
     arguments:
       - '@Drupal\spotdeals_data_ingestion\Service\GeoapifyClient'
 
-  Drupal\spotdeals_data_ingestion\Service\VenueMapper: {}
+  Drupal\spotdeals_data_ingestion\Service\GeoapifyCategoryCatalog:
+    arguments:
+      - '@http_client'
+      - '@config.factory'
+      - '@state'
+      - '@logger.channel.spotdeals_data_ingestion'
+
+  Drupal\spotdeals_data_ingestion\Service\VenueTypeMappingManager:
+    arguments:
+      - '@entity_type.manager'
+      - '@config.factory'
+      - '@Drupal\spotdeals_data_ingestion\Service\GeoapifyCategoryCatalog'
+      - '@Drupal\spotdeals_data_ingestion\Service\VenueTypeResolver'
+      - '@logger.channel.spotdeals_data_ingestion'
+
+  Drupal\spotdeals_data_ingestion\Service\VenueTypeResolver:
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+
+  Drupal\spotdeals_data_ingestion\Service\VenueMapper:
+    arguments:
+      - '@Drupal\spotdeals_data_ingestion\Service\VenueTypeResolver'
 
   Drupal\spotdeals_data_ingestion\Service\SpanishNodeTranslationCreator:
     arguments:
@@ -50,6 +72,15 @@ services:
 
   spotdeals_data_ingestion.geoapify_venue_resolver:
     alias: Drupal\spotdeals_data_ingestion\Service\GeoapifyVenueResolver
+
+  spotdeals_data_ingestion.geoapify_category_catalog:
+    alias: Drupal\spotdeals_data_ingestion\Service\GeoapifyCategoryCatalog
+
+  spotdeals_data_ingestion.venue_type_mapping_manager:
+    alias: Drupal\spotdeals_data_ingestion\Service\VenueTypeMappingManager
+
+  spotdeals_data_ingestion.venue_type_resolver:
+    alias: Drupal\spotdeals_data_ingestion\Service\VenueTypeResolver
 
   spotdeals_data_ingestion.venue_mapper:
     alias: Drupal\spotdeals_data_ingestion\Service\VenueMapper
