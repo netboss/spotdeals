@@ -9,8 +9,8 @@ id: taxonomy_term.venue_type.field_geoapify_categories
 field_name: field_geoapify_categories
 entity_type: taxonomy_term
 bundle: venue_type
-label: 'Geoapify categories'
-description: 'One Geoapify Places API category per value. These mappings drive external nearby-venue search and venue-type normalization.'
+label: 'Geoapify category overrides'
+description: 'Optional manual overrides, one Geoapify Places API category per value. Leave empty to use the automatically managed mapping.'
 required: false
 translatable: true
 default_value: {  }

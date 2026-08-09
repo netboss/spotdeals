@@ -1,0 +1,19 @@
+uuid: f63485bf-d6c3-43c3-a790-1ae4572ae41f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_geoapify_auto_categories
+    - taxonomy.vocabulary.venue_type
+id: taxonomy_term.venue_type.field_geoapify_auto_categories
+field_name: field_geoapify_auto_categories
+entity_type: taxonomy_term
+bundle: venue_type
+label: 'Geoapify automatic categories'
+description: 'Automatically managed provider categories. These values are synchronized from the current Geoapify category catalog and are not intended for manual editing.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string
