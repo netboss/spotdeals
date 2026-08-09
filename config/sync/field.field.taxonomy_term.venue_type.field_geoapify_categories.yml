@@ -1,0 +1,19 @@
+uuid: 28d7e1a7-a728-42ca-b70a-734a15d009db
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.taxonomy_term.field_geoapify_categories
+    - taxonomy.vocabulary.venue_type
+id: taxonomy_term.venue_type.field_geoapify_categories
+field_name: field_geoapify_categories
+entity_type: taxonomy_term
+bundle: venue_type
+label: 'Geoapify categories'
+description: 'One Geoapify Places API category per value. These mappings drive external nearby-venue search and venue-type normalization.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

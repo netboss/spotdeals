@@ -3,6 +3,8 @@ langcode: en
 status: true
 dependencies:
   config:
+    - field.field.taxonomy_term.venue_type.field_geoapify_categories
+    - field.field.taxonomy_term.venue_type.field_search_aliases
     - taxonomy.vocabulary.venue_type
   module:
     - path
@@ -15,6 +17,22 @@ content:
   description:
     type: text_textfield
     weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_geoapify_categories:
+    type: string_textfield
+    weight: 20
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_search_aliases:
+    type: string_textfield
+    weight: 21
     region: content
     settings:
       size: 60
@@ -38,6 +56,11 @@ content:
   path:
     type: path
     weight: 30
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  simple_sitemap:
+    weight: 10
     region: content
     settings: {  }
     third_party_settings: {  }
