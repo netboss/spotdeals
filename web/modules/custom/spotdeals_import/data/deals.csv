@@ -236,7 +236,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "NY Pizza Slice Combo","$6 slice + drink",Daily,Lunch,Combo,"Eddie & Sam's NY Pizza Tampa - Tampa",1.0,1,,,
 "Sushi Lunch","$13 sushi plates",Weekdays,11am–3pm,"Lunch Special","Noble Rice Tampa - Tampa",1.0,1,,,
 "Brunch Menu","$18 brunch plates",Weekends,Morning,"Brunch Special","Oxford Exchange Tampa - Tampa",1.0,1,,,
-"Comfort Lunch","$12 lunch specials",Daily,Lunch,"Lunch Special","Datz Tampa - Tampa",1.0,1,,,
 "Build Your Taco Combo","$10 tacos + drink",Daily,Lunch,Combo,"Taco Dirty Tampa - Tampa",1.0,1,,,
 "Taco Deal","$3 tacos",Daily,"Happy Hour","Daily Special","Bartaco Tampa - Tampa",1.0,1,,,
 "Coffee & Breakfast","$6 combo",Daily,Morning,"Breakfast Special","Buddy Brew Coffee Tampa - Tampa",1.0,1,,,
@@ -772,7 +771,6 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "The Chateau Anna Maria Early Dinner Special","Early dinner food special",Monday-Friday,"4:00 PM","Dinner Special","The Chateau Anna Maria - Holmes Beach",1.0,1,"6:00 PM",,
 "Beach Bistro Early Dinner Special","Early dinner food special",Monday-Friday,"4:00 PM","Dinner Special","Beach Bistro - Holmes Beach",1.0,1,"6:00 PM",,
 "Mean Deans Local Kitchen Early Dinner Special","Early dinner food special",Monday-Friday,"4:00 PM","Dinner Special","Mean Deans Local Kitchen - Bradenton",1.0,1,"6:00 PM",,
-"Datz Lunch Special","Weekday lunch special",Monday-Friday,"11:00 AM","Lunch Special","Datz - Tampa",1.0,1,"3:00 PM",,
 "Ella's Americana Folk Art Cafe Early Dinner Special","Early dinner food special",Monday-Friday,"4:00 PM","Dinner Special","Ella's Americana Folk Art Cafe - Tampa",1.0,1,"6:00 PM",,
 "Goody Goody Burgers Early Dinner Special","Early dinner food special",Monday-Friday,"4:00 PM","Dinner Special","Goody Goody Burgers - Tampa",1.0,1,"6:00 PM",,
 "Tampa Bay Brewing Company - Westchase Early Dinner Special","Early dinner food special",Monday-Friday,"4:00 PM","Dinner Special","Tampa Bay Brewing Company - Westchase - Tampa",1.0,1,"6:00 PM",,
@@ -4201,3 +4199,4 @@ title,field_price_offer_text,field_day_of_week,field_start_time,field_deal_categ
 "Thirsty Thursdays","Happy hour all night at Parkville Market bars","Thursday","3:00 PM","Happy Hour","Parkville Market - Hartford","1","1","10:00 PM","","","","",""
 "Monday-Thursday Happy Hour","Happy hour with $4 domestic beer, $5 imported bottles, $7 cocktails and wines, $1.25 clams and $1.75 Blue Point oysters","Monday,Tuesday,Wednesday,Thursday","3:00 PM","Happy Hour","Cast Iron Chef Chop House & Oyster Bar - New Haven","1","1","8:00 PM","","","","",""
 "Friday Happy Hour","Friday happy hour with discounted beer, cocktails, wine, oysters, shellfish and bar bites","Friday","3:00 PM","Happy Hour","Cast Iron Chef Chop House & Oyster Bar - New Haven","1","1","7:00 PM","","","","",""
+"Datz Lunch Special","Weekday lunch special",Monday-Friday,"11:00 AM","Lunch Special","Datz - Tampa",1.0,1,"3:00 PM",,
