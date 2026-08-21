@@ -3,7 +3,186 @@
 declare(strict_types=1);
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\node\NodeInterface;
 use Drupal\taxonomy\TermInterface;
+
+/**
+ * Implements hook_pathauto_alias_alter().
+ *
+ * New venue aliases use a clean URL that removes one trailing copy of the city
+ * from the title slug.
+ *
+ * Existing aliases deliberately retain whichever URL style they already use.
+ * This prevents routine update/bulk-update operations from migrating previously
+ * indexed venue URLs while allowing newly created venues and newly created
+ * language aliases to use the clean URL format.
+ *
+ * Example:
+ *
+ *   Stored venue title:
+ *   Sound Coffee - Bridgeport
+ *
+ *   Pathauto candidate:
+ *   /venue/bridgeport/sound-coffee-bridgeport
+ *
+ *   New venue alias:
+ *   /venue/bridgeport/sound-coffee
+ *
+ * Existing old-style aliases such as:
+ *
+ *   /venue/orlando/stk-orlando-orlando
+ *
+ * remain unchanged during update and bulkupdate operations.
+ */
+function spotdeals_data_ingestion_pathauto_alias_alter(
+  &$alias,
+  array &$context,
+): void {
+  $operation = (string) ($context['op'] ?? '');
+
+  if (!in_array($operation, ['insert', 'update', 'bulkupdate'], TRUE)) {
+    return;
+  }
+
+  $node = $context['data']['node'] ?? NULL;
+  if (!$node instanceof NodeInterface || $node->bundle() !== 'venue') {
+    return;
+  }
+
+  if (!is_string($alias) || $alias === '') {
+    return;
+  }
+
+  $clean_alias = _spotdeals_data_ingestion_clean_venue_alias_candidate($alias);
+
+  if ($clean_alias === NULL) {
+    return;
+  }
+
+  // Brand-new venue aliases always use the clean format.
+  if ($operation === 'insert') {
+    $alias = $clean_alias;
+    return;
+  }
+
+  $source = (string) ($context['source'] ?? '');
+  $language = (string) ($context['language'] ?? '');
+
+  if ($source === '' || $language === '') {
+    return;
+  }
+
+  // Use an exact source + language lookup. Do not use the path alias manager
+  // here because language fallback can make a newly created translation appear
+  // to have an existing alias when only another language has one.
+  $existing_alias = _spotdeals_data_ingestion_load_exact_alias(
+    $source,
+    $language,
+  );
+
+  // No alias exists for this exact language yet. This commonly happens when a
+  // Spanish translation is created after the English node, where Pathauto uses
+  // the "update" operation. Treat it as a new language alias.
+  if ($existing_alias === NULL) {
+    $alias = $clean_alias;
+    return;
+  }
+
+  // Preserve clean-style aliases during later update/bulkupdate operations.
+  // Existing old-style aliases are intentionally left untouched.
+  if (
+    $existing_alias === $clean_alias
+    || preg_match(
+      '/^' . preg_quote($clean_alias, '/') . '-\d+$/',
+      $existing_alias,
+    ) === 1
+  ) {
+    $alias = $clean_alias;
+  }
+}
+
+/**
+ * Loads an alias only when it exists for the exact source and language.
+ */
+function _spotdeals_data_ingestion_load_exact_alias(
+  string $source,
+  string $language,
+): ?string {
+  try {
+    $storage = \Drupal::entityTypeManager()->getStorage('path_alias');
+
+    $ids = $storage->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('path', $source)
+      ->condition('langcode', $language)
+      ->sort('id', 'DESC')
+      ->range(0, 1)
+      ->execute();
+
+    if ($ids === []) {
+      return NULL;
+    }
+
+    $alias_entity = $storage->load(reset($ids));
+
+    if ($alias_entity === NULL) {
+      return NULL;
+    }
+
+    return (string) $alias_entity->getAlias();
+  }
+  catch (\Throwable) {
+    return NULL;
+  }
+}
+
+/**
+ * Builds the clean candidate for a venue alias.
+ *
+ * The configured venue Pathauto pattern is:
+ *
+ *   /venue/[node:field_address:locality]/[node:title]
+ *
+ * This helper removes exactly one trailing copy of the city path segment from
+ * the title slug. It does not alter the node title and does not remove city
+ * names appearing elsewhere in the venue name.
+ */
+function _spotdeals_data_ingestion_clean_venue_alias_candidate(
+  string $alias,
+): ?string {
+  $segments = explode('/', trim($alias, '/'));
+
+  if (
+    count($segments) !== 3
+    || $segments[0] !== 'venue'
+    || $segments[1] === ''
+    || $segments[2] === ''
+  ) {
+    return NULL;
+  }
+
+  $city_slug = $segments[1];
+  $venue_slug = $segments[2];
+  $city_suffix = '-' . $city_slug;
+
+  if (!str_ends_with($venue_slug, $city_suffix)) {
+    return NULL;
+  }
+
+  $clean_venue_slug = substr(
+    $venue_slug,
+    0,
+    strlen($venue_slug) - strlen($city_suffix),
+  );
+
+  if ($clean_venue_slug === '') {
+    return NULL;
+  }
+
+  $segments[2] = $clean_venue_slug;
+
+  return '/' . implode('/', $segments);
+}
 
 /**
  * Implements hook_cron().
