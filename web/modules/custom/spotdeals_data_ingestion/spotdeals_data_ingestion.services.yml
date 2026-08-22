@@ -4,6 +4,14 @@ services:
     arguments:
       - 'spotdeals_data_ingestion'
 
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryService:
+    arguments:
+      - '@http_client'
+      - '@logger.channel.spotdeals_data_ingestion'
+
+  spotdeals_data_ingestion.deal_discovery:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryService
+
   Drupal\spotdeals_data_ingestion\Service\GeoapifyClient:
     arguments:
       - '@http_client'
