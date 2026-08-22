@@ -7,6 +7,7 @@ namespace Drupal\spotdeals_data_ingestion\Drush\Commands;
 use Drupal\Core\State\StateInterface;
 use Drupal\node\Entity\Node;
 use Drupal\spotdeals_data_ingestion\Service\GeoapifyCategoryCatalog;
+use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryService;
 use Drupal\spotdeals_data_ingestion\Service\GeoapifyClient;
 use Drupal\spotdeals_data_ingestion\Service\SpanishNodeTranslationCreator;
 use Drupal\spotdeals_data_ingestion\Service\VenueCandidateValidator;
@@ -25,6 +26,7 @@ final class GeoapifyDrushCommands extends DrushCommands {
 
   public function __construct(
     private readonly GeoapifyClient $geoapifyClient,
+    private readonly DealDiscoveryService $dealDiscoveryService,
     private readonly GeoapifyCategoryCatalog $geoapifyCategoryCatalog,
     private readonly VenueTypeMappingManager $venueTypeMappingManager,
     private readonly VenueMapper $venueMapper,
@@ -381,6 +383,276 @@ final class GeoapifyDrushCommands extends DrushCommands {
 
     $this->io()->success(sprintf('%d venue node(s) created.', $statistics['created']));
     return 0;
+  }
+
+
+
+  /**
+   * Researches Geoapify venue candidates for review-only deal signals.
+   */
+  #[CLI\Command(
+    name: 'spotdeals:deal-discovery-dry-run',
+    aliases: ['sd:deal-discovery-dry-run'],
+  )]
+  #[CLI\Argument(
+    name: 'category',
+    description: 'Geoapify category or comma-separated categories.',
+  )]
+  #[CLI\Argument(
+    name: 'placeId',
+    description: 'Geoapify place_id used for the city boundary filter.',
+  )]
+  #[CLI\Option(
+    name: 'limit',
+    description: 'Number of records requested per Geoapify API page.',
+  )]
+  #[CLI\Option(
+    name: 'max-pages',
+    description: 'Maximum number of Geoapify API pages to request.',
+  )]
+  #[CLI\Option(
+    name: 'candidates',
+    description: 'Maximum number of valid, non-duplicate venues to research.',
+  )]
+  #[CLI\Option(
+    name: 'site-pages',
+    description: 'Maximum number of same-domain website pages to inspect per venue.',
+  )]
+  #[CLI\Usage(
+    name: 'drush spotdeals:deal-discovery-dry-run entertainment PLACE_ID --candidates=10',
+    description: 'Research up to 10 Geoapify candidates for review-only deal signals.',
+  )]
+  public function dealDiscoveryDryRun(
+    string $category,
+    string $placeId,
+    array $options = [
+      'limit' => 100,
+      'max-pages' => 5,
+      'candidates' => 10,
+      'site-pages' => 5,
+    ],
+  ): int {
+    $apiKey = $this->getApiKey();
+    if ($apiKey === NULL) {
+      return 1;
+    }
+
+    $limit = max(1, min(500, (int) $options['limit']));
+    $maxPages = max(1, (int) $options['max-pages']);
+    $candidateLimit = max(1, min(50, (int) $options['candidates']));
+    $sitePages = max(1, min(10, (int) $options['site-pages']));
+
+    $this->io()->title('SpotDeals Deal Discovery — Review-Only Dry Run');
+    $this->io()->definitionList(
+      ['Category' => $category],
+      ['Place ID' => $placeId],
+      ['Candidate limit' => (string) $candidateLimit],
+      ['Website pages per candidate' => (string) $sitePages],
+      ['Writes' => 'None'],
+    );
+
+    try {
+      $features = $this->geoapifyClient->fetchPlaces(
+        apiKey: $apiKey,
+        placeId: $placeId,
+        category: $category,
+        pageSize: $limit,
+        maxPages: $maxPages,
+      );
+    }
+    catch (\Throwable $exception) {
+      $this->io()->error($exception->getMessage());
+      return 1;
+    }
+
+    $venues = array_map(
+      fn (array $feature): array => $this->venueMapper->map($feature, $category),
+      $features,
+    );
+    $venues = $this->candidateValidator->validateBatch($venues);
+
+    $statistics = [
+      'fetched' => count($features),
+      'eligible' => 0,
+      'researched' => 0,
+      'website_resolved' => 0,
+      'review' => 0,
+      'manual_check' => 0,
+      'skip' => 0,
+      'deal_candidates' => 0,
+    ];
+
+    $rows = [];
+    $details = [];
+    $researchedWebsiteHosts = [];
+
+    foreach ($venues as $venue) {
+      if (!$venue['valid'] || $venue['existing_duplicate'] || $venue['batch_duplicate']) {
+        continue;
+      }
+
+      $statistics['eligible']++;
+      if ($statistics['researched'] >= $candidateLimit) {
+        continue;
+      }
+
+      // Place details can contain a website even when the Places list result did
+      // not. Keep the original Geoapify place ID as canonical identity.
+      if (($venue['website'] ?? '') === '' && ($venue['external_id'] ?? '') !== '') {
+        try {
+          $detailsFeature = $this->geoapifyClient->getPlaceDetails(
+            $apiKey,
+            (string) $venue['external_id'],
+          );
+          $enrichedVenue = $this->venueMapper->map($detailsFeature, $category);
+          if (($enrichedVenue['website'] ?? '') !== '') {
+            $venue['website'] = $enrichedVenue['website'];
+          }
+          if (($venue['phone'] ?? '') === '' && ($enrichedVenue['phone'] ?? '') !== '') {
+            $venue['phone'] = $enrichedVenue['phone'];
+          }
+        }
+        catch (\Throwable $exception) {
+          $this->logger()->notice(
+            'Deal discovery place-details enrichment failed for {place_id}: {message}',
+            [
+              'place_id' => $venue['external_id'],
+              'message' => $exception->getMessage(),
+            ],
+          );
+        }
+      }
+
+      $websiteHost = $this->normalizedWebsiteHost((string) ($venue['website'] ?? ''));
+      if ($websiteHost !== '' && isset($researchedWebsiteHosts[$websiteHost])) {
+        $address = is_array($venue['address'] ?? NULL) ? $venue['address'] : [];
+        $rows[] = [
+          $venue['title'],
+          (string) ($address['address_line1'] ?? ''),
+          'duplicate_website',
+          'Yes',
+          '0',
+          '0',
+          '0',
+          'SKIP',
+        ];
+        continue;
+      }
+
+      if ($websiteHost !== '') {
+        $researchedWebsiteHosts[$websiteHost] = TRUE;
+      }
+
+      $statistics['researched']++;
+      $result = $this->dealDiscoveryService->discover($venue, $sitePages);
+
+      if ($result['website'] !== '') {
+        $statistics['website_resolved']++;
+      }
+
+      $recommendation = (string) $result['recommendation'];
+      if ($recommendation === 'REVIEW') {
+        $statistics['review']++;
+      }
+      elseif ($recommendation === 'MANUAL_CHECK') {
+        $statistics['manual_check']++;
+      }
+      else {
+        $statistics['skip']++;
+      }
+
+      $dealCount = count($result['deal_candidates']);
+      $statistics['deal_candidates'] += $dealCount;
+
+      $address = is_array($venue['address'] ?? NULL) ? $venue['address'] : [];
+      $rows[] = [
+        $venue['title'],
+        (string) ($address['address_line1'] ?? ''),
+        (string) ($result['status'] ?? ''),
+        $result['website'] !== '' ? 'Yes' : 'No',
+        (string) $result['pages_checked'],
+        (string) $result['location_confidence'],
+        (string) $dealCount,
+        $recommendation,
+      ];
+
+      if ($dealCount > 0) {
+        $details[] = [
+          'title' => $venue['title'],
+          'website' => $result['website'],
+          'recommendation' => $recommendation,
+          'candidates' => $result['deal_candidates'],
+        ];
+      }
+    }
+
+    $this->io()->section('Summary');
+    $this->io()->table(
+      ['Metric', 'Count'],
+      [
+        ['Geoapify fetched', $statistics['fetched']],
+        ['Eligible after validation/deduplication', $statistics['eligible']],
+        ['Researched', $statistics['researched']],
+        ['Website resolved', $statistics['website_resolved']],
+        ['REVIEW', $statistics['review']],
+        ['MANUAL_CHECK', $statistics['manual_check']],
+        ['SKIP', $statistics['skip']],
+        ['Deal candidate snippets', $statistics['deal_candidates']],
+      ],
+    );
+
+    if ($rows !== []) {
+      $this->io()->section('Candidate results');
+      $this->io()->table(
+        ['Venue', 'Address', 'Status', 'Website', 'Pages', 'Location', 'Deals', 'Recommendation'],
+        $rows,
+      );
+    }
+
+    foreach ($details as $detail) {
+      $this->io()->section($detail['title'] . ' — ' . $detail['recommendation']);
+      $this->io()->text('Website: ' . $detail['website']);
+
+      $candidateRows = [];
+      foreach ($detail['candidates'] as $candidate) {
+        $candidateRows[] = [
+          (string) $candidate['score'],
+          (string) ($candidate['title'] ?? ''),
+          (string) ($candidate['value'] ?? ''),
+          (string) ($candidate['schedule'] ?? ''),
+          (string) $candidate['source_url'],
+          (string) ($candidate['reason'] ?? ''),
+        ];
+      }
+      $this->io()->table(
+        ['Score', 'Offer', 'Value', 'Schedule / validity', 'Source', 'Why it qualified'],
+        $candidateRows,
+      );
+    }
+
+    $this->io()->success(
+      'Review-only deal discovery completed. No venue nodes, deal nodes, or CSV files were created or changed.',
+    );
+
+    return 0;
+  }
+
+
+  /**
+   * Returns a normalized host for review-only website deduplication.
+   */
+  private function normalizedWebsiteHost(string $website): string {
+    $website = trim($website);
+    if ($website === '') {
+      return '';
+    }
+
+    if (!preg_match('#^https?://#i', $website)) {
+      $website = 'https://' . ltrim($website, '/');
+    }
+
+    $host = mb_strtolower((string) parse_url($website, PHP_URL_HOST));
+    return preg_replace('/^www\./i', '', $host) ?? $host;
   }
 
 
