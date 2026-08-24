@@ -12,6 +12,70 @@ services:
   spotdeals_data_ingestion.deal_discovery:
     alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryService
 
+
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage:
+    arguments:
+      - '@database'
+      - '@datetime.time'
+
+  spotdeals_data_ingestion.deal_discovery_storage:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage
+
+
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryConfidenceClassifier:
+    arguments:
+      - '@config.factory'
+
+  spotdeals_data_ingestion.deal_discovery_confidence_classifier:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryConfidenceClassifier
+
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryFieldDeriver: {}
+
+  spotdeals_data_ingestion.deal_discovery_field_deriver:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryFieldDeriver
+
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishPreviewService:
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+      - '@database'
+      - '@state'
+      - '@Drupal\spotdeals_data_ingestion\Service\GeoapifyClient'
+      - '@Drupal\spotdeals_data_ingestion\Service\VenueMapper'
+      - '@Drupal\spotdeals_data_ingestion\Service\VenueLocalMatcher'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryFieldDeriver'
+
+  spotdeals_data_ingestion.deal_discovery_publish_preview:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishPreviewService
+
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublisher:
+    arguments:
+      - '@database'
+      - '@entity_type.manager'
+      - '@lock'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishPreviewService'
+      - '@Drupal\spotdeals_data_ingestion\Service\VenuePersistenceService'
+      - '@Drupal\spotdeals_data_ingestion\Service\SpanishNodeTranslationCreator'
+
+  spotdeals_data_ingestion.deal_discovery_publisher:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublisher
+
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishAuditService:
+    arguments:
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishPreviewService'
+
+  spotdeals_data_ingestion.deal_discovery_publish_audit:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishAuditService
+
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryLocationResolver:
+    arguments:
+      - '@database'
+
+  spotdeals_data_ingestion.deal_discovery_location_resolver:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryLocationResolver
+
   Drupal\spotdeals_data_ingestion\Service\GeoapifyClient:
     arguments:
       - '@http_client'

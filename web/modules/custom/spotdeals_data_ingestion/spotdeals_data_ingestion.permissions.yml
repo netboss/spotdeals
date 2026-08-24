@@ -11,3 +11,20 @@ review external venue reports:
   title: 'Review external venue reports'
   description: 'Review reports and exclude or restore external venue listings.'
   restrict access: true
+
+
+review spotdeals deal discovery:
+  title: 'Review SpotDeals deal discovery'
+  description: 'Review and edit deal candidates discovered from official venue websites.'
+  restrict access: true
+
+run spotdeals deal discovery:
+  title: 'Run SpotDeals deal discovery'
+  description: 'Run review-only deal discovery and queue candidates for administrative review.'
+  restrict access: true
+
+
+publish spotdeals deal discovery:
+  title: 'Publish SpotDeals deal discovery candidates'
+  description: 'Publish ready approved deal-discovery candidates as Drupal venue and deal content.'
+  restrict access: true

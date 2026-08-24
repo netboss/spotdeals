@@ -121,6 +121,36 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    $form['deal_discovery'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Deal discovery automation'),
+      '#open' => FALSE,
+    ];
+
+    $form['deal_discovery']['deal_discovery_auto_approve_score'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Automatic-approval minimum score'),
+      '#default_value' => $config->get('deal_discovery_auto_approve_score'),
+      '#min' => 1,
+      '#max' => 10,
+      '#required' => TRUE,
+    ];
+
+    $form['deal_discovery']['deal_discovery_auto_approve_location_confidence'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Automatic-approval minimum location confidence'),
+      '#default_value' => $config->get('deal_discovery_auto_approve_location_confidence'),
+      '#min' => 0,
+      '#max' => 10,
+      '#required' => TRUE,
+    ];
+
+    $form['deal_discovery']['deal_discovery_auto_approve_require_schedule'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Require schedule or validity context for automatic approval'),
+      '#default_value' => $config->get('deal_discovery_auto_approve_require_schedule'),
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -136,6 +166,9 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
         'request_timeout',
         (int) $form_state->getValue('request_timeout'),
       )
+      ->set('deal_discovery_auto_approve_score', (int) $form_state->getValue('deal_discovery_auto_approve_score'))
+      ->set('deal_discovery_auto_approve_location_confidence', (int) $form_state->getValue('deal_discovery_auto_approve_location_confidence'))
+      ->set('deal_discovery_auto_approve_require_schedule', (bool) $form_state->getValue('deal_discovery_auto_approve_require_schedule'))
       ->save();
 
     $clearKey = (bool) $form_state->getValue(

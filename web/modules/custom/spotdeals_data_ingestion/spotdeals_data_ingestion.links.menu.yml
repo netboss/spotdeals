@@ -11,3 +11,11 @@ spotdeals_data_ingestion.external_venue_reports:
   route_name: spotdeals_data_ingestion.external_venue_reports
   parent: system.admin_content
   weight: 40
+
+
+spotdeals_data_ingestion.deal_discovery_candidates:
+  title: 'SpotDeals deal discovery'
+  description: 'Review deal candidates discovered from official venue websites.'
+  route_name: spotdeals_data_ingestion.deal_discovery_candidates
+  parent: system.admin_content
+  weight: 41
