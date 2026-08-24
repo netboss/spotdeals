@@ -213,6 +213,127 @@ final class GeoapifyClient {
 
 
   /**
+   * Resolves a human-readable locality to a Geoapify place boundary ID.
+   */
+  public function resolveLocalityPlaceId(
+    string $apiKey,
+    string $city,
+    string $state = '',
+    string $countryCode = 'US',
+  ): string {
+    $apiKey = trim($apiKey);
+    $city = trim($city);
+    $state = trim($state);
+    $countryCode = strtolower(trim($countryCode));
+
+    if ($apiKey === '') {
+      throw new \InvalidArgumentException('The Geoapify API key is required.');
+    }
+
+    if ($city === '') {
+      throw new \InvalidArgumentException('A city is required.');
+    }
+
+    $query = [
+      'city' => $city,
+      'type' => 'city',
+      'lang' => 'en',
+      'limit' => 10,
+      'format' => 'geojson',
+      'apiKey' => $apiKey,
+    ];
+
+    if ($state !== '') {
+      $query['state'] = $state;
+    }
+
+    if ($countryCode !== '') {
+      $query['filter'] = 'countrycode:' . $countryCode;
+    }
+
+    try {
+      $response = $this->httpClient->request('GET', self::GEOCODING_SEARCH_ENDPOINT, [
+        'query' => $query,
+        'headers' => [
+          'Accept' => 'application/json',
+        ],
+        'timeout' => 30,
+      ]);
+    }
+    catch (GuzzleException $exception) {
+      $this->logger->error(
+        'Geoapify locality lookup failed for {city}, {state}: {message}',
+        [
+          'city' => $city,
+          'state' => $state,
+          'message' => $exception->getMessage(),
+        ],
+      );
+
+      throw new \RuntimeException(
+        'Geoapify locality lookup failed: ' . $exception->getMessage(),
+        0,
+        $exception,
+      );
+    }
+
+    $decoded = json_decode((string) $response->getBody(), TRUE);
+    if (!is_array($decoded)) {
+      throw new \RuntimeException('Geoapify returned invalid locality-search JSON.');
+    }
+
+    $features = $decoded['features'] ?? [];
+    if (!is_array($features)) {
+      throw new \RuntimeException('Geoapify returned an invalid locality-search feature collection.');
+    }
+
+    foreach ($features as $feature) {
+      if (!is_array($feature)) {
+        continue;
+      }
+
+      $properties = $feature['properties'] ?? [];
+      if (!is_array($properties)) {
+        continue;
+      }
+
+      $returnedCity = trim((string) (
+        $properties['city']
+        ?? $properties['town']
+        ?? $properties['village']
+        ?? $properties['name']
+        ?? ''
+      ));
+      $returnedState = strtoupper(trim((string) (
+        $properties['state_code']
+        ?? $properties['state']
+        ?? ''
+      )));
+      $returnedCountry = strtoupper(trim((string) ($properties['country_code'] ?? '')));
+      $placeId = trim((string) ($properties['place_id'] ?? ''));
+
+      if ($placeId === '' || strcasecmp($returnedCity, $city) !== 0) {
+        continue;
+      }
+
+      if ($state !== '' && $returnedState !== '' && strcasecmp($returnedState, $state) !== 0) {
+        continue;
+      }
+
+      if ($countryCode !== '' && $returnedCountry !== '' && strcasecmp($returnedCountry, $countryCode) !== 0) {
+        continue;
+      }
+
+      return $placeId;
+    }
+
+    throw new \RuntimeException(
+      sprintf('Geoapify could not resolve a place boundary for %s%s.', $city, $state !== '' ? ', ' . $state : ''),
+    );
+  }
+
+
+  /**
    * Loads one exact Geoapify place by its unique place ID.
    *
    * @return array<string, mixed>

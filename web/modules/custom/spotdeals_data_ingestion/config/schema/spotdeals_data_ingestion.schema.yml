@@ -26,3 +26,12 @@ spotdeals_data_ingestion.settings:
     mapping_ambiguity_delta:
       type: float
       label: 'Minimum score gap required to avoid ambiguous mappings'
+    deal_discovery_auto_approve_score:
+      type: integer
+      label: 'Deal discovery automatic-approval score'
+    deal_discovery_auto_approve_location_confidence:
+      type: integer
+      label: 'Deal discovery automatic-approval location confidence'
+    deal_discovery_auto_approve_require_schedule:
+      type: boolean
+      label: 'Require schedule context for automatic approval'

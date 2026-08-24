@@ -193,6 +193,23 @@ final class VenueTypeResolver {
   }
 
   /**
+   * Returns taxonomy-owned venue types that have Geoapify category mappings.
+   *
+   * @return array<int, array{
+   *   tid: int,
+   *   name: string,
+   *   categories: array<int, string>,
+   *   phrases: array<int, string>
+   * }>
+   */
+  public function mappedVenueTypes(): array {
+    return array_values(array_filter(
+      $this->definitions(),
+      static fn (array $definition): bool => $definition['categories'] !== [],
+    ));
+  }
+
+  /**
    * Loads taxonomy-owned venue type definitions.
    *
    * @return array<int, array{

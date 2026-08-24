@@ -42,3 +42,58 @@ spotdeals_data_ingestion.external_venue_report_review:
   requirements:
     _permission: 'review external venue reports'
     report_id: '\d+'
+
+
+spotdeals_data_ingestion.deal_discovery_candidates:
+  path: '/admin/content/spotdeals-deal-discovery'
+  defaults:
+    _controller: '\Drupal\spotdeals_data_ingestion\Controller\DealDiscoveryAdminController::listing'
+    _title: 'SpotDeals deal discovery'
+  requirements:
+    _permission: 'review spotdeals deal discovery'
+
+spotdeals_data_ingestion.deal_discovery_run:
+  path: '/admin/content/spotdeals-deal-discovery/run'
+  defaults:
+    _form: '\Drupal\spotdeals_data_ingestion\Form\DealDiscoveryRunForm'
+    _title: 'Run SpotDeals deal discovery'
+  requirements:
+    _permission: 'run spotdeals deal discovery'
+
+spotdeals_data_ingestion.deal_discovery_candidate_review:
+  path: '/admin/content/spotdeals-deal-discovery/{candidate_id}'
+  defaults:
+    _form: '\Drupal\spotdeals_data_ingestion\Form\DealDiscoveryReviewForm'
+    _title: 'Review deal-discovery candidate'
+  requirements:
+    _permission: 'review spotdeals deal discovery'
+    candidate_id: '\d+'
+
+
+spotdeals_data_ingestion.deal_discovery_publish_preview:
+  path: '/admin/content/spotdeals-deal-discovery/{candidate_id}/publish-preview'
+  defaults:
+    _controller: '\Drupal\spotdeals_data_ingestion\Controller\DealDiscoveryPublishPreviewController::preview'
+    _title: 'Deal publishing preview'
+  requirements:
+    _permission: 'review spotdeals deal discovery'
+    candidate_id: '\d+'
+
+
+spotdeals_data_ingestion.deal_discovery_publish_audit:
+  path: '/admin/content/spotdeals-deal-discovery/publish-audit'
+  defaults:
+    _controller: '\Drupal\spotdeals_data_ingestion\Controller\DealDiscoveryPublishAuditController::audit'
+    _title: 'Deal publishing audit'
+  requirements:
+    _permission: 'review spotdeals deal discovery'
+
+
+spotdeals_data_ingestion.deal_discovery_publish:
+  path: '/admin/content/spotdeals-deal-discovery/{candidate_id}/publish'
+  defaults:
+    _form: '\Drupal\spotdeals_data_ingestion\Form\DealDiscoveryPublishForm'
+    _title: 'Publish discovered deal'
+  requirements:
+    _permission: 'publish spotdeals deal discovery'
+    candidate_id: '\d+'

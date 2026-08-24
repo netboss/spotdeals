@@ -54,6 +54,51 @@ function spotdeals_data_ingestion_schema(): array {
     ],
   ];
 
+
+  $schema['spotdeals_deal_discovery_candidate'] = [
+    'description' => 'Review-only deal candidates discovered from official venue websites.',
+    'fields' => [
+      'id' => ['type' => 'serial', 'not null' => TRUE],
+      'fingerprint' => ['type' => 'varchar', 'length' => 64, 'not null' => TRUE],
+      'external_source' => ['type' => 'varchar', 'length' => 32, 'not null' => TRUE],
+      'external_id' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'venue_name' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'venue_address' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
+      'venue_website' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
+      'category' => ['type' => 'varchar', 'length' => 512, 'not null' => TRUE],
+      'place_id' => ['type' => 'varchar', 'length' => 512, 'not null' => TRUE],
+      'offer_title' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'offer_value' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'schedule' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
+      'source_url' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
+      'reason' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
+      'score' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+      'confidence' => ['type' => 'varchar', 'length' => 32, 'not null' => TRUE, 'default' => 'review'],
+      'classification_reason' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
+      'override_day_of_week_tid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'override_deal_category_tid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'status' => ['type' => 'varchar', 'length' => 32, 'not null' => TRUE, 'default' => 'pending'],
+      'admin_notes' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
+      'created' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      'changed' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      'last_seen' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      'reviewed_by' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'reviewed_at' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'published_venue_nid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'published_deal_nid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'published_by' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'published_at' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'fingerprint' => ['fingerprint'],
+    ],
+    'indexes' => [
+      'status_last_seen' => ['status', 'last_seen'],
+      'external_venue' => ['external_source', 'external_id'],
+    ],
+  ];
+
   return $schema;
 }
 
@@ -133,6 +178,172 @@ function spotdeals_data_ingestion_update_10003(): void {
 
   $config->save();
 }
+
+
+
+/**
+ * Creates persistent storage for administrative deal-discovery review.
+ */
+function spotdeals_data_ingestion_update_10004(): void {
+  $schema = \Drupal::database()->schema();
+  $definitions = spotdeals_data_ingestion_schema();
+  $table = 'spotdeals_deal_discovery_candidate';
+
+  if (!$schema->tableExists($table)) {
+    $schema->createTable($table, $definitions[$table]);
+  }
+}
+
+
+
+
+/**
+ * Adds confidence classification metadata to deal-discovery candidates.
+ */
+function spotdeals_data_ingestion_update_10005(): void {
+  $schema = \Drupal::database()->schema();
+  $table = 'spotdeals_deal_discovery_candidate';
+
+  if (!$schema->fieldExists($table, 'confidence')) {
+    $schema->addField($table, 'confidence', [
+      'type' => 'varchar',
+      'length' => 32,
+      'not null' => TRUE,
+      'default' => 'review',
+    ]);
+  }
+
+  if (!$schema->fieldExists($table, 'classification_reason')) {
+    $schema->addField($table, 'classification_reason', [
+      'type' => 'text',
+      'size' => 'normal',
+      'not null' => FALSE,
+    ]);
+  }
+}
+
+
+/**
+ * Initializes deal-discovery automation settings on existing installations.
+ */
+function spotdeals_data_ingestion_update_10006(): void {
+  $modulePath = \Drupal::service('extension.list.module')
+    ->getPath('spotdeals_data_ingestion');
+  $installConfigPath = $modulePath . '/config/install/spotdeals_data_ingestion.settings.yml';
+
+  if (!is_file($installConfigPath) || !is_readable($installConfigPath)) {
+    throw new \RuntimeException(
+      'Unable to read the SpotDeals data-ingestion install configuration.',
+    );
+  }
+
+  $defaults = \Drupal\Component\Serialization\Yaml::decode(
+    (string) file_get_contents($installConfigPath),
+  );
+  if (!is_array($defaults)) {
+    throw new \RuntimeException(
+      'The SpotDeals data-ingestion install configuration is invalid.',
+    );
+  }
+
+  $keys = [
+    'deal_discovery_auto_approve_score',
+    'deal_discovery_auto_approve_location_confidence',
+    'deal_discovery_auto_approve_require_schedule',
+  ];
+
+  $config = \Drupal::configFactory()
+    ->getEditable('spotdeals_data_ingestion.settings');
+
+  foreach ($keys as $key) {
+    if ($config->get($key) !== NULL) {
+      continue;
+    }
+
+    if (!array_key_exists($key, $defaults)) {
+      throw new \RuntimeException(
+        sprintf('Missing required install configuration key "%s".', $key),
+      );
+    }
+
+    $config->set($key, $defaults[$key]);
+  }
+
+  $config->save();
+}
+
+
+/**
+ * Adds manual publishing overrides to deal-discovery candidates.
+ */
+function spotdeals_data_ingestion_update_10007(): void {
+  $schema = \Drupal::database()->schema();
+  $table = 'spotdeals_deal_discovery_candidate';
+
+  $fields = [
+    'override_day_of_week_tid' => [
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+    'override_deal_category_tid' => [
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+  ];
+
+  foreach ($fields as $fieldName => $definition) {
+    if (!$schema->fieldExists($table, $fieldName)) {
+      $schema->addField($table, $fieldName, $definition);
+    }
+  }
+}
+
+
+/**
+ * Adds controlled publishing metadata to deal-discovery candidates.
+ */
+function spotdeals_data_ingestion_update_10008(): void {
+  $schema = \Drupal::database()->schema();
+  $table = 'spotdeals_deal_discovery_candidate';
+
+  $fields = [
+    'published_venue_nid' => [
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+    'published_deal_nid' => [
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+    'published_by' => [
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+    'published_at' => [
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'default' => 0,
+    ],
+  ];
+
+  foreach ($fields as $fieldName => $definition) {
+    if (!$schema->fieldExists($table, $fieldName)) {
+      $schema->addField($table, $fieldName, $definition);
+    }
+  }
+}
+
 
 /**
  * Ensures provider metadata fields exist on the venue-type vocabulary.
