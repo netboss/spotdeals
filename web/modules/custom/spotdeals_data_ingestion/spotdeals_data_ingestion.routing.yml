@@ -97,3 +97,12 @@ spotdeals_data_ingestion.deal_discovery_publish:
   requirements:
     _permission: 'publish spotdeals deal discovery'
     candidate_id: '\d+'
+
+
+spotdeals_data_ingestion.deal_discovery_publish_ready:
+  path: '/admin/content/spotdeals-deal-discovery/publish-ready'
+  defaults:
+    _form: '\Drupal\spotdeals_data_ingestion\Form\DealDiscoveryPublishReadyForm'
+    _title: 'Publish ready reviewed deals'
+  requirements:
+    _permission: 'publish spotdeals deal discovery'

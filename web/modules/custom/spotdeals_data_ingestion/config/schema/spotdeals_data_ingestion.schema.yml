@@ -35,3 +35,6 @@ spotdeals_data_ingestion.settings:
     deal_discovery_auto_approve_require_schedule:
       type: boolean
       label: 'Require schedule context for automatic approval'
+    deal_discovery_auto_publish_enabled:
+      type: boolean
+      label: 'Automatically publish ready auto-approved deal-discovery candidates'

@@ -88,6 +88,7 @@ function spotdeals_data_ingestion_schema(): array {
       'published_deal_nid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
       'published_by' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
       'published_at' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'published_via' => ['type' => 'varchar', 'length' => 16, 'not null' => TRUE, 'default' => ''],
     ],
     'primary key' => ['id'],
     'unique keys' => [
@@ -454,4 +455,31 @@ function _spotdeals_data_ingestion_ensure_venue_type_metadata_fields(): void {
   ]);
   $formDisplay->removeComponent('field_geoapify_auto_categories');
   $formDisplay->save();
+}
+
+
+/**
+ * Adds exception-driven deal-discovery publishing controls and metadata.
+ */
+function spotdeals_data_ingestion_update_10009(): void {
+  $schema = \Drupal::database()->schema();
+  $table = 'spotdeals_deal_discovery_candidate';
+
+  if (!$schema->fieldExists($table, 'published_via')) {
+    $schema->addField($table, 'published_via', [
+      'type' => 'varchar',
+      'length' => 16,
+      'not null' => TRUE,
+      'default' => '',
+    ]);
+  }
+
+  $config = \Drupal::configFactory()
+    ->getEditable('spotdeals_data_ingestion.settings');
+
+  if ($config->get('deal_discovery_auto_publish_enabled') === NULL) {
+    // Deliberately disabled on upgrade. Production must opt in after the new
+    // exception-driven publishing path has been reviewed and tested.
+    $config->set('deal_discovery_auto_publish_enabled', FALSE)->save();
+  }
 }

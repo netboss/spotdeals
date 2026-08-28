@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Drupal\spotdeals_data_ingestion\Form;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryConfidenceClassifier;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryLocationResolver;
+use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublisher;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryService;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage;
 use Drupal\spotdeals_data_ingestion\Service\GeoapifyClient;
@@ -34,6 +36,8 @@ final class DealDiscoveryRunForm extends FormBase {
     private readonly VenueTypeResolver $venueTypeResolver,
     private readonly DealDiscoveryLocationResolver $locationResolver,
     private readonly DealDiscoveryConfidenceClassifier $confidenceClassifier,
+    private readonly DealDiscoveryPublisher $publisher,
+    private readonly ConfigFactoryInterface $spotdealsConfigFactory,
   ) {}
 
   public static function create(ContainerInterface $container): static {
@@ -47,6 +51,8 @@ final class DealDiscoveryRunForm extends FormBase {
       $container->get('Drupal\spotdeals_data_ingestion\Service\VenueTypeResolver'),
       $container->get('spotdeals_data_ingestion.deal_discovery_location_resolver'),
       $container->get('spotdeals_data_ingestion.deal_discovery_confidence_classifier'),
+      $container->get('spotdeals_data_ingestion.deal_discovery_publisher'),
+      $container->get('config.factory'),
     );
   }
 
@@ -56,7 +62,7 @@ final class DealDiscoveryRunForm extends FormBase {
 
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $form['notice'] = [
-      '#markup' => '<p>' . $this->t('This runs deal discovery and classifies candidates by confidence. High-confidence candidates are automatically approved in shadow mode; uncertain candidates remain pending for review. No venue nodes, deal nodes, or CSV rows are created.') . '</p>',
+      '#markup' => '<p>' . $this->t('This runs deal discovery and classifies candidates by confidence. High-confidence candidates are automatically approved. If automatic publishing is enabled in SpotDeals Data Ingestion settings, each ready auto-approved candidate is immediately passed through the same controlled publishing contract used by Preview publish. Unsafe candidates remain queued for review.') . '</p>',
     ];
 
     $venueTypeOptions = [];
@@ -194,6 +200,8 @@ final class DealDiscoveryRunForm extends FormBase {
     $queued = 0;
     $autoApproved = 0;
     $pendingReview = 0;
+    $autoPublished = 0;
+    $autoPublishBlocked = 0;
     $researchedWebsiteHosts = [];
 
     foreach ($venues as $venue) {
@@ -261,7 +269,7 @@ final class DealDiscoveryRunForm extends FormBase {
           $pendingReview++;
         }
 
-        $this->storage->createOrRefresh([
+        $candidateId = $this->storage->createOrRefresh([
           'external_source' => (string) ($venue['external_provider'] ?? 'geoapify'),
           'external_id' => (string) ($venue['external_id'] ?? ''),
           'venue_name' => (string) ($venue['title'] ?? ''),
@@ -280,16 +288,45 @@ final class DealDiscoveryRunForm extends FormBase {
           'classification_reason' => implode('; ', $classification['reasons']),
         ]);
         $queued++;
+
+        $storedCandidate = $this->storage->load($candidateId);
+        if (
+          (string) ($storedCandidate['status'] ?? '') === 'auto_approved'
+          && (bool) $this->spotdealsConfigFactory
+            ->get('spotdeals_data_ingestion.settings')
+            ->get('deal_discovery_auto_publish_enabled')
+        ) {
+          try {
+            $publishResult = $this->publisher->publish(
+              $candidateId,
+              (int) $this->currentUser()->id(),
+              'automatic',
+            );
+
+            if (!empty($publishResult['already_published'])) {
+              continue;
+            }
+
+            $autoPublished++;
+          }
+          catch (\Throwable) {
+            // Fail closed. The candidate remains auto-approved and visible in
+            // the publishing dashboard as an exception to resolve manually.
+            $autoPublishBlocked++;
+          }
+        }
       }
     }
 
     $this->messenger()->addStatus($this->t(
-      'Discovery completed. Researched @researched venue candidates, found @review qualifying venues, and queued/refreshed @queued deal candidates: @auto automatically approved in shadow mode and @pending pending manual review.',
+      'Discovery completed. Researched @researched venue candidates, found @review qualifying venues, and queued/refreshed @queued deal candidates: @auto auto-approved, @published auto-published, @blocked left as auto-publish exceptions, and @pending pending manual review.',
       [
         '@researched' => $researched,
         '@review' => $reviewVenues,
         '@queued' => $queued,
         '@auto' => $autoApproved,
+        '@published' => $autoPublished,
+        '@blocked' => $autoPublishBlocked,
         '@pending' => $pendingReview,
       ],
     ));

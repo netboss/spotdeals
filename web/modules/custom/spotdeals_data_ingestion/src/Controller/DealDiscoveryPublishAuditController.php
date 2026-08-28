@@ -39,8 +39,9 @@ final class DealDiscoveryPublishAuditController extends ControllerBase {
       'all',
       'ready',
       'blocked',
-      'not_eligible',
+      'needs_review',
       'published',
+      'auto_published',
       'duplicate',
       'venue_unresolved',
       'error',
@@ -68,13 +69,17 @@ final class DealDiscoveryPublishAuditController extends ControllerBase {
         'label' => 'Blocked',
         'count' => (int) ($summary['blocked'] ?? 0),
       ],
-      'not_eligible' => [
-        'label' => 'Not approved',
-        'count' => (int) ($summary['not_eligible'] ?? 0),
+      'needs_review' => [
+        'label' => 'Needs review',
+        'count' => (int) ($summary['needs_review'] ?? 0),
       ],
       'published' => [
-        'label' => 'Published',
+        'label' => 'Published manually',
         'count' => (int) ($summary['published'] ?? 0),
+      ],
+      'auto_published' => [
+        'label' => 'Auto-published',
+        'count' => (int) ($summary['auto_published'] ?? 0),
       ],
       'duplicate' => [
         'label' => 'Duplicate',
@@ -179,6 +184,19 @@ final class DealDiscoveryPublishAuditController extends ControllerBase {
           '#access' => $this->currentUser()
             ->hasPermission('run spotdeals deal discovery'),
         ],
+        'publish_ready' => [
+          '#type' => 'link',
+          '#title' => $this->t('Publish ready reviewed candidates'),
+          '#url' => Url::fromRoute(
+            'spotdeals_data_ingestion.deal_discovery_publish_ready',
+          ),
+          '#attributes' => [
+            'class' => ['button'],
+          ],
+          '#access' => $this->currentUser()
+            ->hasPermission('publish spotdeals deal discovery'),
+          '#prefix' => ' ',
+        ],
         'queue' => [
           '#type' => 'link',
           '#title' => $this->t('Back to deal discovery'),
@@ -197,7 +215,7 @@ final class DealDiscoveryPublishAuditController extends ControllerBase {
           [
             '@ready' => (int) ($summary['ready'] ?? 0),
             '@blocked' => (int) ($summary['blocked'] ?? 0),
-            '@published' => (int) ($summary['published'] ?? 0),
+            '@published' => (int) ($summary['published'] ?? 0) + (int) ($summary['auto_published'] ?? 0),
           ],
         ),
         '#open' => TRUE,
@@ -257,7 +275,7 @@ final class DealDiscoveryPublishAuditController extends ControllerBase {
       '#attributes' => ['class' => ['container-inline']],
     ];
 
-    if ($result === 'published') {
+    if (in_array($result, ['published', 'auto_published'], TRUE)) {
       $operations['published_result'] = [
         '#type' => 'link',
         '#title' => $this->t('Published result'),
@@ -296,7 +314,7 @@ final class DealDiscoveryPublishAuditController extends ControllerBase {
       return $operations;
     }
 
-    if ($result === 'not_eligible') {
+    if ($result === 'needs_review') {
       $operations['review'] = [
         '#type' => 'link',
         '#title' => $this->t('Review candidate'),

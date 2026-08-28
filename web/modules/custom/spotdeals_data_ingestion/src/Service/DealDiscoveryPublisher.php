@@ -34,7 +34,11 @@ final class DealDiscoveryPublisher {
    *   already_published: bool
    * }
    */
-  public function publish(int $candidateId, int $uid): array {
+  public function publish(
+    int $candidateId,
+    int $uid,
+    string $publishedVia = 'manual',
+  ): array {
     $lockName = 'spotdeals_deal_discovery_publish:' . $candidateId;
 
     if (!$this->lock->acquire($lockName, 30.0)) {
@@ -133,6 +137,7 @@ final class DealDiscoveryPublisher {
           (int) $venue->id(),
           (int) $deal->id(),
           $uid,
+          $publishedVia,
         );
 
         return [
