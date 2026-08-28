@@ -6,3 +6,7 @@ category_catalog_max_age: 604800
 category_catalog_minimum_size: 100
 mapping_min_score: 0.9
 mapping_ambiguity_delta: 0.05
+deal_discovery_auto_approve_score: 8
+deal_discovery_auto_approve_location_confidence: 1
+deal_discovery_auto_approve_require_schedule: true
+deal_discovery_auto_publish_enabled: false
