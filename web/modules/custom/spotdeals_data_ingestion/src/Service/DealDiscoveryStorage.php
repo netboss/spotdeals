@@ -88,6 +88,7 @@ final class DealDiscoveryStorage {
       'published_deal_nid' => 0,
       'published_by' => 0,
       'published_at' => 0,
+      'published_via' => '',
     ];
 
     return (int) $this->database
@@ -199,12 +200,17 @@ final class DealDiscoveryStorage {
     int $venueNid,
     int $dealNid,
     int $uid,
+    string $publishedVia = 'manual',
   ): void {
     if ($venueNid <= 0 || $dealNid <= 0) {
       throw new \InvalidArgumentException(
         'Published venue and deal node IDs must be positive.',
       );
     }
+
+    $publishedVia = in_array($publishedVia, ['manual', 'automatic'], TRUE)
+      ? $publishedVia
+      : 'manual';
 
     $now = $this->time->getRequestTime();
 
@@ -216,6 +222,7 @@ final class DealDiscoveryStorage {
         'published_deal_nid' => $dealNid,
         'published_by' => max(0, $uid),
         'published_at' => $now,
+        'published_via' => $publishedVia,
         'changed' => $now,
       ])
       ->condition('id', $id)

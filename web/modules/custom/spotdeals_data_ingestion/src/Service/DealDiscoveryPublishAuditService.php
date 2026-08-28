@@ -27,8 +27,9 @@ final class DealDiscoveryPublishAuditService {
       'total' => 0,
       'ready' => 0,
       'blocked' => 0,
-      'not_eligible' => 0,
+      'needs_review' => 0,
       'published' => 0,
+      'auto_published' => 0,
       'duplicate' => 0,
       'venue_unresolved' => 0,
       'error' => 0,
@@ -41,10 +42,12 @@ final class DealDiscoveryPublishAuditService {
       $status = (string) ($candidate['status'] ?? '');
 
       if ($status === 'published' || (int) ($candidate['published_deal_nid'] ?? 0) > 0) {
-        $summary['published']++;
+        $publishedVia = (string) ($candidate['published_via'] ?? '');
+        $result = $publishedVia === 'automatic' ? 'auto_published' : 'published';
+        $summary[$result]++;
         $rows[] = [
           'candidate' => $candidate,
-          'result' => 'published',
+          'result' => $result,
           'message' => 'Candidate has already been published to Drupal.',
           'blocking_fields' => [],
         ];
@@ -52,11 +55,11 @@ final class DealDiscoveryPublishAuditService {
       }
 
       if (!in_array($status, ['approved', 'auto_approved'], TRUE)) {
-        $summary['not_eligible']++;
+        $summary['needs_review']++;
         $rows[] = [
           'candidate' => $candidate,
-          'result' => 'not_eligible',
-          'message' => 'Candidate is not approved for publishing preview.',
+          'result' => 'needs_review',
+          'message' => 'Candidate still needs an administrative publishing decision.',
           'blocking_fields' => [],
         ];
         continue;

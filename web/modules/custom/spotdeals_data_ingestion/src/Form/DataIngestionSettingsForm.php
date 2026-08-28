@@ -151,6 +151,13 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('deal_discovery_auto_approve_require_schedule'),
     ];
 
+    $form['deal_discovery']['deal_discovery_auto_publish_enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Automatically publish ready auto-approved candidates'),
+      '#description' => $this->t('When enabled, discovery immediately attempts controlled publishing only for candidates classified as auto-approved. The full publishing preview contract is re-run before every write; blocked or unsafe candidates remain in the exception queue.'),
+      '#default_value' => (bool) ($config->get('deal_discovery_auto_publish_enabled') ?? FALSE),
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -169,6 +176,7 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
       ->set('deal_discovery_auto_approve_score', (int) $form_state->getValue('deal_discovery_auto_approve_score'))
       ->set('deal_discovery_auto_approve_location_confidence', (int) $form_state->getValue('deal_discovery_auto_approve_location_confidence'))
       ->set('deal_discovery_auto_approve_require_schedule', (bool) $form_state->getValue('deal_discovery_auto_approve_require_schedule'))
+      ->set('deal_discovery_auto_publish_enabled', (bool) $form_state->getValue('deal_discovery_auto_publish_enabled'))
       ->save();
 
     $clearKey = (bool) $form_state->getValue(

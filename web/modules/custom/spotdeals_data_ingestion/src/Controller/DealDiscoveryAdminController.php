@@ -106,7 +106,7 @@ final class DealDiscoveryAdminController extends ControllerBase {
       'intro' => [
         '#type' => 'container',
         'text' => [
-          '#markup' => '<p>' . $this->t('Deal candidates discovered from official venue websites. High-confidence candidates may be auto-approved, uncertain candidates remain pending for review, and ready approved candidates can be published through the controlled publishing preview.') . '</p>',
+          '#markup' => '<p>' . $this->t('Deal candidates discovered from official venue websites. High-confidence candidates may be auto-approved and, when automatic publishing is enabled, safely published through the same readiness contract used by Preview publish. The queue is primarily for exceptions and manual review.') . '</p>',
         ],
         'run' => [
           '#type' => 'link',
