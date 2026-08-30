@@ -9,6 +9,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryConfidenceClassifier;
+use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryLocationResolver;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublisher;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryService;
@@ -36,6 +37,7 @@ final class DealDiscoveryRunForm extends FormBase {
     private readonly VenueTypeResolver $venueTypeResolver,
     private readonly DealDiscoveryLocationResolver $locationResolver,
     private readonly DealDiscoveryConfidenceClassifier $confidenceClassifier,
+    private readonly DealDiscoveryContentQualityService $contentQuality,
     private readonly DealDiscoveryPublisher $publisher,
     private readonly ConfigFactoryInterface $spotdealsConfigFactory,
   ) {}
@@ -51,6 +53,7 @@ final class DealDiscoveryRunForm extends FormBase {
       $container->get('Drupal\spotdeals_data_ingestion\Service\VenueTypeResolver'),
       $container->get('spotdeals_data_ingestion.deal_discovery_location_resolver'),
       $container->get('spotdeals_data_ingestion.deal_discovery_confidence_classifier'),
+      $container->get('spotdeals_data_ingestion.deal_discovery_content_quality'),
       $container->get('spotdeals_data_ingestion.deal_discovery_publisher'),
       $container->get('config.factory'),
     );
@@ -257,6 +260,7 @@ final class DealDiscoveryRunForm extends FormBase {
       ])));
 
       foreach ($result['deal_candidates'] as $candidate) {
+        $candidate = $this->contentQuality->normalizeCandidate($candidate);
         $classification = $this->confidenceClassifier->classify(
           $candidate,
           (int) ($result['location_confidence'] ?? 0),

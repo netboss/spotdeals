@@ -241,6 +241,9 @@ final class DealDiscoveryReviewForm extends FormBase {
       $blocking = is_array($deal['blocking_fields'] ?? NULL)
         ? $deal['blocking_fields']
         : [];
+      $informational = is_array($deal['informational'] ?? NULL)
+        ? $deal['informational']
+        : [];
 
       $element['readiness'] = [
         '#type' => 'item',
@@ -249,6 +252,44 @@ final class DealDiscoveryReviewForm extends FormBase {
           ? '<strong>' . $this->t('Ready based on the currently saved candidate values.') . '</strong>'
           : '<strong>' . $this->t('Not ready. Review the unresolved or blocking values below before approving.') . '</strong>',
       ];
+
+      $qualityCorrections = is_array($informational['content_quality_corrections'] ?? NULL)
+        ? $informational['content_quality_corrections']
+        : [];
+      if ($qualityCorrections !== []) {
+        $correctionItems = [];
+        foreach ($qualityCorrections as $field => $correction) {
+          if (!is_array($correction)) {
+            continue;
+          }
+          $correctionItems[] = htmlspecialchars((string) $field)
+            . ': <del>' . htmlspecialchars((string) ($correction['from'] ?? '')) . '</del>'
+            . ' &rarr; <strong>' . htmlspecialchars((string) ($correction['to'] ?? '')) . '</strong>';
+        }
+        if ($correctionItems !== []) {
+          $element['content_normalization'] = [
+            '#type' => 'item',
+            '#title' => $this->t('Automatic content normalization'),
+            '#markup' => '<p>' . $this->t('The following deterministic cleanup will be applied before publishing:') . '</p><ul><li>'
+              . implode('</li><li>', $correctionItems)
+              . '</li></ul>',
+          ];
+        }
+      }
+
+      $qualityWarnings = is_array($informational['content_quality_warnings'] ?? NULL)
+        ? $informational['content_quality_warnings']
+        : [];
+      if ($qualityWarnings !== []) {
+        $element['content_quality_warnings'] = [
+          '#type' => 'item',
+          '#title' => $this->t('Content quality review flags'),
+          '#markup' => '<ul><li>' . implode('</li><li>', array_map(
+            static fn (mixed $warning): string => htmlspecialchars((string) $warning),
+            $qualityWarnings,
+          )) . '</li></ul>',
+        ];
+      }
 
       $element['day_of_week'] = [
         '#type' => 'item',
