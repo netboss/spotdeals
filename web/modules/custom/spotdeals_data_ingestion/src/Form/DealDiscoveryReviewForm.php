@@ -9,6 +9,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Url;
+use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishPreviewService;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -24,6 +25,7 @@ final class DealDiscoveryReviewForm extends FormBase {
     private readonly DealDiscoveryStorage $storage,
     private readonly AccountProxyInterface $account,
     private readonly EntityTypeManagerInterface $entityTypeManager,
+    private readonly DealDiscoveryPublishPreviewService $publishPreview,
   ) {}
 
   public static function create(ContainerInterface $container): static {
@@ -31,6 +33,7 @@ final class DealDiscoveryReviewForm extends FormBase {
       $container->get('spotdeals_data_ingestion.deal_discovery_storage'),
       $container->get('current_user'),
       $container->get('entity_type.manager'),
+      $container->get('spotdeals_data_ingestion.deal_discovery_publish_preview'),
     );
   }
 
@@ -121,10 +124,12 @@ final class DealDiscoveryReviewForm extends FormBase {
       '#required' => TRUE,
     ];
 
+    $form['automatic_publishing'] = $this->buildAutomaticPublishingSummary();
+
     $form['publishing_overrides'] = [
       '#type' => 'details',
       '#title' => $this->t('Publishing overrides'),
-      '#description' => $this->t('Use these only when automatic field derivation cannot represent the source correctly. Overrides are stored on this candidate and are used by publishing preview and audit.'),
+      '#description' => $this->t('Use these only when the automatic publishing value shown above is unresolved or does not accurately represent the source. Overrides are stored on this candidate and are used by publishing preview and audit.'),
       '#open' => FALSE,
     ];
 
@@ -132,27 +137,30 @@ final class DealDiscoveryReviewForm extends FormBase {
       '#type' => 'select',
       '#title' => $this->t('Day of week override'),
       '#options' => $this->taxonomyOptions('day_of_week'),
-      '#empty_option' => $this->t('- Use automatic derivation -'),
+      '#empty_option' => $this->t('- Use automatic derivation shown above -'),
       '#default_value' => (int) ($this->candidate['override_day_of_week_tid'] ?? 0) ?: '',
-      '#description' => $this->t('Select an existing Day of Week taxonomy term when the automatic schedule mapping is blocked or incorrect.'),
+      '#description' => $this->t('Leave this on automatic only when the Day of Week value shown above correctly represents the source. Otherwise select the correct existing taxonomy term.'),
     ];
 
     $form['publishing_overrides']['override_deal_category_tid'] = [
       '#type' => 'select',
       '#title' => $this->t('Deal category override'),
       '#options' => $this->taxonomyOptions('deal_category'),
-      '#empty_option' => $this->t('- Use automatic derivation -'),
+      '#empty_option' => $this->t('- Use automatic derivation shown above -'),
       '#default_value' => (int) ($this->candidate['override_deal_category_tid'] ?? 0) ?: '',
-      '#description' => $this->t('Select an existing Deal Category taxonomy term when automatic category mapping is blocked or incorrect.'),
+      '#description' => $this->t('Leave this on automatic only when the Deal Category value shown above correctly represents the source. Otherwise select the correct existing taxonomy term.'),
     ];
 
     $form['decision'] = [
       '#type' => 'radios',
       '#title' => $this->t('Administrative decision'),
       '#required' => TRUE,
-      '#default_value' => in_array($this->candidate['status'], ['approved', 'rejected'], TRUE)
-        ? $this->candidate['status']
-        : 'approved',
+      '#default_value' => match ((string) $this->candidate['status']) {
+        'approved' => 'approved',
+        'rejected' => 'rejected',
+        'pending' => 'pending',
+        default => 'approved',
+      },
       '#options' => [
         'approved' => $this->t('Approve candidate for the future publishing step'),
         'rejected' => $this->t('Reject candidate'),
@@ -207,6 +215,178 @@ final class DealDiscoveryReviewForm extends FormBase {
     $form_state->setRedirect('spotdeals_data_ingestion.deal_discovery_candidates');
   }
 
+  /**
+   * Builds a read-only summary of the exact current automatic publishing plan.
+   */
+  private function buildAutomaticPublishingSummary(): array {
+    $element = [
+      '#type' => 'details',
+      '#title' => $this->t('Automatic publishing values'),
+      '#description' => $this->t('These are the exact values the current publishing preview derives from the saved candidate. If an override is left on automatic, the value shown here is what publishing will use. This preview does not write data.'),
+      '#open' => TRUE,
+    ];
+
+    try {
+      // Pending and rejected candidates are normally ineligible for publishing
+      // preview. Temporarily mark this in-memory copy approved so an admin can
+      // inspect the exact no-write field derivation before making a decision.
+      $previewCandidate = $this->candidate;
+      $previewCandidate['status'] = 'approved';
+      $preview = $this->publishPreview->preview($previewCandidate);
+
+      $deal = is_array($preview['deal'] ?? NULL) ? $preview['deal'] : [];
+      $proposed = is_array($deal['proposed_fields'] ?? NULL)
+        ? $deal['proposed_fields']
+        : [];
+      $blocking = is_array($deal['blocking_fields'] ?? NULL)
+        ? $deal['blocking_fields']
+        : [];
+
+      $element['readiness'] = [
+        '#type' => 'item',
+        '#title' => $this->t('Publishing readiness'),
+        '#markup' => !empty($preview['ready'])
+          ? '<strong>' . $this->t('Ready based on the currently saved candidate values.') . '</strong>'
+          : '<strong>' . $this->t('Not ready. Review the unresolved or blocking values below before approving.') . '</strong>',
+      ];
+
+      $element['day_of_week'] = [
+        '#type' => 'item',
+        '#title' => $this->t('Day of Week automatic value'),
+        '#markup' => $this->formatTaxonomyValues(
+          $proposed['field_day_of_week'] ?? NULL,
+          (string) ($blocking['field_day_of_week'] ?? ''),
+        ),
+      ];
+
+      $element['deal_category'] = [
+        '#type' => 'item',
+        '#title' => $this->t('Deal Category automatic value'),
+        '#markup' => $this->formatTaxonomyValues(
+          $proposed['field_deal_category'] ?? NULL,
+          (string) ($blocking['field_deal_category'] ?? ''),
+        ),
+      ];
+
+      $startTime = trim((string) ($proposed['field_start_time'] ?? ''));
+      $element['start_time'] = [
+        '#type' => 'item',
+        '#title' => $this->t('Start time automatic value'),
+        '#markup' => $startTime !== ''
+          ? '<strong>' . htmlspecialchars($startTime) . '</strong>'
+          : '<strong>' . $this->t('No automatic start time derived.') . '</strong>',
+      ];
+
+      if (array_key_exists('field_recurring', $proposed)) {
+        $recurring = $proposed['field_recurring'];
+        $recurringLabel = $recurring === NULL
+          ? (string) $this->t('Not derived / unset')
+          : ((bool) $recurring ? (string) $this->t('Yes') : (string) $this->t('No'));
+
+        $element['recurring'] = [
+          '#type' => 'item',
+          '#title' => $this->t('Recurring automatic value'),
+          '#markup' => '<strong>' . htmlspecialchars($recurringLabel) . '</strong>',
+        ];
+      }
+
+      $venue = is_array($preview['venue'] ?? NULL) ? $preview['venue'] : [];
+      $venueAction = (string) ($venue['action'] ?? 'unresolved');
+      $venueDescription = match ($venueAction) {
+        'reuse_existing' => $this->t(
+          'Reuse existing venue: @title (node @nid).',
+          [
+            '@title' => (string) ($venue['title'] ?? ''),
+            '@nid' => (int) ($venue['nid'] ?? 0),
+          ],
+        ),
+        'would_create' => $this->t(
+          'Create a new venue from the validated Geoapify venue: @title.',
+          ['@title' => (string) ($venue['title'] ?? '')],
+        ),
+        default => $this->t('Venue resolution is currently unresolved.'),
+      };
+
+      $element['venue_action'] = [
+        '#type' => 'item',
+        '#title' => $this->t('Venue publishing action'),
+        '#markup' => '<strong>' . htmlspecialchars((string) $venueDescription) . '</strong>',
+      ];
+
+      $blockingMessages = [];
+      foreach ($blocking as $message) {
+        $message = trim((string) $message);
+        if ($message !== '') {
+          $blockingMessages[] = htmlspecialchars($message);
+        }
+      }
+      foreach ((array) ($venue['errors'] ?? []) as $message) {
+        $message = trim((string) $message);
+        if ($message !== '') {
+          $blockingMessages[] = htmlspecialchars($message);
+        }
+      }
+
+      if (!empty($deal['duplicate_found'])) {
+        $blockingMessages[] = htmlspecialchars((string) $this->t(
+          'A duplicate deal was detected (node @nid).',
+          ['@nid' => (int) ($deal['duplicate_nid'] ?? 0)],
+        ));
+      }
+
+      if ($blockingMessages !== []) {
+        $element['blockers'] = [
+          '#type' => 'item',
+          '#title' => $this->t('Current publishing blockers'),
+          '#markup' => '<ul><li>' . implode('</li><li>', $blockingMessages) . '</li></ul>',
+        ];
+      }
+    }
+    catch (\Throwable $exception) {
+      $element['preview_error'] = [
+        '#type' => 'item',
+        '#title' => $this->t('Publishing preview unavailable'),
+        '#markup' => htmlspecialchars($this->t(
+          'The automatic publishing values could not be calculated: @message',
+          ['@message' => $exception->getMessage()],
+        )),
+      ];
+    }
+
+    return $element;
+  }
+
+  /**
+   * Formats derived taxonomy values for the read-only publishing summary.
+   */
+  private function formatTaxonomyValues(mixed $value, string $blockingMessage): string {
+    $values = [];
+
+    if (is_array($value)) {
+      if (isset($value['name'])) {
+        $values[] = (string) $value['name'];
+      }
+      else {
+        foreach ($value as $item) {
+          if (is_array($item) && isset($item['name'])) {
+            $values[] = (string) $item['name'];
+          }
+        }
+      }
+    }
+
+    $values = array_values(array_unique(array_filter(array_map('trim', $values))));
+    if ($values !== []) {
+      return '<strong>' . htmlspecialchars(implode(', ', $values)) . '</strong>';
+    }
+
+    if ($blockingMessage !== '') {
+      return '<strong>' . $this->t('UNRESOLVED') . '</strong><br>'
+        . htmlspecialchars($blockingMessage);
+    }
+
+    return '<strong>' . $this->t('No automatic value derived; this does not currently block publishing.') . '</strong>';
+  }
 
   /**
    * Returns taxonomy options without hardcoded term IDs.
@@ -234,6 +414,5 @@ final class DealDiscoveryReviewForm extends FormBase {
 
     return $options;
   }
-
 
 }
