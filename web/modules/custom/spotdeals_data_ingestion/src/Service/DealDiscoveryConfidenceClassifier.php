@@ -13,6 +13,7 @@ final class DealDiscoveryConfidenceClassifier {
 
   public function __construct(
     private readonly ConfigFactoryInterface $configFactory,
+    private readonly DealDiscoveryContentQualityService $contentQuality,
   ) {}
 
   /**
@@ -47,8 +48,15 @@ final class DealDiscoveryConfidenceClassifier {
     $sourceUrl = trim((string) ($candidate['source_url'] ?? ''));
     $value = trim((string) ($candidate['value'] ?? ''));
     $title = trim((string) ($candidate['title'] ?? ''));
+    $quality = $this->contentQuality->assessCandidate($candidate);
 
     $reasons = [];
+    foreach ($quality['blockers'] as $qualityBlocker) {
+      $reasons[] = 'content quality: ' . $qualityBlocker;
+    }
+    foreach ($quality['warnings'] as $qualityWarning) {
+      $reasons[] = 'content quality review: ' . $qualityWarning;
+    }
     if ($score < $autoApproveScore) {
       $reasons[] = sprintf('score %d is below configured automatic-approval score %d', $score, $autoApproveScore);
     }

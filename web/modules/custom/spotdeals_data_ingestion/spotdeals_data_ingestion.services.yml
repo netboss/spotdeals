@@ -25,6 +25,22 @@ services:
   Drupal\spotdeals_data_ingestion\Service\DealDiscoveryConfidenceClassifier:
     arguments:
       - '@config.factory'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService'
+
+
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService: {}
+
+  spotdeals_data_ingestion.deal_discovery_content_quality:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService
+
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityAuditService:
+    arguments:
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage'
+      - '@entity_type.manager'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService'
+
+  spotdeals_data_ingestion.deal_discovery_content_quality_audit:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityAuditService
 
   spotdeals_data_ingestion.deal_discovery_confidence_classifier:
     alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryConfidenceClassifier
@@ -44,6 +60,7 @@ services:
       - '@Drupal\spotdeals_data_ingestion\Service\VenueMapper'
       - '@Drupal\spotdeals_data_ingestion\Service\VenueLocalMatcher'
       - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryFieldDeriver'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService'
 
   spotdeals_data_ingestion.deal_discovery_publish_preview:
     alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishPreviewService

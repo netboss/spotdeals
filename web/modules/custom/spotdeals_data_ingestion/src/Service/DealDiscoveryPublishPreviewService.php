@@ -26,6 +26,7 @@ final class DealDiscoveryPublishPreviewService {
     private readonly VenueMapper $venueMapper,
     private readonly VenueLocalMatcher $venueLocalMatcher,
     private readonly DealDiscoveryFieldDeriver $fieldDeriver,
+    private readonly DealDiscoveryContentQualityService $contentQuality,
   ) {}
 
   /**
@@ -134,6 +135,8 @@ final class DealDiscoveryPublishPreviewService {
    * @return array<string, mixed>
    */
   private function buildDealPlan(array $candidate, array $venuePlan): array {
+    $quality = $this->contentQuality->assessCandidate($candidate);
+    $candidate = $quality['normalized'];
     $title = trim((string) ($candidate['offer_title'] ?? ''));
     $offerValue = trim((string) ($candidate['offer_value'] ?? ''));
     $schedule = trim((string) ($candidate['schedule'] ?? ''));
@@ -185,6 +188,9 @@ final class DealDiscoveryPublishPreviewService {
     }
     if ($offerValue === '') {
       $blockingFields['field_price_offer_text'] = 'Offer value is required.';
+    }
+    if ($quality['blockers'] !== []) {
+      $blockingFields['content_quality'] = implode(' ', $quality['blockers']);
     }
 
     $manualDay = $this->loadOverrideTerm(
@@ -258,6 +264,8 @@ final class DealDiscoveryPublishPreviewService {
       'discovery_score' => (int) ($candidate['score'] ?? 0),
       'confidence' => (string) ($candidate['confidence'] ?? ''),
       'status' => (string) ($candidate['status'] ?? ''),
+      'content_quality_corrections' => $quality['corrections'],
+      'content_quality_warnings' => $quality['warnings'],
     ];
 
     if ($derivedDays === [] && $this->bundleHasField('deal', 'field_day_of_week')) {
