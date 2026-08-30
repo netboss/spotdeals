@@ -126,6 +126,51 @@ final class DealDiscoveryStorage {
   }
 
   /**
+   * Routes a system auto-approval back to manual review when publishing is not
+   * ready, without recording an administrative review decision.
+   *
+   * @param string[] $reasons
+   *   Publishing-readiness reasons to append to the classification explanation.
+   */
+  public function markPendingForPublishingReadiness(int $id, array $reasons): void {
+    $candidate = $this->load($id);
+    if ($candidate === NULL || (string) ($candidate['status'] ?? '') !== 'auto_approved') {
+      return;
+    }
+
+    $reasonParts = [];
+    foreach ($reasons as $reason) {
+      $reason = trim((string) $reason);
+      if ($reason !== '') {
+        $reasonParts[] = $reason;
+      }
+    }
+
+    $classificationReason = trim((string) ($candidate['classification_reason'] ?? ''));
+    $readinessReason = $reasonParts !== []
+      ? 'publishing readiness: ' . implode('; ', array_unique($reasonParts))
+      : 'publishing readiness: candidate requires manual review';
+
+    if ($classificationReason !== '') {
+      $classificationReason .= '; ' . $readinessReason;
+    }
+    else {
+      $classificationReason = $readinessReason;
+    }
+
+    $this->database
+      ->update('spotdeals_deal_discovery_candidate')
+      ->fields([
+        'status' => 'pending',
+        'classification_reason' => $classificationReason,
+        'changed' => $this->time->getRequestTime(),
+      ])
+      ->condition('id', $id)
+      ->condition('status', 'auto_approved')
+      ->execute();
+  }
+
+  /**
    * Saves an administrative decision and any reviewed candidate edits.
    */
   public function review(

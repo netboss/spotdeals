@@ -11,6 +11,7 @@ use Drupal\Core\State\StateInterface;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryConfidenceClassifier;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryLocationResolver;
+use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishPreviewService;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublisher;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryService;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage;
@@ -38,6 +39,7 @@ final class DealDiscoveryRunForm extends FormBase {
     private readonly DealDiscoveryLocationResolver $locationResolver,
     private readonly DealDiscoveryConfidenceClassifier $confidenceClassifier,
     private readonly DealDiscoveryContentQualityService $contentQuality,
+    private readonly DealDiscoveryPublishPreviewService $publishPreview,
     private readonly DealDiscoveryPublisher $publisher,
     private readonly ConfigFactoryInterface $spotdealsConfigFactory,
   ) {}
@@ -54,6 +56,7 @@ final class DealDiscoveryRunForm extends FormBase {
       $container->get('spotdeals_data_ingestion.deal_discovery_location_resolver'),
       $container->get('spotdeals_data_ingestion.deal_discovery_confidence_classifier'),
       $container->get('spotdeals_data_ingestion.deal_discovery_content_quality'),
+      $container->get('spotdeals_data_ingestion.deal_discovery_publish_preview'),
       $container->get('spotdeals_data_ingestion.deal_discovery_publisher'),
       $container->get('config.factory'),
     );
@@ -65,7 +68,7 @@ final class DealDiscoveryRunForm extends FormBase {
 
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $form['notice'] = [
-      '#markup' => '<p>' . $this->t('This runs deal discovery and classifies candidates by confidence. High-confidence candidates are automatically approved. If automatic publishing is enabled in SpotDeals Data Ingestion settings, each ready auto-approved candidate is immediately passed through the same controlled publishing contract used by Preview publish. Unsafe candidates remain queued for review.') . '</p>',
+      '#markup' => '<p>' . $this->t('This runs deal discovery and classifies candidates by confidence. High-confidence candidates are automatically approved only when the exact no-write publishing preview is fully ready with no blockers or duplicates. If automatic publishing is enabled in SpotDeals Data Ingestion settings, each ready auto-approved candidate is immediately passed through the same controlled publishing contract used by Preview publish. Candidates requiring administrator judgment remain queued for review.') . '</p>',
     ];
 
     $venueTypeOptions = [];
@@ -266,13 +269,6 @@ final class DealDiscoveryRunForm extends FormBase {
           (int) ($result['location_confidence'] ?? 0),
         );
 
-        if ($classification['status'] === 'auto_approved') {
-          $autoApproved++;
-        }
-        else {
-          $pendingReview++;
-        }
-
         $candidateId = $this->storage->createOrRefresh([
           'external_source' => (string) ($venue['external_provider'] ?? 'geoapify'),
           'external_id' => (string) ($venue['external_id'] ?? ''),
@@ -294,6 +290,33 @@ final class DealDiscoveryRunForm extends FormBase {
         $queued++;
 
         $storedCandidate = $this->storage->load($candidateId);
+        if ((string) ($storedCandidate['status'] ?? '') === 'auto_approved') {
+          try {
+            $preview = $this->publishPreview->preview($storedCandidate);
+            if (empty($preview['ready'])) {
+              $this->storage->markPendingForPublishingReadiness(
+                $candidateId,
+                $this->publishingReadinessReasons($preview),
+              );
+              $storedCandidate = $this->storage->load($candidateId);
+            }
+          }
+          catch (\Throwable $exception) {
+            $this->storage->markPendingForPublishingReadiness(
+              $candidateId,
+              ['Publishing readiness preview failed: ' . $exception->getMessage()],
+            );
+            $storedCandidate = $this->storage->load($candidateId);
+          }
+        }
+
+        if ((string) ($storedCandidate['status'] ?? '') === 'auto_approved') {
+          $autoApproved++;
+        }
+        else {
+          $pendingReview++;
+        }
+
         if (
           (string) ($storedCandidate['status'] ?? '') === 'auto_approved'
           && (bool) $this->spotdealsConfigFactory
@@ -336,6 +359,56 @@ final class DealDiscoveryRunForm extends FormBase {
     ));
 
     $form_state->setRedirect('spotdeals_data_ingestion.deal_discovery_candidates');
+  }
+
+  /**
+   * Builds concise reasons for routing an otherwise high-confidence candidate
+   * back to manual review when the exact publishing contract is not ready.
+   *
+   * @param array<string, mixed> $preview
+   *   The no-write publishing preview.
+   *
+   * @return string[]
+   *   Human-readable publishing-readiness reasons.
+   */
+  private function publishingReadinessReasons(array $preview): array {
+    $reasons = [];
+
+    foreach ((array) ($preview['errors'] ?? []) as $error) {
+      $error = trim((string) $error);
+      if ($error !== '') {
+        $reasons[] = $error;
+      }
+    }
+
+    $venue = is_array($preview['venue'] ?? NULL) ? $preview['venue'] : [];
+    foreach ((array) ($venue['errors'] ?? []) as $error) {
+      $error = trim((string) $error);
+      if ($error !== '') {
+        $reasons[] = $error;
+      }
+    }
+
+    $deal = is_array($preview['deal'] ?? NULL) ? $preview['deal'] : [];
+    foreach ((array) ($deal['blocking_fields'] ?? []) as $field => $message) {
+      $message = trim((string) $message);
+      if ($message !== '') {
+        $reasons[] = (string) $field . ': ' . $message;
+      }
+    }
+
+    if (!empty($deal['duplicate_found'])) {
+      $duplicateNid = (int) ($deal['duplicate_nid'] ?? 0);
+      $reasons[] = $duplicateNid > 0
+        ? 'A duplicate deal already exists (node ' . $duplicateNid . ').'
+        : 'A duplicate deal already exists.';
+    }
+
+    if ($reasons === []) {
+      $reasons[] = 'The publishing preview did not report the candidate as ready.';
+    }
+
+    return array_values(array_unique($reasons));
   }
 
   private function normalizedWebsiteHost(string $website): string {
