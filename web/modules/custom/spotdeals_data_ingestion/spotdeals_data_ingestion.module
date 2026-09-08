@@ -202,6 +202,30 @@ function spotdeals_data_ingestion_cron(): void {
       ['message' => $exception->getMessage()],
     );
   }
+
+  try {
+    $result = \Drupal::service('spotdeals_data_ingestion.deal_discovery_auto_publisher')
+      ->processCronBatch();
+
+    if ((int) ($result['processed'] ?? 0) > 0) {
+      \Drupal::logger('spotdeals_data_ingestion')->notice(
+        'Deal-discovery automatic publishing cron processed {processed} candidate(s): {published} published, {already} already published, {review} routed to review, {failed} left queued for retry.',
+        [
+          'processed' => (int) ($result['processed'] ?? 0),
+          'published' => (int) ($result['published'] ?? 0),
+          'already' => (int) ($result['already_published'] ?? 0),
+          'review' => (int) ($result['routed_to_review'] ?? 0),
+          'failed' => (int) ($result['failed'] ?? 0),
+        ],
+      );
+    }
+  }
+  catch (\Throwable $exception) {
+    \Drupal::logger('spotdeals_data_ingestion')->warning(
+      'Deal-discovery automatic publishing cron failed safely: {message}',
+      ['message' => $exception->getMessage()],
+    );
+  }
 }
 
 /**

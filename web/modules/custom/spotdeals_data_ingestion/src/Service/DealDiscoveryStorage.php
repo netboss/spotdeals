@@ -171,6 +171,28 @@ final class DealDiscoveryStorage {
   }
 
   /**
+   * Lists auto-approved candidates waiting for automatic publishing.
+   *
+   * Oldest candidates are returned first so a steady discovery stream cannot
+   * starve earlier ready candidates.
+   *
+   * @return array<int, array<string, mixed>>
+   *   Candidate records keyed by candidate ID.
+   */
+  public function listAutoApprovedForPublishing(int $limit = 25): array {
+    $limit = max(1, min(200, $limit));
+
+    return $this->database
+      ->select('spotdeals_deal_discovery_candidate', 'c')
+      ->fields('c')
+      ->condition('status', 'auto_approved')
+      ->orderBy('changed', 'ASC')
+      ->range(0, $limit)
+      ->execute()
+      ->fetchAllAssoc('id', \PDO::FETCH_ASSOC);
+  }
+
+  /**
    * Saves an administrative decision and any reviewed candidate edits.
    */
   public function review(

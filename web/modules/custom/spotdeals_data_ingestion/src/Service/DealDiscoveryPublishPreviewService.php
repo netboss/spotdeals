@@ -197,12 +197,31 @@ final class DealDiscoveryPublishPreviewService {
       (int) ($candidate['override_day_of_week_tid'] ?? 0),
       'day_of_week',
     );
+    $dayTerms = $this->loadVocabularyTerms('day_of_week');
     $derivedDays = $manualDay !== NULL
       ? [$manualDay]
       : $this->fieldDeriver->deriveTaxonomyScheduleTerms(
         $schedule,
-        $this->loadVocabularyTerms('day_of_week'),
+        $dayTerms,
       );
+
+    // Global publishing policy: field_day_of_week represents weekday
+    // applicability, not the overall validity window. If the source contains
+    // no explicit weekday restriction and normal derivation returns nothing,
+    // use the canonical Daily taxonomy term rather than blocking an otherwise
+    // publishable candidate. Explicit weekday language remains conservative:
+    // when it cannot be mapped safely, the candidate still requires review.
+    if (
+      $manualDay === NULL
+      && $derivedDays === []
+      && !$this->hasExplicitWeekdayRestriction($schedule)
+    ) {
+      $dailyTerm = $this->findVocabularyTermByName($dayTerms, 'Daily');
+      if ($dailyTerm !== NULL) {
+        $derivedDays = [$dailyTerm];
+        $proposed['field_day_of_week_default'] = 'global Daily fallback: no explicit weekday restriction';
+      }
+    }
 
     if ($derivedDays !== []) {
       $proposed['field_day_of_week'] = $derivedDays;
@@ -336,6 +355,62 @@ final class DealDiscoveryPublishPreviewService {
     }
 
     return $terms;
+  }
+
+  /**
+   * Finds one exact taxonomy term by normalized name.
+   *
+   * @param array<int, array{tid: int, name: string, weight: int}> $terms
+   *
+   * @return array{target_id: int, name: string}|null
+   */
+  private function findVocabularyTermByName(array $terms, string $name): ?array {
+    $normalizedName = $this->normalizeTermName($name);
+    $matches = [];
+
+    foreach ($terms as $term) {
+      if ($this->normalizeTermName((string) $term['name']) !== $normalizedName) {
+        continue;
+      }
+
+      $matches[] = $term;
+    }
+
+    if ($matches === []) {
+      return NULL;
+    }
+
+    usort(
+      $matches,
+      static fn (array $left, array $right): int =>
+        $left['tid'] <=> $right['tid'],
+    );
+
+    return [
+      'target_id' => (int) $matches[0]['tid'],
+      'name' => (string) $matches[0]['name'],
+    ];
+  }
+
+  /**
+   * Returns TRUE when the source explicitly limits weekday applicability.
+   */
+  private function hasExplicitWeekdayRestriction(string $schedule): bool {
+    $normalized = $this->normalizeTermName($schedule);
+    if ($normalized === '') {
+      return FALSE;
+    }
+
+    return preg_match(
+      '/(?:^|\s)(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|weekday|weekdays|weekend|weekends)(?:\s|$)/u',
+      $normalized,
+    ) === 1;
+  }
+
+  private function normalizeTermName(string $text): string {
+    $text = mb_strtolower($this->cleanText($text));
+    $text = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $text) ?? $text;
+    return trim((string) preg_replace('/\s+/u', ' ', $text));
   }
 
   private function fieldIsRequired(string $bundle, string $fieldName): bool {

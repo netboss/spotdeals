@@ -38,3 +38,6 @@ spotdeals_data_ingestion.settings:
     deal_discovery_auto_publish_enabled:
       type: boolean
       label: 'Automatically publish ready auto-approved deal-discovery candidates'
+    deal_discovery_auto_publish_batch_size:
+      type: integer
+      label: 'Automatic deal-discovery publishing batch size per cron run'

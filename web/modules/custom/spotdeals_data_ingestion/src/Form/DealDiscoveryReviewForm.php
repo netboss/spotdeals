@@ -126,29 +126,57 @@ final class DealDiscoveryReviewForm extends FormBase {
 
     $form['automatic_publishing'] = $this->buildAutomaticPublishingSummary();
 
+    $publishingSuggestions = $this->publishingSuggestions();
+    $daySuggestion = is_array($publishingSuggestions['field_day_of_week'] ?? NULL)
+      ? $publishingSuggestions['field_day_of_week']
+      : NULL;
+    $categorySuggestion = is_array($publishingSuggestions['field_deal_category'] ?? NULL)
+      ? $publishingSuggestions['field_deal_category']
+      : NULL;
+
     $form['publishing_overrides'] = [
       '#type' => 'details',
       '#title' => $this->t('Publishing overrides'),
-      '#description' => $this->t('Use these only when the automatic publishing value shown above is unresolved or does not accurately represent the source. Overrides are stored on this candidate and are used by publishing preview and audit.'),
-      '#open' => FALSE,
+      '#description' => $this->t('Use these only when the automatic publishing value shown above is unresolved or does not accurately represent the source. When publishing has a suggested resolution, it is shown and preselected here as an administrative starting point. Verify the source before accepting a low-confidence suggestion. Overrides are stored on this candidate and are used by publishing preview and audit.'),
+      '#open' => $daySuggestion !== NULL || $categorySuggestion !== NULL,
     ];
+
+    if ($daySuggestion !== NULL) {
+      $form['publishing_overrides']['day_of_week_suggestion'] = $this->buildSuggestionSummary(
+        $this->t('Suggested Day of Week resolution'),
+        $daySuggestion,
+      );
+    }
+
+    $currentDayTid = (int) ($this->candidate['override_day_of_week_tid'] ?? 0);
+    $suggestedDayTid = (int) ($daySuggestion['target_id'] ?? 0);
 
     $form['publishing_overrides']['override_day_of_week_tid'] = [
       '#type' => 'select',
       '#title' => $this->t('Day of week override'),
       '#options' => $this->taxonomyOptions('day_of_week'),
       '#empty_option' => $this->t('- Use automatic derivation shown above -'),
-      '#default_value' => (int) ($this->candidate['override_day_of_week_tid'] ?? 0) ?: '',
-      '#description' => $this->t('Leave this on automatic only when the Day of Week value shown above correctly represents the source. Otherwise select the correct existing taxonomy term.'),
+      '#default_value' => ($currentDayTid > 0 ? $currentDayTid : $suggestedDayTid) ?: '',
+      '#description' => $this->t('Leave this on automatic only when the Day of Week value shown above correctly represents the source. If a suggestion is preselected, verify it against the source before saving the review.'),
     ];
+
+    if ($categorySuggestion !== NULL) {
+      $form['publishing_overrides']['deal_category_suggestion'] = $this->buildSuggestionSummary(
+        $this->t('Suggested Deal Category resolution'),
+        $categorySuggestion,
+      );
+    }
+
+    $currentCategoryTid = (int) ($this->candidate['override_deal_category_tid'] ?? 0);
+    $suggestedCategoryTid = (int) ($categorySuggestion['target_id'] ?? 0);
 
     $form['publishing_overrides']['override_deal_category_tid'] = [
       '#type' => 'select',
       '#title' => $this->t('Deal category override'),
       '#options' => $this->taxonomyOptions('deal_category'),
       '#empty_option' => $this->t('- Use automatic derivation shown above -'),
-      '#default_value' => (int) ($this->candidate['override_deal_category_tid'] ?? 0) ?: '',
-      '#description' => $this->t('Leave this on automatic only when the Deal Category value shown above correctly represents the source. Otherwise select the correct existing taxonomy term.'),
+      '#default_value' => ($currentCategoryTid > 0 ? $currentCategoryTid : $suggestedCategoryTid) ?: '',
+      '#description' => $this->t('Leave this on automatic only when the Deal Category value shown above correctly represents the source. If a suggestion is preselected, verify it against the source before saving the review.'),
     ];
 
     $form['decision'] = [
@@ -216,6 +244,74 @@ final class DealDiscoveryReviewForm extends FormBase {
   }
 
   /**
+   * Returns blocker suggestions from the current no-write publishing preview.
+   *
+   * @return array<string, array<string, mixed>>
+   */
+  private function publishingSuggestions(): array {
+    try {
+      $previewCandidate = $this->candidate;
+      $previewCandidate['status'] = 'approved';
+
+      $preview = $this->publishPreview->preview($previewCandidate);
+      $deal = is_array($preview['deal'] ?? NULL)
+        ? $preview['deal']
+        : [];
+
+      return is_array($deal['blocking_suggestions'] ?? NULL)
+        ? $deal['blocking_suggestions']
+        : [];
+    }
+    catch (\Throwable) {
+      return [];
+    }
+  }
+
+  /**
+   * Builds a visible publishing-suggestion summary for an override field.
+   */
+  private function buildSuggestionSummary(mixed $title, array $suggestion): array {
+    $name = trim((string) ($suggestion['name'] ?? ''));
+    $confidence = strtoupper(trim((string) ($suggestion['confidence'] ?? '')));
+    $reason = trim((string) ($suggestion['reason'] ?? ''));
+    $usageCount = (int) ($suggestion['usage_count'] ?? 0);
+
+    $parts = [];
+
+    if ($name !== '') {
+      $parts[] = '<strong>' . htmlspecialchars($name) . '</strong>';
+    }
+
+    if ($confidence !== '') {
+      $parts[] = htmlspecialchars((string) $this->t(
+        '@confidence confidence',
+        ['@confidence' => $confidence],
+      ));
+    }
+
+    $markup = $parts !== []
+      ? '<p>' . implode(' — ', $parts) . '</p>'
+      : '';
+
+    if ($reason !== '') {
+      $markup .= '<p>' . htmlspecialchars($reason) . '</p>';
+    }
+
+    if ($usageCount > 0) {
+      $markup .= '<p>' . htmlspecialchars((string) $this->t(
+        'Current usage: @count deal nodes.',
+        ['@count' => $usageCount],
+      )) . '</p>';
+    }
+
+    return [
+      '#type' => 'item',
+      '#title' => $title,
+      '#markup' => $markup,
+    ];
+  }
+
+  /**
    * Builds a read-only summary of the exact current automatic publishing plan.
    */
   private function buildAutomaticPublishingSummary(): array {
@@ -256,16 +352,20 @@ final class DealDiscoveryReviewForm extends FormBase {
       $qualityCorrections = is_array($informational['content_quality_corrections'] ?? NULL)
         ? $informational['content_quality_corrections']
         : [];
+
       if ($qualityCorrections !== []) {
         $correctionItems = [];
+
         foreach ($qualityCorrections as $field => $correction) {
           if (!is_array($correction)) {
             continue;
           }
+
           $correctionItems[] = htmlspecialchars((string) $field)
             . ': <del>' . htmlspecialchars((string) ($correction['from'] ?? '')) . '</del>'
             . ' &rarr; <strong>' . htmlspecialchars((string) ($correction['to'] ?? '')) . '</strong>';
         }
+
         if ($correctionItems !== []) {
           $element['content_normalization'] = [
             '#type' => 'item',
@@ -280,6 +380,7 @@ final class DealDiscoveryReviewForm extends FormBase {
       $qualityWarnings = is_array($informational['content_quality_warnings'] ?? NULL)
         ? $informational['content_quality_warnings']
         : [];
+
       if ($qualityWarnings !== []) {
         $element['content_quality_warnings'] = [
           '#type' => 'item',
@@ -310,6 +411,7 @@ final class DealDiscoveryReviewForm extends FormBase {
       ];
 
       $startTime = trim((string) ($proposed['field_start_time'] ?? ''));
+
       $element['start_time'] = [
         '#type' => 'item',
         '#title' => $this->t('Start time automatic value'),
@@ -320,6 +422,7 @@ final class DealDiscoveryReviewForm extends FormBase {
 
       if (array_key_exists('field_recurring', $proposed)) {
         $recurring = $proposed['field_recurring'];
+
         $recurringLabel = $recurring === NULL
           ? (string) $this->t('Not derived / unset')
           : ((bool) $recurring ? (string) $this->t('Yes') : (string) $this->t('No'));
@@ -331,8 +434,12 @@ final class DealDiscoveryReviewForm extends FormBase {
         ];
       }
 
-      $venue = is_array($preview['venue'] ?? NULL) ? $preview['venue'] : [];
+      $venue = is_array($preview['venue'] ?? NULL)
+        ? $preview['venue']
+        : [];
+
       $venueAction = (string) ($venue['action'] ?? 'unresolved');
+
       $venueDescription = match ($venueAction) {
         'reuse_existing' => $this->t(
           'Reuse existing venue: @title (node @nid).',
@@ -355,14 +462,18 @@ final class DealDiscoveryReviewForm extends FormBase {
       ];
 
       $blockingMessages = [];
+
       foreach ($blocking as $message) {
         $message = trim((string) $message);
+
         if ($message !== '') {
           $blockingMessages[] = htmlspecialchars($message);
         }
       }
+
       foreach ((array) ($venue['errors'] ?? []) as $message) {
         $message = trim((string) $message);
+
         if ($message !== '') {
           $blockingMessages[] = htmlspecialchars($message);
         }
@@ -387,7 +498,7 @@ final class DealDiscoveryReviewForm extends FormBase {
       $element['preview_error'] = [
         '#type' => 'item',
         '#title' => $this->t('Publishing preview unavailable'),
-        '#markup' => htmlspecialchars($this->t(
+        '#markup' => htmlspecialchars((string) $this->t(
           'The automatic publishing values could not be calculated: @message',
           ['@message' => $exception->getMessage()],
         )),
@@ -417,6 +528,7 @@ final class DealDiscoveryReviewForm extends FormBase {
     }
 
     $values = array_values(array_unique(array_filter(array_map('trim', $values))));
+
     if ($values !== []) {
       return '<strong>' . htmlspecialchars(implode(', ', $values)) . '</strong>';
     }
@@ -436,6 +548,7 @@ final class DealDiscoveryReviewForm extends FormBase {
    */
   private function taxonomyOptions(string $vocabulary): array {
     $storage = $this->entityTypeManager->getStorage('taxonomy_term');
+
     $ids = $storage
       ->getQuery()
       ->accessCheck(FALSE)
@@ -449,6 +562,7 @@ final class DealDiscoveryReviewForm extends FormBase {
     }
 
     $options = [];
+
     foreach ($storage->loadMultiple($ids) as $term) {
       $options[(int) $term->id()] = (string) $term->label();
     }

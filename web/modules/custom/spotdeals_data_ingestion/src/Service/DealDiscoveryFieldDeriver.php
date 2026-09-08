@@ -27,6 +27,16 @@ final class DealDiscoveryFieldDeriver {
 
     $normalizedSchedule = $this->normalizeText($schedule);
 
+    // Broad-validity evidence such as an explicit blackout-date exception
+    // means the offer applies generally rather than only on named weekdays.
+    // Resolve that deterministically to the existing Daily term before the
+    // more general phrase/range parsing below can misinterpret punctuation
+    // such as the hyphen in "full-price" as a schedule range.
+    $dailyFallback = $this->deriveUnrestrictedDailyTerm($schedule, $terms);
+    if ($dailyFallback !== NULL) {
+      return [$dailyFallback];
+    }
+
     if (preg_match('/(?:^|\s)weekends?(?:\s|$)/u', $normalizedSchedule) === 1) {
       $weekendMatches = [];
       foreach ($terms as $term) {
@@ -165,6 +175,11 @@ final class DealDiscoveryFieldDeriver {
         }
       }
 
+      $dailyFallback = $this->deriveUnrestrictedDailyTerm($schedule, $terms);
+      if ($dailyFallback !== NULL) {
+        return [$dailyFallback];
+      }
+
       return [];
     }
 
@@ -213,7 +228,8 @@ final class DealDiscoveryFieldDeriver {
     $matches = $this->schedulePhraseMatches($canonicalSchedule, $terms);
 
     if ($matches === []) {
-      return [];
+      $dailyFallback = $this->deriveUnrestrictedDailyTerm($schedule, $terms);
+      return $dailyFallback !== NULL ? [$dailyFallback] : [];
     }
 
     usort($matches, static function (array $left, array $right): int {
@@ -228,6 +244,68 @@ final class DealDiscoveryFieldDeriver {
 
     $term = $bestMatches[0]['term'];
     return [['target_id' => $term['tid'], 'name' => $term['name']]];
+  }
+
+  /**
+   * Derives Daily only from explicit unrestricted-validity evidence.
+   *
+   * This is deliberately narrower than the administrative fallback used by
+   * publishing preview. It does not choose the most common taxonomy value and
+   * it does not infer Daily merely because a schedule is non-empty. The source
+   * must contain wording that indicates the offer remains generally valid
+   * across a period, such as an explicit blackout-date exception or an
+   * explicit valid-through / valid-until statement.
+   *
+   * @param array<int, array{tid: int, name: string, weight: int}> $terms
+   *
+   * @return array{target_id: int, name: string}|null
+   */
+  private function deriveUnrestrictedDailyTerm(string $schedule, array $terms): ?array {
+    $normalizedSchedule = $this->normalizeText($schedule);
+    if ($normalizedSchedule === '') {
+      return NULL;
+    }
+
+    $hasUnrestrictedValidityEvidence = preg_match(
+      '/(?:^|\s)(?:select\s+)?blackout\s+dates?(?:\s|$)/u',
+      $normalizedSchedule,
+    ) === 1
+      || preg_match(
+        '/(?:^|\s)valid\s+(?:through|thru|until)\s+[\p{L}\p{N}]/u',
+        $normalizedSchedule,
+      ) === 1
+      || preg_match(
+        '/(?:^|\s)valid\s+for\s+(?:\d+|a|an|one|twelve)\s+(?:full\s+)?(?:days?|months?|years?)(?:\s|$)/u',
+        $normalizedSchedule,
+      ) === 1;
+
+    if (!$hasUnrestrictedValidityEvidence) {
+      return NULL;
+    }
+
+    $dailyMatches = [];
+    foreach ($terms as $term) {
+      if ($this->normalizeText($term['name']) === 'daily') {
+        $dailyMatches[] = $term;
+      }
+    }
+
+    if ($dailyMatches === []) {
+      return NULL;
+    }
+
+    usort(
+      $dailyMatches,
+      static fn (array $left, array $right): int =>
+        $left['tid'] <=> $right['tid'],
+    );
+
+    $term = $dailyMatches[0];
+
+    return [
+      'target_id' => $term['tid'],
+      'name' => $term['name'],
+    ];
   }
 
   public function deriveRecurring(string $schedule): ?int {
