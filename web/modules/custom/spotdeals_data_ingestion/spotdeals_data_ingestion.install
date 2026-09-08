@@ -483,3 +483,24 @@ function spotdeals_data_ingestion_update_10009(): void {
     $config->set('deal_discovery_auto_publish_enabled', FALSE)->save();
   }
 }
+
+
+/**
+ * Enables cron-driven automatic publishing and initializes its batch size.
+ */
+function spotdeals_data_ingestion_update_10010(): void {
+  $config = \Drupal::configFactory()
+    ->getEditable('spotdeals_data_ingestion.settings');
+
+  $config
+    ->set('deal_discovery_auto_publish_enabled', TRUE)
+    ->set(
+      'deal_discovery_auto_publish_batch_size',
+      max(1, min(
+        200,
+        (int) ($config->get('deal_discovery_auto_publish_batch_size') ?? 25),
+      )),
+    )
+    ->save();
+}
+

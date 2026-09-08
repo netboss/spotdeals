@@ -153,9 +153,19 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
 
     $form['deal_discovery']['deal_discovery_auto_publish_enabled'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Automatically publish ready auto-approved candidates'),
-      '#description' => $this->t('When enabled, discovery immediately attempts controlled publishing only for candidates classified as auto-approved. The full publishing preview contract is re-run before every write; blocked or unsafe candidates remain in the exception queue.'),
-      '#default_value' => (bool) ($config->get('deal_discovery_auto_publish_enabled') ?? FALSE),
+      '#title' => $this->t('Automatically publish ready auto-approved candidates via cron'),
+      '#description' => $this->t('Enabled by default. High-confidence candidates are queued only after the exact publishing preview is ready. Drupal cron then publishes them in bounded batches through the controlled publisher. Candidates that become blocked are routed to manual review; write-time failures remain queued for retry.'),
+      '#default_value' => (bool) ($config->get('deal_discovery_auto_publish_enabled') ?? TRUE),
+    ];
+
+    $form['deal_discovery']['deal_discovery_auto_publish_batch_size'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Automatic publishing batch size per cron run'),
+      '#description' => $this->t('Maximum number of queued auto-approved candidates cron will process in one run. Oldest queued candidates are processed first.'),
+      '#default_value' => (int) ($config->get('deal_discovery_auto_publish_batch_size') ?? 25),
+      '#min' => 1,
+      '#max' => 200,
+      '#required' => TRUE,
     ];
 
     return parent::buildForm($form, $form_state);
@@ -177,6 +187,7 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
       ->set('deal_discovery_auto_approve_location_confidence', (int) $form_state->getValue('deal_discovery_auto_approve_location_confidence'))
       ->set('deal_discovery_auto_approve_require_schedule', (bool) $form_state->getValue('deal_discovery_auto_approve_require_schedule'))
       ->set('deal_discovery_auto_publish_enabled', (bool) $form_state->getValue('deal_discovery_auto_publish_enabled'))
+      ->set('deal_discovery_auto_publish_batch_size', max(1, min(200, (int) $form_state->getValue('deal_discovery_auto_publish_batch_size'))))
       ->save();
 
     $clearKey = (bool) $form_state->getValue(
