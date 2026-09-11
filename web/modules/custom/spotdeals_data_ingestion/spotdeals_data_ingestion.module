@@ -207,13 +207,29 @@ function spotdeals_data_ingestion_cron(): void {
     $result = \Drupal::service('spotdeals_data_ingestion.deal_discovery_auto_publisher')
       ->processCronBatch();
 
-    if ((int) ($result['processed'] ?? 0) > 0) {
+    if (
+      (int) ($result['processed'] ?? 0) > 0
+      || (int) ($result['readiness_rechecked'] ?? 0) > 0
+      || (int) ($result['historical_scanned'] ?? 0) > 0
+    ) {
       \Drupal::logger('spotdeals_data_ingestion')->notice(
-        'Deal-discovery automatic publishing cron processed {processed} candidate(s): {published} published, {already} already published, {review} routed to review, {failed} left queued for retry.',
+        'Deal-discovery cron rechecked {rechecked} stale readiness candidate(s): {restored} restored, {still_blocked} still blocked; historical pending scan inspected {historical_scanned}: {historical_eligible} classifier-eligible, {historical_restored} restored, {historical_duplicates} duplicate(s) rejected, {historical_blocked} publishing-blocked, {historical_location} location-safety skip(s), {historical_reviewed} reviewed skip(s), {historical_errors} error(s); publishing processed {processed}: {published} published, {already} already published, {duplicates} total duplicate(s) rejected, {review} routed to review, {failed} left queued for retry.',
         [
+          'rechecked' => (int) ($result['readiness_rechecked'] ?? 0),
+          'restored' => (int) ($result['readiness_restored'] ?? 0),
+          'still_blocked' => (int) ($result['readiness_still_blocked'] ?? 0),
+          'historical_scanned' => (int) ($result['historical_scanned'] ?? 0),
+          'historical_eligible' => (int) ($result['historical_classifier_eligible'] ?? 0),
+          'historical_restored' => (int) ($result['historical_restored'] ?? 0),
+          'historical_duplicates' => (int) ($result['historical_duplicates'] ?? 0),
+          'historical_blocked' => (int) ($result['historical_blocked'] ?? 0),
+          'historical_location' => (int) ($result['historical_skipped_location'] ?? 0),
+          'historical_reviewed' => (int) ($result['historical_skipped_reviewed'] ?? 0),
+          'historical_errors' => (int) ($result['historical_errors'] ?? 0),
           'processed' => (int) ($result['processed'] ?? 0),
           'published' => (int) ($result['published'] ?? 0),
           'already' => (int) ($result['already_published'] ?? 0),
+          'duplicates' => (int) ($result['duplicate_rejected'] ?? 0),
           'review' => (int) ($result['routed_to_review'] ?? 0),
           'failed' => (int) ($result['failed'] ?? 0),
         ],

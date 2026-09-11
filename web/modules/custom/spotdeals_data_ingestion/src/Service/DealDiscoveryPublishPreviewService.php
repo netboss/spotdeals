@@ -198,10 +198,15 @@ final class DealDiscoveryPublishPreviewService {
       'day_of_week',
     );
     $dayTerms = $this->loadVocabularyTerms('day_of_week');
+    // Weekday applicability is often stated in the offer title while the
+    // extracted schedule contains only time/validity context. Use both for
+    // day-of-week derivation so explicit wording such as "every Wednesday",
+    // "every day", and "weekday" is not lost before publishing.
+    $dayContext = $this->cleanText($title . ' ' . $schedule);
     $derivedDays = $manualDay !== NULL
       ? [$manualDay]
       : $this->fieldDeriver->deriveTaxonomyScheduleTerms(
-        $schedule,
+        $dayContext,
         $dayTerms,
       );
 
@@ -214,7 +219,7 @@ final class DealDiscoveryPublishPreviewService {
     if (
       $manualDay === NULL
       && $derivedDays === []
-      && !$this->hasExplicitWeekdayRestriction($schedule)
+      && !$this->hasExplicitWeekdayRestriction($dayContext)
     ) {
       $dailyTerm = $this->findVocabularyTermByName($dayTerms, 'Daily');
       if ($dailyTerm !== NULL) {
@@ -260,6 +265,7 @@ final class DealDiscoveryPublishPreviewService {
       ?? $this->fieldDeriver->deriveExactTaxonomyTerm(
         $categoryContext,
         $this->loadVocabularyTerms('deal_category'),
+        $this->loadUsedTaxonomyTermIds('field_deal_category', 'deal_category'),
       );
 
     if ($derivedCategory !== NULL) {
@@ -358,6 +364,55 @@ final class DealDiscoveryPublishPreviewService {
   }
 
   /**
+   * Loads taxonomy term IDs already used by current deal nodes for a field.
+   *
+   * These IDs are used only as a conservative ambiguity tie-breaker. A term
+   * being popular or already used never overrides a unique exact taxonomy
+   * phrase match.
+   *
+   * @return array<int, int>
+   */
+  private function loadUsedTaxonomyTermIds(
+    string $fieldName,
+    string $vocabulary,
+  ): array {
+    $fieldDefinitions = $this->entityFieldManager->getFieldDefinitions('node', 'deal');
+    if (!isset($fieldDefinitions[$fieldName])) {
+      return [];
+    }
+
+    $storageDefinition = $fieldDefinitions[$fieldName]->getFieldStorageDefinition();
+    if ($storageDefinition->getType() !== 'entity_reference') {
+      return [];
+    }
+
+    $table = 'node__' . $fieldName;
+    $targetColumn = $fieldName . '_target_id';
+    if (!$this->database->schema()->tableExists($table)) {
+      return [];
+    }
+
+    $query = $this->database->select($table, 'f');
+    $query->innerJoin('node_field_data', 'n', 'n.nid = f.entity_id');
+    $query->innerJoin(
+      'taxonomy_term_field_data',
+      't',
+      't.tid = f.' . $targetColumn . ' AND t.vid = :vocabulary',
+      [':vocabulary' => $vocabulary],
+    );
+    $query->addField('f', $targetColumn, 'target_id');
+    $query->condition('f.deleted', 0);
+    $query->condition('n.type', 'deal');
+    $query->distinct();
+
+    $ids = $query->execute()->fetchCol();
+    $ids = array_values(array_unique(array_map('intval', $ids)));
+    sort($ids, SORT_NUMERIC);
+
+    return $ids;
+  }
+
+  /**
    * Finds one exact taxonomy term by normalized name.
    *
    * @param array<int, array{tid: int, name: string, weight: int}> $terms
@@ -437,24 +492,29 @@ final class DealDiscoveryPublishPreviewService {
   }
 
   private function findExistingDealDuplicate(string $title, int $venueNid): ?int {
-    if ($title === '') {
+    // A deal duplicate is meaningful only within the same persisted venue.
+    // When the venue preview would create a new venue there is no safe venue
+    // NID to constrain the query, so a title-only lookup would incorrectly
+    // collapse identical chain promotions across different locations/cities.
+    if ($title === '' || $venueNid <= 0) {
       return NULL;
     }
 
-    $query = $this->entityTypeManager
+    if (!$this->bundleHasField('deal', 'field_venue')) {
+      return NULL;
+    }
+
+    $nids = $this->entityTypeManager
       ->getStorage('node')
       ->getQuery()
       ->accessCheck(FALSE)
       ->condition('type', 'deal')
       ->condition('title', $title)
+      ->condition('field_venue.target_id', $venueNid)
       ->sort('nid', 'ASC')
-      ->range(0, 10);
+      ->range(0, 10)
+      ->execute();
 
-    if ($venueNid > 0 && $this->bundleHasField('deal', 'field_venue')) {
-      $query->condition('field_venue.target_id', $venueNid);
-    }
-
-    $nids = $query->execute();
     if ($nids === []) {
       return NULL;
     }

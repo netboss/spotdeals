@@ -72,6 +72,36 @@ final class DealDiscoveryFieldDeriverTest extends TestCase {
     $this->assertSame(1, $this->deriver->deriveRecurring($schedule));
   }
 
+  public function testEveryWednesdayResolvesSingleDay(): void {
+    $this->assertSame(
+      [['target_id' => 49, 'name' => 'Wednesday']],
+      $this->deriver->deriveTaxonomyScheduleTerms(
+        'Free admission every Wednesday from 5 to 9 PM.',
+        $this->dayTerms(),
+      ),
+    );
+  }
+
+  public function testEveryDayResolvesAllDaysComposite(): void {
+    $this->assertSame(
+      [['target_id' => 1633, 'name' => 'Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday']],
+      $this->deriver->deriveTaxonomyScheduleTerms(
+        'Free Admission Every Day',
+        $this->dayTerms(),
+      ),
+    );
+  }
+
+  public function testWeekdayResolvesMondayThroughFriday(): void {
+    $this->assertSame(
+      [['target_id' => 369, 'name' => 'Monday-Friday']],
+      $this->deriver->deriveTaxonomyScheduleTerms(
+        'Up to 25% Off Weekday Birthdays',
+        $this->dayTerms(),
+      ),
+    );
+  }
+
   public function testGroupDiscountWithoutScheduleRemainsUnresolved(): void {
     $this->assertSame([], $this->deriver->deriveTaxonomyScheduleTerms('', $this->dayTerms()));
     $this->assertSame('', $this->deriver->deriveStartTime(''));
@@ -81,6 +111,68 @@ final class DealDiscoveryFieldDeriverTest extends TestCase {
       $this->deriver->deriveExactTaxonomyTerm(
         'Group discount: take 20% off when you buy 8 or more tickets.',
         $this->categoryTerms(),
+      ),
+    );
+  }
+
+  public function testExactCategoryTiePrefersUsedDealCategory(): void {
+    $terms = [
+      ['tid' => 1129, 'name' => 'Wednesday', 'weight' => 0],
+      ['tid' => 1181, 'name' => 'Promotion', 'weight' => 0],
+    ];
+
+    $this->assertSame(
+      ['target_id' => 1181, 'name' => 'Promotion'],
+      $this->deriver->deriveExactTaxonomyTerm(
+        'Winning Wednesday promotion=deal,deals,offer,offers.',
+        $terms,
+        [1181],
+      ),
+    );
+  }
+
+  public function testExactCategoryTieRemainsUnresolvedWhenBothTermsAreUsed(): void {
+    $terms = [
+      ['tid' => 1129, 'name' => 'Wednesday', 'weight' => 0],
+      ['tid' => 1181, 'name' => 'Promotion', 'weight' => 0],
+    ];
+
+    $this->assertNull(
+      $this->deriver->deriveExactTaxonomyTerm(
+        'Winning Wednesday promotion=deal,deals,offer,offers.',
+        $terms,
+        [1129, 1181],
+      ),
+    );
+  }
+
+  public function testExactCategoryTieRemainsUnresolvedWithoutUsedMatch(): void {
+    $terms = [
+      ['tid' => 1129, 'name' => 'Wednesday', 'weight' => 0],
+      ['tid' => 1181, 'name' => 'Promotion', 'weight' => 0],
+    ];
+
+    $this->assertNull(
+      $this->deriver->deriveExactTaxonomyTerm(
+        'Winning Wednesday promotion=deal,deals,offer,offers.',
+        $terms,
+        [],
+      ),
+    );
+  }
+
+  public function testUniqueExactCategoryIsNotOverriddenByUsedTerms(): void {
+    $terms = [
+      ['tid' => 1181, 'name' => 'Promotion', 'weight' => 0],
+      ['tid' => 3690, 'name' => 'Group Discount', 'weight' => 0],
+    ];
+
+    $this->assertSame(
+      ['target_id' => 3690, 'name' => 'Group Discount'],
+      $this->deriver->deriveExactTaxonomyTerm(
+        'Group discount: take 20% off when you buy 8 or more tickets.',
+        $terms,
+        [1181],
       ),
     );
   }
