@@ -199,6 +199,7 @@ final class DealDiscoveryRunForm extends FormBase {
     $reviewVenues = 0;
     $queued = 0;
     $autoApproved = 0;
+    $duplicatesRejected = 0;
     $pendingReview = 0;
     $researchedWebsiteHosts = [];
 
@@ -282,14 +283,28 @@ final class DealDiscoveryRunForm extends FormBase {
         $queued++;
 
         $storedCandidate = $this->storage->load($candidateId);
+        $autoRejectedDuplicate = FALSE;
         if ((string) ($storedCandidate['status'] ?? '') === 'auto_approved') {
           try {
             $preview = $this->publishPreview->preview($storedCandidate);
             if (empty($preview['ready'])) {
-              $this->storage->markPendingForPublishingReadiness(
-                $candidateId,
-                $this->publishingReadinessReasons($preview),
-              );
+              $deal = is_array($preview['deal'] ?? NULL) ? $preview['deal'] : [];
+              $duplicateNid = !empty($deal['duplicate_found'])
+                ? (int) ($deal['duplicate_nid'] ?? 0)
+                : 0;
+
+              if (
+                $duplicateNid > 0
+                && $this->storage->markRejectedAsDuplicate($candidateId, $duplicateNid)
+              ) {
+                $autoRejectedDuplicate = TRUE;
+              }
+              else {
+                $this->storage->markPendingForPublishingReadiness(
+                  $candidateId,
+                  $this->publishingReadinessReasons($preview),
+                );
+              }
               $storedCandidate = $this->storage->load($candidateId);
             }
           }
@@ -305,6 +320,9 @@ final class DealDiscoveryRunForm extends FormBase {
         if ((string) ($storedCandidate['status'] ?? '') === 'auto_approved') {
           $autoApproved++;
         }
+        elseif ($autoRejectedDuplicate) {
+          $duplicatesRejected++;
+        }
         else {
           $pendingReview++;
         }
@@ -313,12 +331,13 @@ final class DealDiscoveryRunForm extends FormBase {
     }
 
     $this->messenger()->addStatus($this->t(
-      'Discovery completed. Researched @researched venue candidates, found @review qualifying venues, and queued/refreshed @queued deal candidates: @auto ready and queued for automatic cron publishing, and @pending pending manual review.',
+      'Discovery completed. Researched @researched venue candidates, found @review qualifying venues, and queued/refreshed @queued deal candidates: @auto ready and queued for automatic cron publishing, @duplicates automatically rejected as existing duplicates, and @pending pending manual review.',
       [
         '@researched' => $researched,
         '@review' => $reviewVenues,
         '@queued' => $queued,
         '@auto' => $autoApproved,
+        '@duplicates' => $duplicatesRejected,
         '@pending' => $pendingReview,
       ],
     ));

@@ -26,6 +26,7 @@ services:
     arguments:
       - '@config.factory'
       - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService'
+      - '@datetime.time'
 
 
   Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService: {}
@@ -82,8 +83,10 @@ services:
     arguments:
       - '@config.factory'
       - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryConfidenceClassifier'
       - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishPreviewService'
       - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublisher'
+      - '@state'
       - '@logger.channel.spotdeals_data_ingestion'
 
   spotdeals_data_ingestion.deal_discovery_auto_publisher:

@@ -27,6 +27,39 @@ final class DealDiscoveryFieldDeriver {
 
     $normalizedSchedule = $this->normalizeText($schedule);
 
+    // Resolve explicit broad weekday applicability before general phrase
+    // matching. These expressions are common in discovery titles and map
+    // deterministically to existing composite day-of-week taxonomy terms.
+    if (preg_match('/(?:^|\s)(?:every\s+day|everyday|daily)(?:\s|$)/u', $normalizedSchedule) === 1) {
+      $allDays = $this->deriveCompositeDayTerm(
+        $terms,
+        ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+        ['daily'],
+      );
+      if ($allDays !== NULL) {
+        return [$allDays];
+      }
+    }
+
+    if (preg_match('/(?:^|\s)weekdays?(?:\s|$)/u', $normalizedSchedule) === 1) {
+      // Prefer an explicit Monday-Friday taxonomy range when the vocabulary
+      // provides one. A hyphenated range normalizes to the two endpoints, so
+      // it cannot be discovered by the generic five-token composite matcher.
+      $weekdayRange = $this->deriveNamedScheduleTerm($terms, 'monday friday');
+      if ($weekdayRange !== NULL) {
+        return [$weekdayRange];
+      }
+
+      $weekdays = $this->deriveCompositeDayTerm(
+        $terms,
+        ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+        ['weekday', 'weekdays'],
+      );
+      if ($weekdays !== NULL) {
+        return [$weekdays];
+      }
+    }
+
     // Broad-validity evidence such as an explicit blackout-date exception
     // means the offer applies generally rather than only on named weekdays.
     // Resolve that deterministically to the existing Daily term before the
@@ -101,7 +134,7 @@ final class DealDiscoveryFieldDeriver {
     }
 
     if (preg_match(
-      '/(?<![\p{L}\p{N}])([\p{L}\p{N}]+)\s+(?:through|thru|to|-)\s+([\p{L}\p{N}]+)(?![\p{L}\p{N}])/iu',
+      '/(?<![\p{L}])([\p{L}]+)\s+(?:through|thru|to|-)\s+([\p{L}]+)(?![\p{L}])/iu',
       mb_strtolower($schedule),
       $range,
     ) === 1) {
@@ -246,6 +279,95 @@ final class DealDiscoveryFieldDeriver {
     return [['target_id' => $term['tid'], 'name' => $term['name']]];
   }
 
+
+  /**
+   * Resolves one taxonomy term by its normalized schedule label.
+   *
+   * @param array<int, array{tid: int, name: string, weight: int}> $terms
+   *
+   * @return array{target_id: int, name: string}|null
+   */
+  private function deriveNamedScheduleTerm(array $terms, string $normalizedName): ?array {
+    $matches = [];
+    foreach ($terms as $term) {
+      if ($this->normalizeText($term['name']) === $normalizedName) {
+        $matches[] = $term;
+      }
+    }
+
+    if ($matches === []) {
+      return NULL;
+    }
+
+    usort(
+      $matches,
+      static fn (array $left, array $right): int =>
+        $left['tid'] <=> $right['tid'],
+    );
+
+    return [
+      'target_id' => $matches[0]['tid'],
+      'name' => $matches[0]['name'],
+    ];
+  }
+
+  /**
+   * Resolves a deterministic composite weekday term from the vocabulary.
+   *
+   * @param array<int, array{tid: int, name: string, weight: int}> $terms
+   * @param string[] $requiredDays
+   * @param string[] $literalNames
+   *
+   * @return array{target_id: int, name: string}|null
+   */
+  private function deriveCompositeDayTerm(
+    array $terms,
+    array $requiredDays,
+    array $literalNames = [],
+  ): ?array {
+    $requiredDays = array_values(array_unique($requiredDays));
+    sort($requiredDays);
+
+    $matches = [];
+    foreach ($terms as $term) {
+      $normalizedName = $this->normalizeText($term['name']);
+      if ($normalizedName === '') {
+        continue;
+      }
+
+      if (in_array($normalizedName, $literalNames, TRUE)) {
+        $matches[] = ['priority' => 0, 'term' => $term];
+        continue;
+      }
+
+      $tokens = preg_split('/\s+/u', $normalizedName) ?: [];
+      $tokens = array_values(array_unique(array_filter(
+        $tokens,
+        static fn (string $token): bool => $token !== '',
+      )));
+      sort($tokens);
+
+      if ($tokens === $requiredDays) {
+        $matches[] = ['priority' => 1, 'term' => $term];
+      }
+    }
+
+    if ($matches === []) {
+      return NULL;
+    }
+
+    usort($matches, static function (array $left, array $right): int {
+      return ($left['priority'] <=> $right['priority'])
+        ?: ($left['term']['tid'] <=> $right['term']['tid']);
+    });
+
+    $term = $matches[0]['term'];
+    return [
+      'target_id' => $term['tid'],
+      'name' => $term['name'],
+    ];
+  }
+
   /**
    * Derives Daily only from explicit unrestricted-validity evidence.
    *
@@ -346,10 +468,18 @@ final class DealDiscoveryFieldDeriver {
 
   /**
    * @param array<int, array{tid: int, name: string, weight: int}> $terms
+   * @param array<int, int> $preferredTermIds
+   *   Existing taxonomy term IDs that are already used by deal nodes. These
+   *   IDs are consulted only to resolve an otherwise ambiguous equal-length
+   *   exact-match tie. They never override a unique longest exact match.
    *
    * @return array{target_id: int, name: string}|null
    */
-  public function deriveExactTaxonomyTerm(string $text, array $terms): ?array {
+  public function deriveExactTaxonomyTerm(
+    string $text,
+    array $terms,
+    array $preferredTermIds = [],
+  ): ?array {
     $normalizedText = $this->normalizeText($text);
     if ($normalizedText === '') {
       return NULL;
@@ -379,7 +509,24 @@ final class DealDiscoveryFieldDeriver {
     $bestMatches = array_values(array_filter($matches, static fn (array $match): bool => $match['length'] === $bestLength));
     $normalizedNames = array_values(array_unique(array_column($bestMatches, 'normalized_name')));
     if (count($normalizedNames) !== 1) {
-      return NULL;
+      $preferredLookup = array_fill_keys(
+        array_values(array_unique(array_map('intval', $preferredTermIds))),
+        TRUE,
+      );
+      $preferredMatches = array_values(array_filter(
+        $bestMatches,
+        static fn (array $match): bool => isset($preferredLookup[(int) $match['term']['tid']]),
+      ));
+      $preferredNames = array_values(array_unique(array_column(
+        $preferredMatches,
+        'normalized_name',
+      )));
+
+      if (count($preferredNames) !== 1) {
+        return NULL;
+      }
+
+      $bestMatches = $preferredMatches;
     }
 
     $term = $bestMatches[0]['term'];
