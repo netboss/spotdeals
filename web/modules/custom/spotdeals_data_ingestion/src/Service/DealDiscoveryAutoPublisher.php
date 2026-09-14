@@ -19,6 +19,7 @@ final class DealDiscoveryAutoPublisher {
     private readonly DealDiscoveryConfidenceClassifier $confidenceClassifier,
     private readonly DealDiscoveryPublishPreviewService $previewService,
     private readonly DealDiscoveryPublisher $publisher,
+    private readonly DealDiscoveryDailyDigest $dailyDigest,
     private readonly StateInterface $state,
     private readonly LoggerInterface $logger,
   ) {}
@@ -155,6 +156,18 @@ final class DealDiscoveryAutoPublisher {
         }
         else {
           $result['published']++;
+          try {
+            $this->dailyDigest->recordPublication($publishResult);
+          }
+          catch (\Throwable $exception) {
+            $this->logger->warning(
+              'Automatic publishing succeeded for deal-discovery candidate {candidate_id}, but recording it for the daily digest failed safely: {message}',
+              [
+                'candidate_id' => $candidateId,
+                'message' => $exception->getMessage(),
+              ],
+            );
+          }
         }
       }
       catch (\Throwable $exception) {
@@ -170,6 +183,16 @@ final class DealDiscoveryAutoPublisher {
           ],
         );
       }
+    }
+
+    try {
+      $this->dailyDigest->recordDuplicateRejections((int) $result['duplicate_rejected']);
+    }
+    catch (\Throwable $exception) {
+      $this->logger->warning(
+        'Deal-discovery cron completed, but recording duplicate rejections for the daily digest failed safely: {message}',
+        ['message' => $exception->getMessage()],
+      );
     }
 
     return $result;
