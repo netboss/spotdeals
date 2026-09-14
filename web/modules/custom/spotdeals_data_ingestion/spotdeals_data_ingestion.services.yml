@@ -71,6 +71,7 @@ services:
       - '@database'
       - '@entity_type.manager'
       - '@lock'
+      - '@state'
       - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage'
       - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishPreviewService'
       - '@Drupal\spotdeals_data_ingestion\Service\VenuePersistenceService'
