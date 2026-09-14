@@ -242,6 +242,33 @@ function spotdeals_data_ingestion_cron(): void {
       ['message' => $exception->getMessage()],
     );
   }
+
+  try {
+    \Drupal::service('spotdeals_data_ingestion.deal_discovery_daily_digest')
+      ->sendCompletedDigests();
+  }
+  catch (\Throwable $exception) {
+    \Drupal::logger('spotdeals_data_ingestion')->warning(
+      'Deal-discovery daily publishing digest failed safely during cron: {message}',
+      ['message' => $exception->getMessage()],
+    );
+  }
+}
+
+/**
+ * Implements hook_mail().
+ */
+function spotdeals_data_ingestion_mail(
+  string $key,
+  array &$message,
+  array $params,
+): void {
+  if ($key !== 'deal_discovery_daily_digest') {
+    return;
+  }
+
+  $message['subject'] = (string) ($params['subject'] ?? 'SpotDeals daily publishing summary');
+  $message['body'][] = (string) ($params['body'] ?? '');
 }
 
 /**
