@@ -7,6 +7,7 @@ namespace Drupal\spotdeals_data_ingestion\Service;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Lock\LockBackendInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\node\NodeInterface;
 
 /**
@@ -18,6 +19,7 @@ final class DealDiscoveryPublisher {
     private readonly Connection $database,
     private readonly EntityTypeManagerInterface $entityTypeManager,
     private readonly LockBackendInterface $lock,
+    private readonly StateInterface $state,
     private readonly DealDiscoveryStorage $storage,
     private readonly DealDiscoveryPublishPreviewService $previewService,
     private readonly VenuePersistenceService $venuePersistence,
@@ -100,6 +102,9 @@ final class DealDiscoveryPublisher {
         : [];
 
       $transaction = $this->database->startTransaction();
+      $notificationSuppressionKey = 'spotdeals_suppress_admin_notifications';
+      $previousNotificationSuppression = $this->state->get($notificationSuppressionKey, NULL);
+      $this->state->set($notificationSuppressionKey, TRUE);
 
       try {
         $venueResult = $this->persistVenue($venuePlan);
@@ -150,6 +155,17 @@ final class DealDiscoveryPublisher {
       catch (\Throwable $exception) {
         $transaction->rollBack();
         throw $exception;
+      }
+      finally {
+        if ($previousNotificationSuppression === NULL) {
+          $this->state->delete($notificationSuppressionKey);
+        }
+        else {
+          $this->state->set(
+            $notificationSuppressionKey,
+            $previousNotificationSuppression,
+          );
+        }
       }
     }
     finally {
