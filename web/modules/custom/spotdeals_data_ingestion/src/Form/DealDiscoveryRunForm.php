@@ -26,6 +26,8 @@ final class DealDiscoveryRunForm extends FormBase {
 
   private const API_KEY_STATE_NAME = 'spotdeals_data_ingestion.geoapify_api_key';
 
+  private const DISCOVERY_HISTORY_STATE_NAME = 'spotdeals_data_ingestion.deal_discovery_history';
+
   public function __construct(
     private readonly GeoapifyClient $geoapifyClient,
     private readonly VenueMapper $venueMapper,
@@ -132,12 +134,14 @@ final class DealDiscoveryRunForm extends FormBase {
 
     $venueTypeTid = (int) $form_state->getValue('venue_type');
     $category = '';
+    $categoryLabel = '';
     foreach ($this->venueTypeResolver->mappedVenueTypes() as $definition) {
       if ((int) $definition['tid'] !== $venueTypeTid) {
         continue;
       }
 
       $category = implode(',', $definition['categories']);
+      $categoryLabel = (string) $definition['name'];
       break;
     }
 
@@ -330,19 +334,94 @@ final class DealDiscoveryRunForm extends FormBase {
       }
     }
 
+    $locationLabel = $this->locationLabel($location);
+    $historySummary = $this->recordDiscoveryRun($categoryLabel, $locationLabel);
+
     $this->messenger()->addStatus($this->t(
-      'Discovery completed. Researched @researched venue candidates, found @review qualifying venues, and queued/refreshed @queued deal candidates: @auto ready and queued for automatic cron publishing, @duplicates automatically rejected as existing duplicates, and @pending pending manual review.',
+      'Discovery completed for @category in @location. Researched @researched venue candidates, found @review qualifying venues, and queued/refreshed @queued deal candidates: @auto ready and queued for automatic cron publishing, @duplicates automatically rejected as existing duplicates, and @pending pending manual review. Explored so far: categories — @categories; cities — @cities.',
       [
+        '@category' => $categoryLabel,
+        '@location' => $locationLabel,
         '@researched' => $researched,
         '@review' => $reviewVenues,
         '@queued' => $queued,
         '@auto' => $autoApproved,
         '@duplicates' => $duplicatesRejected,
         '@pending' => $pendingReview,
+        '@categories' => implode(', ', $historySummary['categories']),
+        '@cities' => implode(', ', $historySummary['locations']),
       ],
     ));
 
     $form_state->setRedirect('spotdeals_data_ingestion.deal_discovery_candidates');
+  }
+
+  /**
+   * Records a completed discovery run and returns the explored summary.
+   *
+   * @return array{categories: string[], locations: string[]}
+   *   Unique category and location labels seen in completed discovery runs.
+   */
+  private function recordDiscoveryRun(string $categoryLabel, string $locationLabel): array {
+    $history = $this->state->get(self::DISCOVERY_HISTORY_STATE_NAME, []);
+    if (!is_array($history)) {
+      $history = [];
+    }
+
+    $categories = is_array($history['categories'] ?? NULL)
+      ? $history['categories']
+      : [];
+    $locations = is_array($history['locations'] ?? NULL)
+      ? $history['locations']
+      : [];
+
+    if ($categoryLabel !== '') {
+      $categories[] = $categoryLabel;
+    }
+    if ($locationLabel !== '') {
+      $locations[] = $locationLabel;
+    }
+
+    $categories = array_values(array_unique(array_filter(array_map(
+      static fn (mixed $value): string => trim((string) $value),
+      $categories,
+    ))));
+    $locations = array_values(array_unique(array_filter(array_map(
+      static fn (mixed $value): string => trim((string) $value),
+      $locations,
+    ))));
+
+    natcasesort($categories);
+    natcasesort($locations);
+    $categories = array_values($categories);
+    $locations = array_values($locations);
+
+    $this->state->set(self::DISCOVERY_HISTORY_STATE_NAME, [
+      'categories' => $categories,
+      'locations' => $locations,
+    ]);
+
+    return [
+      'categories' => $categories,
+      'locations' => $locations,
+    ];
+  }
+
+  /**
+   * Builds the same concise city/state label shown by the discovery form.
+   *
+   * @param array{city: string, state: string, country: string} $location
+   *   Decoded discovery location.
+   */
+  private function locationLabel(array $location): string {
+    $label = trim((string) ($location['city'] ?? ''));
+    $state = strtoupper(trim((string) ($location['state'] ?? '')));
+
+    if ($state !== '') {
+      $label .= ', ' . $state;
+    }
+
+    return $label;
   }
 
   /**
