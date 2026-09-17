@@ -8,6 +8,7 @@ services:
       - '@spotdeals_vote.aggregate_storage'
       - '@cache_tags.invalidator'
       - '@spotdeals_vote.fields'
+      - '@spotdeals_vote.anonymous_rate_limiter'
 
   spotdeals_vote_deal.render_builder:
     class: Drupal\spotdeals_vote_deal\DealVoteRenderBuilder
@@ -15,3 +16,4 @@ services:
       - '@current_user'
       - '@spotdeals_vote_deal.manager'
       - '@date.formatter'
+      - '@spotdeals_vote.anonymous_identity'

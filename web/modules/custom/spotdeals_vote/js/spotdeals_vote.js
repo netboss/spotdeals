@@ -218,14 +218,6 @@
       return;
     }
 
-    if (wrapper.getAttribute('data-authenticated') !== '1') {
-      const loginUrl = wrapper.getAttribute('data-login-url');
-      if (loginUrl) {
-        window.location.href = loginUrl;
-      }
-      return;
-    }
-
     const dealVote = isDealVote(wrapper);
     const payload = {
       venue_nid: parseInt(button.getAttribute('data-venue-nid') || wrapper.getAttribute('data-venue-nid') || '0', 10),

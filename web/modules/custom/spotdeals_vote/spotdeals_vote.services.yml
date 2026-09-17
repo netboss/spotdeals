@@ -10,6 +10,19 @@ services:
     class: Drupal\spotdeals_vote\VoteAggregateStorage
     arguments: ['@database']
 
+  spotdeals_vote.anonymous_identity:
+    class: Drupal\spotdeals_vote\AnonymousVoteIdentity
+    arguments:
+      - '@current_user'
+      - '@request_stack'
+      - '@private_key'
+
+  spotdeals_vote.anonymous_rate_limiter:
+    class: Drupal\spotdeals_vote\AnonymousVoteRateLimiter
+    arguments:
+      - '@flood'
+      - '@spotdeals_vote.anonymous_identity'
+
   spotdeals_vote.manager:
     class: Drupal\spotdeals_vote\VoteManager
     arguments:

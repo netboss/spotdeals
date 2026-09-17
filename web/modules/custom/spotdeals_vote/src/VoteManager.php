@@ -26,7 +26,7 @@ final class VoteManager {
    *   Vote state array.
    */
   public function getDealVoteState(int $dealNid, int $uid = 0): array {
-    return $this->getDealVoteManager()->getDealVoteState($dealNid, $uid);
+    return $this->getDealVoteManager()->getDealVoteState($dealNid, $uid > 0 ? 'u:' . $uid : '');
   }
 
   /**
@@ -36,7 +36,11 @@ final class VoteManager {
    *   Normalized response payload.
    */
   public function submitVote(int $uid, int $dealNid, int $venueNid, string $fieldName, int $value, ?string $source = NULL): array {
-    return $this->getDealVoteManager()->submitVote($uid, $dealNid, $venueNid, $fieldName, $value, $source);
+    return $this->getDealVoteManager()->submitVote([
+      'uid' => $uid,
+      'voter_key' => $uid > 0 ? 'u:' . $uid : '',
+      'anonymous_hash' => '',
+    ], $dealNid, $venueNid, $fieldName, $value, $source);
   }
 
   /**

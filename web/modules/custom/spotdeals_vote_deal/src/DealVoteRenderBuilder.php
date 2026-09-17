@@ -6,6 +6,7 @@ namespace Drupal\spotdeals_vote_deal;
 
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\spotdeals_vote\AnonymousVoteIdentity;
 use Drupal\Core\Url;
 use Drupal\Core\Render\Markup;
 use Drupal\node\NodeInterface;
@@ -22,6 +23,7 @@ final class DealVoteRenderBuilder {
     private readonly AccountProxyInterface $currentUser,
     private readonly DealVoteManager $voteManager,
     private readonly DateFormatterInterface $dateFormatter,
+    private readonly AnonymousVoteIdentity $voterIdentity,
   ) {}
 
   /**
@@ -40,7 +42,11 @@ final class DealVoteRenderBuilder {
       return [];
     }
 
-    $voteState = $this->voteManager->getDealVoteState((int) $deal->id(), (int) $this->currentUser->id());
+    $identity = $this->voterIdentity->current();
+    $voteState = $this->voteManager->getDealVoteState(
+      (int) $deal->id(),
+      (string) ($identity['voter_key'] ?? ''),
+    );
 
     $classes = ['spotdeals-vote'];
     $classes[] = $compact ? 'spotdeals-vote--compact' : 'spotdeals-vote--full';
@@ -88,6 +94,7 @@ final class DealVoteRenderBuilder {
           'user',
           'route',
           'languages:language_interface',
+          'cookies:spotdeals_voter',
         ],
       ],
     ];
