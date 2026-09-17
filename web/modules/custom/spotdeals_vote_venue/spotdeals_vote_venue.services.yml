@@ -16,9 +16,11 @@ services:
       - '@spotdeals_vote_venue.aggregate_storage'
       - '@cache_tags.invalidator'
       - '@spotdeals_vote.fields'
+      - '@spotdeals_vote.anonymous_rate_limiter'
 
   spotdeals_vote_venue.render_builder:
     class: Drupal\spotdeals_vote_venue\VenueVoteRenderBuilder
     arguments:
       - '@current_user'
       - '@spotdeals_vote_venue.manager'
+      - '@spotdeals_vote.anonymous_identity'

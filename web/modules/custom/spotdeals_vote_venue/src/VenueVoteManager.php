@@ -8,6 +8,7 @@ use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\node\NodeInterface;
+use Drupal\spotdeals_vote\AnonymousVoteRateLimiter;
 use Drupal\spotdeals_vote\VoteFields;
 
 /**
@@ -25,6 +26,7 @@ final class VenueVoteManager {
     private readonly VenueVoteAggregateStorage $aggregateStorage,
     private readonly CacheTagsInvalidatorInterface $cacheTagsInvalidator,
     private readonly VoteFields $voteFields,
+    private readonly AnonymousVoteRateLimiter $rateLimiter,
   ) {}
 
   /**
@@ -33,15 +35,15 @@ final class VenueVoteManager {
    * @return array<string,mixed>
    *   Vote state array.
    */
-  public function getVenueVoteState(int $venueNid, int $uid = 0): array {
+  public function getVenueVoteState(int $venueNid, string $voterKey = ''): array {
     $aggregate = $this->aggregateStorage->loadVenueAggregate($venueNid);
     $userVote = [
       'worth_it' => NULL,
       'would_go_again' => NULL,
     ];
 
-    if ($uid > 0) {
-      $row = $this->voteStorage->loadUserVenueVote($uid, $venueNid);
+    if ($voterKey !== '') {
+      $row = $this->voteStorage->loadVoterVenueVote($voterKey, $venueNid);
       if (is_array($row)) {
         $userVote['worth_it'] = $row['worth_it'] !== NULL ? (int) $row['worth_it'] : NULL;
         $userVote['would_go_again'] = $row['would_go_again'] !== NULL ? (int) $row['would_go_again'] : NULL;
@@ -61,9 +63,12 @@ final class VenueVoteManager {
    * @return array<string,mixed>
    *   Normalized response payload.
    */
-  public function submitVote(int $uid, int $venueNid, string $fieldName, int $value, ?string $source = NULL): array {
-    if ($uid <= 0 || !$this->currentUser->isAuthenticated()) {
-      throw new \InvalidArgumentException('Authentication is required.');
+  public function submitVote(array $identity, int $venueNid, string $fieldName, int $value, ?string $source = NULL): array {
+    $uid = (int) ($identity['uid'] ?? 0);
+    $voterKey = trim((string) ($identity['voter_key'] ?? ''));
+    $anonymousHash = trim((string) ($identity['anonymous_hash'] ?? ''));
+    if ($voterKey === '') {
+      throw new \InvalidArgumentException('Unable to identify voter.');
     }
 
     if (!$this->voteFields->isAllowed($fieldName)) {
@@ -83,14 +88,16 @@ final class VenueVoteManager {
       throw new \InvalidArgumentException('Access denied for this venue.');
     }
 
-    $this->voteStorage->upsertVote($uid, $venueNid, [$fieldName => $value], $source);
+    $this->rateLimiter->assertAllowed('venue', $venueNid, $anonymousHash);
+    $this->voteStorage->upsertVote($uid, $voterKey, $anonymousHash, $venueNid, [$fieldName => $value], $source);
+    $this->rateLimiter->register('venue', $venueNid, $anonymousHash);
     $this->aggregateStorage->rebuildVenueAggregate($venueNid);
     $this->cacheTagsInvalidator->invalidateTags([
       'node:' . $venueNid,
       'spotdeals_vote_venue:' . $venueNid,
     ]);
 
-    $state = $this->getVenueVoteState($venueNid, $uid);
+    $state = $this->getVenueVoteState($venueNid, $voterKey);
 
     return [
       'ok' => TRUE,

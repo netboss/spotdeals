@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\spotdeals_vote\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\spotdeals_vote\AnonymousVoteIdentity;
 use Drupal\spotdeals_vote_deal\DealVoteManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -20,6 +21,7 @@ final class VoteController extends ControllerBase {
    */
   public function __construct(
     private readonly DealVoteManager $voteManager,
+    private readonly AnonymousVoteIdentity $voterIdentity,
   ) {}
 
   /**
@@ -28,6 +30,7 @@ final class VoteController extends ControllerBase {
   public static function create(ContainerInterface $container): self {
     return new self(
       $container->get('spotdeals_vote_deal.manager'),
+      $container->get('spotdeals_vote.anonymous_identity'),
     );
   }
 
@@ -40,9 +43,11 @@ final class VoteController extends ControllerBase {
       $payload = $request->request->all();
     }
 
+    $resolvedIdentity = $this->voterIdentity->forSubmission();
+
     try {
       $response = $this->voteManager->submitVote(
-        (int) $this->currentUser()->id(),
+        $resolvedIdentity['identity'],
         (int) ($payload['deal_nid'] ?? 0),
         (int) ($payload['venue_nid'] ?? 0),
         trim((string) ($payload['field'] ?? '')),

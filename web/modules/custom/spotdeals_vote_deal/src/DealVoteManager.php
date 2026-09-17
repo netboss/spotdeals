@@ -8,6 +8,7 @@ use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\node\NodeInterface;
+use Drupal\spotdeals_vote\AnonymousVoteRateLimiter;
 use Drupal\spotdeals_vote\VoteAggregateStorage;
 use Drupal\spotdeals_vote\VoteFields;
 use Drupal\spotdeals_vote\VoteStorage;
@@ -27,6 +28,7 @@ final class DealVoteManager {
     private readonly VoteAggregateStorage $aggregateStorage,
     private readonly CacheTagsInvalidatorInterface $cacheTagsInvalidator,
     private readonly VoteFields $voteFields,
+    private readonly AnonymousVoteRateLimiter $rateLimiter,
   ) {}
 
   /**
@@ -35,7 +37,7 @@ final class DealVoteManager {
    * @return array<string,mixed>
    *   Vote state array.
    */
-  public function getDealVoteState(int $dealNid, int $uid = 0): array {
+  public function getDealVoteState(int $dealNid, string $voterKey = ''): array {
     $aggregate = $this->aggregateStorage->loadDealAggregate($dealNid);
     $lastWorthItVoteChanged = $this->aggregateStorage->loadLastWorthItVoteChanged($dealNid);
     $userVote = [
@@ -43,8 +45,8 @@ final class DealVoteManager {
       'would_go_again' => NULL,
     ];
 
-    if ($uid > 0) {
-      $row = $this->voteStorage->loadUserDealVote($uid, $dealNid);
+    if ($voterKey !== '') {
+      $row = $this->voteStorage->loadVoterDealVote($voterKey, $dealNid);
       if (is_array($row)) {
         $userVote['worth_it'] = $row['worth_it'] !== NULL ? (int) $row['worth_it'] : NULL;
         $userVote['would_go_again'] = $row['would_go_again'] !== NULL ? (int) $row['would_go_again'] : NULL;
@@ -65,9 +67,12 @@ final class DealVoteManager {
    * @return array<string,mixed>
    *   Normalized response payload.
    */
-  public function submitVote(int $uid, int $dealNid, int $venueNid, string $fieldName, int $value, ?string $source = NULL): array {
-    if ($uid <= 0 || !$this->currentUser->isAuthenticated()) {
-      throw new \InvalidArgumentException('Authentication is required.');
+  public function submitVote(array $identity, int $dealNid, int $venueNid, string $fieldName, int $value, ?string $source = NULL): array {
+    $uid = (int) ($identity['uid'] ?? 0);
+    $voterKey = trim((string) ($identity['voter_key'] ?? ''));
+    $anonymousHash = trim((string) ($identity['anonymous_hash'] ?? ''));
+    if ($voterKey === '') {
+      throw new \InvalidArgumentException('Unable to identify voter.');
     }
 
     if (!$this->voteFields->isAllowed($fieldName)) {
@@ -92,14 +97,16 @@ final class DealVoteManager {
       throw new \InvalidArgumentException('Deal and venue do not match.');
     }
 
-    $this->voteStorage->upsertVote($uid, $dealNid, $venueNid, [$fieldName => $value], $source);
+    $this->rateLimiter->assertAllowed('deal', $dealNid, $anonymousHash);
+    $this->voteStorage->upsertVote($uid, $voterKey, $anonymousHash, $dealNid, $venueNid, [$fieldName => $value], $source);
+    $this->rateLimiter->register('deal', $dealNid, $anonymousHash);
     $this->aggregateStorage->rebuildDealAggregate($dealNid, $venueNid);
     $this->cacheTagsInvalidator->invalidateTags([
       'node:' . $dealNid,
       'spotdeals_vote:' . $dealNid,
     ]);
 
-    $state = $this->getDealVoteState($dealNid, $uid);
+    $state = $this->getDealVoteState($dealNid, $voterKey);
 
     return [
       'ok' => TRUE,

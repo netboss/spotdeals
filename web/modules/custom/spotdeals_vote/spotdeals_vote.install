@@ -21,10 +21,23 @@ function spotdeals_vote_schema(): array {
         'unsigned' => TRUE,
       ],
       'uid' => [
-        'description' => 'The user ID.',
+        'description' => 'The user ID. Zero for anonymous voters.',
         'type' => 'int',
         'not null' => TRUE,
         'unsigned' => TRUE,
+      ],
+      'voter_key' => [
+        'description' => 'Stable voter key. Uses u:<uid> for accounts and a:<hash> for anonymous voters.',
+        'type' => 'varchar',
+        'length' => 70,
+        'not null' => TRUE,
+      ],
+      'anonymous_voter_hash' => [
+        'description' => 'Pseudonymous hash for anonymous voter identity; empty for authenticated users.',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
       ],
       'deal_nid' => [
         'description' => 'The deal node ID.',
@@ -79,7 +92,7 @@ function spotdeals_vote_schema(): array {
     ],
     'primary key' => ['id'],
     'unique keys' => [
-      'uniq_user_deal' => ['uid', 'deal_nid'],
+      'uniq_voter_deal' => ['voter_key', 'deal_nid'],
     ],
     'indexes' => [
       'idx_deal_nid' => ['deal_nid'],
@@ -169,4 +182,51 @@ function spotdeals_vote_schema(): array {
   ];
 
   return $schema;
+}
+
+
+/**
+ * Adds anonymous voter identity columns and replaces user-only uniqueness.
+ */
+function spotdeals_vote_update_11001(): void {
+  $database = \Drupal::database();
+  $schema = $database->schema();
+
+  if (!$schema->fieldExists('spotdeals_vote', 'voter_key')) {
+    $schema->addField('spotdeals_vote', 'voter_key', [
+      'description' => 'Stable voter key. Uses u:<uid> for accounts and a:<hash> for anonymous voters.',
+      'type' => 'varchar',
+      'length' => 70,
+      'not null' => FALSE,
+    ]);
+  }
+
+  if (!$schema->fieldExists('spotdeals_vote', 'anonymous_voter_hash')) {
+    $schema->addField('spotdeals_vote', 'anonymous_voter_hash', [
+      'description' => 'Pseudonymous hash for anonymous voter identity; empty for authenticated users.',
+      'type' => 'varchar',
+      'length' => 64,
+      'not null' => TRUE,
+      'default' => '',
+    ]);
+  }
+
+  $database->update('spotdeals_vote')
+    ->expression('voter_key', "CONCAT('u:', uid)")
+    ->isNull('voter_key')
+    ->execute();
+
+  if ($schema->indexExists('spotdeals_vote', 'uniq_user_deal')) {
+    $schema->dropUniqueKey('spotdeals_vote', 'uniq_user_deal');
+  }
+  if (!$schema->indexExists('spotdeals_vote', 'uniq_voter_deal')) {
+    $schema->addUniqueKey('spotdeals_vote', 'uniq_voter_deal', ['voter_key', 'deal_nid']);
+  }
+
+  $schema->changeField('spotdeals_vote', 'voter_key', 'voter_key', [
+    'description' => 'Stable voter key. Uses u:<uid> for accounts and a:<hash> for anonymous voters.',
+    'type' => 'varchar',
+    'length' => 70,
+    'not null' => TRUE,
+  ]);
 }

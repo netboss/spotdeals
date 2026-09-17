@@ -10,6 +10,7 @@ dependencies:
     - filter
     - media
     - spotdeals_data_ingestion
+    - spotdeals_vote
     - system
 _core:
   default_config_hash: xLG41YbRo2NP-0SgRNTkMzLEuaeibanGXgUTbdIcIIg
@@ -22,5 +23,6 @@ permissions:
   - 'access content'
   - 'access site-wide contact form'
   - 'submit external venue reports'
+  - 'submit spotdeals votes'
   - 'use text format restricted_html'
   - 'view media'

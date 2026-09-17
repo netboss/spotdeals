@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Drupal\spotdeals_vote_venue\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\spotdeals_vote\AnonymousVoteIdentity;
 use Drupal\spotdeals_vote_venue\VenueVoteManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -15,19 +17,15 @@ use Symfony\Component\HttpFoundation\Request;
  */
 final class VenueVoteController extends ControllerBase {
 
-  /**
-   * Constructs the controller.
-   */
   public function __construct(
     private readonly VenueVoteManager $voteManager,
+    private readonly AnonymousVoteIdentity $voterIdentity,
   ) {}
 
-  /**
-   * {@inheritdoc}
-   */
   public static function create(ContainerInterface $container): self {
     return new self(
       $container->get('spotdeals_vote_venue.manager'),
+      $container->get('spotdeals_vote.anonymous_identity'),
     );
   }
 
@@ -40,16 +38,18 @@ final class VenueVoteController extends ControllerBase {
       $payload = $request->request->all();
     }
 
+    $resolvedIdentity = $this->voterIdentity->forSubmission();
+
     try {
       $response = $this->voteManager->submitVote(
-        (int) $this->currentUser()->id(),
+        $resolvedIdentity['identity'],
         (int) ($payload['venue_nid'] ?? 0),
         trim((string) ($payload['field'] ?? '')),
         (int) ($payload['value'] ?? -1),
         isset($payload['source']) ? (string) $payload['source'] : NULL,
       );
 
-      return $this->buildResponse($response, 200);
+      return $this->buildResponse($response, 200, $resolvedIdentity['cookie']);
     }
     catch (\InvalidArgumentException $exception) {
       return $this->buildResponse([
@@ -73,15 +73,12 @@ final class VenueVoteController extends ControllerBase {
     }
   }
 
-  /**
-   * Builds a no-cache JSON response.
-   *
-   * @param array<string,mixed> $payload
-   *   Response data.
-   */
-  private function buildResponse(array $payload, int $statusCode): JsonResponse {
+  private function buildResponse(array $payload, int $statusCode, ?Cookie $cookie = NULL): JsonResponse {
     $response = new JsonResponse($payload, $statusCode);
     $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    if ($cookie !== NULL && $statusCode < 400) {
+      $response->headers->setCookie($cookie);
+    }
     return $response;
   }
 

@@ -4,5 +4,4 @@ spotdeals_vote_venue.submit:
     _controller: '\Drupal\spotdeals_vote_venue\Controller\VenueVoteController::submit'
   methods: [POST]
   requirements:
-    _user_is_logged_in: 'TRUE'
     _permission: 'submit spotdeals votes'

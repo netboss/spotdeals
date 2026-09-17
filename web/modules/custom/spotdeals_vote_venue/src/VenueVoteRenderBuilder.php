@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\spotdeals_vote_venue;
 
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\spotdeals_vote\AnonymousVoteIdentity;
 use Drupal\Core\Url;
 use Drupal\Core\Render\Markup;
 use Drupal\node\NodeInterface;
@@ -20,6 +21,7 @@ final class VenueVoteRenderBuilder {
   public function __construct(
     private readonly AccountProxyInterface $currentUser,
     private readonly VenueVoteManager $voteManager,
+    private readonly AnonymousVoteIdentity $voterIdentity,
   ) {}
 
   /**
@@ -38,7 +40,11 @@ final class VenueVoteRenderBuilder {
       return [];
     }
 
-    $voteState = $this->voteManager->getVenueVoteState($venueNid, (int) $this->currentUser->id());
+    $identity = $this->voterIdentity->current();
+    $voteState = $this->voteManager->getVenueVoteState(
+      $venueNid,
+      (string) ($identity['voter_key'] ?? ''),
+    );
 
     $classes = ['spotdeals-vote'];
     $classes[] = $compact ? 'spotdeals-vote--compact' : 'spotdeals-vote--full';
@@ -83,6 +89,7 @@ final class VenueVoteRenderBuilder {
           'user',
           'route',
           'languages:language_interface',
+          'cookies:spotdeals_voter',
         ],
       ],
     ];
