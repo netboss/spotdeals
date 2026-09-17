@@ -686,6 +686,28 @@ h1.page-title {
   .view-content {
     gap: var(--sp2);
   }
+
+  .block * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .block__content {
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .view,
+  .view-content,
+  .views-row,
+  .views-field {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  h3 {
+    margin-bottom: var(--sp1);
+  }
 }
 
 @media (max-width: 640px) {
@@ -4571,4 +4593,3 @@ h1.page-title {
   font-size: 0.75rem;
   line-height: 1;
 }
-
