@@ -1,0 +1,35 @@
+uuid: 7a7760d0-0616-46c8-833b-ef56f9a4f981
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: deal
+label: Deal
+bundles:
+  - deal
+entity_type: node
+global: false
+flag_short: 'Save deal'
+flag_long: ''
+flag_message: ''
+unflag_short: 'Remove from saved'
+unflag_long: ''
+unflag_message: 'Deal removed from saved.'
+unflag_denied_text: ''
+weight: 0
+flag_type: 'entity:node'
+link_type: ajax_link
+flagTypeConfig:
+  show_in_links:
+    full: full
+    info_block: info_block
+    search_index: search_index
+    search_result: search_result
+    teaser: teaser
+  show_as_field: true
+  show_on_form: false
+  show_contextual_link: false
+  extra_permissions:
+    owner: '0'
+linkTypeConfig: {  }

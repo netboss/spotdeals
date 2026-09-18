@@ -1,0 +1,15 @@
+uuid: 29ab94bd-11ee-41c9-9db1-571c8a06b4e1
+langcode: en
+status: true
+dependencies:
+  config:
+    - flag.flag.deal
+  module:
+    - flag
+id: flag_action.deal_flag
+label: 'Save deal'
+type: node
+plugin: 'flag_action:deal_flag'
+configuration:
+  flag_id: deal
+  flag_action: flag
