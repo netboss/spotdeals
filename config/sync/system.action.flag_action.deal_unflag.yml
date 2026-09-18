@@ -1,0 +1,15 @@
+uuid: feac86fb-3a98-4a41-8ea3-317fc9554c65
+langcode: en
+status: true
+dependencies:
+  config:
+    - flag.flag.deal
+  module:
+    - flag
+id: flag_action.deal_unflag
+label: 'Unsave deal'
+type: node
+plugin: 'flag_action:deal_unflag'
+configuration:
+  flag_id: deal
+  flag_action: unflag

@@ -1,0 +1,35 @@
+uuid: f192e915-a78b-4b46-a4f0-9a3041727263
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+id: venue
+label: Venue
+bundles:
+  - venue
+entity_type: node
+global: false
+flag_short: 'Save venue'
+flag_long: ''
+flag_message: ''
+unflag_short: 'Remove from saved'
+unflag_long: ''
+unflag_message: 'Venue removed from saved.'
+unflag_denied_text: ''
+weight: 0
+flag_type: 'entity:node'
+link_type: ajax_link
+flagTypeConfig:
+  show_in_links:
+    full: full
+    info_block: info_block
+    search_index: search_index
+    search_result: search_result
+    teaser: teaser
+  show_as_field: true
+  show_on_form: false
+  show_contextual_link: false
+  extra_permissions:
+    owner: '0'
+linkTypeConfig: {  }

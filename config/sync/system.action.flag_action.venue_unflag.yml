@@ -1,0 +1,15 @@
+uuid: c33d0782-d660-4227-bc93-781e7d3cc3ec
+langcode: en
+status: true
+dependencies:
+  config:
+    - flag.flag.venue
+  module:
+    - flag
+id: flag_action.venue_unflag
+label: 'Unsave venue'
+type: node
+plugin: 'flag_action:venue_unflag'
+configuration:
+  flag_id: venue
+  flag_action: unflag
