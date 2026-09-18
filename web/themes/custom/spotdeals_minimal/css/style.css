@@ -4593,3 +4593,152 @@ h1.page-title {
   font-size: 0.75rem;
   line-height: 1;
 }
+
+/* ========================================================================
+   Save/Favorite CTA on canonical Deal + Venue pages.
+   Keeps Flag's lazy-built per-session state while presenting Save as a
+   first-class action beside Directions / View Venue / Call.
+   ======================================================================== */
+.page-node-type-deal .spotdeals-save-cta,
+.page-node-type-venue .spotdeals-save-cta {
+  min-width: 0;
+}
+
+.page-node-type-deal .spotdeals-save-cta .flag,
+.page-node-type-venue .spotdeals-save-cta .flag {
+  height: 100%;
+  margin: 0;
+}
+
+.page-node-type-deal .spotdeals-save-cta .flag a,
+.page-node-type-venue .spotdeals-save-cta .flag a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 2.9rem;
+  height: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #d1f17a;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f7fafc;
+  font-size: 0;
+  font-weight: 850;
+  line-height: 1.15;
+  text-align: center;
+  text-decoration: none;
+}
+
+.page-node-type-deal .spotdeals-save-cta .flag a::before,
+.page-node-type-venue .spotdeals-save-cta .flag a::before {
+  content: "♡";
+  margin-right: 0.45rem;
+  font-size: 1.35rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.page-node-type-deal .spotdeals-save-cta .flag a::after,
+.page-node-type-venue .spotdeals-save-cta .flag a::after {
+  content: "Save";
+  font-size: 0.9rem;
+}
+
+.page-node-type-deal .spotdeals-save-cta .flag.action-unflag a::before,
+.page-node-type-venue .spotdeals-save-cta .flag.action-unflag a::before {
+  content: "♥";
+  color: #fff;
+}
+
+.page-node-type-deal .spotdeals-save-cta .flag.action-flag a::before,
+.page-node-type-venue .spotdeals-save-cta .flag.action-flag a::before {
+  color: #fff;
+}
+
+.page-node-type-deal .spotdeals-save-cta .flag.action-unflag a::after,
+.page-node-type-venue .spotdeals-save-cta .flag.action-unflag a::after {
+  content: "Saved";
+}
+
+.page-node-type-deal .spotdeals-save-cta .flag a:hover,
+.page-node-type-deal .spotdeals-save-cta .flag a:focus,
+.page-node-type-venue .spotdeals-save-cta .flag a:hover,
+.page-node-type-venue .spotdeals-save-cta .flag a:focus {
+  border-color: #d1f17a;
+  background: rgba(209, 241, 122, 0.1);
+  color: #fff;
+  text-decoration: none;
+}
+
+.page-node-type-venue .spotdeals-venue-detail__primary-cta {
+  width: 100%;
+}
+
+.page-node-type-venue .spotdeals-deal-cta-panel {
+  margin-top: 0;
+  padding: 1.35rem;
+  border: 1px solid #263238;
+  border-radius: var(--spotdeals-radius);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(141, 182, 31, 0.18), transparent 34%),
+    linear-gradient(180deg, #151d20 0%, #0f1518 100%);
+  box-shadow: 0 16px 34px rgba(15, 21, 24, 0.16);
+}
+
+.page-node-type-venue .spotdeals-deal-cta-panel__title {
+  margin: 0 0 0.35rem;
+  color: #d1f17a;
+  font-size: clamp(1.35rem, 2vw, 1.65rem);
+  font-weight: 850;
+  line-height: 1.15;
+}
+
+.page-node-type-venue .spotdeals-deal-cta-panel__description {
+  margin: 0 0 1.1rem;
+  color: #d7dee4;
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+.page-node-type-venue .spotdeals-deal-cta-panel__links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.page-node-type-venue .spotdeals-deal-cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.9rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(209, 241, 122, 0.36);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f7fafc;
+  font-size: 0.9rem;
+  font-weight: 850;
+  line-height: 1.15;
+  text-align: center;
+  text-decoration: none;
+}
+
+.page-node-type-venue .spotdeals-deal-cta-button--primary {
+  border-color: var(--spotdeals-accent-dark);
+  background: linear-gradient(180deg, var(--spotdeals-accent) 0%, var(--spotdeals-accent-dark) 100%);
+  color: #fff;
+}
+
+@media (max-width: 760px) {
+  .page-node-type-venue .spotdeals-deal-cta-panel__links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .page-node-type-deal .spotdeals-deal-cta-panel__links,
+  .page-node-type-venue .spotdeals-deal-cta-panel__links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

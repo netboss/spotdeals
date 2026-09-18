@@ -98,7 +98,16 @@ function spotdeals_minimal_preprocess_page(array &$variables): void {
     $variables['spotdeals_home_feed_chips'] = _spotdeals_minimal_add_default_home_feed_chips($chips);
   }
 
-  if (!$node instanceof NodeInterface || $node->bundle() !== 'deal') {
+  if (!$node instanceof NodeInterface) {
+    return;
+  }
+
+  if ($node->bundle() === 'venue') {
+    $variables['spotdeals_venue_primary_ctas'] = _spotdeals_minimal_build_venue_page_ctas($node);
+    return;
+  }
+
+  if ($node->bundle() !== 'deal') {
     return;
   }
 
@@ -121,7 +130,36 @@ function spotdeals_minimal_preprocess_page(array &$variables): void {
  */
 function spotdeals_minimal_preprocess_node(array &$variables): void {
   $node = $variables['node'] ?? NULL;
-  if (!$node instanceof NodeInterface || $node->bundle() !== 'deal') {
+  if (!$node instanceof NodeInterface) {
+    return;
+  }
+
+  // Build Flag links as placeholders so anonymous per-session state is resolved
+  // lazily instead of being cached in the surrounding node/page render.
+  if (!$node->isNew() && in_array($node->bundle(), ['deal', 'venue'], TRUE)) {
+    $flag_id = $node->bundle();
+    $variables['spotdeals_save_action'] = [
+      '#lazy_builder' => [
+        'flag.link_builder:build',
+        [
+          $node->getEntityTypeId(),
+          $node->id(),
+          $flag_id,
+          (string) ($variables['view_mode'] ?? 'default'),
+        ],
+      ],
+      '#create_placeholder' => TRUE,
+    ];
+  }
+
+  if ($node->bundle() === 'venue') {
+    if (($variables['view_mode'] ?? '') === 'full') {
+      $variables['spotdeals_venue_primary_ctas'] = _spotdeals_minimal_build_venue_page_ctas($node);
+    }
+    return;
+  }
+
+  if ($node->bundle() !== 'deal') {
     return;
   }
 
@@ -670,6 +708,20 @@ function _spotdeals_minimal_build_deal_page_ctas(?NodeInterface $deal, NodeInter
     }
   }
 
+  if ($deal instanceof NodeInterface && !$deal->isNew()) {
+    $links['save'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['spotdeals-save-cta']],
+      'link' => [
+        '#lazy_builder' => [
+          'flag.link_builder:build',
+          [$deal->getEntityTypeId(), $deal->id(), 'deal', 'full'],
+        ],
+        '#create_placeholder' => TRUE,
+      ],
+    ];
+  }
+
   if (empty($links)) {
     return [];
   }
@@ -686,7 +738,85 @@ function _spotdeals_minimal_build_deal_page_ctas(?NodeInterface $deal, NodeInter
     'description' => [
       '#type' => 'html_tag',
       '#tag' => 'p',
-      '#value' => t('Get directions, visit the venue page, or call ahead before you go.'),
+      '#value' => t('Get directions, visit the venue page, call ahead or save for later.'),
+      '#attributes' => ['class' => ['spotdeals-deal-cta-panel__description']],
+    ],
+    'links' => [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['spotdeals-deal-cta-panel__links']],
+    ] + $links,
+  ];
+}
+
+/**
+ * Builds the main CTA row for venue detail pages.
+ */
+function _spotdeals_minimal_build_venue_page_ctas(NodeInterface $venue): array {
+  $address = _spotdeals_minimal_build_deal_page_address($venue);
+  $phone = _spotdeals_minimal_get_first_field_text($venue, [
+    'field_phone',
+    'field_contact_phone',
+    'field_telephone',
+  ]);
+
+  $links = [];
+
+  if ($address !== '') {
+    $links['directions'] = [
+      '#type' => 'link',
+      '#title' => t('Get Directions'),
+      '#url' => Url::fromUri('https://www.google.com/maps/search/?api=1&query=' . rawurlencode($address)),
+      '#attributes' => [
+        'class' => ['spotdeals-deal-cta-button', 'spotdeals-deal-cta-button--primary'],
+        'target' => '_blank',
+        'rel' => 'noopener noreferrer',
+      ],
+    ];
+  }
+
+  if ($phone !== '') {
+    $tel = preg_replace('/[^0-9+]/', '', $phone) ?? '';
+    if ($tel !== '') {
+      $links['phone'] = [
+        '#type' => 'link',
+        '#title' => t('Call @phone', ['@phone' => $phone]),
+        '#url' => Url::fromUri('tel:' . $tel),
+        '#attributes' => ['class' => ['spotdeals-deal-cta-button']],
+      ];
+    }
+  }
+
+  if (!$venue->isNew()) {
+    $links['save'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['spotdeals-save-cta']],
+      'link' => [
+        '#lazy_builder' => [
+          'flag.link_builder:build',
+          [$venue->getEntityTypeId(), $venue->id(), 'venue', 'full'],
+        ],
+        '#create_placeholder' => TRUE,
+      ],
+    ];
+  }
+
+  if (empty($links)) {
+    return [];
+  }
+
+  return [
+    '#type' => 'container',
+    '#attributes' => ['class' => ['spotdeals-deal-cta-panel', 'spotdeals-venue-cta-panel']],
+    'heading' => [
+      '#type' => 'html_tag',
+      '#tag' => 'h2',
+      '#value' => t('Ready to go?'),
+      '#attributes' => ['class' => ['spotdeals-deal-cta-panel__title']],
+    ],
+    'description' => [
+      '#type' => 'html_tag',
+      '#tag' => 'p',
+      '#value' => t('Get directions, call ahead or save this venue for later.'),
       '#attributes' => ['class' => ['spotdeals-deal-cta-panel__description']],
     ],
     'links' => [
