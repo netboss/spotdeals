@@ -47,9 +47,9 @@
   <div{{ content_attributes.addClass('node__content', layout) }}>
     {# The Menu and View Menu are duplicates; remove field_cta if it contains "View Menu" #}
     {% if 'View Menu' in content.field_cta[0]['#title'] %}
-      {{ content|without('comment', 'field_image', 'body', 'field_address', 'field_venue_type', 'field_cta') }}
+      {{ content|without('comment', 'field_image', 'body', 'field_address', 'field_venue_type', 'field_cta', 'flag_venue') }}
     {% else %}
-      {{ content|without('comment', 'field_image', 'body', 'field_address', 'field_venue_type') }}
+      {{ content|without('comment', 'field_image', 'body', 'field_address', 'field_venue_type', 'flag_venue') }}
     {% endif %}
     {% if content.field_image[0] %}
       {% set haveImg = 'image-' %}
@@ -69,6 +69,12 @@
 
     {% if spotdeals_share_this %}
       {{ spotdeals_share_this }}
+    {% endif %}
+
+    {% if view_mode == 'full' and spotdeals_venue_primary_ctas %}
+      <div class="spotdeals-venue-detail__primary-cta">
+        {{ spotdeals_venue_primary_ctas }}
+      </div>
     {% endif %}
   </div>
 
