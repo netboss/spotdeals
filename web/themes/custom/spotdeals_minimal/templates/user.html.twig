@@ -19,6 +19,20 @@
         <div class="sd-profile__member">{{ 'Member since'|t }} {{ p.member_since }}</div>
         <span class="sd-profile__plan">{{ p.plan_tier }} {{ 'Plan'|t }}</span>
       </div>
+      {% if spotdeals_social_follow_action or spotdeals_social_block_action %}
+        <div class="sd-profile__social-actions" aria-label="{{ 'Social actions'|t }}">
+          {% if spotdeals_social_follow_action %}
+            <div class="sd-profile__social-action sd-profile__social-action--follow">
+              {{ spotdeals_social_follow_action }}
+            </div>
+          {% endif %}
+          {% if spotdeals_social_block_action %}
+            <div class="sd-profile__social-action sd-profile__social-action--block">
+              {{ spotdeals_social_block_action }}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
     </div>
   </section>
 
@@ -35,25 +49,28 @@
         <a class="is-active" href="#overview">⌂ <span>{{ 'Overview'|t }}</span></a>
         <a href="#saved-venues">♡ <span>{{ 'Saved venues'|t }}</span><b>{{ p.saved_venues|length }}</b></a>
         <a href="#saved-deals">♡ <span>{{ 'Saved deals'|t }}</span><b>{{ p.saved_deals|length }}</b></a>
-        <a href="#activity">👍 <span>{{ 'My activity'|t }}</span></a>
+        <a href="#activity">👍 <span>{{ 'Following activity'|t }}</span></a>
         <a href="#account">⚙ <span>{{ 'Account settings'|t }}</span></a>
       </nav>
 
       <main class="sd-profile__main" id="overview">
         <section class="sd-profile__card" id="activity">
-          <div class="sd-profile__card-head"><h2>{{ 'Recent activity'|t }}</h2></div>
-          {% if p.recent_activity %}
+          <div class="sd-profile__card-head"><h2>{{ 'Following activity'|t }}</h2></div>
+          {% if p.following_activity %}
             <div class="sd-profile__activity-list">
-              {% for item in p.recent_activity %}
+              {% for item in p.following_activity %}
                 <div class="sd-profile__activity">
-                  <span class="sd-profile__activity-icon sd-profile__activity-icon--{{ item.type }}">{% if item.type == 'saved' %}♥{% elseif item.type == 'suggestion' %}💬{% else %}👍{% endif %}</span>
-                  <div><small>{{ item.label }}</small>{% if item.url %}<a href="{{ item.url }}">{{ item.title }}</a>{% else %}<strong>{{ item.title }}</strong>{% endif %}{% if item.status %}<em>{{ item.status|capitalize }}</em>{% endif %}</div>
+                  <span class="sd-profile__activity-icon sd-profile__activity-icon--{{ item.type }}">{% if item.type == 'saved' %}♥{% else %}👍{% endif %}</span>
+                  <div>
+                    <small><a href="{{ item.actor_url }}">{{ item.actor_name }}</a> {{ item.label }}</small>
+                    <a href="{{ item.url }}">{{ item.title }}</a>
+                  </div>
                   <time>{{ item.date }}</time>
                 </div>
               {% endfor %}
             </div>
           {% else %}
-            <p class="sd-profile__empty">{{ 'Your SpotDeals activity will appear here as you save, vote, and suggest.'|t }}</p>
+            <p class="sd-profile__empty">{{ 'Activity from people you follow will appear here.'|t }}</p>
           {% endif %}
         </section>
 

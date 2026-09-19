@@ -1,0 +1,15 @@
+uuid: 36b2e0ef-2f68-456a-b37e-0f47e0ef84b1
+langcode: en
+status: true
+dependencies:
+  config:
+    - flag.flag.block_user
+  module:
+    - flag
+id: flag_action.block_user_flag
+label: Block
+type: user
+plugin: 'flag_action:block_user_flag'
+configuration:
+  flag_id: block_user
+  flag_action: flag

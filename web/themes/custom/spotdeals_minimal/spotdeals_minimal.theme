@@ -2269,4 +2269,17 @@ function spotdeals_minimal_preprocess_user(array &$variables): void {
 
   $variables['spotdeals_profile'] = \Drupal::service('spotdeals_revenue.user_profile_dashboard_builder')
     ->build($account);
+
+  if (
+    !empty($variables['spotdeals_profile']['is_owner']) &&
+    \Drupal::hasService('spotdeals_social.following_activity_builder')
+  ) {
+    $following_activity_builder = \Drupal::service('spotdeals_social.following_activity_builder');
+    $variables['spotdeals_profile']['following_activity'] = $following_activity_builder
+      ->build($account);
+
+    $cacheable_metadata = new \Drupal\Core\Cache\CacheableMetadata();
+    $cacheable_metadata->setCacheTags($following_activity_builder->getCacheTags($account));
+    $cacheable_metadata->applyTo($variables['elements']);
+  }
 }

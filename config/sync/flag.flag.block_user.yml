@@ -1,0 +1,30 @@
+uuid: 1c59a3db-54a7-4939-a60d-5daea2f1bc64
+langcode: en
+status: true
+dependencies:
+  module:
+    - user
+id: block_user
+label: 'Block user'
+bundles: {  }
+entity_type: user
+global: false
+flag_short: Block
+flag_long: ''
+flag_message: ''
+unflag_short: Unblock
+unflag_long: ''
+unflag_message: ''
+unflag_denied_text: ''
+weight: 0
+flag_type: 'entity:user'
+link_type: ajax_link
+flagTypeConfig:
+  show_in_links: {  }
+  show_as_field: true
+  show_on_form: false
+  show_contextual_link: false
+  extra_permissions:
+    owner: '0'
+  show_on_profile: true
+linkTypeConfig: {  }

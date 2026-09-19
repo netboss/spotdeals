@@ -1,0 +1,95 @@
+<?php
+
+/**
+ * @file
+ * SpotDeals Social hooks.
+ */
+
+use Drupal\Core\Cache\CacheableMetadata;
+use Drupal\flag\FlaggingInterface;
+use Drupal\spotdeals_social\Cache\SocialActivityCache;
+use Drupal\user\UserInterface;
+
+/**
+ * Implements hook_preprocess_user().
+ *
+ * Exposes lazy-built Follow/Unfollow and Block/Unblock controls to the
+ * SpotDeals user profile template. Social actions are available only when an
+ * authenticated user is viewing another user's profile.
+ */
+function spotdeals_social_preprocess_user(array &$variables): void {
+  $profile_user = $variables['user'] ?? NULL;
+  $current_user = \Drupal::currentUser();
+
+  if (
+    !$profile_user instanceof UserInterface ||
+    $profile_user->isNew() ||
+    $current_user->isAnonymous() ||
+    (int) $current_user->id() === (int) $profile_user->id()
+  ) {
+    return;
+  }
+
+  $variables['spotdeals_social_follow_action'] = [
+    '#lazy_builder' => [
+      'flag.link_builder:build',
+      [
+        $profile_user->getEntityTypeId(),
+        $profile_user->id(),
+        'follow_user',
+        (string) ($variables['view_mode'] ?? 'full'),
+      ],
+    ],
+    '#create_placeholder' => TRUE,
+  ];
+
+  $variables['spotdeals_social_block_action'] = [
+    '#lazy_builder' => [
+      'flag.link_builder:build',
+      [
+        $profile_user->getEntityTypeId(),
+        $profile_user->id(),
+        'block_user',
+        (string) ($variables['view_mode'] ?? 'full'),
+      ],
+    ],
+    '#create_placeholder' => TRUE,
+  ];
+
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function spotdeals_social_entity_insert(\Drupal\Core\Entity\EntityInterface $entity): void {
+  spotdeals_social_invalidate_flagging_activity($entity);
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function spotdeals_social_entity_delete(\Drupal\Core\Entity\EntityInterface $entity): void {
+  spotdeals_social_invalidate_flagging_activity($entity);
+}
+
+/**
+ * Invalidates social activity when a deal or venue save changes.
+ */
+function spotdeals_social_invalidate_flagging_activity(\Drupal\Core\Entity\EntityInterface $entity): void {
+  if (!$entity instanceof FlaggingInterface) {
+    return;
+  }
+
+  if (!in_array($entity->getFlag()->id(), ['deal', 'venue'], TRUE)) {
+    return;
+  }
+
+  $uid = (int) $entity->getOwnerId();
+  if ($uid <= 0) {
+    return;
+  }
+
+  \Drupal::service('cache_tags.invalidator')->invalidateTags([
+    SocialActivityCache::activityTag($uid),
+  ]);
+}
