@@ -1,0 +1,22 @@
+{#
+/**
+ * @file
+ * Page title block for the SpotDeals user profile dashboard.
+ *
+ * Drupal's page title render array remains the sole H1. The profile settings
+ * action participates in the same flex row instead of being positioned over it.
+ */
+#}
+<div{{ attributes.addClass('sd-profile-titlebar') }}>
+  {{ title_prefix }}
+  {{ title_suffix }}
+  <div class="sd-profile-titlebar__inner">
+    <div class="sd-profile-titlebar__title">{{ content }}</div>
+    {% if spotdeals_profile_edit_url %}
+      <a class="sd-profile__edit" href="{{ spotdeals_profile_edit_url }}" aria-label="{{ 'Edit profile'|t }}" title="{{ 'Edit profile'|t }}">
+        <span class="sd-profile__edit-icon" aria-hidden="true">⚙</span>
+        <span class="sd-profile__edit-label">{{ 'Edit profile'|t }}</span>
+      </a>
+    {% endif %}
+  </div>
+</div>

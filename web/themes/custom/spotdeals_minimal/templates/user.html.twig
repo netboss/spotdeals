@@ -1,0 +1,103 @@
+{#
+/**
+ * @file
+ * SpotDeals consumer profile dashboard.
+ */
+#}
+{% set p = spotdeals_profile %}
+<article{{ attributes.addClass('sd-profile') }}>
+  <section class="sd-profile__hero">
+    <div class="sd-profile__hero-inner">
+      <div class="sd-profile__avatar" aria-hidden="true">
+        {% if content.user_picture %}
+          {{ content.user_picture }}
+        {% else %}
+          <span>👤</span>
+        {% endif %}
+      </div>
+      <div class="sd-profile__identity">
+        <div class="sd-profile__member">{{ 'Member since'|t }} {{ p.member_since }}</div>
+        <span class="sd-profile__plan">{{ p.plan_tier }} {{ 'Plan'|t }}</span>
+      </div>
+    </div>
+  </section>
+
+  {% if p.show_private %}
+    <section class="sd-profile__stats" aria-label="{{ 'Activity summary'|t }}">
+      <div class="sd-profile__stat sd-profile__stat--positive"><span>👍</span><strong>{{ p.stats.positive }}</strong><small>{{ 'Positive votes'|t }}</small></div>
+      <div class="sd-profile__stat sd-profile__stat--negative"><span>👎</span><strong>{{ p.stats.negative }}</strong><small>{{ 'Negative votes'|t }}</small></div>
+      <div class="sd-profile__stat sd-profile__stat--saved"><span>♡</span><strong>{{ p.stats.saved }}</strong><small>{{ 'Saved'|t }}</small></div>
+      <div class="sd-profile__stat sd-profile__stat--suggestions"><span>💬</span><strong>{{ p.stats.suggestions }}</strong><small>{{ 'Suggestions'|t }}</small></div>
+    </section>
+
+    <div class="sd-profile__layout">
+      <nav class="sd-profile__nav" aria-label="{{ 'Profile sections'|t }}">
+        <a class="is-active" href="#overview">⌂ <span>{{ 'Overview'|t }}</span></a>
+        <a href="#saved-venues">♡ <span>{{ 'Saved venues'|t }}</span><b>{{ p.saved_venues|length }}</b></a>
+        <a href="#saved-deals">♡ <span>{{ 'Saved deals'|t }}</span><b>{{ p.saved_deals|length }}</b></a>
+        <a href="#activity">👍 <span>{{ 'My activity'|t }}</span></a>
+        <a href="#account">⚙ <span>{{ 'Account settings'|t }}</span></a>
+      </nav>
+
+      <main class="sd-profile__main" id="overview">
+        <section class="sd-profile__card" id="activity">
+          <div class="sd-profile__card-head"><h2>{{ 'Recent activity'|t }}</h2></div>
+          {% if p.recent_activity %}
+            <div class="sd-profile__activity-list">
+              {% for item in p.recent_activity %}
+                <div class="sd-profile__activity">
+                  <span class="sd-profile__activity-icon sd-profile__activity-icon--{{ item.type }}">{% if item.type == 'saved' %}♥{% elseif item.type == 'suggestion' %}💬{% else %}👍{% endif %}</span>
+                  <div><small>{{ item.label }}</small>{% if item.url %}<a href="{{ item.url }}">{{ item.title }}</a>{% else %}<strong>{{ item.title }}</strong>{% endif %}{% if item.status %}<em>{{ item.status|capitalize }}</em>{% endif %}</div>
+                  <time>{{ item.date }}</time>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="sd-profile__empty">{{ 'Your SpotDeals activity will appear here as you save, vote, and suggest.'|t }}</p>
+          {% endif %}
+        </section>
+
+        <div class="sd-profile__saved-grid">
+          <section class="sd-profile__card" id="saved-deals">
+            <div class="sd-profile__card-head"><h2>{{ 'Saved deals'|t }}</h2><span>{{ p.saved_deals|length }}</span></div>
+            {% if p.saved_deals %}
+              {% for item in p.saved_deals|slice(0, 5) %}<a class="sd-profile__saved-item" href="{{ item.url }}">♥ <span>{{ item.title }}</span><b>›</b></a>{% endfor %}
+            {% else %}<p class="sd-profile__empty">{{ 'No saved deals yet.'|t }}</p>{% endif %}
+          </section>
+          <section class="sd-profile__card" id="saved-venues">
+            <div class="sd-profile__card-head"><h2>{{ 'Saved venues'|t }}</h2><span>{{ p.saved_venues|length }}</span></div>
+            {% if p.saved_venues %}
+              {% for item in p.saved_venues|slice(0, 5) %}<a class="sd-profile__saved-item" href="{{ item.url }}">♥ <span>{{ item.title }}</span><b>›</b></a>{% endfor %}
+            {% else %}<p class="sd-profile__empty">{{ 'No saved venues yet.'|t }}</p>{% endif %}
+          </section>
+        </div>
+      </main>
+
+      <aside class="sd-profile__aside" id="account">
+        <section class="sd-profile__card">
+          <div class="sd-profile__card-head"><h2>{{ 'Account details'|t }}</h2>{% if p.edit_url %}<a href="{{ p.edit_url }}">{{ 'Edit'|t }}</a>{% endif %}</div>
+          <dl class="sd-profile__details">
+            <div><dt>{{ 'Display name'|t }}</dt><dd>{{ p.display_name }}</dd></div>
+            {% if p.email %}<div><dt>{{ 'Email'|t }}</dt><dd>{{ p.email }}</dd></div>{% endif %}
+            <div><dt>{{ 'Member since'|t }}</dt><dd>{{ p.member_since }}</dd></div>
+          </dl>
+        </section>
+        <section class="sd-profile__card sd-profile__subscription">
+          <div class="sd-profile__card-head"><h2>{{ 'Subscription'|t }}</h2></div>
+          <strong>✓ {{ p.plan_tier }} {{ 'Plan'|t }}</strong>
+          {% if p.plan_status %}<p>{{ 'Status'|t }}: {{ p.plan_status }}</p>{% endif %}
+        </section>
+      </aside>
+    </div>
+
+    <section class="sd-profile__discover">
+      <div><strong>{{ 'Discover more local deals'|t }}</strong><span>{{ 'Save favorites, vote on deals, and help others find great places.'|t }}</span></div>
+      <a href="/deals">{{ 'Explore deals'|t }}</a>
+    </section>
+  {% else %}
+    <section class="sd-profile__public-card">
+      <h2>{{ p.display_name }}</h2>
+      <p>{{ 'SpotDeals member since'|t }} {{ p.member_since }}.</p>
+    </section>
+  {% endif %}
+</article>

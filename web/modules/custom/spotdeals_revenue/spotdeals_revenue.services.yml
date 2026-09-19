@@ -2,3 +2,11 @@ services:
   spotdeals_revenue.promoted_slot_builder:
     class: Drupal\spotdeals_revenue\Service\PromotedSlotBuilder
     arguments: ['@config.factory']
+
+  spotdeals_revenue.user_profile_dashboard_builder:
+    class: Drupal\spotdeals_revenue\Service\UserProfileDashboardBuilder
+    arguments:
+      - '@database'
+      - '@entity_type.manager'
+      - '@date.formatter'
+      - '@current_user'

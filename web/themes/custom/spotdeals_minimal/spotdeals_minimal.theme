@@ -4,6 +4,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
 use Drupal\taxonomy\TermInterface;
+use Drupal\user\UserInterface;
 use Drupal\views\ViewExecutable;
 
 /**
@@ -56,6 +57,17 @@ function spotdeals_minimal_theme_suggestions_block_alter(array &$suggestions, ar
         $suggestions[] = 'block__' . $safe_region . '__plugin_id__' . $safe_plugin_id;
       }
     }
+  }
+
+  $route_match = \Drupal::routeMatch();
+  $account = $route_match->getParameter('user');
+
+  if (
+    $plugin_id === 'page_title_block' &&
+    $route_match->getRouteName() === 'entity.user.canonical' &&
+    $account instanceof UserInterface
+  ) {
+    $suggestions[] = 'block__spotdeals_profile_page_title';
   }
 
   $suggestions = array_values(array_unique($suggestions));
@@ -1975,6 +1987,26 @@ function spotdeals_minimal_preprocess_menu(array &$variables): void {
  * Implements hook_preprocess_block().
  */
 function spotdeals_minimal_preprocess_block(array &$variables): void {
+  $elements = $variables['elements'] ?? [];
+  $plugin_id = (string) ($elements['#plugin_id'] ?? '');
+  $route_match = \Drupal::routeMatch();
+  $account = $route_match->getParameter('user');
+
+  if (
+    $plugin_id === 'page_title_block' &&
+    $route_match->getRouteName() === 'entity.user.canonical' &&
+    $account instanceof UserInterface
+  ) {
+    $variables['spotdeals_profile_edit_url'] = NULL;
+
+    if ($account->access('update', \Drupal::currentUser())) {
+      $variables['spotdeals_profile_edit_url'] = Url::fromRoute(
+        'entity.user.edit_form',
+        ['user' => $account->id()]
+      )->toString();
+    }
+  }
+
   foreach (['label', 'configuration.label'] as $key) {
     $value = $key === 'configuration.label'
       ? ($variables['configuration']['label'] ?? NULL)
@@ -2217,4 +2249,24 @@ function spotdeals_minimal_home_feed_chip_icon(string $keyword): string {
   }
 
   return '✨';
+}
+
+/**
+ * Implements hook_preprocess_user().
+ *
+ * Profile dashboard data is assembled by application-layer module code. The
+ * theme only passes the prepared data to Twig.
+ */
+function spotdeals_minimal_preprocess_user(array &$variables): void {
+  $account = $variables['user'] ?? NULL;
+  if (!$account instanceof UserInterface) {
+    return;
+  }
+
+  if (!\Drupal::hasService('spotdeals_revenue.user_profile_dashboard_builder')) {
+    return;
+  }
+
+  $variables['spotdeals_profile'] = \Drupal::service('spotdeals_revenue.user_profile_dashboard_builder')
+    ->build($account);
 }
