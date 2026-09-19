@@ -1,0 +1,43 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for SpotDeals Social.
+ */
+
+use Drupal\pathauto\PathautoState;
+
+/**
+ * Implements hook_install().
+ *
+ * Enables automatic Pathauto aliases for existing user accounts.
+ *
+ * Existing users may have been created before the SpotDeals user Pathauto
+ * pattern existed and can therefore have automatic alias generation disabled.
+ * Normalize those accounts when this module is installed so they receive the
+ * same automatic profile URL behavior as newly created accounts.
+ */
+function spotdeals_social_install(): void {
+  $user_storage = \Drupal::entityTypeManager()->getStorage('user');
+
+  $uids = $user_storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('uid', 0, '>')
+    ->execute();
+
+  if (!$uids) {
+    return;
+  }
+
+  /** @var \Drupal\user\UserInterface[] $users */
+  $users = $user_storage->loadMultiple($uids);
+
+  foreach ($users as $user) {
+    if (!$user->hasField('path')) {
+      continue;
+    }
+
+    $user->path->pathauto = PathautoState::CREATE;
+    $user->save();
+  }
+}
