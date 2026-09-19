@@ -1,0 +1,9 @@
+name: SpotDeals Social
+type: module
+description: 'Provides the SpotDeals social networking foundation, including social user profile behavior and relationship integrations.'
+package: SpotDeals
+core_version_requirement: ^10 || ^11
+
+dependencies:
+  - drupal:user
+  - pathauto:pathauto
