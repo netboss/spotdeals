@@ -92,10 +92,14 @@ final class VenueVoteManager {
     $this->voteStorage->upsertVote($uid, $voterKey, $anonymousHash, $venueNid, [$fieldName => $value], $source);
     $this->rateLimiter->register('venue', $venueNid, $anonymousHash);
     $this->aggregateStorage->rebuildVenueAggregate($venueNid);
-    $this->cacheTagsInvalidator->invalidateTags([
+    $cacheTags = [
       'node:' . $venueNid,
       'spotdeals_vote_venue:' . $venueNid,
-    ]);
+    ];
+    if ($uid > 0) {
+      $cacheTags[] = 'spotdeals_social_activity:' . $uid;
+    }
+    $this->cacheTagsInvalidator->invalidateTags($cacheTags);
 
     $state = $this->getVenueVoteState($venueNid, $voterKey);
 

@@ -5293,3 +5293,51 @@ h1.page-title {
     font-size: 1.35rem;
   }
 }
+
+/* SpotDeals social profile actions. */
+.sd-profile__social-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-left: auto;
+}
+
+.sd-profile__social-action a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: .45rem .8rem;
+  border: 1px solid #b9df63;
+  border-radius: 6px;
+  background: #b9df63;
+  color: #17210f !important;
+  font-size: .75rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.sd-profile__social-action a:hover,
+.sd-profile__social-action a:focus {
+  text-decoration: none;
+}
+
+.sd-profile__social-action--block a {
+  border-color: rgba(255, 255, 255, .45);
+  background: transparent;
+  color: #fff !important;
+}
+
+@media (max-width: 699px) {
+  .sd-profile__hero-inner {
+    flex-wrap: wrap;
+  }
+
+  .sd-profile__social-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+

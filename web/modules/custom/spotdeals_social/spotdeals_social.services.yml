@@ -1,0 +1,16 @@
+services:
+  spotdeals_social.flag_subscriber:
+    class: Drupal\spotdeals_social\EventSubscriber\SocialFlagSubscriber
+    arguments:
+      - '@flag'
+      - '@cache_tags.invalidator'
+    tags:
+      - { name: event_subscriber }
+
+  spotdeals_social.following_activity_builder:
+    class: Drupal\spotdeals_social\Service\FollowingActivityBuilder
+    arguments:
+      - '@database'
+      - '@entity_type.manager'
+      - '@date.formatter'
+

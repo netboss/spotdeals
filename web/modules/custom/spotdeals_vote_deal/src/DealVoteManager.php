@@ -101,10 +101,14 @@ final class DealVoteManager {
     $this->voteStorage->upsertVote($uid, $voterKey, $anonymousHash, $dealNid, $venueNid, [$fieldName => $value], $source);
     $this->rateLimiter->register('deal', $dealNid, $anonymousHash);
     $this->aggregateStorage->rebuildDealAggregate($dealNid, $venueNid);
-    $this->cacheTagsInvalidator->invalidateTags([
+    $cacheTags = [
       'node:' . $dealNid,
       'spotdeals_vote:' . $dealNid,
-    ]);
+    ];
+    if ($uid > 0) {
+      $cacheTags[] = 'spotdeals_social_activity:' . $uid;
+    }
+    $this->cacheTagsInvalidator->invalidateTags($cacheTags);
 
     $state = $this->getDealVoteState($dealNid, $voterKey);
 

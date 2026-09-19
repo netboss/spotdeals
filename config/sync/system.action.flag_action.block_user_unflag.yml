@@ -1,0 +1,15 @@
+uuid: 40f383b4-6718-41e7-9085-7c0fa236f192
+langcode: en
+status: true
+dependencies:
+  config:
+    - flag.flag.block_user
+  module:
+    - flag
+id: flag_action.block_user_unflag
+label: Unblock
+type: user
+plugin: 'flag_action:block_user_unflag'
+configuration:
+  flag_id: block_user
+  flag_action: unflag
