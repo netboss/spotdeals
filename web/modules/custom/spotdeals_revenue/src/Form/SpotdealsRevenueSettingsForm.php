@@ -37,6 +37,13 @@ class SpotdealsRevenueSettingsForm extends ConfigFormBase {
       '#default_value' => (bool) $config->get('promoted_slot_enabled'),
     ];
 
+    $form['profile_promoted_slot_enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enable promoted private-profile slot'),
+      '#description' => $this->t('Shows the configured promoted markup after discovery content when a visitor reaches a private profile they cannot view.'),
+      '#default_value' => (bool) $config->get('profile_promoted_slot_enabled'),
+    ];
+
     $form['promoted_slot_label'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Promoted slot label'),
@@ -89,6 +96,7 @@ class SpotdealsRevenueSettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $this->config('spotdeals_revenue.settings')
       ->set('promoted_slot_enabled', (bool) $form_state->getValue('promoted_slot_enabled'))
+      ->set('profile_promoted_slot_enabled', (bool) $form_state->getValue('profile_promoted_slot_enabled'))
       ->set('promoted_slot_label', trim((string) $form_state->getValue('promoted_slot_label')) ?: 'Sponsored')
       ->set('promoted_slot_markup', trim((string) $form_state->getValue('promoted_slot_markup')))
       ->set('free_deals_per_venue', max(0, (int) $form_state->getValue('free_deals_per_venue')))

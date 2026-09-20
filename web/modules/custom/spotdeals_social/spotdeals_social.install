@@ -18,6 +18,8 @@ use Drupal\pathauto\PathautoState;
  * same automatic profile URL behavior as newly created accounts.
  */
 function spotdeals_social_install(): void {
+  spotdeals_social_ensure_privacy_field();
+
   $user_storage = \Drupal::entityTypeManager()->getStorage('user');
 
   $uids = $user_storage->getQuery()
@@ -40,4 +42,44 @@ function spotdeals_social_install(): void {
     $user->path->pathauto = PathautoState::CREATE;
     $user->save();
   }
+}
+
+/**
+ * Creates the per-user SpotDeals private-account preference field.
+ */
+function spotdeals_social_ensure_privacy_field(): void {
+  $field_name = 'field_social_private';
+
+  $storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('user', $field_name);
+  if ($storage === NULL) {
+    $storage = \Drupal\field\Entity\FieldStorageConfig::create([
+      'field_name' => $field_name,
+      'entity_type' => 'user',
+      'type' => 'boolean',
+      'cardinality' => 1,
+      'settings' => [],
+      'translatable' => FALSE,
+    ]);
+    $storage->save();
+  }
+
+  $field = \Drupal\field\Entity\FieldConfig::loadByName('user', 'user', $field_name);
+  if ($field === NULL) {
+    $field = \Drupal\field\Entity\FieldConfig::create([
+      'field_storage' => $storage,
+      'bundle' => 'user',
+      'label' => 'Private account',
+      'description' => 'Controls SpotDeals social profile visibility and interaction.',
+      'required' => FALSE,
+      'default_value' => [['value' => 0]],
+    ]);
+    $field->save();
+  }
+}
+
+/**
+ * Adds the private-account preference to existing SpotDeals installations.
+ */
+function spotdeals_social_update_10001(): void {
+  spotdeals_social_ensure_privacy_field();
 }
