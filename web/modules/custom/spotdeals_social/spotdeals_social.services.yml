@@ -4,6 +4,7 @@ services:
     arguments:
       - '@flag'
       - '@cache_tags.invalidator'
+      - '@spotdeals_social.privacy_manager'
     tags:
       - { name: event_subscriber }
 
@@ -13,4 +14,18 @@ services:
       - '@database'
       - '@entity_type.manager'
       - '@date.formatter'
+      - '@spotdeals_social.privacy_manager'
 
+  spotdeals_social.relationship_manager:
+    class: Drupal\spotdeals_social\Service\SocialRelationshipManager
+    arguments:
+      - '@database'
+      - '@entity_type.manager'
+      - '@current_user'
+      - '@spotdeals_social.privacy_manager'
+
+  spotdeals_social.privacy_manager:
+    class: Drupal\spotdeals_social\Service\SocialPrivacyManager
+    arguments:
+      - '@database'
+      - '@cache_tags.invalidator'

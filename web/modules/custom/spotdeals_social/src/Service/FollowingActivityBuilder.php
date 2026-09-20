@@ -21,6 +21,7 @@ final class FollowingActivityBuilder {
     private readonly Connection $database,
     private readonly EntityTypeManagerInterface $entityTypeManager,
     private readonly DateFormatterInterface $dateFormatter,
+    private readonly SocialPrivacyManager $privacyManager,
   ) {}
 
   /**
@@ -54,6 +55,16 @@ final class FollowingActivityBuilder {
     }
 
     $users = $this->entityTypeManager->getStorage('user')->loadMultiple($followedUids);
+    foreach ($users as $followed_uid => $followed_user) {
+      if (!$followed_user instanceof UserInterface || !$this->privacyManager->canViewProfile($followed_user, $account)) {
+        unset($users[$followed_uid]);
+      }
+    }
+    $followedUids = array_values(array_map('intval', array_keys($users)));
+    if (!$followedUids) {
+      return [];
+    }
+
     $activity = [];
 
     $this->addDealVotes($followedUids, $users, $activity);
@@ -102,6 +113,7 @@ final class FollowingActivityBuilder {
 
     foreach ($followedUids as $followedUid) {
       $tags[] = \Drupal\spotdeals_social\Cache\SocialActivityCache::activityTag($followedUid);
+      $tags[] = 'user:' . $followedUid;
     }
 
     return array_values(array_unique($tags));

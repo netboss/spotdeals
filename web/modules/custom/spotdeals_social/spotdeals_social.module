@@ -5,10 +5,35 @@
  * SpotDeals Social hooks.
  */
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Cache\CacheableMetadata;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
 use Drupal\flag\FlaggingInterface;
+use Drupal\spotdeals_social\Form\PrivacyToggleForm;
 use Drupal\spotdeals_social\Cache\SocialActivityCache;
 use Drupal\user\UserInterface;
+
+/**
+ * Implements hook_entity_view_alter().
+ *
+ * User profile output depends on the current viewer (owner, block, and private
+ * account relationships). Add the user cache context at the entity render-array
+ * level so Drupal varies the cached profile before preprocess variables are
+ * evaluated.
+ */
+function spotdeals_social_entity_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display): void {
+  if (!$entity instanceof UserInterface) {
+    return;
+  }
+
+  $cacheability = new CacheableMetadata();
+  $cacheability->addCacheableDependency($entity);
+  $cacheability->addCacheContexts(['theme', 'user']);
+  $cacheability->applyTo($build);
+}
 
 /**
  * Implements hook_preprocess_user().
@@ -19,29 +44,89 @@ use Drupal\user\UserInterface;
  */
 function spotdeals_social_preprocess_user(array &$variables): void {
   $profile_user = $variables['user'] ?? NULL;
+  if (!$profile_user instanceof UserInterface || $profile_user->isNew()) {
+    return;
+  }
+
   $current_user = \Drupal::currentUser();
+  $variables['spotdeals_social_is_owner'] = $current_user->isAuthenticated()
+    && (int) $current_user->id() === (int) $profile_user->id();
+
+  if (\Drupal::hasService('spotdeals_social.privacy_manager')) {
+    $privacy_manager = \Drupal::service('spotdeals_social.privacy_manager');
+    $variables['spotdeals_social_is_private'] = $privacy_manager->isPrivate($profile_user);
+    $variables['spotdeals_social_can_view_profile'] = $privacy_manager->canViewProfile($profile_user, $current_user);
+    $variables['spotdeals_social_is_blocked'] = $current_user->isAuthenticated()
+      && (int) $current_user->id() !== (int) $profile_user->id()
+      && $privacy_manager->userBlocked((int) $profile_user->id(), (int) $current_user->id());
+    $variables['spotdeals_social_viewer_blocked_profile'] = $current_user->isAuthenticated()
+      && (int) $current_user->id() !== (int) $profile_user->id()
+      && $privacy_manager->userBlocked((int) $current_user->id(), (int) $profile_user->id());
+
+    if ((int) $current_user->id() === (int) $profile_user->id()) {
+      $variables['spotdeals_social_privacy_toggle'] = \Drupal::formBuilder()->getForm(PrivacyToggleForm::class, $profile_user);
+      $variables['spotdeals_social_blocked_users_url'] = Url::fromRoute('spotdeals_social.blocked', [
+        'user' => $profile_user->id(),
+      ])->toString();
+    }
+
+    $privacy_cacheability = new CacheableMetadata();
+    $privacy_cacheability->addCacheableDependency($profile_user);
+    $privacy_cacheability->addCacheContexts(['user']);
+    $privacy_cacheability->applyTo($variables['elements']);
+
+    if ($variables['spotdeals_social_is_private'] && !$variables['spotdeals_social_can_view_profile']) {
+      $block_manager = \Drupal::service('plugin.manager.block');
+
+      $variables['spotdeals_social_private_popular_searches'] = $block_manager
+        ->createInstance('spotdeals_search_insights_most_searched', [])
+        ->build();
+      $variables['spotdeals_social_private_trending'] = $block_manager
+        ->createInstance('spotdeals_search_smart_location_trending_near_you', [])
+        ->build();
+
+      if (\Drupal::hasService('spotdeals_revenue.promoted_slot_builder')) {
+        $variables['spotdeals_social_private_promoted_slot'] = \Drupal::service('spotdeals_revenue.promoted_slot_builder')
+          ->buildProfileSlot();
+        if (!empty($variables['spotdeals_social_private_promoted_slot'])) {
+          $variables['#attached']['library'][] = 'spotdeals_revenue/promoted_slot';
+        }
+      }
+    }
+  }
+
+  if (\Drupal::hasService('spotdeals_social.relationship_manager')) {
+    $relationship_manager = \Drupal::service('spotdeals_social.relationship_manager');
+    $variables['spotdeals_social_relationships'] = $relationship_manager->buildSummary($profile_user);
+
+    $cacheable_metadata = new CacheableMetadata();
+    $cacheable_metadata->setCacheTags($relationship_manager->getCacheTags($profile_user));
+    $cacheable_metadata->addCacheContexts($relationship_manager->getCacheContexts());
+    $cacheable_metadata->applyTo($variables['elements']);
+  }
 
   if (
-    !$profile_user instanceof UserInterface ||
-    $profile_user->isNew() ||
     $current_user->isAnonymous() ||
-    (int) $current_user->id() === (int) $profile_user->id()
+    (int) $current_user->id() === (int) $profile_user->id() ||
+    (isset($variables['spotdeals_social_can_view_profile']) && !$variables['spotdeals_social_can_view_profile'])
   ) {
     return;
   }
 
-  $variables['spotdeals_social_follow_action'] = [
-    '#lazy_builder' => [
-      'flag.link_builder:build',
-      [
-        $profile_user->getEntityTypeId(),
-        $profile_user->id(),
-        'follow_user',
-        (string) ($variables['view_mode'] ?? 'full'),
+  if (empty($variables['spotdeals_social_viewer_blocked_profile'])) {
+    $variables['spotdeals_social_follow_action'] = [
+      '#lazy_builder' => [
+        'flag.link_builder:build',
+        [
+          $profile_user->getEntityTypeId(),
+          $profile_user->id(),
+          'follow_user',
+          (string) ($variables['view_mode'] ?? 'full'),
+        ],
       ],
-    ],
-    '#create_placeholder' => TRUE,
-  ];
+      '#create_placeholder' => TRUE,
+    ];
+  }
 
   $variables['spotdeals_social_block_action'] = [
     '#lazy_builder' => [
@@ -55,7 +140,27 @@ function spotdeals_social_preprocess_user(array &$variables): void {
     ],
     '#create_placeholder' => TRUE,
   ];
+}
 
+/**
+ * Implements hook_entity_access().
+ *
+ * Prevents Drupal's user contact form from bypassing SpotDeals social privacy.
+ */
+function spotdeals_social_entity_access(EntityInterface $entity, string $operation, AccountInterface $account): AccessResult {
+  if (!$entity instanceof UserInterface || $operation !== 'contact') {
+    return AccessResult::neutral();
+  }
+
+  if (!\Drupal::hasService('spotdeals_social.privacy_manager')) {
+    return AccessResult::neutral();
+  }
+
+  $allowed = \Drupal::service('spotdeals_social.privacy_manager')->canViewProfile($entity, $account);
+
+  return $allowed
+    ? AccessResult::neutral()->addCacheableDependency($entity)->addCacheContexts(['user'])
+    : AccessResult::forbidden()->addCacheableDependency($entity)->addCacheContexts(['user']);
 }
 
 /**

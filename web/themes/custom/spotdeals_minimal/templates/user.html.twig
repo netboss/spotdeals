@@ -5,6 +5,61 @@
  */
 #}
 {% set p = spotdeals_profile %}
+{% if spotdeals_social_is_blocked and not spotdeals_social_is_owner and not p.is_owner %}
+  <article{{ attributes.addClass('sd-profile', 'sd-profile--private') }}>
+    <section class="sd-profile__private-card">
+      <div class="sd-profile__private-lock" aria-hidden="true">🔒</div>
+      <strong>{{ 'This profile is unavailable.'|t }}</strong>
+    </section>
+  </article>
+{% elseif spotdeals_social_is_private and not spotdeals_social_can_view_profile %}
+  <article{{ attributes.addClass('sd-profile', 'sd-profile--private') }}>
+    <section class="sd-profile__private-card">
+      <div class="sd-profile__private-avatar" aria-hidden="true">
+        {% if content.user_picture %}
+          {{ content.user_picture }}
+        {% else %}
+          <span>👤</span>
+        {% endif %}
+      </div>
+      <h2>{{ p.display_name }}</h2>
+      <div class="sd-profile__private-lock" aria-hidden="true">🔒</div>
+      <strong>{{ 'This account is private.'|t }}</strong>
+    </section>
+
+    <nav class="sd-profile__private-actions" aria-label="{{ 'Continue exploring SpotDeals'|t }}">
+      <a class="sd-profile__private-action sd-profile__private-action--back" href="#" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/'; } return false;">← {{ 'Go back'|t }}</a>
+      <a class="sd-profile__private-action sd-profile__private-action--primary" href="/deals">{{ 'Find deals'|t }} →</a>
+    </nav>
+
+    {% if spotdeals_social_private_popular_searches or spotdeals_social_private_trending %}
+      <section class="sd-profile__private-discovery" aria-label="{{ 'Explore SpotDeals'|t }}">
+        <div class="sd-profile__private-discovery-head">
+          <span>{{ 'Keep exploring'|t }}</span>
+          <h2>{{ 'Discover something nearby'|t }}</h2>
+        </div>
+        <div class="sd-profile__private-discovery-grid">
+          {% if spotdeals_social_private_popular_searches %}
+            <div class="sd-profile__private-discovery-card sd-profile__private-discovery-card--searches">
+              {{ spotdeals_social_private_popular_searches }}
+            </div>
+          {% endif %}
+          {% if spotdeals_social_private_trending %}
+            <div class="sd-profile__private-discovery-card sd-profile__private-discovery-card--trending">
+              {{ spotdeals_social_private_trending }}
+            </div>
+          {% endif %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if spotdeals_social_private_promoted_slot %}
+      <aside class="sd-profile__private-sponsored" aria-label="{{ 'Sponsored'|t }}">
+        {{ spotdeals_social_private_promoted_slot }}
+      </aside>
+    {% endif %}
+  </article>
+{% else %}
 <article{{ attributes.addClass('sd-profile') }}>
   <section class="sd-profile__hero">
     <div class="sd-profile__hero-inner">
@@ -18,6 +73,23 @@
       <div class="sd-profile__identity">
         <div class="sd-profile__member">{{ 'Member since'|t }} {{ p.member_since }}</div>
         <span class="sd-profile__plan">{{ p.plan_tier }} {{ 'Plan'|t }}</span>
+        {% if spotdeals_social_relationships %}
+          <div class="sd-profile__relationships" aria-label="{{ 'Social connections'|t }}">
+            <a href="{{ spotdeals_social_relationships.followers_url }}"><strong>{{ spotdeals_social_relationships.followers_count }}</strong> {{ 'Followers'|t }}</a>
+            <span aria-hidden="true">·</span>
+            <a href="{{ spotdeals_social_relationships.following_url }}"><strong>{{ spotdeals_social_relationships.following_count }}</strong> {{ 'Following'|t }}</a>
+          </div>
+        {% endif %}
+        {% if spotdeals_social_privacy_toggle %}
+          <div class="sd-profile__privacy-control">
+            {{ spotdeals_social_privacy_toggle }}
+          </div>
+        {% endif %}
+        {% if spotdeals_social_blocked_users_url %}
+          <div class="sd-profile__blocked-users-link">
+            <a href="{{ spotdeals_social_blocked_users_url }}">{{ 'Blocked users'|t }}</a>
+          </div>
+        {% endif %}
       </div>
       {% if spotdeals_social_follow_action or spotdeals_social_block_action %}
         <div class="sd-profile__social-actions" aria-label="{{ 'Social actions'|t }}">
@@ -118,3 +190,4 @@
     </section>
   {% endif %}
 </article>
+{% endif %}

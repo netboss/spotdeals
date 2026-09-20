@@ -4,9 +4,11 @@ namespace Drupal\spotdeals_social\EventSubscriber;
 
 use Drupal\flag\Event\FlagEvents;
 use Drupal\flag\Event\FlaggingEvent;
+use Drupal\flag\Event\UnflaggingEvent;
 use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\flag\FlagServiceInterface;
 use Drupal\spotdeals_social\Cache\SocialActivityCache;
+use Drupal\spotdeals_social\Service\SocialPrivacyManager;
 use Drupal\user\UserInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -21,6 +23,7 @@ final class SocialFlagSubscriber implements EventSubscriberInterface {
   public function __construct(
     private readonly FlagServiceInterface $flagService,
     private readonly CacheTagsInvalidatorInterface $cacheTagsInvalidator,
+    private readonly SocialPrivacyManager $privacyManager,
   ) {}
 
   /**
@@ -68,8 +71,12 @@ final class SocialFlagSubscriber implements EventSubscriberInterface {
     }
 
     // A follow relationship cannot exist when either user has blocked the
-    // other. Remove an attempted follow immediately if a block exists.
-    if ($this->usersAreBlocked($actor, $target)) {
+    // other. A private target also cannot be approached unless that private
+    // user deliberately opened the relationship by following the actor first.
+    if (
+      $this->usersAreBlocked($actor, $target) ||
+      !$this->privacyManager->canInitiateInteraction($actor, $target)
+    ) {
       $this->flagService->unflag($flag, $target, $actor);
     }
   }
@@ -77,28 +84,31 @@ final class SocialFlagSubscriber implements EventSubscriberInterface {
   /**
    * Invalidates social timeline composition after a social flag is removed.
    */
-  public function onEntityUnflagged(FlaggingEvent $event): void {
-    $flagging = $event->getFlagging();
-    if (!in_array($flagging->getFlag()->id(), ['follow_user', 'block_user'], TRUE)) {
-      return;
-    }
+  public function onEntityUnflagged(UnflaggingEvent $event): void {
+    foreach ($event->getFlaggings() as $flagging) {
+      if (!in_array($flagging->getFlag()->id(), ['follow_user', 'block_user'], TRUE)) {
+        continue;
+      }
 
-    $actor = $flagging->getOwner();
-    $target = $flagging->getFlaggable();
-    if (!$actor instanceof UserInterface || !$target instanceof UserInterface) {
-      return;
-    }
+      $actor = $flagging->getOwner();
+      $target = $flagging->getFlaggable();
+      if (!$actor instanceof UserInterface || !$target instanceof UserInterface) {
+        continue;
+      }
 
-    $this->invalidateRelationshipTimelines($actor, $target);
+      $this->invalidateRelationshipTimelines($actor, $target);
+    }
   }
 
   /**
-   * Invalidates timelines whose relationship graph may have changed.
+   * Invalidates profile and timeline caches when the relationship graph changes.
    */
   private function invalidateRelationshipTimelines(UserInterface $first, UserInterface $second): void {
     $this->cacheTagsInvalidator->invalidateTags([
       SocialActivityCache::timelineTag((int) $first->id()),
       SocialActivityCache::timelineTag((int) $second->id()),
+      'user:' . $first->id(),
+      'user:' . $second->id(),
     ]);
   }
 

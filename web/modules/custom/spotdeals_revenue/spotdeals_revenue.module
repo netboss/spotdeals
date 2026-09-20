@@ -39,6 +39,25 @@ function spotdeals_revenue_theme($existing, $type, $theme, $path): array {
 }
 
 /**
+ * Implements hook_page_attachments().
+ *
+ * Adds the Google AdSense account meta tag used to verify ownership of
+ * spotdeals.app. This tag does not load AdSense JavaScript or display ads.
+ */
+function spotdeals_revenue_page_attachments(array &$attachments): void {
+  $attachments['#attached']['html_head'][] = [
+    [
+      '#tag' => 'meta',
+      '#attributes' => [
+        'name' => 'google-adsense-account',
+        'content' => 'ca-pub-6222520421919108',
+      ],
+    ],
+    'spotdeals_revenue_google_adsense_account',
+  ];
+}
+
+/**
  * Implements hook_preprocess_node().
  */
 function spotdeals_revenue_preprocess_node(array &$variables): void {

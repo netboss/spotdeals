@@ -1,0 +1,38 @@
+spotdeals_social.followers:
+  path: '/user/{user}/followers'
+  defaults:
+    _controller: '\Drupal\spotdeals_social\Controller\SocialRelationshipController::followers'
+    _title: ''
+  requirements:
+    _custom_access: '\Drupal\spotdeals_social\Controller\SocialRelationshipController::access'
+    user: '\d+'
+  options:
+    parameters:
+      user:
+        type: entity:user
+
+spotdeals_social.following:
+  path: '/user/{user}/following'
+  defaults:
+    _controller: '\Drupal\spotdeals_social\Controller\SocialRelationshipController::following'
+    _title: ''
+  requirements:
+    _custom_access: '\Drupal\spotdeals_social\Controller\SocialRelationshipController::access'
+    user: '\d+'
+  options:
+    parameters:
+      user:
+        type: entity:user
+
+spotdeals_social.blocked:
+  path: '/user/{user}/blocked'
+  defaults:
+    _controller: '\Drupal\spotdeals_social\Controller\SocialRelationshipController::blocked'
+    _title: ''
+  requirements:
+    _custom_access: '\Drupal\spotdeals_social\Controller\SocialRelationshipController::blockedAccess'
+    user: '\d+'
+  options:
+    parameters:
+      user:
+        type: entity:user
