@@ -14,6 +14,12 @@ spotdeals_revenue.settings:
     promoted_slot_markup:
       type: text
       label: 'Promoted slot markup'
+    adsense_client:
+      type: string
+      label: 'Google AdSense publisher ID'
+    adsense_slot:
+      type: string
+      label: 'Google AdSense ad slot ID'
     free_deals_per_venue:
       type: integer
       label: 'Free suggested deals per venue'

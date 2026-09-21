@@ -1,12 +1,21 @@
 {#
 /**
  * @file
- * Search-only promoted slot foundation.
+ * Controlled promoted slot for SpotDeals revenue providers.
  */
 #}
 <div class="spotdeals-promoted-slot" role="complementary" aria-label="{{ label }}">
   <div class="spotdeals-promoted-slot__label">{{ label }}</div>
   <div class="spotdeals-promoted-slot__content">
-    {{ markup|raw }}
+    {% if adsense_client and adsense_slot %}
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="{{ adsense_client }}"
+           data-ad-slot="{{ adsense_slot }}"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    {% else %}
+      {{ markup|raw }}
+    {% endif %}
   </div>
 </div>

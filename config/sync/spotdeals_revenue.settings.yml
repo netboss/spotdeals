@@ -1,5 +1,8 @@
-promoted_slot_enabled: false
+promoted_slot_enabled: true
+profile_promoted_slot_enabled: true
 promoted_slot_label: Sponsored
 promoted_slot_markup: ''
+adsense_client: ca-pub-6222520421919108
+adsense_slot: '8151785277'
 free_deals_per_venue: 1
 owner_notifications_enabled: true

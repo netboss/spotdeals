@@ -51,6 +51,22 @@ class SpotdealsRevenueSettingsForm extends ConfigFormBase {
       '#maxlength' => 64,
     ];
 
+    $form['adsense_client'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Google AdSense publisher ID'),
+      '#description' => $this->t('AdSense publisher ID used by controlled SpotDeals promoted slots.'),
+      '#default_value' => $config->get('adsense_client') ?: 'ca-pub-6222520421919108',
+      '#maxlength' => 64,
+    ];
+
+    $form['adsense_slot'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Google AdSense ad slot ID'),
+      '#description' => $this->t('Responsive display ad unit ID used by the enabled promoted slots.'),
+      '#default_value' => $config->get('adsense_slot') ?: '',
+      '#maxlength' => 32,
+    ];
+
     $form['promoted_slot_markup'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Promoted slot markup'),
@@ -98,6 +114,8 @@ class SpotdealsRevenueSettingsForm extends ConfigFormBase {
       ->set('promoted_slot_enabled', (bool) $form_state->getValue('promoted_slot_enabled'))
       ->set('profile_promoted_slot_enabled', (bool) $form_state->getValue('profile_promoted_slot_enabled'))
       ->set('promoted_slot_label', trim((string) $form_state->getValue('promoted_slot_label')) ?: 'Sponsored')
+      ->set('adsense_client', trim((string) $form_state->getValue('adsense_client')))
+      ->set('adsense_slot', trim((string) $form_state->getValue('adsense_slot')))
       ->set('promoted_slot_markup', trim((string) $form_state->getValue('promoted_slot_markup')))
       ->set('free_deals_per_venue', max(0, (int) $form_state->getValue('free_deals_per_venue')))
       ->set('owner_notifications_enabled', (bool) $form_state->getValue('owner_notifications_enabled'))
