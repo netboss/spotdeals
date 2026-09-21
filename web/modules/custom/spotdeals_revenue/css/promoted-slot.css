@@ -19,3 +19,12 @@
 .spotdeals-promoted-slot__content > *:last-child {
   margin-bottom: 0;
 }
+
+/* Keep AdSense placements out of the layout until Google confirms an ad filled. */
+.spotdeals-promoted-slot:has(ins.adsbygoogle) {
+  display: none;
+}
+
+.spotdeals-promoted-slot--filled:has(ins.adsbygoogle) {
+  display: block;
+}
