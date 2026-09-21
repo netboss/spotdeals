@@ -137,6 +137,43 @@
 
                 {{ page.content_above }}
                 {{ page.content }}
+
+                {% if spotdeals_not_found_popular_searches or spotdeals_not_found_trending or spotdeals_not_found_promoted_slot %}
+                  <section class="sd-profile--private" aria-label="{{ 'Continue exploring SpotDeals'|t }}">
+                    <nav class="sd-profile__private-actions" aria-label="{{ 'Page not found actions'|t }}">
+                      <a class="sd-profile__private-action sd-profile__private-action--back" href="#" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/'; } return false;">← {{ 'Go back'|t }}</a>
+                      <a class="sd-profile__private-action sd-profile__private-action--primary" href="/deals">{{ 'Find deals'|t }} →</a>
+                    </nav>
+
+                    {% if spotdeals_not_found_popular_searches or spotdeals_not_found_trending %}
+                      <section class="sd-profile__private-discovery" aria-label="{{ 'Explore SpotDeals'|t }}">
+                        <div class="sd-profile__private-discovery-head">
+                          <span>{{ 'Keep exploring'|t }}</span>
+                          <h2>{{ 'Discover something nearby'|t }}</h2>
+                        </div>
+                        <div class="sd-profile__private-discovery-grid">
+                          {% if spotdeals_not_found_popular_searches %}
+                            <div class="sd-profile__private-discovery-card sd-profile__private-discovery-card--searches">
+                              {{ spotdeals_not_found_popular_searches }}
+                            </div>
+                          {% endif %}
+                          {% if spotdeals_not_found_trending %}
+                            <div class="sd-profile__private-discovery-card sd-profile__private-discovery-card--trending">
+                              {{ spotdeals_not_found_trending }}
+                            </div>
+                          {% endif %}
+                        </div>
+                      </section>
+                    {% endif %}
+
+                    {% if spotdeals_not_found_promoted_slot %}
+                      <div class="sd-profile__private-sponsored">
+                        {{ spotdeals_not_found_promoted_slot }}
+                      </div>
+                    {% endif %}
+                  </section>
+                {% endif %}
+
                 {{ page.content_below }}
               </main>
 
