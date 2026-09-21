@@ -1,0 +1,24 @@
+uuid: d050d548-0897-4f37-99de-c144696195aa
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_social_private
+  module:
+    - user
+id: user.user.field_social_private
+field_name: field_social_private
+entity_type: user
+bundle: user
+label: 'Private account'
+description: 'Controls SpotDeals social profile visibility and interaction.'
+required: false
+translatable: true
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

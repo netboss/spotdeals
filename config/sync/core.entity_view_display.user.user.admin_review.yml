@@ -51,6 +51,7 @@ dependencies:
     - field.field.user.user.field_reviewed_at
     - field.field.user.user.field_reviewed_by
     - field.field.user.user.field_risk_flags
+    - field.field.user.user.field_social_private
     - field.field.user.user.field_stripe_customer_id
     - field.field.user.user.field_stripe_subscription_id
     - field.field.user.user.field_submitted_at
@@ -203,6 +204,16 @@ content:
     third_party_settings: {  }
     weight: 11
     region: content
+  flag_block_user:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 10
+    region: content
+  flag_follow_user:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 10
+    region: content
 hidden:
   field_authorized_representative: true
   field_business_email: true
@@ -238,6 +249,7 @@ hidden:
   field_plan_tier: true
   field_primary_owner_user: true
   field_profile_photo: true
+  field_social_private: true
   field_stripe_customer_id: true
   field_stripe_subscription_id: true
   field_submitted_at: true

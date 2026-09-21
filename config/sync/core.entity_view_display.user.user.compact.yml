@@ -51,6 +51,7 @@ dependencies:
     - field.field.user.user.field_reviewed_at
     - field.field.user.user.field_reviewed_by
     - field.field.user.user.field_risk_flags
+    - field.field.user.user.field_social_private
     - field.field.user.user.field_stripe_customer_id
     - field.field.user.user.field_stripe_subscription_id
     - field.field.user.user.field_submitted_at
@@ -73,6 +74,16 @@ targetEntityType: user
 bundle: user
 mode: compact
 content:
+  flag_block_user:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 10
+    region: content
+  flag_follow_user:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 10
+    region: content
   user_picture:
     type: image
     label: hidden
@@ -132,6 +143,7 @@ hidden:
   field_reviewed_at: true
   field_reviewed_by: true
   field_risk_flags: true
+  field_social_private: true
   field_stripe_customer_id: true
   field_stripe_subscription_id: true
   field_submitted_at: true

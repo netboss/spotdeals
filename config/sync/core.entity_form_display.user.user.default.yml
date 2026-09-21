@@ -50,6 +50,7 @@ dependencies:
     - field.field.user.user.field_reviewed_at
     - field.field.user.user.field_reviewed_by
     - field.field.user.user.field_risk_flags
+    - field.field.user.user.field_social_private
     - field.field.user.user.field_stripe_customer_id
     - field.field.user.user.field_stripe_subscription_id
     - field.field.user.user.field_submitted_at
@@ -77,6 +78,11 @@ mode: default
 content:
   account:
     weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  contact:
+    weight: 5
     region: content
     settings: {  }
     third_party_settings: {  }
@@ -202,6 +208,7 @@ hidden:
   field_reviewed_at: true
   field_reviewed_by: true
   field_risk_flags: true
+  field_social_private: true
   field_submitted_at: true
   field_supporting_documents: true
   field_supporting_images: true
