@@ -51,6 +51,7 @@ dependencies:
     - field.field.user.user.field_reviewed_at
     - field.field.user.user.field_reviewed_by
     - field.field.user.user.field_risk_flags
+    - field.field.user.user.field_social_private
     - field.field.user.user.field_stripe_customer_id
     - field.field.user.user.field_stripe_subscription_id
     - field.field.user.user.field_submitted_at
@@ -81,6 +82,11 @@ content:
   account:
     weight: -10
     region: content
+  contact:
+    weight: 5
+    region: content
+    settings: {  }
+    third_party_settings: {  }
   field_authorized_representative:
     type: boolean_checkbox
     weight: 58
@@ -492,6 +498,7 @@ hidden:
   field_plan_renew_at: true
   field_plan_status: true
   field_plan_tier: true
+  field_social_private: true
   field_stripe_customer_id: true
   field_stripe_subscription_id: true
   langcode: true
