@@ -5984,3 +5984,55 @@ h1.page-title {
 .sd-profile__blocked-users-link a:focus {
   color: #fff;
 }
+
+
+/* Immediate feedback while a Deals Finder request is resolving or navigating. */
+.spotdeals-search-loading-host {
+  position: relative;
+}
+
+.spotdeals-search-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.spotdeals-search-loading__panel {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  padding: .9rem 1.15rem;
+  border: 1px solid rgba(38, 53, 46, 0.14);
+  border-radius: .8rem;
+  background: #fff;
+  box-shadow: 0 .5rem 1.5rem rgba(38, 53, 46, 0.14);
+  color: #26352e;
+  font-weight: 700;
+}
+
+.spotdeals-search-loading__spinner {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: 0 0 auto;
+  border: 3px solid rgba(102, 143, 18, 0.22);
+  border-top-color: #668f12;
+  border-radius: 50%;
+  animation: spotdeals-search-loading-spin .7s linear infinite;
+}
+
+@keyframes spotdeals-search-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spotdeals-search-loading__spinner {
+    animation-duration: 1.5s;
+  }
+}

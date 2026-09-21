@@ -1613,9 +1613,87 @@
     syncMobileStickySearchFormState();
   }
 
+  function showSpotDealsSearchLoading() {
+    if (document.querySelector('.spotdeals-search-loading')) {
+      return;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'spotdeals-search-loading';
+    overlay.setAttribute('role', 'status');
+    overlay.setAttribute('aria-live', 'polite');
+    overlay.innerHTML = '<div class="spotdeals-search-loading__panel">' +
+      '<span class="spotdeals-search-loading__spinner" aria-hidden="true"></span>' +
+      '<span class="spotdeals-search-loading__text">' +
+      (getCurrentLanguageId() === 'es' ? 'Buscando ofertas cerca de ti…' : 'Finding deals near you…') +
+      '</span></div>';
+
+    const host = document.querySelector('.spotdeals-finder__results') ||
+      document.querySelector('.view-deals-search-solr') ||
+      document.querySelector('.spotdeals-finder');
+
+    if (!host) {
+      return;
+    }
+
+    host.classList.add('spotdeals-search-loading-host');
+    host.appendChild(overlay);
+
+    // Bring the same Deals Finder results area into view immediately while the
+    // request is resolving, rather than waiting for the results page to load.
+    scrollToSpotDealsFinderTarget(host);
+  }
+
+  function attachSearchLoadingIndicator(context) {
+    once('spotdeals-search-loading-indicator', 'body', context).forEach(function () {
+      document.addEventListener('submit', function (event) {
+        const form = event.target;
+
+        if (!(form instanceof HTMLFormElement)) {
+          return;
+        }
+
+        if (form.matches('.spotdeals-finder__filters form, form.views-exposed-form, form.spotdeals-seo-filter-form')) {
+          const submitter = event.submitter || document.activeElement;
+          const label = submitter ? ((submitter.getAttribute('value') || submitter.textContent || '').trim()) : '';
+          const isReset = /reset|restablecer/i.test(label) || (submitter && /reset/i.test(submitter.getAttribute('name') || ''));
+
+          if (!isReset) {
+            showSpotDealsSearchLoading();
+          }
+        }
+      }, true);
+
+      document.addEventListener('click', function (event) {
+        const target = event.target;
+
+        if (!(target instanceof Element)) {
+          return;
+        }
+
+        const searchTrigger = target.closest('.spotdeals-home-feed [data-search], .spotdeals-help-me-choose-trigger, .spotdeals-popular-search-link');
+        if (searchTrigger) {
+          showSpotDealsSearchLoading();
+        }
+      }, true);
+
+      window.addEventListener('pageshow', function () {
+        const overlay = document.querySelector('.spotdeals-search-loading');
+        if (overlay) {
+          const host = overlay.parentElement;
+          overlay.remove();
+          if (host) {
+            host.classList.remove('spotdeals-search-loading-host');
+          }
+        }
+      });
+    });
+  }
+
   Drupal.behaviors.spotdealsThemeFixes = {
     attach: function (context) {
       normalizeSpotDealsFinderResultsMarkup(context);
+      attachSearchLoadingIndicator(context);
 
       moveMobileDiscoveryBlocks();
       moveSeoLandingMobileAccordions();
