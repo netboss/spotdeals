@@ -48,15 +48,34 @@ class PromotedSlotBuilder {
       return [];
     }
 
+    $adsense_client = trim((string) $config->get('adsense_client'));
+    $adsense_slot = trim((string) $config->get('adsense_slot'));
     $markup = trim((string) $config->get('promoted_slot_markup'));
-    if ($markup === '') {
-      return [];
+
+    if ($adsense_client === '' || $adsense_slot === '') {
+      if ($markup === '') {
+        return [];
+      }
+
+      return [
+        '#theme' => 'spotdeals_promoted_slot',
+        '#label' => trim((string) $config->get('promoted_slot_label')) ?: 'Sponsored',
+        '#markup' => Xss::filterAdmin($markup),
+        '#cache' => [
+          'tags' => ['config:spotdeals_revenue.settings'],
+        ],
+      ];
     }
 
     return [
       '#theme' => 'spotdeals_promoted_slot',
       '#label' => trim((string) $config->get('promoted_slot_label')) ?: 'Sponsored',
-      '#markup' => Xss::filterAdmin($markup),
+      '#markup' => '',
+      '#adsense_client' => $adsense_client,
+      '#adsense_slot' => $adsense_slot,
+      '#attached' => [
+        'library' => ['spotdeals_revenue/adsense'],
+      ],
       '#cache' => [
         'tags' => ['config:spotdeals_revenue.settings'],
       ],

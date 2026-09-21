@@ -25,6 +25,8 @@ function spotdeals_revenue_theme($existing, $type, $theme, $path): array {
       'variables' => [
         'label' => '',
         'markup' => '',
+        'adsense_client' => '',
+        'adsense_slot' => '',
       ],
     ],
     'spotdeals_suggest_cta' => [
