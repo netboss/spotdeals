@@ -88,6 +88,31 @@ function spotdeals_minimal_preprocess_page(array &$variables): void {
     $variables['#attached']['library'][] = 'spotdeals_minimal/seo_landing';
   }
 
+  if ($route_name === 'system.404') {
+    $block_manager = \Drupal::service('plugin.manager.block');
+
+    if ($block_manager->getDefinition('spotdeals_search_insights_most_searched', FALSE)) {
+      $variables['spotdeals_not_found_popular_searches'] = $block_manager
+        ->createInstance('spotdeals_search_insights_most_searched', [])
+        ->build();
+    }
+
+    if ($block_manager->getDefinition('spotdeals_search_smart_location_trending_near_you', FALSE)) {
+      $variables['spotdeals_not_found_trending'] = $block_manager
+        ->createInstance('spotdeals_search_smart_location_trending_near_you', [])
+        ->build();
+    }
+
+    if (\Drupal::hasService('spotdeals_revenue.promoted_slot_builder')) {
+      $variables['spotdeals_not_found_promoted_slot'] = \Drupal::service('spotdeals_revenue.promoted_slot_builder')
+        ->buildProfileSlot();
+
+      if (!empty($variables['spotdeals_not_found_promoted_slot'])) {
+        $variables['#attached']['library'][] = 'spotdeals_revenue/promoted_slot';
+      }
+    }
+  }
+
   if (\Drupal::service('path.matcher')->isFrontPage()) {
     $popular = \Drupal::service('spotdeals_search_insights.logger')
       ->getPopularSearches(6, 7);
