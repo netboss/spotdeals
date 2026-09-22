@@ -20,11 +20,21 @@
   margin-bottom: 0;
 }
 
-/* Keep AdSense placements out of the layout until Google confirms an ad filled. */
+/* Keep AdSense placements measurable while hidden until Google confirms an ad filled. */
 .spotdeals-promoted-slot:has(ins.adsbygoogle) {
-  display: none;
+  visibility: hidden;
+  height: 0;
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0;
 }
 
 .spotdeals-promoted-slot--filled:has(ins.adsbygoogle) {
-  display: block;
+  visibility: visible;
+  height: auto;
+  overflow: visible;
 }
