@@ -52,6 +52,10 @@
       return 'upgrade';
     }
 
+    if (/^\/(?:[a-z]{2}\/)?user\/\d+(?:\/|$)/i.test(window.location.pathname)) {
+      return 'profile';
+    }
+
     return 'other';
   }
 
@@ -394,6 +398,68 @@
       target_url: href
     };
 
+    if (control.closest('.flag-follow-user')) {
+      const isUnfollow = Boolean(control.closest('.flag.action-unflag'));
+      sendEvent(isUnfollow ? 'social_unfollow' : 'social_follow', baseData);
+      return;
+    }
+
+    if (control.closest('.flag-block-user')) {
+      const isUnblock = Boolean(control.closest('.flag.action-unflag'));
+      sendEvent(isUnblock ? 'social_unblock' : 'social_block', baseData);
+      return;
+    }
+
+    if (control.closest('.sd-social-relationships__view') && control.closest('.flag-block-user')) {
+      const isUnblock = Boolean(control.closest('.flag.action-unflag'));
+      sendEvent(isUnblock ? 'social_unblock' : 'social_block', baseData);
+      return;
+    }
+
+    if (control.closest('.sd-profile__relationships')) {
+      let relationshipType = '';
+
+      try {
+        const relationshipPath = new URL(href, window.location.origin).pathname;
+        if (/\/followers\/?$/i.test(relationshipPath)) {
+          relationshipType = 'followers';
+        }
+        else if (/\/following\/?$/i.test(relationshipPath)) {
+          relationshipType = 'following';
+        }
+      }
+      catch (e) {
+        relationshipType = '';
+      }
+
+      if (relationshipType) {
+        sendEvent('social_relationships_click', Object.assign({}, baseData, {
+          relationship_type: relationshipType
+        }));
+        return;
+      }
+    }
+
+    if (control.closest('.sd-profile__blocked-users-link')) {
+      sendEvent('social_blocked_users_click', baseData);
+      return;
+    }
+
+    if (control.matches('.sd-social-relationships__name, .sd-social-relationships__view') && !control.closest('.flag')) {
+      let relationshipType = '';
+      if (/\/followers\/?$/i.test(window.location.pathname)) {
+        relationshipType = 'followers';
+      }
+      else if (/\/following\/?$/i.test(window.location.pathname)) {
+        relationshipType = 'following';
+      }
+
+      sendEvent('social_profile_click', Object.assign({}, baseData, {
+        relationship_type: relationshipType
+      }));
+      return;
+    }
+
     if (control.matches('.deal-title a, .spotdeals-deal-card__deal-title a')) {
       sendEvent('deal_click', baseData);
       return;
@@ -547,7 +613,15 @@
       }
 
       once('spotdeals-analytics-global-clicks', 'html', context).forEach(() => {
-        document.addEventListener('click', trackClick);
+        document.addEventListener('click', trackClick, true);
+      });
+
+      once('spotdeals-analytics-social-privacy', '.sd-profile__privacy-checkbox', context).forEach((checkbox) => {
+        checkbox.addEventListener('change', () => {
+          sendEvent('social_privacy_change', {
+            privacy_state: checkbox.checked ? 'private' : 'public'
+          });
+        });
       });
 
       once('spotdeals-analytics-search', 'html', context).forEach(() => {
