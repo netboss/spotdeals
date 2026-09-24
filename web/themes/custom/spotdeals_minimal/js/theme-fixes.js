@@ -1657,8 +1657,11 @@
           const submitter = event.submitter || document.activeElement;
           const label = submitter ? ((submitter.getAttribute('value') || submitter.textContent || '').trim()) : '';
           const isReset = /reset|restablecer/i.test(label) || (submitter && /reset/i.test(submitter.getAttribute('name') || ''));
+          const isRecommendationRetry = /try again|intentar de nuevo|inténtalo de nuevo/i.test(label);
 
-          if (!isReset) {
+          // Recommendation retries provide their own "Finding another nearby pick"
+          // indicator. Do not stack the generic search loader on top of it.
+          if (!isReset && !isRecommendationRetry) {
             showSpotDealsSearchLoading();
           }
         }
