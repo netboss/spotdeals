@@ -6006,21 +6006,22 @@ h1.page-title {
   display: flex;
   align-items: center;
   gap: .8rem;
-  padding: .9rem 1.15rem;
-  border: 1px solid rgba(38, 53, 46, 0.14);
-  border-radius: .8rem;
-  background: #fff;
-  box-shadow: 0 .5rem 1.5rem rgba(38, 53, 46, 0.14);
-  color: #26352e;
+  width: min(720px, 100%);
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 0;
+  background: #05080d;
+  box-shadow: 0 12px 30px rgba(5, 8, 13, 0.22);
+  color: #fff;
   font-weight: 700;
 }
 
 .spotdeals-search-loading__spinner {
-  width: 1.35rem;
-  height: 1.35rem;
-  flex: 0 0 auto;
-  border: 3px solid rgba(102, 143, 18, 0.22);
-  border-top-color: #668f12;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  border: 3px solid rgba(105, 190, 40, 0.35);
+  border-top-color: #69be28;
   border-radius: 50%;
   animation: spotdeals-search-loading-spin .7s linear infinite;
 }

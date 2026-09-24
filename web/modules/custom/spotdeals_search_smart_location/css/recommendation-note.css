@@ -72,6 +72,23 @@
   box-shadow: 0 12px 30px rgba(5, 8, 13, 0.22);
 }
 
+.spotdeals-recommendation-note--loading .spotdeals-recommendation-note__icon {
+  background: transparent;
+  border: 3px solid rgba(105, 190, 40, 0.35);
+  border-top-color: #69be28;
+  animation: spotdeals-recommendation-loading-spin .7s linear infinite;
+}
+
+.spotdeals-recommendation-note--loading .spotdeals-recommendation-note__icon::before {
+  content: none;
+}
+
+@keyframes spotdeals-recommendation-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .spotdeals-recommendation-retry-loading-active .spotdeals-recommendation-bottom-actions__button {
   opacity: 0.7;
   pointer-events: none;
