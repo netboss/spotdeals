@@ -45,6 +45,7 @@ final class DealDiscoveryAutoPublisher {
    *   readiness_still_blocked: int,
    *   historical_scanned: int,
    *   historical_classifier_eligible: int,
+   *   historical_classifier_rejected: int,
    *   historical_restored: int,
    *   historical_duplicates: int,
    *   historical_blocked: int,
@@ -67,6 +68,7 @@ final class DealDiscoveryAutoPublisher {
       'readiness_still_blocked' => 0,
       'historical_scanned' => 0,
       'historical_classifier_eligible' => 0,
+      'historical_classifier_rejected' => 0,
       'historical_restored' => 0,
       'historical_duplicates' => 0,
       'historical_blocked' => 0,
@@ -370,7 +372,22 @@ final class DealDiscoveryAutoPublisher {
         continue;
       }
 
-      if ((string) ($classification['status'] ?? '') !== 'auto_approved') {
+      $classificationStatus = (string) ($classification['status'] ?? '');
+      if ($classificationStatus === 'rejected') {
+        $reasons = is_array($classification['reasons'] ?? NULL)
+          ? $classification['reasons']
+          : [];
+        if ($this->storage->markRejectedByClassifier($candidateId, $reasons)) {
+          $result['historical_classifier_rejected']++;
+          $this->logger->notice(
+            'Historical pending deal-discovery candidate {candidate_id} was automatically rejected by the current classifier.',
+            ['candidate_id' => $candidateId],
+          );
+        }
+        continue;
+      }
+
+      if ($classificationStatus !== 'auto_approved') {
         continue;
       }
 

@@ -213,13 +213,14 @@ function spotdeals_data_ingestion_cron(): void {
       || (int) ($result['historical_scanned'] ?? 0) > 0
     ) {
       \Drupal::logger('spotdeals_data_ingestion')->notice(
-        'Deal-discovery cron rechecked {rechecked} stale readiness candidate(s): {restored} restored, {still_blocked} still blocked; historical pending scan inspected {historical_scanned}: {historical_eligible} classifier-eligible, {historical_restored} restored, {historical_duplicates} duplicate(s) rejected, {historical_blocked} publishing-blocked, {historical_location} location-safety skip(s), {historical_reviewed} reviewed skip(s), {historical_errors} error(s); publishing processed {processed}: {published} published, {already} already published, {duplicates} total duplicate(s) rejected, {review} routed to review, {failed} left queued for retry.',
+        'Deal-discovery cron rechecked {rechecked} stale readiness candidate(s): {restored} restored, {still_blocked} still blocked; historical pending scan inspected {historical_scanned}: {historical_eligible} classifier-eligible, {historical_rejected} classifier-rejected, {historical_restored} restored, {historical_duplicates} duplicate(s) rejected, {historical_blocked} publishing-blocked, {historical_location} location-safety skip(s), {historical_reviewed} reviewed skip(s), {historical_errors} error(s); publishing processed {processed}: {published} published, {already} already published, {duplicates} total duplicate(s) rejected, {review} routed to review, {failed} left queued for retry.',
         [
           'rechecked' => (int) ($result['readiness_rechecked'] ?? 0),
           'restored' => (int) ($result['readiness_restored'] ?? 0),
           'still_blocked' => (int) ($result['readiness_still_blocked'] ?? 0),
           'historical_scanned' => (int) ($result['historical_scanned'] ?? 0),
           'historical_eligible' => (int) ($result['historical_classifier_eligible'] ?? 0),
+          'historical_rejected' => (int) ($result['historical_classifier_rejected'] ?? 0),
           'historical_restored' => (int) ($result['historical_restored'] ?? 0),
           'historical_duplicates' => (int) ($result['historical_duplicates'] ?? 0),
           'historical_blocked' => (int) ($result['historical_blocked'] ?? 0),
