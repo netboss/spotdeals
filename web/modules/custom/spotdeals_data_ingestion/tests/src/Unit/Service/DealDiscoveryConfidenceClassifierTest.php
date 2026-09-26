@@ -268,9 +268,10 @@ final class DealDiscoveryConfidenceClassifierTest extends TestCase {
       'reason' => 'promotion=free; value=FREE admission; binding=article',
     ], 1);
 
-    self::assertSame('pending', $result['status']);
+    self::assertSame('rejected', $result['status']);
+    self::assertSame('low', $result['confidence']);
     self::assertContains(
-      'validity review: explicit validity ended on 2026-06-30',
+      'candidate is expired: explicit validity ended on 2026-06-30',
       $result['reasons'],
     );
   }
@@ -557,7 +558,7 @@ final class DealDiscoveryConfidenceClassifierTest extends TestCase {
   /**
    * @covers ::classify
    */
-  public function testNonDiscountComparisonValueRemainsPending(): void {
+  public function testIdenticalComparisonPricesAreRejected(): void {
     $result = $this->classifier->classify([
       'title' => 'Starburst Acrylic',
       'value' => '$250.00 vs $250.00',
@@ -565,6 +566,27 @@ final class DealDiscoveryConfidenceClassifierTest extends TestCase {
       'source_url' => 'https://example.com/product',
       'score' => 6,
       'reason' => 'promotion=sale; value=$250.00 vs $250.00; binding=heading',
+    ], 1);
+
+    self::assertSame('rejected', $result['status']);
+    self::assertSame('low', $result['confidence']);
+    self::assertContains(
+      'candidate is not a deal: current and regular comparison prices are identical',
+      $result['reasons'],
+    );
+  }
+
+  /**
+   * @covers ::classify
+   */
+  public function testUnequalComparisonPricesRemainPendingForReview(): void {
+    $result = $this->classifier->classify([
+      'title' => 'Meet You at Home',
+      'value' => '$39 vs $28.99',
+      'schedule' => '',
+      'source_url' => 'https://example.com/product-sale',
+      'score' => 6,
+      'reason' => 'promotion=sale; value=$39 vs $28.99; binding=section',
     ], 1);
 
     self::assertSame('pending', $result['status']);

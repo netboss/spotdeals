@@ -605,8 +605,28 @@ final class DealDiscoveryService {
     $snippet = mb_substr($text, 0, 420);
     $titleSource = $block['title'] !== '' ? $block['title'] : $text;
 
+    // A heading that contains its own explicit deal value is the strongest
+    // available binding signal. Do not pair that heading with different values
+    // found in following sibling content. This prevents one promotion heading
+    // (for example, "40% OFF") from spawning unrelated "10% OFF" and
+    // "20% OFF" candidates from nearby page content.
+    $titleValues = $block['source'] === 'heading'
+      ? $this->extractValues($this->cleanText($block['title']))
+      : [];
+    $normalizedTitleValues = array_map(
+      fn (string $titleValue): string => $this->normalizeCandidateValue($titleValue),
+      $titleValues,
+    );
+
     $candidates = [];
     foreach ($matchedValues as $matchedValue) {
+      if (
+        $normalizedTitleValues !== []
+        && !in_array($this->normalizeCandidateValue($matchedValue), $normalizedTitleValues, TRUE)
+      ) {
+        continue;
+      }
+
       if ($this->looksLikePermanentBenefit($text, $matchedValue)) {
         continue;
       }
