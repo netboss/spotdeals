@@ -1021,6 +1021,144 @@ final class DealDiscoveryAuditCommands extends DrushCommands {
 
 
   /**
+   * Reclassifies classifier-confirmed terminal candidates out of the pending queue.
+   *
+   * Dry-run is the default. Only unreviewed pending candidates that the current
+   * classifier explicitly returns as rejected are eligible for writes.
+   */
+  #[CLI\Command(
+    name: 'spotdeals:deal-discovery-reject-non-deals',
+    aliases: ['sd:deal-discovery-reject-non-deals'],
+  )]
+  #[CLI\Option(
+    name: 'apply',
+    description: 'Persist classifier-rejected candidates as rejected. Without this option the command is read-only.',
+  )]
+  #[CLI\Usage(
+    name: 'drush spotdeals:deal-discovery-reject-non-deals',
+    description: 'Preview pending candidates that the current classifier identifies as terminal and safe to reject.',
+  )]
+  #[CLI\Usage(
+    name: 'drush spotdeals:deal-discovery-reject-non-deals --apply',
+    description: 'Move classifier-confirmed terminal candidates from pending to rejected.',
+  )]
+  public function rejectNonDeals(
+    array $options = ['apply' => FALSE],
+  ): int {
+    $apply = (bool) ($options['apply'] ?? FALSE);
+    $candidates = $this->storage->list('pending', 1000);
+    $config = $this->configFactory->get('spotdeals_data_ingestion.settings');
+    $configuredLocationConfidence = $config->get(
+      'deal_discovery_auto_approve_location_confidence',
+    );
+
+    $this->io()->title('SpotDeals Deal Discovery — Non-Deal Reclassification');
+    $this->io()->definitionList(
+      ['Pending candidates loaded' => (string) count($candidates)],
+      ['Mode' => $apply ? 'APPLY' : 'DRY RUN'],
+    );
+
+    if ($configuredLocationConfidence === NULL) {
+      $this->io()->error(
+        'Automatic-approval minimum location confidence is not configured. No candidates were evaluated.',
+      );
+      return 1;
+    }
+
+    $minimumLocationConfidence = (int) $configuredLocationConfidence;
+    $rows = [];
+    $eligible = 0;
+    $updated = 0;
+    $errors = 0;
+
+    foreach ($candidates as $candidate) {
+      if (
+        (int) ($candidate['reviewed_by'] ?? 0) > 0
+        || (int) ($candidate['reviewed_at'] ?? 0) > 0
+      ) {
+        continue;
+      }
+
+      $classifierCandidate = [
+        'title' => (string) ($candidate['offer_title'] ?? ''),
+        'value' => (string) ($candidate['offer_value'] ?? ''),
+        'schedule' => (string) ($candidate['schedule'] ?? ''),
+        'source_url' => (string) ($candidate['source_url'] ?? ''),
+        'reason' => (string) ($candidate['reason'] ?? ''),
+        'score' => (int) ($candidate['score'] ?? 0),
+      ];
+
+      try {
+        $classification = $this->confidenceClassifier->classify(
+          $classifierCandidate,
+          $minimumLocationConfidence,
+        );
+      }
+      catch (\Throwable $exception) {
+        $errors++;
+        $rows[] = [
+          (string) ($candidate['id'] ?? 0),
+          (string) ($candidate['venue_name'] ?? ''),
+          (string) ($candidate['offer_title'] ?? ''),
+          (string) ($candidate['offer_value'] ?? ''),
+          'ERROR: ' . $exception->getMessage(),
+          'No',
+        ];
+        continue;
+      }
+
+      if (($classification['status'] ?? '') !== 'rejected') {
+        continue;
+      }
+
+      $eligible++;
+      $reasons = array_map('strval', (array) ($classification['reasons'] ?? []));
+      $didUpdate = FALSE;
+      if ($apply) {
+        $didUpdate = $this->storage->markRejectedByClassifier(
+          (int) ($candidate['id'] ?? 0),
+          $reasons,
+        );
+        if ($didUpdate) {
+          $updated++;
+        }
+      }
+
+      $rows[] = [
+        (string) ($candidate['id'] ?? 0),
+        (string) ($candidate['venue_name'] ?? ''),
+        (string) ($candidate['offer_title'] ?? ''),
+        (string) ($candidate['offer_value'] ?? ''),
+        implode('; ', $reasons),
+        $apply ? ($didUpdate ? 'Yes' : 'No') : 'Dry run',
+      ];
+    }
+
+    $this->io()->table(
+      ['ID', 'Venue', 'Offer', 'Value', 'Classifier reason', 'Updated'],
+      $rows,
+    );
+    $this->io()->definitionList(
+      ['Classifier-rejected candidates' => (string) $eligible],
+      ['Records updated' => (string) $updated],
+      ['Errors' => (string) $errors],
+    );
+
+    if ($errors > 0) {
+      $this->io()->warning('Non-deal reclassification completed with runtime errors.');
+      return 1;
+    }
+
+    $this->io()->success(
+      $apply
+        ? 'Non-deal reclassification completed.'
+        : 'Dry run completed. No data was written.',
+    );
+    return 0;
+  }
+
+
+  /**
    * Diagnoses low-score pending candidates that also lack a schedule.
    *
    * This command is strictly read-only. Candidate selection uses the current

@@ -180,6 +180,59 @@ final class DealDiscoveryStorage {
   }
 
   /**
+   * Automatically rejects an unreviewed candidate classified as a non-deal.
+   *
+   * This is intentionally separate from review() so system routing does not
+   * masquerade as an administrative decision. Rejected records remain durable
+   * under createOrRefresh(), preventing the same false positive from returning
+   * to the pending queue on rediscovery.
+   *
+   * @param string[] $reasons
+   *   Classifier reasons explaining why the candidate is not actionable.
+   */
+  public function markRejectedByClassifier(int $id, array $reasons): bool {
+    $candidate = $this->load($id);
+    if ($candidate === NULL || (string) ($candidate['status'] ?? '') !== 'pending') {
+      return FALSE;
+    }
+
+    if (
+      (int) ($candidate['reviewed_by'] ?? 0) > 0
+      || (int) ($candidate['reviewed_at'] ?? 0) > 0
+    ) {
+      return FALSE;
+    }
+
+    $reasonParts = [];
+    foreach ($reasons as $reason) {
+      $reason = trim((string) $reason);
+      if ($reason !== '') {
+        $reasonParts[] = $reason;
+      }
+    }
+
+    if ($reasonParts === []) {
+      return FALSE;
+    }
+
+    $updated = $this->database
+      ->update('spotdeals_deal_discovery_candidate')
+      ->fields([
+        'status' => 'rejected',
+        'confidence' => 'low',
+        'classification_reason' => implode('; ', array_unique($reasonParts)),
+        'changed' => $this->time->getRequestTime(),
+      ])
+      ->condition('id', $id)
+      ->condition('status', 'pending')
+      ->condition('reviewed_by', 0)
+      ->condition('reviewed_at', 0)
+      ->execute();
+
+    return $updated > 0;
+  }
+
+  /**
    * Routes a system auto-approval back to manual review when publishing is not
    * ready, without recording an administrative review decision.
    *

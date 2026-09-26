@@ -204,6 +204,7 @@ final class DealDiscoveryRunForm extends FormBase {
     $queued = 0;
     $autoApproved = 0;
     $duplicatesRejected = 0;
+    $rejectedCandidates = 0;
     $pendingReview = 0;
     $researchedWebsiteHosts = [];
 
@@ -327,6 +328,9 @@ final class DealDiscoveryRunForm extends FormBase {
         elseif ($autoRejectedDuplicate) {
           $duplicatesRejected++;
         }
+        elseif ((string) ($storedCandidate['status'] ?? '') === 'rejected') {
+          $rejectedCandidates++;
+        }
         else {
           $pendingReview++;
         }
@@ -338,7 +342,7 @@ final class DealDiscoveryRunForm extends FormBase {
     $historySummary = $this->recordDiscoveryRun($categoryLabel, $locationLabel);
 
     $this->messenger()->addStatus($this->t(
-      'Discovery completed for @category in @location. Researched @researched venue candidates, found @review qualifying venues, and queued/refreshed @queued deal candidates: @auto ready and queued for automatic cron publishing, @duplicates automatically rejected as existing duplicates, and @pending pending manual review. Explored so far: categories — @categories; cities — @cities.',
+      'Discovery completed for @category in @location. Researched @researched venue candidates, found @review qualifying venues, and queued/refreshed @queued deal candidates: @auto ready and queued for automatic cron publishing, @duplicates automatically rejected as existing duplicates, @rejected rejected/non-actionable, and @pending pending manual review. Explored so far: categories — @categories; cities — @cities.',
       [
         '@category' => $categoryLabel,
         '@location' => $locationLabel,
@@ -347,6 +351,7 @@ final class DealDiscoveryRunForm extends FormBase {
         '@queued' => $queued,
         '@auto' => $autoApproved,
         '@duplicates' => $duplicatesRejected,
+        '@rejected' => $rejectedCandidates,
         '@pending' => $pendingReview,
         '@categories' => implode(', ', $historySummary['categories']),
         '@cities' => implode(', ', $historySummary['locations']),

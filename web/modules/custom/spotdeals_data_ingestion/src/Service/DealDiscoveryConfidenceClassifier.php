@@ -53,6 +53,36 @@ final class DealDiscoveryConfidenceClassifier {
     $quality = $this->contentQuality->assessCandidate($candidate);
     $validityIssue = $this->detectTemporalValidityIssue($candidate);
 
+    // A current/regular price comparison with identical prices is positive
+    // evidence that no discount exists. Route these obvious extraction false
+    // positives out of the manual-review queue without weakening any of the
+    // automatic-approval safeguards below.
+    if ($this->hasIdenticalComparisonPrices($value)) {
+      return [
+        'status' => 'rejected',
+        'confidence' => 'low',
+        'reasons' => [
+          'candidate is not a deal: current and regular comparison prices are identical',
+        ],
+      ];
+    }
+
+    // An explicit validity end date that is already in the past is equally
+    // terminal: the promotion may have been legitimate, but it is no longer a
+    // current deal and should not remain in the human-review queue.
+    if (
+      $validityIssue !== NULL
+      && str_starts_with($validityIssue, 'explicit validity ended on ')
+    ) {
+      return [
+        'status' => 'rejected',
+        'confidence' => 'low',
+        'reasons' => [
+          'candidate is expired: ' . $validityIssue,
+        ],
+      ];
+    }
+
     // Strong explicit-offer evidence may safely substitute for the legacy
     // score/schedule gates. It never bypasses location, source, required
     // content, or content-quality protections.
@@ -652,6 +682,29 @@ final class DealDiscoveryConfidenceClassifier {
       '/\b(?:discount|save|savings|sale|reduced|half[- ]price|complimentary)\b/iu',
       $normalizedTitle,
     ) === 1;
+  }
+
+  /**
+   * Returns TRUE when a comparison value proves there is no price discount.
+   *
+   * Deal discovery represents current/regular price pairs as "$X vs $Y".
+   * Equal prices are not a promotion; unequal comparisons remain reviewable
+   * because they may represent a real sale even without explicit "off" text.
+   */
+  private function hasIdenticalComparisonPrices(string $value): bool {
+    if (preg_match(
+      '/^\s*([$£€])\s*(\d+(?:\.\d{1,2})?)\s+vs\s+([$£€])\s*(\d+(?:\.\d{1,2})?)\s*$/iu',
+      $value,
+      $matches,
+    ) !== 1) {
+      return FALSE;
+    }
+
+    if ($matches[1] !== $matches[3]) {
+      return FALSE;
+    }
+
+    return (float) $matches[2] === (float) $matches[4];
   }
 
   /**
