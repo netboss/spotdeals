@@ -126,6 +126,21 @@ final class DealDiscoveryStorage {
   }
 
   /**
+   * Counts candidates by administrative status.
+   */
+  public function count(string $status = 'pending'): int {
+    $query = $this->database
+      ->select('spotdeals_deal_discovery_candidate', 'c');
+    $query->addExpression('COUNT(*)');
+
+    if ($status !== 'all') {
+      $query->condition('status', $status);
+    }
+
+    return (int) $query->execute()->fetchField();
+  }
+
+  /**
    * Automatically rejects a discovery candidate that duplicates an existing deal.
    *
    * Only pending/system-auto-approved candidates are eligible. Administrative

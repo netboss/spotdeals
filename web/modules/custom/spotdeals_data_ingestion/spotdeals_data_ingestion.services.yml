@@ -46,6 +46,16 @@ services:
   spotdeals_data_ingestion.deal_discovery_confidence_classifier:
     alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryConfidenceClassifier
 
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPendingReclassifier:
+    arguments:
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryConfidenceClassifier'
+      - '@config.factory'
+
+  spotdeals_data_ingestion.deal_discovery_pending_reclassifier:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPendingReclassifier
+
+
   Drupal\spotdeals_data_ingestion\Service\DealDiscoveryFieldDeriver: {}
 
   spotdeals_data_ingestion.deal_discovery_field_deriver:

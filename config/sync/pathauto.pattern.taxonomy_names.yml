@@ -12,7 +12,6 @@ selection_criteria:
   6cb3db16-adb8-4577-8de6-1469e357ba55:
     id: 'entity_bundle:taxonomy_term'
     negate: false
-    uuid: 6cb3db16-adb8-4577-8de6-1469e357ba55
     context_mapping:
       taxonomy_term: taxonomy_term
     bundles:
@@ -21,6 +20,7 @@ selection_criteria:
       deal_category: deal_category
       neighborhood: neighborhood
       venue_type: venue_type
+    uuid: 6cb3db16-adb8-4577-8de6-1469e357ba55
 selection_logic: and
 weight: -5
 relationships: {  }

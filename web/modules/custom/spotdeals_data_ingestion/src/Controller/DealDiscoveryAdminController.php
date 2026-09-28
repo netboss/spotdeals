@@ -7,6 +7,8 @@ namespace Drupal\spotdeals_data_ingestion\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Link;
+use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\Core\Url;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -20,12 +22,16 @@ final class DealDiscoveryAdminController extends ControllerBase {
   public function __construct(
     private readonly DealDiscoveryStorage $storage,
     private readonly DateFormatterInterface $dateFormatter,
+    private readonly StateInterface $state,
+    private readonly AccountProxyInterface $account,
   ) {}
 
   public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('spotdeals_data_ingestion.deal_discovery_storage'),
       $container->get('date.formatter'),
+      $container->get('state'),
+      $container->get('current_user'),
     );
   }
 
@@ -47,6 +53,12 @@ final class DealDiscoveryAdminController extends ControllerBase {
         ),
       ];
     }
+
+    $backlogAlert = $this->state->get(
+      'spotdeals_data_ingestion.deal_discovery_backlog_alert',
+      NULL,
+    );
+    $canManageBacklog = $this->account->hasPermission('administer spotdeals data ingestion');
 
     $rows = [];
     foreach ($this->storage->list($status) as $candidate) {
@@ -121,6 +133,35 @@ final class DealDiscoveryAdminController extends ControllerBase {
           '#attributes' => ['class' => ['button']],
           '#prefix' => ' ',
         ],
+        'flag_backlog' => $backlogAlert === NULL
+          ? [
+            '#type' => 'link',
+            '#title' => $this->t('Flag backlog for admin review'),
+            '#url' => Url::fromRoute('spotdeals_data_ingestion.deal_discovery_backlog_flag'),
+            '#attributes' => ['class' => ['button']],
+            '#prefix' => ' ',
+          ]
+          : [
+            '#markup' => ' <strong>' . $this->t('Backlog flagged for administrator review.') . '</strong>',
+          ],
+        'reclassify_backlog' => $canManageBacklog
+          ? [
+            '#type' => 'link',
+            '#title' => $this->t('Admin: safely reclassify backlog'),
+            '#url' => Url::fromRoute('spotdeals_data_ingestion.deal_discovery_backlog_reclassify'),
+            '#attributes' => ['class' => ['button']],
+            '#prefix' => ' ',
+          ]
+          : [],
+        'dismiss_backlog' => $canManageBacklog && $backlogAlert !== NULL
+          ? [
+            '#type' => 'link',
+            '#title' => $this->t('Admin: dismiss backlog alert'),
+            '#url' => Url::fromRoute('spotdeals_data_ingestion.deal_discovery_backlog_dismiss'),
+            '#attributes' => ['class' => ['button']],
+            '#prefix' => ' ',
+          ]
+          : [],
       ],
       'filters' => [
         '#type' => 'container',

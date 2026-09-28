@@ -63,8 +63,30 @@ final class DealDiscoveryRunForm extends FormBase {
   }
 
   public function buildForm(array $form, FormStateInterface $form_state): array {
+    $pendingCount = $this->storage->count('pending');
+    $backlogAlert = $this->state->get(
+      'spotdeals_data_ingestion.deal_discovery_backlog_alert',
+      NULL,
+    );
+
     $form['notice'] = [
-      '#markup' => '<p>' . $this->t('This runs deal discovery and classifies candidates by confidence. High-confidence candidates are automatically approved only when the exact no-write publishing preview is fully ready with no blockers or duplicates. Ready auto-approved candidates are queued for automatic publishing by Drupal cron. Candidates requiring administrator judgment remain queued for review.') . '</p>',
+      '#type' => 'container',
+      'text' => [
+        '#markup' => '<p>' . $this->t('This runs deal discovery and classifies candidates by confidence. High-confidence candidates are automatically approved only when the exact no-write publishing preview is fully ready with no blockers or duplicates. Ready auto-approved candidates are queued for automatic publishing by Drupal cron. Candidates requiring administrator judgment remain queued for review.') . '</p>',
+      ],
+      'pending' => [
+        '#markup' => '<p><strong>' . $this->t('Pending candidates: @count', ['@count' => $pendingCount]) . '</strong></p>',
+      ],
+      'flag_backlog' => $backlogAlert === NULL
+        ? [
+          '#type' => 'link',
+          '#title' => $this->t('Flag backlog for admin review'),
+          '#url' => \Drupal\Core\Url::fromRoute('spotdeals_data_ingestion.deal_discovery_backlog_flag'),
+          '#attributes' => ['class' => ['button']],
+        ]
+        : [
+          '#markup' => '<p><strong>' . $this->t('This backlog has already been flagged for administrator review.') . '</strong></p>',
+        ],
     ];
 
     $venueTypeOptions = [];

@@ -106,3 +106,28 @@ spotdeals_data_ingestion.deal_discovery_publish_ready:
     _title: 'Publish ready reviewed deals'
   requirements:
     _permission: 'publish spotdeals deal discovery'
+
+
+spotdeals_data_ingestion.deal_discovery_backlog_flag:
+  path: '/admin/content/spotdeals-deal-discovery/backlog/flag'
+  defaults:
+    _form: '\Drupal\spotdeals_data_ingestion\Form\DealDiscoveryBacklogFlagForm'
+    _title: 'Flag Deal Discovery backlog'
+  requirements:
+    _permission: 'run spotdeals deal discovery'
+
+spotdeals_data_ingestion.deal_discovery_backlog_reclassify:
+  path: '/admin/content/spotdeals-deal-discovery/backlog/reclassify'
+  defaults:
+    _form: '\Drupal\spotdeals_data_ingestion\Form\DealDiscoveryBacklogReclassifyForm'
+    _title: 'Reclassify Deal Discovery backlog'
+  requirements:
+    _permission: 'administer spotdeals data ingestion'
+
+spotdeals_data_ingestion.deal_discovery_backlog_dismiss:
+  path: '/admin/content/spotdeals-deal-discovery/backlog/dismiss'
+  defaults:
+    _form: '\Drupal\spotdeals_data_ingestion\Form\DealDiscoveryBacklogDismissForm'
+    _title: 'Dismiss Deal Discovery backlog alert'
+  requirements:
+    _permission: 'administer spotdeals data ingestion'
