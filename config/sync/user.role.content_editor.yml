@@ -14,6 +14,7 @@ dependencies:
     - filter
     - node
     - path
+    - spotdeals_data_ingestion
     - system
     - taxonomy
     - toolbar
@@ -42,6 +43,8 @@ permissions:
   - 'edit own venue content'
   - 'edit terms in tags'
   - 'revert all revisions'
+  - 'review spotdeals deal discovery'
+  - 'run spotdeals deal discovery'
   - 'use text format basic_html'
   - 'view all revisions'
   - 'view own unpublished content'

@@ -10,6 +10,7 @@ use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityAuditServ
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishAuditService;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishPreviewService;
+use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPendingReclassifier;
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage;
 use Drush\Attributes as CLI;
 use Drush\Commands\AutowireTrait;
@@ -30,6 +31,7 @@ final class DealDiscoveryAuditCommands extends DrushCommands {
     private readonly DealDiscoveryPublishPreviewService $previewService,
     private readonly DealDiscoveryConfidenceClassifier $confidenceClassifier,
     private readonly ConfigFactoryInterface $configFactory,
+    private readonly DealDiscoveryPendingReclassifier $pendingReclassifier,
   ) {
     parent::__construct();
   }
@@ -1046,91 +1048,31 @@ final class DealDiscoveryAuditCommands extends DrushCommands {
     array $options = ['apply' => FALSE],
   ): int {
     $apply = (bool) ($options['apply'] ?? FALSE);
-    $candidates = $this->storage->list('pending', 1000);
-    $config = $this->configFactory->get('spotdeals_data_ingestion.settings');
-    $configuredLocationConfidence = $config->get(
-      'deal_discovery_auto_approve_location_confidence',
-    );
 
     $this->io()->title('SpotDeals Deal Discovery — Non-Deal Reclassification');
-    $this->io()->definitionList(
-      ['Pending candidates loaded' => (string) count($candidates)],
-      ['Mode' => $apply ? 'APPLY' : 'DRY RUN'],
-    );
 
-    if ($configuredLocationConfidence === NULL) {
-      $this->io()->error(
-        'Automatic-approval minimum location confidence is not configured. No candidates were evaluated.',
-      );
+    try {
+      $result = $this->pendingReclassifier->reclassify(1000, $apply);
+    }
+    catch (\Throwable $exception) {
+      $this->io()->error($exception->getMessage());
       return 1;
     }
 
-    $minimumLocationConfidence = (int) $configuredLocationConfidence;
+    $this->io()->definitionList(
+      ['Pending candidates loaded' => (string) $result['loaded']],
+      ['Mode' => $apply ? 'APPLY' : 'DRY RUN'],
+    );
+
     $rows = [];
-    $eligible = 0;
-    $updated = 0;
-    $errors = 0;
-
-    foreach ($candidates as $candidate) {
-      if (
-        (int) ($candidate['reviewed_by'] ?? 0) > 0
-        || (int) ($candidate['reviewed_at'] ?? 0) > 0
-      ) {
-        continue;
-      }
-
-      $classifierCandidate = [
-        'title' => (string) ($candidate['offer_title'] ?? ''),
-        'value' => (string) ($candidate['offer_value'] ?? ''),
-        'schedule' => (string) ($candidate['schedule'] ?? ''),
-        'source_url' => (string) ($candidate['source_url'] ?? ''),
-        'reason' => (string) ($candidate['reason'] ?? ''),
-        'score' => (int) ($candidate['score'] ?? 0),
-      ];
-
-      try {
-        $classification = $this->confidenceClassifier->classify(
-          $classifierCandidate,
-          $minimumLocationConfidence,
-        );
-      }
-      catch (\Throwable $exception) {
-        $errors++;
-        $rows[] = [
-          (string) ($candidate['id'] ?? 0),
-          (string) ($candidate['venue_name'] ?? ''),
-          (string) ($candidate['offer_title'] ?? ''),
-          (string) ($candidate['offer_value'] ?? ''),
-          'ERROR: ' . $exception->getMessage(),
-          'No',
-        ];
-        continue;
-      }
-
-      if (($classification['status'] ?? '') !== 'rejected') {
-        continue;
-      }
-
-      $eligible++;
-      $reasons = array_map('strval', (array) ($classification['reasons'] ?? []));
-      $didUpdate = FALSE;
-      if ($apply) {
-        $didUpdate = $this->storage->markRejectedByClassifier(
-          (int) ($candidate['id'] ?? 0),
-          $reasons,
-        );
-        if ($didUpdate) {
-          $updated++;
-        }
-      }
-
+    foreach ($result['rows'] as $row) {
       $rows[] = [
-        (string) ($candidate['id'] ?? 0),
-        (string) ($candidate['venue_name'] ?? ''),
-        (string) ($candidate['offer_title'] ?? ''),
-        (string) ($candidate['offer_value'] ?? ''),
-        implode('; ', $reasons),
-        $apply ? ($didUpdate ? 'Yes' : 'No') : 'Dry run',
+        (string) $row['id'],
+        (string) $row['venue'],
+        (string) $row['offer'],
+        (string) $row['value'],
+        (string) $row['reason'],
+        $apply ? ($row['updated'] ? 'Yes' : 'No') : 'Dry run',
       ];
     }
 
@@ -1139,12 +1081,12 @@ final class DealDiscoveryAuditCommands extends DrushCommands {
       $rows,
     );
     $this->io()->definitionList(
-      ['Classifier-rejected candidates' => (string) $eligible],
-      ['Records updated' => (string) $updated],
-      ['Errors' => (string) $errors],
+      ['Classifier-rejected candidates' => (string) $result['eligible']],
+      ['Records updated' => (string) $result['updated']],
+      ['Errors' => (string) $result['errors']],
     );
 
-    if ($errors > 0) {
+    if ($result['errors'] > 0) {
       $this->io()->warning('Non-deal reclassification completed with runtime errors.');
       return 1;
     }

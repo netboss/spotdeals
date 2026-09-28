@@ -12,11 +12,11 @@ selection_criteria:
   a351f760-7814-4bb0-bdff-e8b20d3c1f8f:
     id: 'entity_bundle:node'
     negate: false
-    uuid: a351f760-7814-4bb0-bdff-e8b20d3c1f8f
     context_mapping:
       node: node
     bundles:
       deal: deal
+    uuid: a351f760-7814-4bb0-bdff-e8b20d3c1f8f
 selection_logic: and
 weight: -5
 relationships: {  }

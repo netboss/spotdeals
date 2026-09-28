@@ -381,3 +381,55 @@ function spotdeals_data_ingestion_form_taxonomy_term_form_alter(
     '#items' => $automatic,
   ];
 }
+
+/**
+ * Implements hook_page_top().
+ *
+ * Shows administrators a persistent alert when an editor flags the Deal
+ * Discovery pending backlog. The alert remains until an administrator
+ * explicitly dismisses it.
+ */
+function spotdeals_data_ingestion_page_top(array &$page_top): void {
+  $account = \Drupal::currentUser();
+  if (!$account->hasPermission('administer spotdeals data ingestion')) {
+    return;
+  }
+
+  $alert = \Drupal::state()->get(
+    'spotdeals_data_ingestion.deal_discovery_backlog_alert',
+    NULL,
+  );
+  if (!is_array($alert)) {
+    return;
+  }
+
+  $pending_count = (int) ($alert['pending_count'] ?? 0);
+  $flagged_by = trim((string) ($alert['flagged_by_name'] ?? ''));
+  $message = 'Deal Discovery backlog needs administrator review.';
+  if ($pending_count > 0) {
+    $message .= ' It had ' . $pending_count . ' pending candidates when flagged.';
+  }
+  if ($flagged_by !== '') {
+    $message .= ' Flagged by ' . $flagged_by . '.';
+  }
+
+  $page_top['spotdeals_deal_discovery_backlog_alert'] = [
+    '#type' => 'container',
+    '#attributes' => [
+      'style' => 'background:#111;color:#fff;padding:12px 16px;margin:0 0 12px;font-weight:600;',
+      'role' => 'alert',
+    ],
+    'message' => [
+      '#markup' => htmlspecialchars($message) . ' ',
+    ],
+    'link' => [
+      '#type' => 'link',
+      '#title' => t('Review Deal Discovery backlog'),
+      '#url' => \Drupal\Core\Url::fromRoute('spotdeals_data_ingestion.deal_discovery_candidates'),
+      '#attributes' => [
+        'style' => 'color:#fff;text-decoration:underline;',
+      ],
+    ],
+    '#cache' => ['max-age' => 0],
+  ];
+}

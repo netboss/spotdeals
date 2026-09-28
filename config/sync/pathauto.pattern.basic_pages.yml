@@ -12,11 +12,11 @@ selection_criteria:
   a245068b-9263-4f90-b162-14443c5fb015:
     id: 'entity_bundle:node'
     negate: false
-    uuid: a245068b-9263-4f90-b162-14443c5fb015
     context_mapping:
       node: node
     bundles:
       basic_page: basic_page
+    uuid: a245068b-9263-4f90-b162-14443c5fb015
 selection_logic: and
 weight: -5
 relationships: {  }
