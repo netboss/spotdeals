@@ -67,6 +67,35 @@ final class DealDiscoveryConfidenceClassifier {
       ];
     }
 
+    // When both the title and extracted value state explicit percentage-off
+    // amounts, disagreement is deterministic evidence that the extractor bound
+    // the value to the wrong nearby offer. Keep these extraction artifacts out
+    // of the human-review queue without rejecting titles that do not state an
+    // explicit percentage themselves.
+    if ($this->hasContradictoryPercentageOffValue($title, $value)) {
+      return [
+        'status' => 'rejected',
+        'confidence' => 'low',
+        'reasons' => [
+          'candidate has contradictory deal evidence: extracted percentage does not match title percentage',
+        ],
+      ];
+    }
+
+    // A generic services heading paired only with a standalone "Only $X"
+    // price is ordinary service pricing, not evidence of a discount. This
+    // catches extraction artifacts such as "In-store services / Only $129"
+    // without rejecting specifically named promotions or fixed-price specials.
+    if ($this->hasGenericServicePriceOnlyValue($title, $value)) {
+      return [
+        'status' => 'rejected',
+        'confidence' => 'low',
+        'reasons' => [
+          'candidate is not a deal: generic services title contains only a standalone price',
+        ],
+      ];
+    }
+
     // An explicit validity end date that is already in the past is equally
     // terminal: the promotion may have been legitimate, but it is no longer a
     // current deal and should not remain in the human-review queue.
@@ -705,6 +734,65 @@ final class DealDiscoveryConfidenceClassifier {
     }
 
     return (float) $matches[2] === (float) $matches[4];
+  }
+
+  /**
+   * Returns TRUE when title/value percentage-off evidence contradicts itself.
+   *
+   * This intentionally requires explicit "% off" wording on both sides. A
+   * title with no percentage remains reviewable, while a title such as
+   * "Get 40% OFF" paired with an extracted "10% OFF" is provably bound to
+   * the wrong offer value.
+   */
+  private function hasContradictoryPercentageOffValue(string $title, string $value): bool {
+    if (preg_match_all(
+      '/(\d{1,3}(?:\.\d+)?)\s*%\s*off/iu',
+      $title,
+      $titleMatches,
+    ) < 1) {
+      return FALSE;
+    }
+
+    if (preg_match_all(
+      '/(\d{1,3}(?:\.\d+)?)\s*%\s*off/iu',
+      $value,
+      $valueMatches,
+    ) < 1) {
+      return FALSE;
+    }
+
+    $titlePercents = array_map('floatval', $titleMatches[1]);
+    $valuePercents = array_map('floatval', $valueMatches[1]);
+
+    foreach ($valuePercents as $valuePercent) {
+      if (in_array($valuePercent, $titlePercents, TRUE)) {
+        return FALSE;
+      }
+    }
+
+    return TRUE;
+  }
+
+  /**
+   * Returns TRUE for generic service pricing without a promotional benefit.
+   *
+   * This is intentionally narrow: the title must be only a generic services
+   * label and the value must be only an "Only $X" price. Named services,
+   * specials, discounts, comparisons, and other offer wording remain
+   * reviewable.
+   */
+  private function hasGenericServicePriceOnlyValue(string $title, string $value): bool {
+    if (preg_match(
+      '/^(?:in[- ]store\s+)?services?$/iu',
+      trim($title),
+    ) !== 1) {
+      return FALSE;
+    }
+
+    return preg_match(
+      '/^only\s+[$£€]\s*\d+(?:\.\d{1,2})?$/iu',
+      trim($value),
+    ) === 1;
   }
 
   /**
