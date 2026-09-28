@@ -579,6 +579,80 @@ final class DealDiscoveryConfidenceClassifierTest extends TestCase {
   /**
    * @covers ::classify
    */
+  public function testContradictoryPercentageOffValueIsRejected(): void {
+    $result = $this->classifier->classify([
+      'title' => 'Stay on routine! Get 40% OFF your 1st Autoship order',
+      'value' => '10% OFF',
+      'schedule' => '',
+      'source_url' => 'https://example.com/autoship',
+      'score' => 5,
+      'reason' => 'promotion=savings; value=10% OFF; binding=heading',
+    ], 1);
+
+    self::assertSame('rejected', $result['status']);
+    self::assertSame('low', $result['confidence']);
+    self::assertContains(
+      'candidate has contradictory deal evidence: extracted percentage does not match title percentage',
+      $result['reasons'],
+    );
+  }
+
+  /**
+   * @covers ::classify
+   */
+  public function testGenericServicePriceOnlyCandidateIsRejected(): void {
+    $result = $this->classifier->classify([
+      'title' => 'In-store services',
+      'value' => 'Only $129',
+      'schedule' => '',
+      'source_url' => 'https://example.com/services',
+      'score' => 6,
+      'reason' => 'promotion=special,save; value=Only $129; binding=section',
+    ], 1);
+
+    self::assertSame('rejected', $result['status']);
+    self::assertSame('low', $result['confidence']);
+    self::assertContains(
+      'candidate is not a deal: generic services title contains only a standalone price',
+      $result['reasons'],
+    );
+  }
+
+  /**
+   * @covers ::classify
+   */
+  public function testNamedFixedPriceSpecialIsNotRejectedAsGenericServicePricing(): void {
+    $result = $this->classifier->classify([
+      'title' => 'Breakfast combo',
+      'value' => 'Only $10.99',
+      'schedule' => 'Served every day 9:00 AM - 11:00 AM',
+      'source_url' => 'https://example.com/specials',
+      'score' => 7,
+      'reason' => 'promotion=special; value=Only $10.99; binding=article',
+    ], 1);
+
+    self::assertNotSame('rejected', $result['status']);
+  }
+
+  /**
+   * @covers ::classify
+   */
+  public function testMatchingPercentageOffValueIsNotRejectedAsContradictory(): void {
+    $result = $this->classifier->classify([
+      'title' => 'Get 40% OFF your first order',
+      'value' => '40% OFF',
+      'schedule' => '',
+      'source_url' => 'https://example.com/first-order',
+      'score' => 5,
+      'reason' => 'promotion=savings; value=40% OFF; binding=heading',
+    ], 1);
+
+    self::assertNotSame('rejected', $result['status']);
+  }
+
+  /**
+   * @covers ::classify
+   */
   public function testUnequalComparisonPricesRemainPendingForReview(): void {
     $result = $this->classifier->classify([
       'title' => 'Meet You at Home',
