@@ -1,0 +1,61 @@
+{#
+/**
+ * @file
+ * SpotDeals Blog post node template.
+ */
+#}
+{% set classes = [
+  'node',
+  'node--type-' ~ node.bundle|clean_class,
+  not node.isPublished() ? 'node--unpublished',
+  view_mode ? 'node--view-mode-' ~ view_mode|clean_class,
+] %}
+
+<article{{ attributes.addClass(classes) }}>
+  {{ title_prefix }}
+  {% if label and view_mode != 'full' %}
+    <h2{{ title_attributes.addClass('node__title') }}>
+      <a href="{{ url }}" rel="bookmark">{{ label }}</a>
+    </h2>
+  {% endif %}
+  {{ title_suffix }}
+
+  {% embed 'spotdeals_minimal:blog' with {
+    author: display_submitted ? author_name : null,
+    date: display_submitted ? date : null,
+    content: content
+  } only %}
+    {% block location %}
+      {% if content.field_address and 'United States' in content.field_address.0.country['#value'] %}
+        <div class="sd-blog__location">
+          {{ content.field_address.0.locality['#value'] }}, {{ content.field_address.0.administrative_area['#value'] }}
+        </div>
+      {% else %}
+        <div class="sd-blog__location">
+          {{ content.field_address }}
+        </div>
+      {% endif %}
+    {% endblock %}
+
+    {% block body %}
+      {{ content.body }}
+      {{ content|without('field_address', 'body', 'field_blog_tags', 'field_blog_comments', 'links') }}
+    {% endblock %}
+
+    {% block tags %}
+      {% if content.field_blog_tags %}
+        <div class="sd-blog__tags">
+          {{ content.field_blog_tags }}
+        </div>
+      {% endif %}
+    {% endblock %}
+
+    {% block comments %}
+      {% if content.field_blog_comments %}
+        <div id="comments" class="sd-blog__comments">
+          {{ content.field_blog_comments }}
+        </div>
+      {% endif %}
+    {% endblock %}
+  {% endembed %}
+</article>

@@ -1,0 +1,26 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/11.x/core/modules/sdc/src/metadata.schema.json
+name: Blog
+status: stable
+description: SpotDeals long-form editorial article layout and typography.
+props:
+  type: object
+  properties:
+    author:
+      type: ['string', 'null']
+      title: Author
+    date:
+      type: ['string', 'null']
+      title: Published date
+slots:
+  location:
+    title: Location
+    description: Geographic context for the article.
+  body:
+    title: Article body
+    description: Long-form editorial content.
+  tags:
+    title: Tags
+    description: Blog taxonomy tags.
+  comments:
+    title: Comments
+    description: Blog discussion and comment form.

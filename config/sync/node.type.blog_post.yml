@@ -1,0 +1,36 @@
+uuid: 66cc9ba2-af7d-4d6b-aae1-c5b447d21875
+langcode: en
+status: true
+dependencies:
+  module:
+    - menu_ui
+    - scheduler
+  enforced:
+    module:
+      - blog
+third_party_settings:
+  menu_ui:
+    available_menus: {  }
+    parent: ''
+  scheduler:
+    expand_fieldset: when_required
+    fields_display_mode: vertical_tab
+    publish_enable: false
+    publish_past_date: error
+    publish_past_date_created: false
+    publish_required: false
+    publish_revision: false
+    publish_touch: false
+    show_message_after_update: true
+    unpublish_enable: false
+    unpublish_required: false
+    unpublish_revision: false
+_core:
+  default_config_hash: j4bvqy_hlp6zOptwrMkwj83pRC9m07nHwUAwFD-JT94
+name: 'Blog post'
+type: blog_post
+description: 'Use for multi-user blogs. Every user gets a personal blog.'
+help: 'Blog post.'
+new_revision: false
+preview_mode: 1
+display_submitted: true

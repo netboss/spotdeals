@@ -2,6 +2,13 @@ uuid: 4a3410bf-5914-4e51-8680-61ca12ed4f10
 langcode: en
 status: true
 dependencies:
+  config:
+    - taxonomy.vocabulary.cuisine
+    - taxonomy.vocabulary.day_of_week
+    - taxonomy.vocabulary.deal_category
+    - taxonomy.vocabulary.neighborhood
+    - taxonomy.vocabulary.tags
+    - taxonomy.vocabulary.venue_type
   module:
     - taxonomy
 id: taxonomy_names
@@ -19,8 +26,8 @@ selection_criteria:
       day_of_week: day_of_week
       deal_category: deal_category
       neighborhood: neighborhood
+      tags: tags
       venue_type: venue_type
-    uuid: 6cb3db16-adb8-4577-8de6-1469e357ba55
 selection_logic: and
 weight: -5
 relationships: {  }

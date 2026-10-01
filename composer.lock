@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fe0991783d2e13af6ead9dac0e8eb30c",
+    "content-hash": "a99f00332f00860a3cef43c2c5d3cff2",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -1586,6 +1586,67 @@
             "support": {
                 "source": "https://git.drupalcode.org/project/admin_toolbar",
                 "issues": "https://www.drupal.org/project/issues/admin_toolbar"
+            }
+        },
+        {
+            "name": "drupal/blog",
+            "version": "3.1.4",
+            "source": {
+                "type": "git",
+                "url": "https://git.drupalcode.org/project/blog.git",
+                "reference": "3.1.4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://ftp.drupal.org/files/projects/blog-3.1.4.zip",
+                "reference": "3.1.4",
+                "shasum": "c7ace5b85d620dd41185eee547719026d1dcc8b2"
+            },
+            "require": {
+                "drupal/core": "^10.4 || ^11.1"
+            },
+            "type": "drupal-module",
+            "extra": {
+                "drupal": {
+                    "version": "3.1.4",
+                    "datestamp": "1735994188",
+                    "security-coverage": {
+                        "status": "covered",
+                        "message": "Covered by Drupal's security advisory policy"
+                    }
+                }
+            },
+            "notification-url": "https://packages.drupal.org/8/downloads",
+            "license": [
+                "GPL-2.0+"
+            ],
+            "authors": [
+                {
+                    "name": "Kurucz István",
+                    "homepage": "https://www.drupal.org/u/nevergone"
+                },
+                {
+                    "name": "David Norman",
+                    "homepage": "https://www.drupal.org/u/deekayen"
+                },
+                {
+                    "name": "Christopher Hall",
+                    "homepage": "https://www.drupal.org/u/chris_hall_hu_cheng"
+                },
+                {
+                    "name": "Dave Reid",
+                    "homepage": "https://www.drupal.org/u/dave-reid"
+                },
+                {
+                    "name": "sylus",
+                    "homepage": "https://www.drupal.org/user/339714"
+                }
+            ],
+            "description": "Enables multi-user blogs.",
+            "homepage": "https://www.drupal.org/project/blog",
+            "support": {
+                "source": "https://git.drupalcode.org/project/blog",
+                "issues": "https://www.drupal.org/project/issues/blog"
             }
         },
         {
@@ -15667,5 +15728,5 @@
     "prefer-lowest": false,
     "platform": {},
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
