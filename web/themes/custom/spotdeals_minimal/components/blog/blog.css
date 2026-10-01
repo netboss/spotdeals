@@ -1,0 +1,147 @@
+.page-node-type-blog-post .layout--pass--content-medium > * {
+  grid-column: 2 / 14;
+}
+
+.page-node-type-blog-post .page-title {
+  max-width: none;
+  margin-inline: 0;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+}
+
+.sd-blog {
+  width: 100%;
+  margin-inline: 0;
+}
+
+.sd-blog__byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-text-neutral-soft, #5f6368);
+  font-size: 0.95rem;
+}
+
+.sd-blog__byline a {
+  font-weight: 700;
+}
+
+.sd-blog__location {
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.sd-blog__location .address {
+  margin: 0;
+}
+
+.sd-blog__body {
+  font-size: 1.0625rem;
+  line-height: 1.72;
+}
+
+.sd-blog__body .text-content {
+  max-width: none;
+}
+
+.sd-blog__body p {
+  margin-block: 0 1.25rem;
+}
+
+.block .sd-blog__body h2 {
+  margin-block: 2.5rem 0.85rem;
+  font-size: clamp(1.45rem, 2.4vw, 1.9rem);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+.sd-blog__body h3 {
+  margin-block: 2rem 0.7rem;
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  line-height: 1.25;
+}
+
+.sd-blog__body h2 a,
+.sd-blog__body h3 a {
+  color: inherit;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.16em;
+}
+
+.sd-blog__body ul,
+.sd-blog__body ol {
+  margin-block: 0 1.25rem;
+}
+
+.sd-blog__tags {
+  margin-top: 2.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color--gray-90, #e7e8e9);
+}
+
+.sd-blog__tags .field__label {
+  margin-bottom: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sd-blog__tags .field__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sd-blog__tags .field__item {
+  margin: 0;
+}
+
+.sd-blog__tags .field__item a {
+  display: inline-block;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--color--gray-80, #d3d4d5);
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.sd-blog__comments {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color--gray-90, #e7e8e9);
+}
+
+.sd-blog__comments .comments__title {
+  margin-block: 0 1.25rem;
+  font-size: clamp(1.35rem, 2.2vw, 1.7rem);
+  line-height: 1.2;
+}
+
+.sd-blog__comments .add-comment {
+  margin-top: 1rem;
+}
+
+@media (max-width: 43.75rem) {
+  .sd-blog__body {
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  .sd-blog__body h2 {
+    margin-top: 2rem;
+  }
+}
+
+/* On small screens the Blog component should use the full content track.
+ * The desktop 2 / 14 grid placement above otherwise leaves an oversized
+ * left inset inside Olivero's medium-content layout. */
+@media (max-width: 700px) {
+  .page-node-type-blog-post .layout--pass--content-medium > * {
+    grid-column: 1 / -1;
+  }
+}

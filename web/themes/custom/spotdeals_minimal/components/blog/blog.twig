@@ -1,0 +1,25 @@
+{#
+/**
+ * @file
+ * SpotDeals Blog single-directory component.
+ */
+#}
+<div class="sd-blog">
+  {% if author or date %}
+    <div class="sd-blog__byline">
+      {% if author %}<span>{{ 'By'|t }} {{ author }}</span>{% endif %}
+      {% if author and date %}<span class="sd-blog__byline-separator" aria-hidden="true">·</span>{% endif %}
+      {% if date %}<time>{{ date }}</time>{% endif %}
+    </div>
+  {% endif %}
+
+  {% block location %}{% endblock %}
+
+  <div class="sd-blog__body">
+    {% block body %}{% endblock %}
+  </div>
+
+  {% block tags %}{% endblock %}
+
+  {% block comments %}{% endblock %}
+</div>

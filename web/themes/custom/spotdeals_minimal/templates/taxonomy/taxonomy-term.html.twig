@@ -10,16 +10,66 @@
 {% if has_landing %}
   <section{{ attributes.addClass('spotdeals-taxonomy-landing', 'spotdeals-taxonomy-landing--' ~ landing.vocabulary|clean_class) }}>
     <header class="spotdeals-taxonomy-landing__hero">
-      {% if landing.eyebrow %}
-        <div class="spotdeals-taxonomy-landing__eyebrow">{{ landing.eyebrow }}</div>
-      {% endif %}
+      {% if landing.vocabulary == 'tags' %}
+        <div class="spotdeals-taxonomy-landing__topic-grid{% if not landing.tag_local_topics.links %} spotdeals-taxonomy-landing__topic-grid--single{% endif %}">
+          <div class="spotdeals-taxonomy-landing__topic-primary">
+            {% if landing.eyebrow %}
+              <div class="spotdeals-taxonomy-landing__eyebrow">{{ landing.eyebrow }}</div>
+            {% endif %}
 
-      {{ title_prefix }}
-      <h2 class="spotdeals-taxonomy-landing__hero-title">{{ landing.title }}</h2>
-      {{ title_suffix }}
+            {{ title_prefix }}
+            <h2 class="spotdeals-taxonomy-landing__hero-title">{{ landing.title }}</h2>
+            {{ title_suffix }}
 
-      {% if landing.intro %}
-        <div class="spotdeals-taxonomy-landing__intro">{{ landing.intro }}</div>
+            {% if landing.intro %}
+              <div class="spotdeals-taxonomy-landing__intro">{{ landing.intro }}</div>
+            {% endif %}
+
+            {% if landing.tag_related_content %}
+              <div class="spotdeals-taxonomy-landing__topic-count" aria-label="{{ 'Content using this topic'|t }}">
+                <div class="spotdeals-taxonomy-landing__topic-count-icon" aria-hidden="true">{{ landing.tag_related_content.icon }}</div>
+                <div>
+                  <div class="spotdeals-taxonomy-landing__topic-count-value">{{ landing.tag_related_content.count }}</div>
+                  <div class="spotdeals-taxonomy-landing__topic-count-label">{{ landing.tag_related_content.label }}</div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+
+          {% if landing.tag_local_topics.links %}
+            <aside class="spotdeals-taxonomy-landing__more-topics">
+              <div class="spotdeals-taxonomy-landing__more-topics-desktop" aria-labelledby="spotdeals-more-local-topics-desktop">
+                <h3 id="spotdeals-more-local-topics-desktop" class="spotdeals-taxonomy-landing__more-topics-heading">{{ 'More in @location'|t({'@location': landing.tag_local_topics.location}) }}</h3>
+                <div class="spotdeals-taxonomy-landing__more-topic-links">
+                  {% for link in landing.tag_local_topics.links %}
+                    <a href="{{ link.url }}">{{ link.title }}</a>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <details class="spotdeals-taxonomy-landing__more-topics-accordion spotdeals-taxonomy-landing__more-topics-accordion--mobile">
+                <summary id="spotdeals-more-local-topics-mobile" class="spotdeals-taxonomy-landing__more-topics-heading">{{ 'More in @location'|t({'@location': landing.tag_local_topics.location}) }}</summary>
+                <div class="spotdeals-taxonomy-landing__more-topic-links">
+                  {% for link in landing.tag_local_topics.links %}
+                    <a href="{{ link.url }}">{{ link.title }}</a>
+                  {% endfor %}
+                </div>
+              </details>
+            </aside>
+          {% endif %}
+        </div>
+      {% else %}
+        {% if landing.eyebrow %}
+          <div class="spotdeals-taxonomy-landing__eyebrow">{{ landing.eyebrow }}</div>
+        {% endif %}
+
+        {{ title_prefix }}
+        <h2 class="spotdeals-taxonomy-landing__hero-title">{{ landing.title }}</h2>
+        {{ title_suffix }}
+
+        {% if landing.intro %}
+          <div class="spotdeals-taxonomy-landing__intro">{{ landing.intro }}</div>
+        {% endif %}
       {% endif %}
 
       {% if landing.stats %}
@@ -88,6 +138,7 @@
       </section>
     {% endif %}
 
+    {% if landing.show_deal_cta|default(true) %}
     <section class="spotdeals-seo-cta spotdeals-taxonomy-landing__cta" aria-label="{{ 'Search more deals'|t }}">
       <div>
         <h2>{{ 'Want to search another way?'|t }}</h2>
@@ -95,6 +146,7 @@
       </div>
       <a class="spotdeals-seo-cta__button" href="{{ landing.browse_url }}">{{ 'Browse all deals'|t }}</a>
     </section>
+    {% endif %}
   </section>
 {% else %}
   <article{{ attributes }}>

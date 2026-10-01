@@ -216,7 +216,7 @@
 
 .spotdeals-seo-cta__button:hover,
 .spotdeals-seo-cta__button:focus {
-  background: var(--spotdeals-seo-green-dark);
+  background: var(--spotdeals-taxonomy-green-dark);
   color: #fff;
   text-decoration: none;
 }
@@ -762,7 +762,6 @@
 }
 
 .spotdeals-taxonomy-landing__intro {
-  max-width: 760px;
   margin-top: 1rem;
   color: var(--spotdeals-taxonomy-muted);
   font-size: clamp(1rem, 2.4vw, 1.12rem);
@@ -771,6 +770,35 @@
 
 .spotdeals-taxonomy-landing__intro p {
   margin: 0;
+}
+
+.spotdeals-taxonomy-landing__topic-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--spotdeals-taxonomy-border);
+  color: var(--spotdeals-taxonomy-text);
+}
+
+.spotdeals-taxonomy-landing__topic-count-icon {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.spotdeals-taxonomy-landing__topic-count-value {
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.spotdeals-taxonomy-landing__topic-count-label {
+  margin-top: 0.15rem;
+  color: var(--spotdeals-taxonomy-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .spotdeals-taxonomy-landing__summary.spotdeals-seo-summary {
@@ -1245,4 +1273,238 @@
 .path-taxonomy .spotdeals-taxonomy-landing__related,
 .path-taxonomy .spotdeals-seo-related {
   display: none;
+}
+
+/* Tags taxonomy hero: topic summary + same-locality topic discovery. */
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__topic-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(220px, 0.8fr);
+  gap: 0;
+}
+
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__topic-grid--single {
+  grid-template-columns: 1fr;
+}
+
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__topic-primary {
+  min-width: 0;
+  padding-right: 1.5rem;
+}
+
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__topic-grid--single .spotdeals-taxonomy-landing__topic-primary {
+  padding-right: 0;
+}
+
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__intro {
+  margin-top: 0;
+}
+
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics {
+  min-width: 0;
+  padding-left: 1.5rem;
+  border-left: 1px solid var(--spotdeals-taxonomy-border);
+}
+
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics-desktop {
+  display: block;
+}
+
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics-accordion--mobile {
+  display: none;
+}
+
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics-heading {
+  margin: 0 0 0.75rem;
+  color: var(--spotdeals-taxonomy-text);
+  font-size: 0.95rem;
+  font-weight: 900;
+  line-height: 1.25;
+  list-style: none;
+  pointer-events: none;
+}
+
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics-heading::-webkit-details-marker {
+  display: none;
+}
+
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topic-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topic-links a {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.42rem 0.7rem;
+  border: 1px solid var(--spotdeals-taxonomy-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--spotdeals-taxonomy-green-dark);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topic-links a:hover,
+.spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topic-links a:focus {
+  border-color: var(--spotdeals-taxonomy-green-dark);
+  background: #f3f8df;
+  text-decoration: none;
+}
+
+@media (max-width: 700px) {
+  .spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics-desktop {
+    display: none;
+  }
+
+  .spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics-accordion--mobile {
+    display: block;
+  }
+
+  .spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__topic-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__topic-primary {
+    padding-right: 0;
+  }
+
+  .spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics {
+    margin-top: 1.25rem;
+    padding-top: 1.1rem;
+    padding-left: 0;
+    border-top: 1px solid var(--spotdeals-taxonomy-border);
+    border-left: 0;
+  }
+
+  .spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics-heading {
+    position: relative;
+    margin-bottom: 0;
+    padding-right: 2rem;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics-heading::after {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    content: "+";
+    color: var(--spotdeals-taxonomy-green-dark);
+    font-size: 1.4rem;
+    font-weight: 800;
+    line-height: 1;
+    transform: translateY(-50%);
+  }
+
+  .spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics-accordion[open] > .spotdeals-taxonomy-landing__more-topics-heading::after {
+    content: "−";
+  }
+
+  .spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics-accordion:not([open]) > .spotdeals-taxonomy-landing__more-topic-links {
+    display: none;
+  }
+
+  .spotdeals-taxonomy-landing--tags .spotdeals-taxonomy-landing__more-topics-accordion[open] > .spotdeals-taxonomy-landing__more-topics-heading {
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Compact venue results inside taxonomy landing pages. */
+.path-taxonomy .view-taxonomy-term .spotdeals-venue-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin: 1.75rem 0 0;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--spotdeals-taxonomy-border, #d7e1e8);
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.path-taxonomy .spotdeals-venue-result__identity { min-width: 0; }
+.path-taxonomy .spotdeals-venue-result .node__title { margin: 0; font-size: 1rem; line-height: 1.3; }
+.path-taxonomy .spotdeals-venue-result .node__title a { color: var(--spotdeals-taxonomy-text, #172033); text-decoration: none; }
+.path-taxonomy .spotdeals-venue-result .node__title a:hover,
+.path-taxonomy .spotdeals-venue-result .node__title a:focus-visible { color: var(--spotdeals-taxonomy-green-dark, #6f9117); text-decoration: underline; text-underline-offset: .16em; }
+.path-taxonomy .spotdeals-venue-result__location { margin-top: .35rem; color: #68788b; font-size: .82rem; font-weight: 600; }
+
+.path-taxonomy .spotdeals-venue-result__actions { display: flex; align-items: center; justify-content: flex-end; gap: .45rem; flex: 0 0 auto; }
+.path-taxonomy .spotdeals-venue-result__action--view,
+.path-taxonomy .spotdeals-venue-result__action--suggest,
+.path-taxonomy .spotdeals-venue-result__action--more,
+.path-taxonomy .spotdeals-venue-result__action--save .flag a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.15rem;
+  margin: 0;
+  padding: .4rem .7rem;
+  border: 1px solid var(--spotdeals-taxonomy-border, #d7e1e8);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--spotdeals-taxonomy-green-dark, #6f9117);
+  font-size: .78rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.path-taxonomy .spotdeals-venue-result__action--view::before { content: "↗"; margin-right: .35rem; }
+.path-taxonomy .spotdeals-venue-result__action--save .flag a::before { content: "♡"; margin-right: .35rem; font-size: 1rem; }
+.path-taxonomy .spotdeals-venue-result__action--save .flag.action-unflag a::before { content: "♥"; color: var(--spotdeals-taxonomy-green-dark, #6f9117); }
+.path-taxonomy .spotdeals-venue-result__action--suggest::before { content: "+"; margin-right: .35rem; font-size: 1rem; }
+.path-taxonomy .spotdeals-venue-result__action--more::before { content: "⋯"; margin-right: .35rem; font-size: 1rem; }
+
+/* The Flag module adds wrapper elements around Save. Keep those wrappers
+ * completely presentationless so only the actual clickable link behaves
+ * like a venue-result action button. */
+.path-taxonomy .spotdeals-venue-result__action--save,
+.path-taxonomy .spotdeals-venue-result__action--save .flag {
+  display: block;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.path-taxonomy .spotdeals-venue-result__action--view:hover,
+.path-taxonomy .spotdeals-venue-result__action--view:focus-visible,
+.path-taxonomy .spotdeals-venue-result__action--suggest:hover,
+.path-taxonomy .spotdeals-venue-result__action--suggest:focus-visible,
+.path-taxonomy .spotdeals-venue-result__action--more:hover,
+.path-taxonomy .spotdeals-venue-result__action--more:focus-visible,
+.path-taxonomy .spotdeals-venue-result__action--save .flag a:hover,
+.path-taxonomy .spotdeals-venue-result__action--save .flag a:focus-visible {
+  border-color: var(--spotdeals-taxonomy-green-dark, #6f9117);
+  background: #f7faee;
+  color: var(--spotdeals-taxonomy-green-dark, #6f9117);
+}
+
+.path-taxonomy .spotdeals-venue-result__more { position: relative; }
+.path-taxonomy .spotdeals-venue-result__more > summary { list-style: none; }
+.path-taxonomy .spotdeals-venue-result__more > summary::-webkit-details-marker { display: none; }
+.path-taxonomy .spotdeals-venue-result__more-menu { position: absolute; z-index: 10; top: calc(100% + .45rem); right: 0; min-width: 12rem; padding: .65rem; border: 1px solid var(--spotdeals-taxonomy-border, #d7e1e8); border-radius: 9px; background: #fff; box-shadow: 0 12px 28px rgba(15,23,42,.12); }
+.path-taxonomy .spotdeals-venue-result__more-menu > * { margin: 0 0 .4rem; }
+.path-taxonomy .spotdeals-venue-result__more-menu > *:last-child { margin-bottom: 0; }
+.path-taxonomy .spotdeals-venue-result__more-menu a { color: var(--spotdeals-taxonomy-green-dark, #6f9117); font-weight: 700; text-decoration: none; }
+
+@media (max-width: 700px) {
+  .path-taxonomy .view-taxonomy-term .spotdeals-venue-result { display: block; margin-top: 1.35rem; padding: .9rem; }
+  .path-taxonomy .spotdeals-venue-result__actions { display: grid; grid-template-columns: 1fr; gap: .45rem; margin-top: .85rem; }
+  .path-taxonomy .spotdeals-venue-result__action,
+  .path-taxonomy .spotdeals-venue-result__action a { width: 100%; }
+  .path-taxonomy .spotdeals-venue-result__action--save { width: 100%; }
+  .path-taxonomy .spotdeals-venue-result__action--save > * { width: 100%; }
+  .path-taxonomy .spotdeals-venue-result__more { width: 100%; }
+  .path-taxonomy .spotdeals-venue-result__more-menu { position: static; width: 100%; margin-top: .45rem; box-shadow: none; }
 }

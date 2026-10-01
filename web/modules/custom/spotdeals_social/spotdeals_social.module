@@ -29,7 +29,7 @@ function spotdeals_social_entity_view_alter(array &$build, EntityInterface $enti
     return;
   }
 
-  $cacheability = new CacheableMetadata();
+  $cacheability = CacheableMetadata::createFromRenderArray($build);
   $cacheability->addCacheableDependency($entity);
   $cacheability->addCacheContexts(['theme', 'user']);
   $cacheability->applyTo($build);
@@ -45,6 +45,14 @@ function spotdeals_social_entity_view_alter(array &$build, EntityInterface $enti
 function spotdeals_social_preprocess_user(array &$variables): void {
   $profile_user = $variables['user'] ?? NULL;
   if (!$profile_user instanceof UserInterface || $profile_user->isNew()) {
+    return;
+  }
+
+  // SpotDeals social controls and profile data belong only to the full user
+  // profile. User entities are also rendered in compact mode for node author
+  // pictures and other embedded contexts; injecting profile actions there
+  // leaks Follow/Block controls into unrelated content.
+  if (($variables['view_mode'] ?? '') !== 'full') {
     return;
   }
 
@@ -70,7 +78,7 @@ function spotdeals_social_preprocess_user(array &$variables): void {
       ])->toString();
     }
 
-    $privacy_cacheability = new CacheableMetadata();
+    $privacy_cacheability = CacheableMetadata::createFromRenderArray($variables['elements']);
     $privacy_cacheability->addCacheableDependency($profile_user);
     $privacy_cacheability->addCacheContexts(['user']);
     $privacy_cacheability->applyTo($variables['elements']);
@@ -99,8 +107,8 @@ function spotdeals_social_preprocess_user(array &$variables): void {
     $relationship_manager = \Drupal::service('spotdeals_social.relationship_manager');
     $variables['spotdeals_social_relationships'] = $relationship_manager->buildSummary($profile_user);
 
-    $cacheable_metadata = new CacheableMetadata();
-    $cacheable_metadata->setCacheTags($relationship_manager->getCacheTags($profile_user));
+    $cacheable_metadata = CacheableMetadata::createFromRenderArray($variables['elements']);
+    $cacheable_metadata->addCacheTags($relationship_manager->getCacheTags($profile_user));
     $cacheable_metadata->addCacheContexts($relationship_manager->getCacheContexts());
     $cacheable_metadata->applyTo($variables['elements']);
   }

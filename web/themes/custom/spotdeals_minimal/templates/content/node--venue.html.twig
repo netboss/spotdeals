@@ -19,6 +19,42 @@
   ]
 %}
 
+{% if view_mode != 'full' %}
+  {% set classes = classes|merge(['spotdeals-venue-result']) %}
+{% endif %}
+
+{% if view_mode != 'full' %}
+  {% set venue_locality = node.field_address.locality|default('') %}
+  <article{{ attributes.addClass(classes) }}>
+    <div class="spotdeals-venue-result__identity">
+      {{ title_prefix }}
+      {% if label %}
+        <h2{{ title_attributes.addClass('node__title') }}>
+          <a href="{{ url }}" rel="bookmark">{{ label }}</a>
+        </h2>
+      {% endif %}
+      {{ title_suffix }}
+      {% if venue_locality %}
+        <div class="spotdeals-venue-result__location"><span aria-hidden="true">📍</span> {{ venue_locality }}</div>
+      {% endif %}
+    </div>
+
+    <div class="spotdeals-venue-result__actions" aria-label="{{ 'Venue actions'|t }}">
+      <a class="spotdeals-venue-result__action spotdeals-venue-result__action--view" href="{{ url }}">{{ 'View venue'|t }}</a>
+      <div class="spotdeals-venue-result__action spotdeals-venue-result__action--save">{{ spotdeals_save_action }}</div>
+      <a class="spotdeals-venue-result__action spotdeals-venue-result__action--suggest" href="{{ path('spotdeals_revenue.suggest') }}">{{ 'Suggest deal'|t }}</a>
+      <details class="spotdeals-venue-result__more">
+        <summary class="spotdeals-venue-result__action spotdeals-venue-result__action--more">{{ 'More'|t }}</summary>
+        <div class="spotdeals-venue-result__more-menu">
+          {% if 'View Menu' not in content.field_cta[0]['#title'] %}
+            {{ content.field_cta }}
+          {% endif %}
+          {{ content|without('comment', 'field_image', 'body', 'field_address', 'field_venue_type', 'field_cta', 'flag_venue') }}
+        </div>
+      </details>
+    </div>
+  </article>
+{% else %}
 <article{{ attributes.addClass(classes) }}>
   <header class="{{ layout }}">
     {{ title_prefix }}
@@ -44,7 +80,7 @@
     {% endif %}
   </header>
 
-  <div{{ content_attributes.addClass('node__content', layout) }}>
+  <div{{ content_attributes.addClass('node__content', layout, view_mode != 'full' ? 'spotdeals-venue-result__content' : '') }}>
     {# The Menu and View Menu are duplicates; remove field_cta if it contains "View Menu" #}
     {% if 'View Menu' in content.field_cta[0]['#title'] %}
       {{ content|without('comment', 'field_image', 'body', 'field_address', 'field_venue_type', 'field_cta', 'flag_venue') }}
@@ -84,3 +120,5 @@
     </div>
   {% endif %}
 </article>
+
+{% endif %}

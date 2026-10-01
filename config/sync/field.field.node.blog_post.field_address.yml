@@ -1,0 +1,47 @@
+uuid: e06684ce-33cc-4462-80a5-d63fc91a9069
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_address
+    - node.type.blog_post
+  module:
+    - address
+id: node.blog_post.field_address
+field_name: field_address
+entity_type: node
+bundle: blog_post
+label: Location
+description: 'Enter the primary city and state this article covers.'
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  available_countries: {  }
+  langcode_override: ''
+  field_overrides:
+    givenName:
+      override: hidden
+    additionalName:
+      override: hidden
+    familyName:
+      override: hidden
+    organization:
+      override: hidden
+    addressLine1:
+      override: hidden
+    addressLine2:
+      override: hidden
+    addressLine3:
+      override: hidden
+    postalCode:
+      override: optional
+    dependentLocality:
+      override: optional
+    locality:
+      override: required
+    administrativeArea:
+      override: required
+  fields: {  }
+field_type: address

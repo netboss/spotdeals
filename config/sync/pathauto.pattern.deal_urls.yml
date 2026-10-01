@@ -2,12 +2,14 @@ uuid: 358bb322-e83d-4e2f-8595-ed58171bdb7d
 langcode: en
 status: true
 dependencies:
+  config:
+    - node.type.deal
   module:
     - node
 id: deal_urls
 label: 'Deal URLs'
 type: 'canonical_entities:node'
-pattern: '/deals/[node:field_venue:entity:field_address:locality]/[node:field_deal_category:entity]/[node:title]'
+pattern: '/deals/[node:field_venue:entity:field_address:locality]/[node:field_deal_category:entity]/[node:field_venue:entity:title]/[node:title]'
 selection_criteria:
   a351f760-7814-4bb0-bdff-e8b20d3c1f8f:
     id: 'entity_bundle:node'
@@ -16,7 +18,6 @@ selection_criteria:
       node: node
     bundles:
       deal: deal
-    uuid: a351f760-7814-4bb0-bdff-e8b20d3c1f8f
 selection_logic: and
 weight: -5
 relationships: {  }
