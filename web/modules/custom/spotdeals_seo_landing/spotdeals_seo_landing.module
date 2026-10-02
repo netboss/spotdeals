@@ -4,6 +4,33 @@ declare(strict_types=1);
 
 use Drupal\Core\Database\Database;
 use Drupal\views\ViewExecutable;
+use Drupal\node\NodeInterface;
+
+use Drupal\taxonomy\TermInterface;
+
+/**
+ * Implements hook_preprocess_taxonomy_term().
+ */
+function spotdeals_seo_landing_preprocess_taxonomy_term(array &$variables): void {
+  $term = $variables['term'] ?? NULL;
+  if (!$term instanceof TermInterface) {
+    return;
+  }
+
+  $landing_vocabularies = [
+    'day_of_week',
+    'deal_category',
+    'cuisine',
+    'venue_type',
+    'neighborhood',
+    'tags',
+  ];
+  if (!in_array($term->bundle(), $landing_vocabularies, TRUE)) {
+    return;
+  }
+
+  $variables['spotdeals_taxonomy_backend'] = \Drupal::service('spotdeals_seo_landing.taxonomy_landing_data')->build($term);
+}
 
 /**
  * Implements hook_views_pre_execute().
@@ -109,4 +136,27 @@ function _spotdeals_seo_landing_normalize_for_comparison(string $value): string 
   $value = preg_replace('/\s+/u', ' ', $value) ?? '';
 
   return trim($value);
+}
+
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function spotdeals_seo_landing_preprocess_page(array &$variables): void {
+  $node = \Drupal::routeMatch()->getParameter('node');
+  if (!$node instanceof NodeInterface || $node->bundle() !== 'deal') {
+    return;
+  }
+
+  if (!$node->hasField('field_venue') || $node->get('field_venue')->isEmpty()) {
+    return;
+  }
+
+  $venue = $node->get('field_venue')->entity;
+  if (!$venue instanceof NodeInterface) {
+    return;
+  }
+
+  $variables['spotdeals_deal_related_deals'] = \Drupal::service('spotdeals_seo_landing.deal_page_data')
+    ->buildRelatedDeals($node, $venue);
 }

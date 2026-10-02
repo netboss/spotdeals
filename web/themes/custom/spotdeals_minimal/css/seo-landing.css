@@ -1088,8 +1088,13 @@
 
 /* Taxonomy page: expand page title/header block to full content wrapper. */
 @media (min-width: 43.75rem) {
+  /* Taxonomy pages do not use the named sidebar grid areas from the generic
+   * page shell. Keep the main element in normal flow so it cannot create an
+   * implicit "main" grid track, and do not turn the main element itself into
+   * a grid just to widen the title region. */
   .path-taxonomy .spotdeals-main-content {
-    display: grid;
+    display: block;
+    grid-area: auto;
   }
 
   .path-taxonomy .region--content-above,

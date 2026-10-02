@@ -127,8 +127,7 @@ process:
     - plugin: skip_on_empty
       method: process
       source: field_tags
-    - plugin: explode
-      delimiter: '|'
+    - plugin: spotdeals_normalize_tags
     - plugin: entity_generate
       entity_type: taxonomy_term
       value_key: name

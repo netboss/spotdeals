@@ -90,7 +90,15 @@
       {% endif %}
     </header>
 
-    {{ content|without('description') }}
+    {% if landing.vocabulary == 'tags' and landing.tag_location_deals %}
+      <section class="spotdeals-taxonomy-landing__local-deals" aria-labelledby="spotdeals-local-deals-title">
+        <h2 id="spotdeals-local-deals-title" class="visually-hidden">{{ 'Deals in @location'|t({'@location': landing.tag_location_deals.location}) }}</h2>
+        {{ landing.tag_location_deals.items }}
+        {{ landing.tag_location_deals.pager }}
+      </section>
+    {% else %}
+      {{ content|without('description') }}
+    {% endif %}
 
     {% if landing.related_links %}
       <section class="spotdeals-seo-related spotdeals-taxonomy-landing__related" aria-labelledby="spotdeals-taxonomy-related-title">
