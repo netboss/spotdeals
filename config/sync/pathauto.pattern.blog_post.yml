@@ -1,0 +1,23 @@
+uuid: 951ee788-3545-40da-9886-31d9b033089c
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.blog_post
+  module:
+    - node
+id: blog_post
+label: 'Blog post'
+type: 'canonical_entities:node'
+pattern: '/blog/[node:title]'
+selection_criteria:
+  6e74fbe8-85c8-4873-b99a-7cdcb6bbd463:
+    id: 'entity_bundle:node'
+    negate: false
+    context_mapping:
+      node: node
+    bundles:
+      blog_post: blog_post
+selection_logic: and
+weight: -5
+relationships: {  }
