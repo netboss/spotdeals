@@ -4,6 +4,7 @@ status: true
 dependencies:
   config:
     - filter.format.basic_html
+    - node.type.blog_post
     - node.type.deal
     - node.type.venue
     - taxonomy.vocabulary.tags
@@ -31,21 +32,27 @@ permissions:
   - 'access files overview'
   - 'access toolbar'
   - 'administer url aliases'
+  - 'create blog_post content'
   - 'create deal content'
   - 'create terms in tags'
   - 'create url aliases'
   - 'create venue content'
+  - 'delete own blog_post content'
   - 'delete own deal content'
   - 'delete own files'
   - 'delete own venue content'
+  - 'edit any blog_post content'
+  - 'edit own blog_post content'
   - 'edit own comments'
   - 'edit own deal content'
   - 'edit own venue content'
   - 'edit terms in tags'
   - 'revert all revisions'
+  - 'revert blog_post revisions'
   - 'review spotdeals deal discovery'
   - 'run spotdeals deal discovery'
   - 'use text format basic_html'
   - 'view all revisions'
+  - 'view blog_post revisions'
   - 'view own unpublished content'
   - 'view the administration theme'

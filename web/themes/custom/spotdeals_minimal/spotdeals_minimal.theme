@@ -159,7 +159,6 @@ function spotdeals_minimal_preprocess_page(array &$variables): void {
 
   $variables['spotdeals_deal_sidebar_venue'] = _spotdeals_minimal_build_deal_page_venue_summary($venue);
   $variables['spotdeals_deal_primary_ctas'] = _spotdeals_minimal_build_deal_page_ctas($node, $venue);
-  $variables['spotdeals_deal_related_deals'] = _spotdeals_minimal_build_deal_page_related_deals($node, $venue);
 }
 
 /**
@@ -259,6 +258,7 @@ function spotdeals_minimal_preprocess_taxonomy_term(array &$variables): void {
   $term_label = $term->label();
   $landing_title = _spotdeals_minimal_build_taxonomy_landing_title($term);
   $is_tag = $vocabulary === 'tags';
+  $backend = is_array($variables['spotdeals_taxonomy_backend'] ?? NULL) ? $variables['spotdeals_taxonomy_backend'] : [];
   $description = trim((string) ($variables['content']['description'][0]['#context']['value'] ?? ''));
 
   $variables['spotdeals_taxonomy_landing'] = [
@@ -266,10 +266,11 @@ function spotdeals_minimal_preprocess_taxonomy_term(array &$variables): void {
     'eyebrow' => _spotdeals_minimal_build_taxonomy_landing_eyebrow($vocabulary),
     'title' => $landing_title,
     'intro' => $description !== '' ? $description : _spotdeals_minimal_build_taxonomy_landing_intro($term, $landing_title),
-    'stats' => $is_tag ? [] : _spotdeals_minimal_build_taxonomy_landing_stats($term),
-    'tag_related_content' => $is_tag ? _spotdeals_minimal_build_tag_related_content($term) : [],
-    'tag_local_topics' => $is_tag ? _spotdeals_minimal_build_tag_local_topics($term) : [],
-    'related_links' => $is_tag ? [] : _spotdeals_minimal_build_taxonomy_related_links($term),
+    'stats' => $backend['stats'] ?? [],
+    'tag_related_content' => $backend['tag_related_content'] ?? [],
+    'tag_local_topics' => $backend['tag_local_topics'] ?? [],
+    'tag_location_deals' => $backend['tag_location_deals'] ?? [],
+    'related_links' => $is_tag ? [] : _spotdeals_minimal_prepare_taxonomy_related_links($backend['related_links'] ?? []),
     'faq' => $is_tag ? [] : _spotdeals_minimal_build_taxonomy_landing_faq($term, $landing_title),
     'show_deal_cta' => !$is_tag,
     'browse_url' => Url::fromUserInput('/deals'),
@@ -348,242 +349,30 @@ function _spotdeals_minimal_build_taxonomy_landing_intro(TermInterface $term, st
 }
 
 /**
- * Builds a compact related-content summary for Tags taxonomy landing pages.
+ * Prepares backend-supplied related taxonomy links for presentation.
  */
-function _spotdeals_minimal_build_tag_related_content(TermInterface $term): array {
-  if ($term->bundle() !== 'tags') {
-    return [];
-  }
-
-  // Count published nodes associated with this term through Drupal's taxonomy
-  // index. This remains field-agnostic for the shared Tags vocabulary.
-  $query = \Drupal::database()->select('taxonomy_index', 'ti');
-  $query->join('node_field_data', 'nfd', 'nfd.nid = ti.nid');
-  $count = (int) $query
-    ->condition('ti.tid', (int) $term->id())
-    ->condition('nfd.status', 1)
-    ->fields('nfd', ['nid'])
-    ->distinct()
-    ->countQuery()
-    ->execute()
-    ->fetchField();
-
-  if ($count === 0) {
-    return [];
-  }
-
-  return [
-    'count' => $count,
-    'label' => \Drupal::translation()->formatPlural($count, 'Published page', 'Published pages'),
-    'icon' => '📄',
-  ];
-}
-
-/**
- * Builds nearby/same-city topic links for Tags taxonomy landing pages.
- *
- * The location comes from published Blog posts using the current tag. Related
- * topics are other Tags used by published Blog posts in that same locality,
- * with a label-based same-locality fallback for existing Tags. This keeps the
- * block data-driven without inventing geographic relationships.
- */
-function _spotdeals_minimal_build_tag_local_topics(TermInterface $term): array {
-  if ($term->bundle() !== 'tags') {
-    return [];
-  }
-
-  $connection = \Drupal::database();
-  $current_tid = (int) $term->id();
-
-  // Find a published Blog post using this tag so its structured address can
-  // provide the locality displayed in the "More in ..." heading.
-  $query = $connection->select('taxonomy_index', 'ti');
-  $query->join('node_field_data', 'nfd', 'nfd.nid = ti.nid');
-  $query->join('node__field_address', 'address', 'address.entity_id = ti.nid AND address.deleted = 0');
-  $query->condition('ti.tid', $current_tid);
-  $query->condition('nfd.type', 'blog_post');
-  $query->condition('nfd.status', 1);
-  $query->condition('address.field_address_locality', '', '<>');
-  $query->addField('address', 'field_address_locality', 'locality');
-  $query->range(0, 1);
-  $locality = trim((string) $query->execute()->fetchField());
-
-  if ($locality === '') {
-    return [];
-  }
-
-  $candidate_ids = [];
-
-  // Prefer topics actually used by other published Blog posts in this city.
-  $query = $connection->select('node_field_data', 'nfd');
-  $query->join('node__field_address', 'address', 'address.entity_id = nfd.nid AND address.deleted = 0');
-  $query->join('node__field_blog_tags', 'blog_tags', 'blog_tags.entity_id = nfd.nid AND blog_tags.deleted = 0');
-  $query->condition('nfd.type', 'blog_post');
-  $query->condition('nfd.status', 1);
-  $query->condition('address.field_address_locality', $locality);
-  $query->condition('blog_tags.field_blog_tags_target_id', $current_tid, '<>');
-  $query->addField('blog_tags', 'field_blog_tags_target_id', 'tid');
-  $query->distinct();
-  foreach ($query->execute()->fetchCol() as $tid) {
-    $candidate_ids[(int) $tid] = TRUE;
-    if (count($candidate_ids) >= 7) {
-      break;
-    }
-  }
-
-  // Existing Tags may predate Blog posts. Fill remaining slots with Tags whose
-  // labels explicitly reference the same locality; this is still a factual,
-  // deterministic relationship rather than a guessed "nearby" location.
-  if (count($candidate_ids) < 7) {
-    $query = $connection->select('taxonomy_term_field_data', 'tfd');
-    $query->condition('tfd.vid', 'tags');
-    $query->condition('tfd.status', 1);
-    $query->condition('tfd.tid', $current_tid, '<>');
-    $query->condition('tfd.name', '%' . $connection->escapeLike($locality) . '%', 'LIKE');
-    $query->fields('tfd', ['tid']);
-    $query->orderBy('tfd.weight');
-    $query->orderBy('tfd.name');
-    $query->range(0, 14);
-    foreach ($query->execute()->fetchCol() as $tid) {
-      $candidate_ids[(int) $tid] = TRUE;
-      if (count($candidate_ids) >= 7) {
-        break;
-      }
-    }
-  }
-
-  if ($candidate_ids === []) {
-    return [];
-  }
-
-  $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadMultiple(array_keys($candidate_ids));
-  $links = [];
-  foreach (array_keys($candidate_ids) as $tid) {
-    $related_term = $terms[$tid] ?? NULL;
-    if (!$related_term instanceof TermInterface) {
-      continue;
-    }
-    $links[] = [
-      'title' => $related_term->label(),
-      'url' => $related_term->toUrl(),
-    ];
-    if (count($links) >= 7) {
-      break;
-    }
-  }
-
-  return [
-    'location' => $locality,
-    'links' => $links,
-  ];
-}
-
-/**
- * Builds lightweight stats for the taxonomy term page hero.
- */
-function _spotdeals_minimal_build_taxonomy_landing_stats(TermInterface $term): array {
-  $connection = \Drupal::database();
-  $tid = (int) $term->id();
-
-  if ($term->bundle() === 'tags') {
-    $guide_count_query = $connection->select('taxonomy_index', 'ti')
-      ->condition('ti.tid', $tid)
-      ->condition('nfd.type', 'blog_post')
-      ->condition('nfd.status', 1)
-      ->fields('ti', ['nid'])
-      ->distinct();
-    $guide_count_query->join('node_field_data', 'nfd', 'nfd.nid = ti.nid');
-    $guide_count = (int) $guide_count_query
-      ->countQuery()
-      ->execute()
-      ->fetchField();
-
-    return [
-      [
-        'icon' => '📖',
-        'value' => (string) $guide_count,
-        'label' => t('Guides'),
-        'description' => \Drupal::translation()->formatPlural($guide_count, 'Published article', 'Published articles'),
-      ],
-      [
-        'icon' => '🔎',
-        'value' => t('Explore'),
-        'label' => t('Topic'),
-        'description' => t('Browse related SpotDeals content'),
-      ],
-    ];
-  }
-
-  $deal_count_query = $connection->select('taxonomy_index', 'ti')
-    ->condition('ti.tid', $tid)
-    ->condition('nfd.type', 'deal')
-    ->condition('nfd.status', 1)
-    ->fields('ti', ['nid'])
-    ->distinct();
-  $deal_count_query->join('node_field_data', 'nfd', 'nfd.nid = ti.nid');
-  $deal_count = (int) $deal_count_query
-    ->countQuery()
-    ->execute()
-    ->fetchField();
-
-  $venue_ids = [];
-  $query = $connection->select('taxonomy_index', 'ti')
-    ->condition('ti.tid', $tid)
-    ->condition('nfd.type', 'deal')
-    ->condition('nfd.status', 1);
-  $query->join('node_field_data', 'nfd', 'nfd.nid = ti.nid');
-  $query->leftJoin('node__field_venue', 'venue_ref', 'venue_ref.entity_id = ti.nid');
-  $query->fields('venue_ref', ['field_venue_target_id']);
-  foreach ($query->execute()->fetchCol() as $venue_id) {
-    if (!empty($venue_id)) {
-      $venue_ids[(int) $venue_id] = TRUE;
-    }
-  }
-
-  return [
-    [
-      'icon' => '🏷',
-      'value' => (string) $deal_count,
-      'label' => t('Active deals'),
-      'description' => t('Current matching offers'),
-    ],
-    [
-      'icon' => '📍',
-      'value' => (string) count($venue_ids),
-      'label' => t('Venues'),
-      'description' => t('Local places with deals'),
-    ],
-    [
-      'icon' => '🔎',
-      'value' => t('Updated'),
-      'label' => t('Discoverable'),
-      'description' => t('Browse and compare results'),
-    ],
-  ];
-}
-
-/**
- * Builds related taxonomy links from the same vocabulary.
- */
-function _spotdeals_minimal_build_taxonomy_related_links(TermInterface $term): array {
-  $storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
-  $terms = $storage->loadTree($term->bundle(), 0, 1, TRUE);
+function _spotdeals_minimal_prepare_taxonomy_related_links(array $backend_links): array {
   $links = [];
 
-  foreach ($terms as $related_term) {
-    if (!$related_term instanceof TermInterface || (int) $related_term->id() === (int) $term->id()) {
+  foreach ($backend_links as $backend_link) {
+    if (!is_array($backend_link) || empty($backend_link['title']) || empty($backend_link['url'])) {
       continue;
     }
 
+    $vocabulary = (string) ($backend_link['vocabulary'] ?? '');
+    $title = (string) $backend_link['title'];
     $links[] = [
-      'title' => _spotdeals_minimal_build_taxonomy_landing_title($related_term),
-      'url' => $related_term->toUrl(),
-      'subtitle' => _spotdeals_minimal_build_taxonomy_landing_eyebrow($related_term->bundle()),
+      'title' => match ($vocabulary) {
+        'day_of_week' => (string) t('@day deals', ['@day' => $title]),
+        'deal_category' => (string) t('@category deals', ['@category' => $title]),
+        'cuisine' => (string) t('@cuisine deals', ['@cuisine' => $title]),
+        'venue_type' => (string) t('@type deals', ['@type' => $title]),
+        'neighborhood' => (string) t('Deals in @place', ['@place' => $title]),
+        default => $title,
+      },
+      'url' => $backend_link['url'],
+      'subtitle' => _spotdeals_minimal_build_taxonomy_landing_eyebrow($vocabulary),
     ];
-
-    if (count($links) >= 6) {
-      break;
-    }
   }
 
   return $links;
@@ -1042,87 +831,6 @@ function _spotdeals_minimal_build_venue_page_ctas(NodeInterface $venue): array {
       '#type' => 'container',
       '#attributes' => ['class' => ['spotdeals-deal-cta-panel__links']],
     ] + $links,
-  ];
-}
-
-/**
- * Builds related deal links for other deals attached to the same venue.
- */
-function _spotdeals_minimal_build_deal_page_related_deals(NodeInterface $deal, NodeInterface $venue): array {
-  $query = \Drupal::entityQuery('node')
-    ->accessCheck(TRUE)
-    ->condition('type', 'deal')
-    ->condition('status', 1)
-    ->condition('field_venue.target_id', $venue->id())
-    ->condition('nid', $deal->id(), '<>')
-    ->sort('changed', 'DESC')
-    ->range(0, 4);
-
-  $deal_field_definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('node', 'deal');
-  if (isset($deal_field_definitions['field_active'])) {
-    $query->condition('field_active', 1);
-  }
-
-  $ids = $query->execute();
-  if (empty($ids)) {
-    return [];
-  }
-
-  $nodes = \Drupal::entityTypeManager()->getStorage('node')->loadMultiple($ids);
-  $items = [];
-
-  foreach ($nodes as $related_deal) {
-    if (!$related_deal instanceof NodeInterface) {
-      continue;
-    }
-
-    $summary_parts = [];
-    $category_labels = _spotdeals_minimal_get_entity_reference_labels($related_deal, ['field_deal_category']);
-    if (!empty($category_labels)) {
-      $summary_parts[] = implode(', ', $category_labels);
-    }
-
-    $days = _spotdeals_minimal_get_entity_reference_labels($related_deal, ['field_day_of_week']);
-    if (!empty($days)) {
-      $summary_parts[] = implode(', ', $days);
-    }
-
-    $items[] = [
-      '#type' => 'container',
-      '#attributes' => ['class' => ['spotdeals-related-deals__item']],
-      'link' => [
-        '#type' => 'link',
-        '#title' => $related_deal->label(),
-        '#url' => $related_deal->toUrl(),
-        '#attributes' => ['class' => ['spotdeals-related-deals__link']],
-      ],
-      'summary' => [
-        '#type' => 'html_tag',
-        '#tag' => 'div',
-        '#value' => implode(' · ', $summary_parts),
-        '#attributes' => ['class' => ['spotdeals-related-deals__summary']],
-        '#access' => !empty($summary_parts),
-      ],
-    ];
-  }
-
-  if (empty($items)) {
-    return [];
-  }
-
-  return [
-    '#type' => 'container',
-    '#attributes' => ['class' => ['spotdeals-related-deals']],
-    'heading' => [
-      '#type' => 'html_tag',
-      '#tag' => 'h2',
-      '#value' => t('More deals at @venue', ['@venue' => $venue->label()]),
-      '#attributes' => ['class' => ['spotdeals-related-deals__title']],
-    ],
-    'items' => [
-      '#type' => 'container',
-      '#attributes' => ['class' => ['spotdeals-related-deals__items']],
-    ] + $items,
   ];
 }
 

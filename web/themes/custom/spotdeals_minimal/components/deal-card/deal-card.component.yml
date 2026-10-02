@@ -12,6 +12,7 @@ props:
       enum:
         - default
         - recommended
+        - taxonomy-teaser
     image:
       type: ['string', 'null']
       title: Image
