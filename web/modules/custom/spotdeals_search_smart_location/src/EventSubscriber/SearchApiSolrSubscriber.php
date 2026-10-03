@@ -57,6 +57,21 @@ final class SearchApiSolrSubscriber implements EventSubscriberInterface {
       return;
     }
 
+    // SEO city/category landing pages are explicitly scoped by their route
+    // contextual arguments. Browser-origin coordinates may still be present in
+    // the URL because the near-me JavaScript preserves the visitor's location,
+    // but those coordinates must not replace the landing page's city scope with
+    // a 25 km geofilter around the visitor. Otherwise a Tampa landing page can
+    // render zero results for a visitor currently in another Florida city even
+    // though Tampa has matching deals.
+    $route_name = \Drupal::routeMatch()->getRouteName();
+    if (in_array($route_name, [
+      'spotdeals_seo_landing.deals_city',
+      'spotdeals_seo_landing.deals_city_category',
+    ], TRUE)) {
+      return;
+    }
+
     $request = \Drupal::request();
     $debug_logging_enabled = (string) $request->query->get('spotdeals_debug_search', '') === '1';
 
