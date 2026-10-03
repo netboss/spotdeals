@@ -8,6 +8,7 @@ dependencies:
     - field.field.node.blog_post.field_address
     - field.field.node.blog_post.field_blog_comments
     - field.field.node.blog_post.field_blog_tags
+    - field.field.node.blog_post.field_related_deal_categories
     - node.type.blog_post
   module:
     - address
@@ -33,5 +34,6 @@ hidden:
   body: true
   field_blog_comments: true
   field_blog_tags: true
+  field_related_deal_categories: true
   langcode: true
   search_api_excerpt: true

@@ -1513,3 +1513,76 @@
   .path-taxonomy .spotdeals-venue-result__more { width: 100%; }
   .path-taxonomy .spotdeals-venue-result__more-menu { position: static; width: 100%; margin-top: .45rem; box-shadow: none; }
 }
+
+/* Editorial guides explicitly matched to this deal-search context. */
+.spotdeals-seo-guides {
+  max-width: 760px;
+  margin: 0 0 1.5rem;
+}
+
+.spotdeals-seo-guides__heading {
+  margin: 0 0 0.75rem;
+  color: var(--spotdeals-seo-text);
+  font-size: 1.1rem;
+  line-height: 1.25;
+}
+
+.spotdeals-seo-guides__items {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.sd-guide-teaser {
+  padding: 1rem 1.15rem;
+  border: 1px solid #d6e4ad;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fbfdf5 0%, #f5f9e8 100%);
+  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.035);
+}
+
+.sd-guide-teaser__eyebrow {
+  margin-bottom: 0.3rem;
+  color: var(--spotdeals-seo-green-dark);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sd-guide-teaser__title {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+.sd-guide-teaser__title a {
+  color: var(--spotdeals-seo-text);
+  text-decoration: none;
+}
+
+.sd-guide-teaser__title a:hover,
+.sd-guide-teaser__title a:focus {
+  color: var(--spotdeals-seo-green-dark);
+  text-decoration: underline;
+}
+
+.sd-guide-teaser__summary {
+  margin: 0.55rem 0 0;
+  color: var(--spotdeals-seo-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.sd-guide-teaser__link {
+  display: inline-block;
+  margin-top: 0.65rem;
+  color: var(--spotdeals-seo-green-dark);
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.sd-guide-teaser__link:hover,
+.sd-guide-teaser__link:focus {
+  text-decoration: underline;
+}

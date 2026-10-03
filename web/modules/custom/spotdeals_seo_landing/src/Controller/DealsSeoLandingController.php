@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\PageCache\ResponsePolicy\KillSwitch;
 use Drupal\Core\Url;
 use Drupal\spotdeals_search_smart_location\RecommendationService;
+use Drupal\spotdeals_seo_landing\Service\BlogSearchMatcher;
 use Drupal\views\ViewExecutable;
 use Drupal\views\Views;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -107,6 +108,11 @@ final class DealsSeoLandingController extends ControllerBase {
   private KillSwitch $seoLandingPageCacheKillSwitch;
 
   /**
+   * Blog/search relevance matcher.
+   */
+  private BlogSearchMatcher $seoLandingBlogSearchMatcher;
+
+  /**
    * View total-row counts keyed by view/display/args/query for this request.
    *
    * @var array<string, int|null>
@@ -121,11 +127,13 @@ final class DealsSeoLandingController extends ControllerBase {
     EntityTypeManagerInterface $entityTypeManager,
     RecommendationService $recommendationService,
     KillSwitch $pageCacheKillSwitch,
+    BlogSearchMatcher $blogSearchMatcher,
   ) {
     $this->seoLandingDatabase = $database;
     $this->seoLandingEntityTypeManager = $entityTypeManager;
     $this->seoLandingRecommendationService = $recommendationService;
     $this->seoLandingPageCacheKillSwitch = $pageCacheKillSwitch;
+    $this->seoLandingBlogSearchMatcher = $blogSearchMatcher;
   }
 
   /**
@@ -137,6 +145,7 @@ final class DealsSeoLandingController extends ControllerBase {
       $container->get('entity_type.manager'),
       $container->get('spotdeals_search_smart_location.recommendation_service'),
       $container->get('page_cache_kill_switch'),
+      $container->get('spotdeals_seo_landing.blog_search_matcher'),
     );
   }
 
@@ -204,6 +213,7 @@ final class DealsSeoLandingController extends ControllerBase {
     $landing_data = $this->buildLandingData($city, $city_label, $category, $category_label);
     $local_recommendation = $this->prepareLocalRecommendation($city_label, $category_label);
     $deals_build = $this->buildDealsResults($city_label, $category_label);
+    $related_guides = $this->seoLandingBlogSearchMatcher->find($city_label, $category_label);
 
     $page_title = $category_label !== NULL
       ? $this->t('@category in @city', [
@@ -288,6 +298,7 @@ final class DealsSeoLandingController extends ControllerBase {
                 'class' => ['spotdeals-seo-landing__results-column'],
               ],
               'local_recommendation' => $this->buildLocalRecommendationBlock($landing_data, $local_recommendation),
+              'related_guides' => $this->buildRelatedGuides($related_guides),
               'results' => [
                 '#type' => 'container',
                 '#attributes' => [
@@ -350,6 +361,49 @@ final class DealsSeoLandingController extends ControllerBase {
           ],
         ],
       ],
+    ];
+  }
+
+  /**
+   * Builds editorial Guide teasers that explicitly match this search context.
+   *
+   * @param array<int, array<string, string>> $guides
+   *   Matching guide teaser data.
+   */
+  private function buildRelatedGuides(array $guides): array {
+    if ($guides === []) {
+      return ['#markup' => ''];
+    }
+
+    $items = [];
+    foreach ($guides as $delta => $guide) {
+      $items['guide_' . $delta] = [
+        '#type' => 'component',
+        '#component' => 'spotdeals_minimal:guide-teaser',
+        '#props' => [
+          'title' => (string) ($guide['title'] ?? ''),
+          'url' => (string) ($guide['url'] ?? ''),
+          'summary' => (string) ($guide['summary'] ?? ''),
+        ],
+      ];
+    }
+
+    return [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['spotdeals-seo-guides'],
+        'aria-label' => $this->t('Related local guides'),
+      ],
+      'heading' => [
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#value' => $this->t('Local Guides'),
+        '#attributes' => ['class' => ['spotdeals-seo-guides__heading']],
+      ],
+      'items' => [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['spotdeals-seo-guides__items']],
+      ] + $items,
     ];
   }
 
