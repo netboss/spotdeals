@@ -6,3 +6,7 @@ services:
   spotdeals_seo_landing.deal_page_data:
     class: Drupal\spotdeals_seo_landing\Service\DealPageData
     arguments: ['@entity_type.manager', '@entity_field.manager']
+
+  spotdeals_seo_landing.blog_search_matcher:
+    class: Drupal\spotdeals_seo_landing\Service\BlogSearchMatcher
+    arguments: ['@entity_type.manager']

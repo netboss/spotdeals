@@ -8,6 +8,7 @@ dependencies:
     - field.field.node.blog_post.field_address
     - field.field.node.blog_post.field_blog_comments
     - field.field.node.blog_post.field_blog_tags
+    - field.field.node.blog_post.field_related_deal_categories
     - node.type.blog_post
   module:
     - address
@@ -50,6 +51,14 @@ content:
       link: true
     third_party_settings: {  }
     weight: 103
+    region: content
+  field_related_deal_categories:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 104
     region: content
   links:
     settings: {  }

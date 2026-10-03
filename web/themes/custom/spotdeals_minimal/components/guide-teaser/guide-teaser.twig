@@ -1,0 +1,10 @@
+<article class="sd-guide-teaser">
+  <div class="sd-guide-teaser__eyebrow">{{ 'Local guide'|t }}</div>
+  <h3 class="sd-guide-teaser__title">
+    <a href="{{ url }}">{{ title }}</a>
+  </h3>
+  {% if summary %}
+    <p class="sd-guide-teaser__summary">{{ summary }}</p>
+  {% endif %}
+  <a class="sd-guide-teaser__link" href="{{ url }}">{{ 'Read the guide'|t }} <span aria-hidden="true">→</span></a>
+</article>

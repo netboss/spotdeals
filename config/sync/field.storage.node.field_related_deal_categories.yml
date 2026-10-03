@@ -1,0 +1,20 @@
+uuid: a73a6a61-043c-48ce-9334-f3514bf578e4
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - taxonomy
+id: node.field_related_deal_categories
+field_name: field_related_deal_categories
+entity_type: node
+type: entity_reference
+settings:
+  target_type: taxonomy_term
+module: core
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

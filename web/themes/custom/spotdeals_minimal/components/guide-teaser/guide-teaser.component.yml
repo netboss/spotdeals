@@ -1,0 +1,19 @@
+$schema: https://git.drupalcode.org/project/drupal/-/raw/11.x/core/modules/sdc/src/metadata.schema.json
+name: Guide teaser
+status: stable
+description: Compact editorial Blog guide promoted on a matching deals landing page.
+props:
+  type: object
+  required:
+    - title
+    - url
+  properties:
+    title:
+      type: string
+      title: Guide title
+    url:
+      type: string
+      title: Guide URL
+    summary:
+      type: string
+      title: Guide summary

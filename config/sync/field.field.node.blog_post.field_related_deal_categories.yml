@@ -1,0 +1,29 @@
+uuid: 40228530-de8f-469d-a7b5-40b52125e601
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_related_deal_categories
+    - node.type.blog_post
+    - taxonomy.vocabulary.deal_category
+id: node.blog_post.field_related_deal_categories
+field_name: field_related_deal_categories
+entity_type: node
+bundle: blog_post
+label: 'Related deal categories'
+description: 'Select the deal categories this article is specifically about. The article may be promoted on matching deal search pages for its location. Leave empty for general location guides.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:taxonomy_term'
+  handler_settings:
+    target_bundles:
+      deal_category: deal_category
+    sort:
+      field: name
+      direction: asc
+    auto_create: false
+    auto_create_bundle: ''
+field_type: entity_reference
