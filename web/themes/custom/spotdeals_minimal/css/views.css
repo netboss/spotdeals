@@ -53,3 +53,14 @@ h3 {
   display: flex;
   justify-content: center;
 }
+
+/* SD-219: contextual Local Guide on interactive Deals Finder results. */
+.spotdeals-finder__local-guide {
+  margin-block: 1rem;
+  width: 100%;
+}
+
+.spotdeals-finder__local-guide .sd-guide-teaser {
+  width: 100%;
+}
+

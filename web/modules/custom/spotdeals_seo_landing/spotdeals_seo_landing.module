@@ -68,6 +68,107 @@ function spotdeals_seo_landing_views_pre_execute(ViewExecutable $view): void {
 }
 
 /**
+ * Implements hook_views_post_execute().
+ *
+ * SD-219 resolves the relevant Blog guide in the backend module layer. Theme
+ * code only consumes the prepared guide data and never performs entity/DB
+ * lookups.
+ */
+function spotdeals_seo_landing_views_post_execute(ViewExecutable $view): void {
+  if ($view->id() !== 'deals_search_solr' || (string) $view->current_display !== 'page_1') {
+    return;
+  }
+
+  if (!\Drupal::hasService('spotdeals_seo_landing.blog_search_matcher')) {
+    return;
+  }
+
+  $request = \Drupal::request();
+  $locality = trim((string) $request->attributes->get('spotdeals_search_smart_location.city', ''));
+
+  if ($locality === '') {
+    $locality = trim((string) $request->query->get('locality_exact', ''));
+  }
+
+  if ($locality === '') {
+    return;
+  }
+
+  $search_text = trim((string) $request->attributes->get(
+    'spotdeals_search_smart_location.raw_query',
+    (string) $request->query->get('search_raw', '')
+  ));
+
+  $guides = \Drupal::service('spotdeals_seo_landing.blog_search_matcher')
+    ->findForSearch($locality, $search_text, 1);
+
+  if ($guides === []) {
+    return;
+  }
+
+  $guide = reset($guides);
+  $view->build_info['spotdeals_search_guide'] = [
+    'title' => (string) ($guide['title'] ?? ''),
+    'url' => (string) ($guide['url'] ?? ''),
+    'summary' => (string) ($guide['summary'] ?? ''),
+  ];
+}
+
+
+/**
+ * Implements hook_preprocess_views_view().
+ *
+ * Recommendation/Near Me locality is finalized by the smart-location module
+ * during Views preprocessing, which is later than views_post_execute(). Resolve
+ * the guide here as a backend fallback so the theme never performs entity/DB
+ * lookups.
+ */
+function spotdeals_seo_landing_preprocess_views_view(array &$variables): void {
+  $view = $variables['view'] ?? NULL;
+  if (!$view instanceof ViewExecutable || $view->id() !== 'deals_search_solr' || (string) $view->current_display !== 'page_1') {
+    return;
+  }
+
+  $guide = $view->build_info['spotdeals_search_guide'] ?? NULL;
+
+  if (!is_array($guide) || empty($guide['title']) || empty($guide['url'])) {
+    if (!\Drupal::hasService('spotdeals_seo_landing.blog_search_matcher')) {
+      return;
+    }
+
+    $request = \Drupal::request();
+    $locality = trim((string) $request->attributes->get('spotdeals_search_smart_location.city', ''));
+    if ($locality === '') {
+      $locality = trim((string) $request->query->get('locality_exact', ''));
+    }
+    if ($locality === '') {
+      return;
+    }
+
+    $search_text = trim((string) $request->attributes->get(
+      'spotdeals_search_smart_location.raw_query',
+      (string) $request->query->get('search_raw', '')
+    ));
+
+    $guides = \Drupal::service('spotdeals_seo_landing.blog_search_matcher')
+      ->findForSearch($locality, $search_text, 1);
+    if ($guides === []) {
+      return;
+    }
+
+    $matched = reset($guides);
+    $guide = [
+      'title' => (string) ($matched['title'] ?? ''),
+      'url' => (string) ($matched['url'] ?? ''),
+      'summary' => (string) ($matched['summary'] ?? ''),
+    ];
+    $view->build_info['spotdeals_search_guide'] = $guide;
+  }
+
+  $variables['spotdeals_search_guide'] = $guide;
+}
+
+/**
  * Resolves a city slug like "port-orange" to the stored locality label.
  */
 function _spotdeals_seo_landing_resolve_city_label(string $city_slug): ?string {
