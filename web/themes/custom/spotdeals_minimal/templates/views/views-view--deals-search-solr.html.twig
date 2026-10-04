@@ -100,6 +100,9 @@
         </div>
         <a class="spotdeals-finder__suggestion-cta-button" href="{{ path('spotdeals_revenue.suggest') }}">{{ "Suggest a venue or deal"|t }}</a>
       </div>
+      {% if spotdeals_search_guide_render %}
+        {{ spotdeals_search_guide_render }}
+      {% endif %}
     {% elseif rows %}
       <div class="view-content spotdeals-finder__cards" data-result-count="{{ spotdeals_result_count }}">
         {{ rows }}

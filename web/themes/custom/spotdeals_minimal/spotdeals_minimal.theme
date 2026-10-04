@@ -1118,6 +1118,30 @@ function spotdeals_minimal_preprocess_views_view(array &$variables) {
   // Views still reports total_rows as 0. Never let a rendered row produce a
   // broken "Displaying 0 - 0 of 0" header.
   $variables['spotdeals_result_count'] = $total_rows > 0 ? $total_rows : $rendered_result_count;
+
+  // SD-219: the backend module resolves the guide. The theme only prepares
+  // its render array for paths (such as direct Near Me recommendations) that
+  // do not render the normal unformatted Views rows.
+  $guide = $variables['spotdeals_search_guide'] ?? ($view->build_info['spotdeals_search_guide'] ?? NULL);
+  if (is_array($guide) && !empty($guide['title']) && !empty($guide['url'])) {
+    $variables['spotdeals_search_guide_render'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['spotdeals-finder__local-guide'],
+        'aria-label' => (string) t('Local guide'),
+      ],
+      'guide' => [
+        '#type' => 'component',
+        '#component' => 'spotdeals_minimal:guide-teaser',
+        '#props' => [
+          'title' => (string) $guide['title'],
+          'url' => (string) $guide['url'],
+          'summary' => (string) ($guide['summary'] ?? ''),
+        ],
+      ],
+    ];
+    $view->element['#attached']['library'][] = 'spotdeals_minimal/seo_landing';
+  }
 }
 
 /**
@@ -2198,3 +2222,53 @@ function spotdeals_minimal_preprocess_user(array &$variables): void {
     $cacheable_metadata->applyTo($variables['elements']);
   }
 }
+
+/**
+ * Implements hook_preprocess_views_view_unformatted().
+ *
+ * SD-219 inserts the already-resolved guide after the third normal search
+ * result. Matching/query work is performed by spotdeals_seo_landing before the
+ * theme layer is reached.
+ */
+function spotdeals_minimal_preprocess_views_view_unformatted(array &$variables): void {
+  $view = $variables['view'] ?? NULL;
+  if (!$view instanceof \Drupal\views\ViewExecutable) {
+    return;
+  }
+
+  if ($view->id() !== 'deals_search_solr' || (string) $view->current_display !== 'page_1') {
+    return;
+  }
+
+  $guide = $view->build_info['spotdeals_search_guide'] ?? NULL;
+  if (!is_array($guide) || empty($guide['title']) || empty($guide['url'])) {
+    return;
+  }
+
+  $guide_row = [
+    'content' => [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['spotdeals-finder__local-guide'],
+        'aria-label' => (string) t('Local guide'),
+      ],
+      'guide' => [
+        '#type' => 'component',
+        '#component' => 'spotdeals_minimal:guide-teaser',
+        '#props' => [
+          'title' => (string) $guide['title'],
+          'url' => (string) $guide['url'],
+          'summary' => (string) ($guide['summary'] ?? ''),
+        ],
+      ],
+    ],
+  ];
+
+  // Put the guide after result 3, or after the last result when fewer than
+  // three deals are present.
+  $position = min(3, count($variables['rows']));
+  array_splice($variables['rows'], $position, 0, [$guide_row]);
+
+  $view->element['#attached']['library'][] = 'spotdeals_minimal/seo_landing';
+}
+
