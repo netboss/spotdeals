@@ -265,6 +265,17 @@ function spotdeals_data_ingestion_cron(): void {
       ['message' => $exception->getMessage()],
     );
   }
+
+  try {
+    \Drupal::service('spotdeals_data_ingestion.scheduled_deal_discovery_activity_digest')
+      ->sendCompletedDigests();
+  }
+  catch (\Throwable $exception) {
+    \Drupal::logger('spotdeals_data_ingestion')->warning(
+      'Scheduled deal-discovery activity digest failed safely during cron: {message}',
+      ['message' => $exception->getMessage()],
+    );
+  }
 }
 
 /**
@@ -275,12 +286,16 @@ function spotdeals_data_ingestion_mail(
   array &$message,
   array $params,
 ): void {
-  if ($key !== 'deal_discovery_daily_digest') {
+  if ($key === 'deal_discovery_daily_digest') {
+    $message['subject'] = (string) ($params['subject'] ?? 'SpotDeals daily publishing summary');
+    $message['body'][] = (string) ($params['body'] ?? '');
     return;
   }
 
-  $message['subject'] = (string) ($params['subject'] ?? 'SpotDeals daily publishing summary');
-  $message['body'][] = (string) ($params['body'] ?? '');
+  if ($key === 'scheduled_deal_discovery_activity_digest') {
+    $message['subject'] = (string) ($params['subject'] ?? 'SpotDeals scheduled discovery activity');
+    $message['body'][] = (string) ($params['body'] ?? '');
+  }
 }
 
 /**

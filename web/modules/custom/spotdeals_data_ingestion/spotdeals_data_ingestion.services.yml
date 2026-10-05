@@ -147,6 +147,17 @@ services:
   spotdeals_data_ingestion.deal_discovery_runner:
     alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryRunner
 
+  Drupal\spotdeals_data_ingestion\Service\ScheduledDealDiscoveryActivityDigest:
+    arguments:
+      - '@state'
+      - '@datetime.time'
+      - '@config.factory'
+      - '@plugin.manager.mail'
+      - '@logger.channel.spotdeals_data_ingestion'
+
+  spotdeals_data_ingestion.scheduled_deal_discovery_activity_digest:
+    alias: Drupal\spotdeals_data_ingestion\Service\ScheduledDealDiscoveryActivityDigest
+
   Drupal\spotdeals_data_ingestion\Service\DealDiscoveryScheduler:
     arguments:
       - '@config.factory'
@@ -154,6 +165,7 @@ services:
       - '@Drupal\spotdeals_data_ingestion\Service\VenueTypeResolver'
       - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryLocationResolver'
       - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryRunner'
+      - '@Drupal\spotdeals_data_ingestion\Service\ScheduledDealDiscoveryActivityDigest'
       - '@lock'
       - '@state'
       - '@datetime.time'
