@@ -22,6 +22,21 @@ final class DealDiscoveryLocationResolver {
    *   Select options keyed by an internal location token.
    */
   public function options(): array {
+    $options = [];
+    foreach ($this->locations() as $token => $location) {
+      $options[$token] = $location['label'];
+    }
+
+    return $options;
+  }
+
+  /**
+   * Returns distinct structured venue locations keyed by internal token.
+   *
+   * @return array<string, array{city: string, state: string, country: string, label: string}>
+   *   Structured locations in the same order as the administrative selector.
+   */
+  public function locations(): array {
     $query = $this->database->select('node__field_address', 'a');
     $query->innerJoin(
       'node_field_data',
@@ -40,7 +55,7 @@ final class DealDiscoveryLocationResolver {
     $query->condition('a.field_address_locality', '', '<>');
     $query->distinct();
 
-    $options = [];
+    $locations = [];
     foreach ($query->execute() as $record) {
       $city = trim((string) $record->field_address_locality);
       $state = strtoupper(trim((string) $record->field_address_administrative_area));
@@ -50,22 +65,30 @@ final class DealDiscoveryLocationResolver {
         continue;
       }
 
-      $token = $this->encode([
+      $location = [
         'city' => $city,
         'state' => $state,
         'country' => $country !== '' ? $country : 'US',
-      ]);
+      ];
+      $token = $this->encode($location);
+      if ($token === '') {
+        continue;
+      }
 
       $label = $city;
       if ($state !== '') {
         $label .= ', ' . $state;
       }
 
-      $options[$token] = $label;
+      $locations[$token] = $location + ['label' => $label];
     }
 
-    natcasesort($options);
-    return $options;
+    uasort($locations, static fn (array $a, array $b): int => strnatcasecmp(
+      $a['label'],
+      $b['label'],
+    ));
+
+    return $locations;
   }
 
   /**

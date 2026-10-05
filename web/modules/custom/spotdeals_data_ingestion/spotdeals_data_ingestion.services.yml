@@ -132,6 +132,36 @@ services:
   spotdeals_data_ingestion.deal_discovery_location_resolver:
     alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryLocationResolver
 
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryRunner:
+    arguments:
+      - '@Drupal\spotdeals_data_ingestion\Service\GeoapifyClient'
+      - '@Drupal\spotdeals_data_ingestion\Service\VenueMapper'
+      - '@Drupal\spotdeals_data_ingestion\Service\VenueCandidateValidator'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryService'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage'
+      - '@state'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryConfidenceClassifier'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishPreviewService'
+
+  spotdeals_data_ingestion.deal_discovery_runner:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryRunner
+
+  Drupal\spotdeals_data_ingestion\Service\DealDiscoveryScheduler:
+    arguments:
+      - '@config.factory'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryStorage'
+      - '@Drupal\spotdeals_data_ingestion\Service\VenueTypeResolver'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryLocationResolver'
+      - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryRunner'
+      - '@lock'
+      - '@state'
+      - '@datetime.time'
+      - '@logger.channel.spotdeals_data_ingestion'
+
+  spotdeals_data_ingestion.deal_discovery_scheduler:
+    alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryScheduler
+
   Drupal\spotdeals_data_ingestion\Service\GeoapifyClient:
     arguments:
       - '@http_client'

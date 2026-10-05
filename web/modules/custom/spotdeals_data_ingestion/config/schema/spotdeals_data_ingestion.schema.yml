@@ -41,3 +41,30 @@ spotdeals_data_ingestion.settings:
     deal_discovery_auto_publish_batch_size:
       type: integer
       label: 'Automatic deal-discovery publishing batch size per cron run'
+    deal_discovery_scheduler_enabled:
+      type: boolean
+      label: 'Enable scheduled deal discovery via cron'
+    deal_discovery_scheduler_venue_types:
+      type: sequence
+      label: 'Venue type term IDs selected for scheduled deal discovery'
+      sequence:
+        type: integer
+        label: 'Venue type term ID'
+    deal_discovery_scheduler_refresh_days:
+      type: integer
+      label: 'Scheduled deal-discovery rediscovery interval in days'
+    deal_discovery_scheduler_minimum_interval_minutes:
+      type: integer
+      label: 'Minimum minutes between scheduled deal-discovery runs'
+    deal_discovery_scheduler_candidate_limit:
+      type: integer
+      label: 'Scheduled deal-discovery candidate limit'
+    deal_discovery_scheduler_site_pages:
+      type: integer
+      label: 'Scheduled deal-discovery website pages per candidate'
+    deal_discovery_scheduler_pause_pending:
+      type: integer
+      label: 'Pending candidate count that pauses scheduled discovery'
+    deal_discovery_scheduler_resume_pending:
+      type: integer
+      label: 'Pending candidate count at or below which scheduled discovery resumes'

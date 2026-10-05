@@ -245,6 +245,17 @@ function spotdeals_data_ingestion_cron(): void {
   }
 
   try {
+    \Drupal::service('spotdeals_data_ingestion.deal_discovery_scheduler')
+      ->processCron();
+  }
+  catch (\Throwable $exception) {
+    \Drupal::logger('spotdeals_data_ingestion')->warning(
+      'Scheduled deal discovery cron failed safely: {message}',
+      ['message' => $exception->getMessage()],
+    );
+  }
+
+  try {
     \Drupal::service('spotdeals_data_ingestion.deal_discovery_daily_digest')
       ->sendCompletedDigests();
   }
