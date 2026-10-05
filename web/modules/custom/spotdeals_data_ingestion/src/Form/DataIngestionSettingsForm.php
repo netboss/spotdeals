@@ -9,6 +9,7 @@ use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\spotdeals_data_ingestion\Service\VenueTypeResolver;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -23,6 +24,7 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
     ConfigFactoryInterface $configFactory,
     TypedConfigManagerInterface $typedConfigManager,
     private readonly StateInterface $state,
+    private readonly VenueTypeResolver $venueTypeResolver,
   ) {
     parent::__construct($configFactory, $typedConfigManager);
   }
@@ -32,6 +34,7 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
       $container->get('config.factory'),
       $container->get('config.typed'),
       $container->get('state'),
+      $container->get('Drupal\spotdeals_data_ingestion\Service\VenueTypeResolver'),
     );
   }
 
@@ -168,13 +171,115 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    $venueTypeOptions = [];
+    foreach ($this->venueTypeResolver->mappedVenueTypes() as $definition) {
+      $venueTypeOptions[(string) $definition['tid']] = (string) $definition['name'];
+    }
+    natcasesort($venueTypeOptions);
+
+    $form['scheduled_discovery'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Scheduled deal discovery'),
+      '#open' => FALSE,
+      '#description' => $this->t('Runs the same discovery pipeline as the manual Deal Discovery form, one category/location pair at a time, with cooldown and Pending-backlog protection.'),
+    ];
+
+    $form['scheduled_discovery']['deal_discovery_scheduler_enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enable scheduled deal discovery via cron'),
+      '#default_value' => (bool) ($config->get('deal_discovery_scheduler_enabled') ?? FALSE),
+    ];
+
+    $form['scheduled_discovery']['deal_discovery_scheduler_venue_types'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Automated venue categories'),
+      '#options' => $venueTypeOptions,
+      '#default_value' => array_map('strval', (array) ($config->get('deal_discovery_scheduler_venue_types') ?? [])),
+      '#description' => $this->t('Choose only the dynamic/high-value categories that should be rediscovered automatically. The scheduler uses their existing Geoapify mappings.'),
+    ];
+
+    $form['scheduled_discovery']['deal_discovery_scheduler_refresh_days'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Rediscovery interval (days)'),
+      '#default_value' => (int) ($config->get('deal_discovery_scheduler_refresh_days') ?? 7),
+      '#min' => 1,
+      '#max' => 30,
+      '#required' => TRUE,
+      '#description' => $this->t('A category/location pair becomes eligible again after this many days. Start with 7 days.'),
+    ];
+
+    $form['scheduled_discovery']['deal_discovery_scheduler_minimum_interval_minutes'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Minimum time between automated discovery runs (minutes)'),
+      '#default_value' => (int) ($config->get('deal_discovery_scheduler_minimum_interval_minutes') ?? 60),
+      '#min' => 5,
+      '#max' => 1440,
+      '#required' => TRUE,
+      '#description' => $this->t('Even when many category/location pairs are due, cron will start at most one discovery after this cooldown.'),
+    ];
+
+    $form['scheduled_discovery']['deal_discovery_scheduler_candidate_limit'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Automated candidate limit'),
+      '#default_value' => (int) ($config->get('deal_discovery_scheduler_candidate_limit') ?? 25),
+      '#min' => 1,
+      '#max' => 50,
+      '#required' => TRUE,
+    ];
+
+    $form['scheduled_discovery']['deal_discovery_scheduler_site_pages'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Website pages per automated candidate'),
+      '#default_value' => (int) ($config->get('deal_discovery_scheduler_site_pages') ?? 5),
+      '#min' => 1,
+      '#max' => 10,
+      '#required' => TRUE,
+    ];
+
+    $form['scheduled_discovery']['deal_discovery_scheduler_pause_pending'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Pause automation at Pending count'),
+      '#default_value' => (int) ($config->get('deal_discovery_scheduler_pause_pending') ?? 300),
+      '#min' => 1,
+      '#max' => 10000,
+      '#required' => TRUE,
+    ];
+
+    $form['scheduled_discovery']['deal_discovery_scheduler_resume_pending'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Resume automation at or below Pending count'),
+      '#default_value' => (int) ($config->get('deal_discovery_scheduler_resume_pending') ?? 250),
+      '#min' => 0,
+      '#max' => 9999,
+      '#required' => TRUE,
+      '#description' => $this->t('Keep this below the pause threshold to prevent rapid pause/resume toggling.'),
+    ];
+
     return parent::buildForm($form, $form_state);
+  }
+
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
+    parent::validateForm($form, $form_state);
+
+    $pauseAt = (int) $form_state->getValue('deal_discovery_scheduler_pause_pending');
+    $resumeAt = (int) $form_state->getValue('deal_discovery_scheduler_resume_pending');
+    if ($resumeAt >= $pauseAt) {
+      $form_state->setErrorByName(
+        'deal_discovery_scheduler_resume_pending',
+        $this->t('The resume threshold must be lower than the pause threshold.'),
+      );
+    }
   }
 
   public function submitForm(
     array &$form,
     FormStateInterface $form_state,
   ): void {
+    $selectedVenueTypes = array_values(array_map('intval', array_filter(
+      (array) $form_state->getValue('deal_discovery_scheduler_venue_types'),
+      static fn (mixed $value): bool => (string) $value !== '0' && (string) $value !== '',
+    )));
+
     $this->configFactory
       ->getEditable('spotdeals_data_ingestion.settings')
       ->set('page_size', (int) $form_state->getValue('page_size'))
@@ -188,6 +293,14 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
       ->set('deal_discovery_auto_approve_require_schedule', (bool) $form_state->getValue('deal_discovery_auto_approve_require_schedule'))
       ->set('deal_discovery_auto_publish_enabled', (bool) $form_state->getValue('deal_discovery_auto_publish_enabled'))
       ->set('deal_discovery_auto_publish_batch_size', max(1, min(200, (int) $form_state->getValue('deal_discovery_auto_publish_batch_size'))))
+      ->set('deal_discovery_scheduler_enabled', (bool) $form_state->getValue('deal_discovery_scheduler_enabled'))
+      ->set('deal_discovery_scheduler_venue_types', $selectedVenueTypes)
+      ->set('deal_discovery_scheduler_refresh_days', max(1, min(30, (int) $form_state->getValue('deal_discovery_scheduler_refresh_days'))))
+      ->set('deal_discovery_scheduler_minimum_interval_minutes', max(5, min(1440, (int) $form_state->getValue('deal_discovery_scheduler_minimum_interval_minutes'))))
+      ->set('deal_discovery_scheduler_candidate_limit', max(1, min(50, (int) $form_state->getValue('deal_discovery_scheduler_candidate_limit'))))
+      ->set('deal_discovery_scheduler_site_pages', max(1, min(10, (int) $form_state->getValue('deal_discovery_scheduler_site_pages'))))
+      ->set('deal_discovery_scheduler_pause_pending', max(1, (int) $form_state->getValue('deal_discovery_scheduler_pause_pending')))
+      ->set('deal_discovery_scheduler_resume_pending', max(0, (int) $form_state->getValue('deal_discovery_scheduler_resume_pending')))
       ->save();
 
     $clearKey = (bool) $form_state->getValue(

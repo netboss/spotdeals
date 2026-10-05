@@ -12,3 +12,11 @@ deal_discovery_auto_approve_location_confidence: 1
 deal_discovery_auto_approve_require_schedule: true
 deal_discovery_auto_publish_enabled: true
 deal_discovery_auto_publish_batch_size: 25
+deal_discovery_scheduler_enabled: false
+deal_discovery_scheduler_venue_types: []
+deal_discovery_scheduler_refresh_days: 7
+deal_discovery_scheduler_minimum_interval_minutes: 60
+deal_discovery_scheduler_candidate_limit: 25
+deal_discovery_scheduler_site_pages: 5
+deal_discovery_scheduler_pause_pending: 300
+deal_discovery_scheduler_resume_pending: 250
