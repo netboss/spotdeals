@@ -29,6 +29,7 @@ final class DealDiscoveryScheduler {
     private readonly VenueTypeResolver $venueTypeResolver,
     private readonly DealDiscoveryLocationResolver $locationResolver,
     private readonly DealDiscoveryRunner $runner,
+    private readonly ScheduledDealDiscoveryActivityDigest $activityDigest,
     private readonly LockBackendInterface $lock,
     private readonly StateInterface $state,
     private readonly TimeInterface $time,
@@ -196,6 +197,20 @@ final class DealDiscoveryScheduler {
         'location_label' => (string) ($target['location']['label'] ?? ''),
       ];
       $this->state->set(self::RUN_STATE_NAME, $runState);
+
+      try {
+        $this->activityDigest->recordRun($result);
+      }
+      catch (\Throwable $exception) {
+        $this->logger->warning(
+          'Scheduled deal-discovery activity recording failed safely for {category} in {location}: {message}',
+          [
+            'category' => (string) ($result['category_label'] ?? ''),
+            'location' => (string) ($result['location_label'] ?? ''),
+            'message' => $exception->getMessage(),
+          ],
+        );
+      }
 
       $this->logger->notice(
         'Automated deal discovery completed for {category} in {location}: researched {researched}, qualifying venues {review}, queued/refreshed {queued}, auto-approved {auto}, duplicate-rejected {duplicates}, rejected {rejected}, pending {pending}.',
