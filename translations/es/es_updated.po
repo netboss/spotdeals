@@ -3,18 +3,17 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2026-08-05 16:59-0400\n"
-"PO-Revision-Date: 2026-08-05 16:59-0400\n"
+"POT-Creation-Date: 2026-10-07 18:10-0400\n"
+"PO-Revision-Date: 2026-10-07 18:10-0400\n"
 "Last-Translator: NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
-"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 msgid "@count items added to @container"
-msgstr ""
+msgstr "@count elementos añadidos a @container"
 
 msgid "Status message"
 msgstr "Mensaje de estado"
@@ -32,13 +31,13 @@ msgid "HTTP Result Code: !status"
 msgstr "Código de Resultado HTTP: !status"
 
 msgid "An AJAX HTTP request terminated abnormally."
-msgstr ""
+msgstr "Una solicitud HTTP AJAX terminó de forma anormal."
 
 msgid "Debugging information follows."
-msgstr ""
+msgstr "A continuación se muestra información de depuración."
 
 msgid "Path: !uri"
-msgstr ""
+msgstr "Ruta: !uri"
 
 msgid "StatusText: !statusText"
 msgstr "StatusText: !statusText"
@@ -55,13 +54,13 @@ msgstr "CustomMessage: !customMessage"
 msgid ""
 "Oops, something went wrong. Check your browser's developer console for "
 "more details."
-msgstr ""
+msgstr "Vaya, algo salió mal. Consulta la consola de desarrollador de tu navegador para obtener más detalles."
 
 msgid "Processing..."
 msgstr "Procesando..."
 
 msgid "The response failed verification so will not be processed."
-msgstr ""
+msgstr "La respuesta no superó la verificación y no se procesará."
 
 msgid "The callback URL is not local and not trusted: !url"
 msgstr "La URL de callback (llamada) no es local y no es confiable: !url"
@@ -174,7 +173,7 @@ msgstr "Ocultar columnas de menor prioridad"
 msgid ""
 "Show table cells that were hidden to make the table fit within a small "
 "screen."
-msgstr ""
+msgstr "Mostrar las celdas de la tabla que se ocultaron para ajustarla a una pantalla pequeña."
 
 msgid "Not in menu"
 msgstr "No está en un menú"
@@ -290,8 +289,8 @@ msgstr "@field_name: @label"
 msgid "Place a CAPTCHA here for untrusted users."
 msgstr "Ponga un CAPTCHA a aquellos usuarios que no son de confianza."
 
-msgid "Search using keywords or location — or combine them"
-msgstr "Busca por palabras clave o ubicación, o combínalas."
+msgid "Search by food type, or location to discover nearby deals."
+msgstr "Busca por tipo de comida o ubicación para descubrir ofertas cercanas."
 
 msgid "CAPTCHA: no challenge enabled"
 msgstr "CAPTCHA: No se ha establecido ninguna pregunta"
@@ -299,11 +298,15 @@ msgstr "CAPTCHA: No se ha establecido ninguna pregunta"
 msgid "Not sure? We’ll pick for you!"
 msgstr "¿No sabes? ¡Elegimos por ti!"
 
-msgid "Category preferences"
-msgstr "Preferencias de categorías"
+msgid "Cuisine preferences"
+msgstr "Preferencias de comida"
 
-msgid "Optional. Enter up to 5 category ideas separated by spaces, or leave this empty and we’ll surprise you."
-msgstr "Opcional. Ingresa hasta 5 categorías separadas por espacios o deja este campo vacío y te sorprenderemos."
+msgid ""
+"Optional. Enter up to 5 cuisine ideas separated by spaces, or leave "
+"this empty and we’ll surprise you."
+msgstr ""
+"Opcional. Ingresa hasta 5 tipos de comida separados por espacios o "
+"déjalo vacío y te sorprenderemos."
 
 msgid "Find deals"
 msgstr "Buscar ofertas"
@@ -1340,8 +1343,12 @@ msgstr "Esta noche cerca de ti"
 msgid "Need help deciding where to go?"
 msgstr "¿Necesitas ayuda para decidir a dónde ir?"
 
-msgid "Discover nearby businesses, deals and local favorites without endlessly scrolling."
-msgstr "Descubre negocios, ofertas y lugares favoritos cerca de ti sin pasar horas buscando."
+msgid ""
+"Discover nearby food, drinks, happy hours and local spots without "
+"endlessly scrolling."
+msgstr ""
+"Descubre comida, bebidas, happy hours y lugares cercanos sin pasar "
+"horas buscando."
 
 msgid "Quick mood picks"
 msgstr "Opciones rápidas según tu antojo"
@@ -1358,8 +1365,10 @@ msgstr "Tendencias cerca de ti esta noche"
 msgid "Popular happy hour spots nearby"
 msgstr "Lugares populares de happy hour cerca de ti"
 
-msgid "Explore nearby deals, offers and local favorites happening right now."
-msgstr "Explora ofertas, promociones y lugares favoritos cerca de ti disponibles ahora mismo."
+msgid "Explore nearby deals, drinks and local favorites happening right now."
+msgstr ""
+"Explora ofertas, bebidas y lugares favoritos cerca de ti que están "
+"disponibles ahora mismo."
 
 msgid "Help Me Choose"
 msgstr "Ayúdame a elegir"
@@ -45903,16 +45912,16 @@ msgid "List of redirects"
 msgstr ""
 
 msgid "‹ previous"
-msgstr ""
+msgstr "‹ anterior"
 
 msgid "next ›"
-msgstr ""
+msgstr "siguiente ›"
 
 msgid "« first"
-msgstr ""
+msgstr "« primero"
 
 msgid "last »"
-msgstr ""
+msgstr "último »"
 
 msgid "With selection"
 msgstr ""
@@ -46066,132 +46075,132 @@ msgid "Restore webform"
 msgstr ""
 
 msgid "This form has not yet been opened to submissions."
-msgstr ""
+msgstr "Este formulario todavía no está abierto para recibir envíos."
 
 msgid "Sorry… This form is closed to new submissions."
-msgstr ""
+msgstr "Lo sentimos… Este formulario está cerrado a nuevos envíos."
 
 msgid "Unable to display this webform. Please contact the site administrator."
-msgstr ""
+msgstr "No se puede mostrar este formulario. Ponte en contacto con el administrador del sitio."
 
 msgid ""
 "This form is confidential. You must <a "
 "href=\"[site:login-url]/logout?destination=[current-page:url:relative]\">Log "
 "out</a> to submit it."
-msgstr ""
+msgstr "Este formulario es confidencial. Debes <a href=\"[site:login-url]/logout?destination=[current-page:url:relative]\">cerrar sesión</a> para enviarlo."
 
 msgid "Please log in to access this form."
-msgstr ""
+msgstr "Inicia sesión para acceder a este formulario."
 
 msgid "Indicates required field"
-msgstr ""
+msgstr "Indica un campo obligatorio"
 
 msgid ""
 "This form's file upload quota of %quota has been exceeded. Please "
 "remove some files."
-msgstr ""
+msgstr "Se ha superado la cuota de carga de archivos de %quota de este formulario. Elimina algunos archivos."
 
 msgid "< Previous"
-msgstr ""
+msgstr "< Anterior"
 
 msgid "Next >"
-msgstr ""
+msgstr "Siguiente >"
 
 msgid "Start"
-msgstr ""
+msgstr "Comenzar"
 
 msgid "Complete"
-msgstr ""
+msgstr "Completar"
 
 msgid "Show all"
 msgstr "Mostrar todo"
 
 msgid "Hide all"
-msgstr ""
+msgstr "Ocultar todo"
 
 msgid "[webform:title]: Preview"
-msgstr ""
+msgstr "[webform:title]: Vista previa"
 
 msgid ""
 "Please review your submission. Your submission is not complete until "
 "you press the \"Submit\" button!"
-msgstr ""
+msgstr "Revisa tu envío. No estará completo hasta que pulses el botón «Enviar»."
 
 msgid "Save Draft"
-msgstr ""
+msgstr "Guardar borrador"
 
 msgid ""
 "Submission saved. You may return to this form later and it will "
 "restore the current values."
-msgstr ""
+msgstr "Envío guardado. Puedes volver a este formulario más tarde y se restaurarán los valores actuales."
 
 msgid ""
 "A partially-completed form was found. Please complete the remaining "
 "portions."
-msgstr ""
+msgstr "Se encontró un formulario parcialmente completado. Completa las secciones restantes."
 
 msgid ""
 "You have a pending draft for this webform. <a href=\"#\">Load your "
 "pending draft</a>."
-msgstr ""
+msgstr "Tienes un borrador pendiente para este formulario. <a href=\"#\">Cargar el borrador pendiente</a>."
 
 msgid ""
 "You have pending drafts for this webform. <a href=\"#\">View your "
 "pending drafts</a>."
-msgstr ""
+msgstr "Tienes borradores pendientes para este formulario. <a href=\"#\">Ver tus borradores pendientes</a>."
 
 msgid "New submission added to [webform:title]."
-msgstr ""
+msgstr "Se añadió un nuevo envío a [webform:title]."
 
 msgid "Back to form"
-msgstr ""
+msgstr "Volver al formulario"
 
 msgid ""
 "[webform_submission:submitted-to]: Submission "
 "#[webform_submission:serial]"
-msgstr ""
+msgstr "[webform_submission:submitted-to]: Envío #[webform_submission:serial]"
 
 msgid "Please log in to access this submission."
-msgstr ""
+msgstr "Inicia sesión para acceder a este envío."
 
 msgid ""
 "Unable to process this submission. Please contact the site "
 "administrator."
-msgstr ""
+msgstr "No se puede procesar este envío. Ponte en contacto con el administrador del sitio."
 
 msgid "This submission has been locked."
-msgstr ""
+msgstr "Este envío ha sido bloqueado."
 
 msgid ""
 "You have already submitted this webform. <a href=\"#\">View your "
 "previous submission</a>."
-msgstr ""
+msgstr "Ya has enviado este formulario. <a href=\"#\">Ver tu envío anterior</a>."
 
 msgid ""
 "You have already submitted this webform. <a href=\"#\">View your "
 "previous submissions</a>."
-msgstr ""
+msgstr "Ya has enviado este formulario. <a href=\"#\">Ver tus envíos anteriores</a>."
 
 msgid "This submission has been autofilled with your previous submission."
-msgstr ""
+msgstr "Este envío se ha rellenado automáticamente con los datos de tu envío anterior."
 
 msgid "No more submissions are permitted."
-msgstr ""
+msgstr "No se permiten más envíos."
 
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 msgid "{Empty}"
-msgstr ""
+msgstr "{Vacío}"
 
 msgid "h2"
 msgstr ""
 
 msgid "Please log in to access the uploaded file."
-msgstr ""
+msgstr "Inicia sesión para acceder al archivo subido."
 
 msgid "Webform submission from: [webform_submission:source-title]"
-msgstr ""
+msgstr "Envío de formulario desde: [webform_submission:source-title]"
 
 msgid ""
 "Submitted on [webform_submission:created]\n"
@@ -46423,13 +46432,13 @@ msgid "[webform_submission:values:name:raw]"
 msgstr ""
 
 msgid "Country codes"
-msgstr ""
+msgstr "Códigos de país"
 
 msgid "Geographic"
-msgstr ""
+msgstr "Geográfico"
 
 msgid "Country names"
-msgstr ""
+msgstr "Nombres de países"
 
 msgid "Days"
 msgstr "Días"
@@ -46448,10 +46457,10 @@ msgid ""
 msgstr ""
 
 msgid "Education"
-msgstr ""
+msgstr "Educación"
 
 msgid "Demographic"
-msgstr ""
+msgstr "Demográfico"
 
 msgid ""
 "High School: High School\n"
@@ -46464,7 +46473,7 @@ msgid ""
 msgstr ""
 
 msgid "Employment status"
-msgstr ""
+msgstr "Situación laboral"
 
 msgid ""
 "'Full Time': 'Full Time'\n"
@@ -46477,7 +46486,7 @@ msgid ""
 msgstr ""
 
 msgid "Ethnicity"
-msgstr ""
+msgstr "Origen étnico"
 
 msgid ""
 "Caucasian: Caucasian\n"
@@ -46540,7 +46549,7 @@ msgid ""
 msgstr ""
 
 msgid "Industry"
-msgstr ""
+msgstr "Sector"
 
 msgid ""
 "Accounting/Finance: Accounting/Finance\n"
@@ -46711,7 +46720,7 @@ msgid ""
 msgstr ""
 
 msgid "Marital status"
-msgstr ""
+msgstr "Estado civil"
 
 msgid ""
 "Single: Single\n"
@@ -46723,7 +46732,7 @@ msgid ""
 msgstr ""
 
 msgid "Months"
-msgstr ""
+msgstr "Meses"
 
 msgid ""
 "January: January\n"
@@ -46745,7 +46754,7 @@ msgid ""
 msgstr ""
 
 msgid "Phone type"
-msgstr ""
+msgstr "Tipo de teléfono"
 
 msgid ""
 "Home: Home\n"
@@ -46755,7 +46764,7 @@ msgid ""
 msgstr ""
 
 msgid "Province codes"
-msgstr ""
+msgstr "Códigos de provincia"
 
 msgid ""
 "AB: Alberta\n"
@@ -46778,7 +46787,7 @@ msgid ""
 msgstr ""
 
 msgid "Province names"
-msgstr ""
+msgstr "Nombres de provincias"
 
 msgid ""
 "Alberta: Alberta\n"
@@ -46814,7 +46823,7 @@ msgid ""
 msgstr ""
 
 msgid "Sex"
-msgstr ""
+msgstr "Sexo"
 
 msgid ""
 "Male: Male\n"
@@ -46843,7 +46852,7 @@ msgid ""
 msgstr ""
 
 msgid "State codes"
-msgstr ""
+msgstr "Códigos de estado"
 
 msgid ""
 "AL: Alabama\n"
@@ -46914,7 +46923,7 @@ msgid ""
 msgstr ""
 
 msgid "State names"
-msgstr ""
+msgstr "Nombres de estados"
 
 msgid ""
 "Alabama: Alabama\n"
@@ -46990,7 +46999,7 @@ msgid ""
 msgstr ""
 
 msgid "State/Province codes"
-msgstr ""
+msgstr "Códigos de estado/provincia"
 
 msgid ""
 "AL: Alabama\n"
@@ -47093,7 +47102,7 @@ msgid ""
 msgstr ""
 
 msgid "State/Province names"
-msgstr ""
+msgstr "Nombres de estado/provincia"
 
 msgid ""
 "Alabama: Alabama\n"
@@ -47208,7 +47217,7 @@ msgid ""
 msgstr ""
 
 msgid "Titles"
-msgstr ""
+msgstr "Tratamientos"
 
 msgid ""
 "Miss: Miss\n"
@@ -47220,10 +47229,10 @@ msgid ""
 msgstr ""
 
 msgid "Translations"
-msgstr ""
+msgstr "Traducciones"
 
 msgid "Yes/No"
-msgstr ""
+msgstr "Sí/No"
 
 msgid ""
 "Yes: Yes\n"
@@ -47271,10 +47280,10 @@ msgid "Recent comments."
 msgstr ""
 
 msgid "@interval hence"
-msgstr ""
+msgstr "dentro de @interval"
 
 msgid "@interval ago"
-msgstr ""
+msgstr "hace @interval"
 
 msgid "admin/reports/dblog/event/{{ wid }}"
 msgstr ""
@@ -47327,7 +47336,7 @@ msgid "{{ arguments.created_year_month }}"
 msgstr ""
 
 msgid "No content available."
-msgstr ""
+msgstr "No hay contenido disponible."
 
 msgid "Find and manage content"
 msgstr ""
@@ -47346,16 +47355,16 @@ msgid ""
 msgstr ""
 
 msgid "Welcome!"
-msgstr ""
+msgstr "¡Bienvenido!"
 
 msgid "Glossary"
-msgstr ""
+msgstr "Glosario"
 
 msgid "All content, by letter."
 msgstr ""
 
 msgid "Last update"
-msgstr ""
+msgstr "Última actualización"
 
 msgid "Scheduled Media"
 msgstr ""
@@ -47429,13 +47438,13 @@ msgid "Find and manage people interacting with your site."
 msgstr ""
 
 msgid "@interval"
-msgstr ""
+msgstr "@interval"
 
 msgid "Name or email contains"
 msgstr ""
 
 msgid "Who's new"
-msgstr ""
+msgstr "Usuarios nuevos"
 
 msgid "Shows a list of the newest user accounts on the site."
 msgstr ""
@@ -47452,21 +47461,21 @@ msgid ""
 msgstr ""
 
 msgid "Who's online"
-msgstr ""
+msgstr "Usuarios en línea"
 
 msgid "There are currently 0 users online."
-msgstr ""
+msgstr "Actualmente no hay usuarios en línea."
 
 msgid ""
 "A user is considered online for this long after they have last viewed "
 "a page."
-msgstr ""
+msgstr "Un usuario se considera conectado durante este tiempo después de haber visto una página por última vez."
 
 msgid "There are currently @total users online."
-msgstr ""
+msgstr "Actualmente hay @total usuarios en línea."
 
 msgid "A list of users that are currently logged in."
-msgstr ""
+msgstr "Una lista de los usuarios que están conectados actualmente."
 
 msgid "Default webform submissions views."
 msgstr ""
@@ -47475,10 +47484,10 @@ msgid "#"
 msgstr ""
 
 msgid "Draft"
-msgstr ""
+msgstr "Borrador"
 
 msgid "No submissions available."
-msgstr ""
+msgstr "No hay envíos disponibles."
 
 msgid "Embed: Default"
 msgstr ""
@@ -47517,28 +47526,28 @@ msgid "Claim this listing"
 msgstr "Reclamar este negocio"
 
 msgid "- Description not available -"
-msgstr ""
+msgstr "- Descripción no disponible -"
 
 msgid "Deal activity"
-msgstr ""
+msgstr "Actividad de ofertas"
 
 msgid "No votes"
 msgstr "Sin votos"
 
 msgid "Load more items"
-msgstr ""
+msgstr "Cargar más elementos"
 
 msgid "Toggle details widget state."
-msgstr ""
+msgstr "Cambiar el estado del panel de detalles."
 
 msgid "Expand all"
-msgstr ""
+msgstr "Expandir todo"
 
 msgid "All details have been expanded."
-msgstr ""
+msgstr "Se han expandido todos los detalles."
 
 msgid "All details have been collapsed."
-msgstr ""
+msgstr "Se han contraído todos los detalles."
 
 msgid ""
 "Bulk actions are now available. These actions will be applied to all "
@@ -47551,7 +47560,7 @@ msgid_plural "@count items selected"
 msgstr[0] ""
 
 msgid "Contact form"
-msgstr ""
+msgstr "Formulario de contacto"
 
 msgid ""
 "Omit the '?' to output all values. Output all values as HTML using "
@@ -47848,19 +47857,19 @@ msgid "Redirect type"
 msgstr ""
 
 msgid "more items"
-msgstr ""
+msgstr "más elementos"
 
 msgid "item"
-msgstr ""
+msgstr "elemento"
 
 msgid "No items entered. Please add items below."
-msgstr ""
+msgstr "No se han introducido elementos. Añádelos a continuación."
 
 msgid "Information message"
-msgstr ""
+msgstr "Mensaje informativo"
 
 msgid "Congratulations!"
-msgstr ""
+msgstr "¡Enhorabuena!"
 
 msgid "You have successfully installed the Webform module."
 msgstr ""
@@ -49534,8 +49543,12 @@ msgstr "Ofertas populares cerca de @city"
 msgid "Can't find what you're looking for?"
 msgstr "¿No encuentras lo que buscas?"
 
-msgid "Browse all local businesses in @city or use Deals Finder to discover more nearby offers."
-msgstr "Explora todos los negocios locales en @city o usa el Buscador de ofertas para descubrir más ofertas cercanas."
+msgid ""
+"Browse all restaurants in @city or use Deals Finder to discover more "
+"nearby specials."
+msgstr ""
+"Explora todos los restaurantes en @city o usa el buscador de ofertas "
+"para descubrir más especiales cercanos."
 
 msgid "Open Deals Finder"
 msgstr "Abrir buscador de ofertas"
@@ -49543,11 +49556,19 @@ msgstr "Abrir buscador de ofertas"
 msgid "About @category in @city"
 msgstr "Acerca de @category en @city"
 
-msgid "SpotDeals tracks @count @category from @venues local businesses and neighborhood venues in @city. Use this page to compare current offers, discover nearby places, and keep exploring more ways to save."
-msgstr "SpotDeals reúne @count @category de @venues negocios locales y establecimientos del vecindario en @city. Usa esta página para comparar ofertas actuales, descubrir lugares cercanos y seguir explorando más formas de ahorrar."
+msgid ""
+"SpotDeals tracks @count @category from @venues local restaurants, "
+"bars, cafes, breweries, and neighborhood dining spots in @city. Use "
+"this page to compare current offers, discover nearby places, and keep "
+"exploring more ways to save."
+msgstr ""
+"SpotDeals rastrea @count @category de @venues restaurantes, bares, "
+"cafés, cervecerías y lugares de comida del vecindario en @city. Usa "
+"esta página para comparar ofertas actuales, descubrir lugares "
+"cercanos y seguir explorando más formas de ahorrar."
 
 msgid "The website encountered an unexpected error. Try again later."
-msgstr ""
+msgstr "El sitio web encontró un error inesperado. Inténtalo de nuevo más tarde."
 
 msgid "Need help choosing?"
 msgstr "¿Necesitas ayuda para elegir?"
@@ -49560,32 +49581,50 @@ msgstr ""
 msgid "Pick one for me"
 msgstr "Elige una para mí"
 
-msgid "Find local deals in @city on SpotDeals. Browse current offers, promotions, and nearby businesses."
-msgstr "Encuentra ofertas locales en @city con SpotDeals. Explora ofertas actuales, promociones y negocios cercanos."
+msgid ""
+"Find local deals in @city on SpotDeals. Browse current restaurant "
+"specials, food deals, and nearby offers."
+msgstr ""
+"Encuentra ofertas locales en @city en SpotDeals. Explora especiales "
+"actuales de restaurantes, ofertas de comida y ofertas cercanas."
 
 msgid "Deals in @city"
 msgstr "Ofertas en @city"
 
-msgid "Browse current local deals in @city, including nearby offers, promotions, and places worth checking out."
-msgstr "Explora las ofertas locales actuales en @city, incluyendo ofertas cercanas, promociones y lugares que vale la pena conocer."
+msgid ""
+"Browse current local deals in @city, including restaurant specials, "
+"food offers, and nearby places worth checking out."
+msgstr ""
+"Explora ofertas locales actuales en @city, incluyendo especiales de "
+"restaurantes, ofertas de comida y lugares cercanos que vale la pena "
+"visitar."
 
 msgid "@count Deals in @city"
 msgstr "@count ofertas en @city"
 
-msgid "Find @category in @city on SpotDeals. Browse current local deals, promotions, and nearby offers."
-msgstr "Encuentra @category en @city con SpotDeals. Explora ofertas locales actuales, promociones y ofertas cercanas."
+msgid ""
+"Find @category in @city on SpotDeals. Browse current local specials, "
+"restaurant deals, and nearby offers."
+msgstr ""
+"Encuentra @category en @city en SpotDeals. Explora especiales locales "
+"actuales, ofertas de restaurantes y ofertas cercanas."
 
 msgid "@category in @city"
-msgstr ""
+msgstr "@category en @city"
 
-msgid "Find @category in @city, including current local offers, nearby promotions, and places worth checking out."
-msgstr "Encuentra @category en @city, incluyendo ofertas locales actuales, promociones cercanas y lugares que vale la pena conocer."
+msgid ""
+"Find @category in @city, including current local offers, food and "
+"drink specials, and nearby places worth checking out."
+msgstr ""
+"Encuentra @category en @city, incluyendo ofertas locales actuales, "
+"especiales de comida y bebida, y lugares cercanos que vale la pena "
+"visitar."
 
 msgid "@count @category in @city"
 msgstr "@count @category en @city"
 
 msgid "Lunch Special"
-msgstr ""
+msgstr "Especial de almuerzo"
 
 msgid "Lunch Specials"
 msgstr "Especiales de almuerzo"
@@ -49675,16 +49714,20 @@ msgid "About Nightlife Deals in @city"
 msgstr "Acerca de las ofertas de vida nocturna en @city"
 
 msgid "Dining Deals"
-msgstr ""
+msgstr "Ofertas de restaurantes"
 
 msgid "Nightlife Deals"
+msgstr "Ofertas de vida nocturna"
+
+msgid "Food & drink deals"
+msgstr "Ofertas de comida y bebida"
+
+msgid ""
+"Discover nearby food, drinks, happy hours and local spots with active "
+"deals."
 msgstr ""
-
-msgid "Local deals & offers"
-msgstr "Ofertas locales"
-
-msgid "Discover nearby local businesses with active deals and offers."
-msgstr "Descubre negocios cercanos con ofertas y promociones activas."
+"Descubre comida, bebidas, happy hours y lugares locales cercanos con "
+"ofertas activas."
 
 msgid "Pick something for me"
 msgstr "Elige algo por mí"
@@ -49702,16 +49745,16 @@ msgid "Popular food"
 msgstr "Comida popular"
 
 msgid "Deal summary"
-msgstr ""
+msgstr "Resumen de la oferta"
 
 msgid "Deal facts"
-msgstr ""
+msgstr "Detalles de la oferta"
 
 msgid "When"
 msgstr "Cuándo"
 
-msgid "Cuisine / Category"
-msgstr "Cocina / Categoría"
+msgid "Cuisine"
+msgstr "Cocina"
 
 msgid "Deal type"
 msgstr "Oferta"
@@ -49744,120 +49787,126 @@ msgid "More deals at @venue"
 msgstr "Más ofertas en @venue"
 
 msgid "@start to @end"
-msgstr ""
+msgstr "@start a @end"
 
 msgid "Monday to Friday"
-msgstr ""
+msgstr "De lunes a viernes"
 
 msgid "@category Deals"
-msgstr ""
+msgstr "Ofertas de @category"
 
 msgid "Deals by category"
-msgstr ""
+msgstr "Ofertas por categoría"
 
-msgid "Browse @category deals from local businesses and nearby venues."
-msgstr "Explora ofertas de @category de negocios locales y lugares cercanos."
+msgid ""
+"Browse @category deals from local restaurants, bars, cafes, and nearby "
+"venues."
+msgstr "Explora ofertas de @category de restaurantes, bares, cafeterías y otros establecimientos locales cercanos."
 
 msgid "Page summary"
-msgstr ""
+msgstr "Resumen de la página"
 
 msgid "Active deals"
-msgstr ""
+msgstr "Ofertas activas"
 
 msgid "Current matching offers"
-msgstr ""
+msgstr "Ofertas actuales coincidentes"
 
 msgid "Venues"
-msgstr ""
+msgstr "Establecimientos"
 
 msgid "Local places with deals"
-msgstr ""
+msgstr "Lugares locales con ofertas"
 
 msgid "Discoverable"
-msgstr ""
+msgstr "Descubribles"
 
 msgid "Browse and compare results"
-msgstr ""
+msgstr "Explora y compara resultados"
 
 msgid "Related deal pages"
-msgstr ""
+msgstr "Páginas de ofertas relacionadas"
 
 msgid "Frequently asked questions"
-msgstr ""
+msgstr "Preguntas frecuentes"
 
 msgid "What can I find on this page?"
-msgstr ""
+msgstr "¿Qué puedo encontrar en esta página?"
 
 msgid ""
 "This page collects SpotDeals results related to @term, including local "
 "specials, discounts, and promotions from nearby venues."
-msgstr ""
+msgstr "Esta página reúne resultados de SpotDeals relacionados con @term, incluidos especiales locales, descuentos y promociones de establecimientos cercanos."
 
 msgid "Are these deals available every day?"
-msgstr ""
+msgstr "¿Estas ofertas están disponibles todos los días?"
 
 msgid ""
 "Deal availability depends on each venue and promotion. Always check "
 "the listed day, time, and source details before you go."
-msgstr ""
+msgstr "La disponibilidad de las ofertas depende de cada establecimiento y promoción. Comprueba siempre el día, la hora y los detalles de la fuente indicados antes de ir."
 
 msgid "Can I search beyond @title?"
-msgstr ""
+msgstr "¿Puedo buscar más allá de @title?"
 
-msgid "Yes. Use the main deals search to combine keywords, cities, business types, categories, and nearby discovery."
-msgstr "Sí. Usa el buscador principal de ofertas para combinar palabras clave, ciudades, tipos de negocio, categorías y búsquedas cercanas."
+msgid ""
+"Yes. Use the main deals search to combine keywords, cities, cuisines, "
+"categories, and nearby discovery."
+msgstr "Sí. Usa el buscador principal de ofertas para combinar palabras clave, ciudades, tipos de cocina, categorías y opciones cercanas."
 
 msgid "Search more deals"
-msgstr ""
+msgstr "Buscar más ofertas"
 
 msgid "Want to search another way?"
-msgstr ""
+msgstr "¿Quieres buscar de otra manera?"
 
-msgid "Browse all current deals by keyword, category, city, or nearby location."
-msgstr "Explora todas las ofertas actuales por palabra clave, categoría, ciudad o ubicación cercana."
+msgid ""
+"Browse all current deals by keyword, cuisine, city, category, or "
+"nearby location."
+msgstr "Explora todas las ofertas actuales por palabra clave, tipo de cocina, ciudad, categoría o ubicación cercana."
 
 msgid "Browse all deals"
-msgstr ""
+msgstr "Explorar todas las ofertas"
 
 msgid "@day Deals"
-msgstr ""
+msgstr "Ofertas del @day"
 
 msgid "Deals by day"
-msgstr ""
+msgstr "Ofertas por día"
 
 msgid ""
 "Find active @title including lunch specials, happy hours, dining "
 "deals, and nightlife promotions from local venues."
-msgstr ""
+msgstr "Encuentra @title activas, incluidos especiales de almuerzo, happy hours, ofertas de restaurantes y promociones de vida nocturna de establecimientos locales."
 
 msgid "Weekday Deals"
-msgstr ""
+msgstr "Ofertas entre semana"
 
 msgid "@distance miles away"
-msgstr ""
+msgstr "a @distance millas"
 
 msgid "@cuisine Deals"
-msgstr ""
+msgstr "Ofertas de @cuisine"
 
 msgid "Deals by cuisine"
-msgstr ""
+msgstr "Ofertas por tipo de cocina"
 
 msgid ""
 "Discover @cuisine food and drink deals, specials, and local offers "
 "from nearby venues."
-msgstr ""
+msgstr "Descubre ofertas de comida y bebida de @cuisine, especiales y promociones locales de establecimientos cercanos."
 
 msgctxt "Address label"
 msgid "Organization"
-msgstr ""
+msgstr "Organización"
 
 msgctxt "Address label"
 msgid "Street address line 3"
-msgstr ""
+msgstr "Línea 3 de la dirección"
 
 msgctxt "Address label"
 msgid "Zip code"
-msgstr ""
+msgstr "Código postal"
 
 msgid "Drag to re-order @entity_types."
 msgstr ""
@@ -49866,10 +49915,10 @@ msgid "Move in any direction"
 msgstr ""
 
 msgid "Tags are limited to:"
-msgstr ""
+msgstr "Las etiquetas están limitadas a:"
 
 msgid "No matching suggestions found for:"
-msgstr ""
+msgstr "No se encontraron sugerencias para:"
 
 msgid "Perform actions on the selected items in the %view_title view"
 msgstr ""
@@ -49911,15 +49960,15 @@ msgid "Unable to save vote."
 msgstr "No se pudo guardar el voto."
 
 msgid "@term Deals"
-msgstr ""
+msgstr "Ofertas de @term"
 
 msgid "SpotDeals discovery"
-msgstr ""
+msgstr "Descubrimiento de SpotDeals"
 
 msgid ""
 "Browse current SpotDeals results for @term and discover nearby offers "
 "worth checking out."
-msgstr ""
+msgstr "Explora los resultados actuales de SpotDeals para @term y descubre ofertas cercanas que vale la pena conocer."
 
 msgid "Know a deal for this venue?"
 msgstr "¿Conoces una oferta para este lugar?"
@@ -49931,7 +49980,7 @@ msgid "Share this"
 msgstr "Compartir esto"
 
 msgid "Open link"
-msgstr ""
+msgstr "Abrir enlace"
 
 msgid "X"
 msgstr ""
@@ -50202,35 +50251,450 @@ msgstr ""
 msgid "External venue reports"
 msgstr ""
 
-msgid "'@title' form element"
+msgid "Cuisine / Category"
+msgstr "Cocina / Categoría"
+
+msgid "Browse @category deals from local businesses and nearby venues."
+msgstr "Explora ofertas de @category de negocios locales y establecimientos cercanos."
+
+msgid ""
+"Yes. Use the main deals search to combine keywords, cities, business "
+"types, categories, and nearby discovery."
+msgstr "Sí. Usa el buscador principal de ofertas para combinar palabras clave, ciudades, tipos de negocio, categorías y opciones cercanas."
+
+msgid ""
+"Browse all current deals by keyword, category, city, or nearby "
+"location."
+msgstr "Explora todas las ofertas actuales por palabra clave, categoría, ciudad o ubicación cercana."
+
+msgid ""
+"Find @category in @city on SpotDeals. Browse current local deals, "
+"promotions, and nearby offers."
+msgstr "Encuentra @category en @city en SpotDeals. Explora ofertas locales actuales, promociones y ofertas cercanas."
+
+msgid ""
+"Find @category in @city, including current local offers, nearby "
+"promotions, and places worth checking out."
+msgstr "Encuentra @category en @city, incluidas ofertas locales actuales, promociones cercanas y lugares que vale la pena conocer."
+
+msgid ""
+"Browse all local businesses in @city or use Deals Finder to discover "
+"more nearby offers."
+msgstr "Explora todos los negocios locales de @city o usa el Buscador de ofertas para descubrir más ofertas cercanas."
+
+msgid ""
+"SpotDeals tracks @count @category from @venues local businesses and "
+"neighborhood venues in @city. Use this page to compare current offers, "
+"discover nearby places, and keep exploring more ways to save."
+msgstr "SpotDeals reúne @count @category de @venues negocios locales y establecimientos de @city. Usa esta página para comparar ofertas actuales, descubrir lugares cercanos y seguir explorando más formas de ahorrar."
+
+msgid ""
+"Find local deals in @city on SpotDeals. Browse current offers, "
+"promotions, and nearby businesses."
+msgstr "Encuentra ofertas locales en @city en SpotDeals. Explora ofertas actuales, promociones y negocios cercanos."
+
+msgid ""
+"Browse current local deals in @city, including nearby offers, "
+"promotions, and places worth checking out."
+msgstr "Explora ofertas locales actuales en @city, incluidas ofertas cercanas, promociones y lugares que vale la pena conocer."
+
+msgid "Search using keywords or location — or combine them"
+msgstr "Busca por palabras clave o ubicación, o combina ambas"
+
+msgid "Category preferences"
+msgstr "Preferencias de categorías"
+
+msgid ""
+"Optional. Enter up to 5 category ideas separated by spaces, or leave "
+"this empty and we’ll surprise you."
+msgstr "Opcional. Introduce hasta 5 ideas de categorías separadas por espacios o déjalo vacío y te sorprenderemos."
+
+msgid "Local deals & offers"
+msgstr "Ofertas y promociones locales"
+
+msgid "Discover nearby local businesses with active deals and offers."
+msgstr "Descubre negocios locales cercanos con ofertas y promociones activas."
+
+msgid "Explore nearby deals, offers and local favorites happening right now."
+msgstr "Explora ofertas, promociones y favoritos locales disponibles cerca de ti ahora mismo."
+
+msgid "Please enter a valid street address, for example 1100 Orlando Ave."
+msgstr "Introduce una dirección válida, por ejemplo, 1100 Orlando Ave."
+
+msgid ""
+"The external venue information is incomplete. Please return to the "
+"search results and try again."
+msgstr "La información del establecimiento externo está incompleta. Vuelve a los resultados de búsqueda e inténtalo de nuevo."
+
+msgid "Report closed or incorrect venue"
+msgstr "Informar de un establecimiento cerrado o incorrecto"
+
+msgid "Review deal candidates discovered from official venue websites."
+msgstr ""
+
+msgid "SpotDeals deal discovery"
+msgstr ""
+
+msgid "Get directions, visit the venue page, call ahead or save for later."
+msgstr "Obtén indicaciones, visita la página del establecimiento, llama antes o guárdalo para más tarde."
+
+msgid "Get directions, call ahead or save this venue for later."
+msgstr "Obtén indicaciones, llama antes o guarda este establecimiento para más tarde."
+
+msgid "Delete flagging"
+msgstr ""
+
+msgid "Flag"
+msgstr ""
+
+msgid "Flagging"
+msgstr ""
+
+msgid "Flags"
+msgstr ""
+
+msgid "Flaggings"
+msgstr ""
+
+msgid "Flag actions"
+msgstr ""
+
+msgid "Flag name"
+msgstr ""
+
+msgid "Flag title"
+msgstr ""
+
+msgid "Flagging date"
+msgstr ""
+
+msgid "Flag action"
+msgstr ""
+
+msgid "Flag entity URL"
+msgstr ""
+
+msgid "Flag entity title"
+msgstr ""
+
+msgid "Flag entity type"
+msgstr ""
+
+msgid "Flag entity ID"
+msgstr ""
+
+msgid "Flag count"
+msgstr ""
+
+msgid "@flag flag count"
+msgstr ""
+
+msgid "@flag flag link"
+msgstr ""
+
+msgid "Continue exploring SpotDeals"
+msgstr "Seguir explorando SpotDeals"
+
+msgid "Page not found actions"
+msgstr ""
+
+msgid "Go back"
+msgstr "Volver"
+
+msgid "Explore SpotDeals"
+msgstr "Explorar SpotDeals"
+
+msgid "Keep exploring"
+msgstr "Seguir explorando"
+
+msgid "Discover something nearby"
+msgstr "Descubrir algo cercano"
+
+msgid "Please enter no more than 5 category preferences for Help me choose."
+msgstr "Introduce como máximo 5 preferencias de categorías para «Ayúdame a elegir»."
+
+msgid "Blog post"
+msgstr "Entrada del blog"
+
+msgid "Use for multi-user blogs. Every user gets a personal blog."
+msgstr ""
+"Úselo para blogs multi-usuarios. Cada usuario obtiene un blog "
+"personal."
+
+msgid "Blog post."
+msgstr "Entrada del blog."
+
+msgid "Blog"
+msgstr "Blog"
+
+msgid "Blog posts"
+msgstr "Entradas de blog"
+
+msgid "No blog entries have been created."
+msgstr "No se han creado entradas en el blog."
+
+msgid "All blog posts"
+msgstr "Todas las entradas del blog"
+
+msgid "Recent blog posts"
+msgstr "Entradas de blog recientes"
+
+msgid "All user blog posts"
+msgstr "Todas las entradas del blog del usuario"
+
+msgid "{{ arguments.uid }}'s blog"
+msgstr "Blog de {{ arguments.uid }}"
+
+msgid "{{ arguments.uid }} has not created any blog entries."
+msgstr "{{ arguments.uid }} no ha creado ninguna entrada de blog."
+
+msgid "All blog posts feed"
+msgstr "Feed de todas las entradas del blog"
+
+msgid "Drupal blog posts"
+msgstr "Entradas del blog de Drupal"
+
+msgid "All user blog posts feed"
+msgstr "Feed de todas las entradas del blog del usuario"
+
+msgid "Blogs"
+msgstr "Blogs"
+
+msgid "My blog"
+msgstr "Mi blog"
+
+msgid "@username's blog"
+msgstr "blog de @username"
+
+msgid "View recent blog entries"
+msgstr "Ver entradas de blog recientes"
+
+msgid "Read @username's latest blog entries."
+msgstr "Leer lo más reciente del blog de @username."
+
+msgid "Single-user blogs"
+msgstr "Blogs de un solo usuario"
+
+msgid ""
+"Each user's blog entries are automatically displayed with a link to "
+"the user's main blog page. You can create as many single-user blogs as "
+"you have site users with permission to create blog content."
+msgstr ""
+"Cada una de las entradas del blog del usuario se muestra "
+"automáticamente con un enlace a la página principal de ese blog. "
+"Puede crear tantos blogs de un sólo usuario como usuarios con permiso "
+"para crear contenido de blog tenga en su sitio."
+
+msgid "Multi-user blogs"
+msgstr "Blogs multi usuario"
+
+msgid ""
+"Blog entries from each single-user blog are also aggregated into one "
+"central multi-user blog, which displays the blog content of all users "
+"in a single listing."
+msgstr ""
+"Las entradas de blog de cada usuario se agregan también a un blog "
+"central multi usuario, que muestra el contenido de todos los usuarios "
+"en una única lista."
+
+msgid ""
+"There is an optional <em>Blogs</em> menu item added to the Navigation "
+"menu, which displays all blogs available on your site, and a <em>My "
+"blog</em> item displaying the current user's blog entries."
+msgstr ""
+"Existe un elemento de menú opcional <em>Blogs</em> en la zona "
+"Navegación que muestra todos los blogs disponibles en su sitio. y un "
+"elemento <em>Mi Blogv</em> que muestra las entradas del blog del "
+"usuario actualmente identificado."
+
+msgid ""
+"The Blog module also creates a default <em>Recent blog posts</em> "
+"block that may be enabled at the <a href=\"@blocks\">blocks "
+"administration page</a>."
+msgstr ""
+"El módulo Blog también crea un bloque predeterminado <em>Envíos "
+"recientes a blogs</em> que se puede activar en la <a "
+"href=\"@blocks\">página de administración de bloques</a>"
+
+msgid "Create new blog entry"
+msgstr "Crear nueva entrada de blog"
+
+msgid "Enables multi-user blogs."
+msgstr "Activa los blogs multi usuario."
+
+msgid ""
+"The Blog module allows registered users to maintain an online journal, "
+"or <em>blog</em>. Blogs are made up of individual <em>blog "
+"entries</em>. By default, the blog entries are displayed by creation "
+"time in descending order, with comments enabled, and are promoted to "
+"the site's front page. For more information, see the online handbook "
+"entry for <a href='@blog'>Blog module</a>."
+msgstr ""
+"El módulo Blog permite a los usuarios registrados mantener un diario "
+"electrónico o <em>blog.</em> Los blogs están formados por envíos "
+"individuales que, en principio, se muestran por orden cronológico "
+"descendente basándose en su creación, con posibilidad de hacer "
+"comentarios y promoverlos a la portada. Para saber más, consulte las "
+"páginas sobre el <a href='@blog'>módulo Blog</a> del manual en "
+"pantalla."
+
+msgid "Blog comments"
+msgstr "Comentarios del blog"
+
+msgid "Comments against a blog post."
+msgstr "Comentarios de una entrada del blog."
+
+msgid "Blog tags"
+msgstr "Etiquetas del blog"
+
+msgid "Tags to help categorize blog post."
+msgstr "Etiquetas para ayudar a categorizar la entrada del blog."
+
+msgid "Edit machine name"
+msgstr ""
+
+msgid "SpotDeals topic"
+msgstr "Tema de SpotDeals"
+
+msgid ""
+"Explore SpotDeals guides, local insights, and related content about "
+"@term."
+msgstr "Explora guías de SpotDeals, información local y contenido relacionado con @term."
+
+msgid "Content using this topic"
+msgstr "Contenido con este tema"
+
+msgid "Published page"
+msgid_plural "Published pages"
+msgstr[0] ""
+
+msgid "Venue actions"
+msgstr "Acciones del establecimiento"
+
+msgid "Suggest deal"
+msgstr "Sugerir oferta"
+
+msgid "More in @location"
+msgstr "Más en @location"
+
+msgid "@day deals"
+msgstr "Ofertas del @day"
+
+msgid "@category deals"
+msgstr "Ofertas de @category"
+
+msgid "Local Guides"
+msgstr "Guías locales"
+
+msgid "Local guide"
+msgstr "Guía local"
+
+msgid "Read the guide"
+msgstr "Leer la guía"
+
+msgid "Related local guides"
+msgstr "Guías locales relacionadas"
+
+msgid "Deals in @location"
+msgstr "Ofertas en @location"
+
+msgid "(active tab)"
+msgstr "(pestaña activa)"
+
+msgid "IndexNow notification enabled"
+msgstr ""
+
+msgid "IndexNow notification disabled"
+msgstr ""
+
+msgid "Included in sitemaps: "
+msgstr ""
+
+msgid "Excluded from all sitemaps"
+msgstr ""
+
+msgid "Lines and paragraphs break automatically."
+msgstr ""
+
+msgid "Discover deal candidates from official venue websites."
 msgstr ""
 
 msgid ""
-"These values are overridden. Changes on this form will be saved, but "
-"overrides will take precedence. See <a "
-"href=\"https://www.drupal.org/docs/drupal-apis/configuration-api/configuration-override-system\">configuration "
-"overrides documentation</a> for more information."
+"Configure flags for marking content with arbitrary information (such "
+"as <em>offensive</em> or <em>bookmarked</em>)."
 msgstr ""
 
-msgid "Specify a relative URL to display as the front page."
+msgid "SpotDeals deal discovery candidates"
 msgstr ""
 
-msgid "System information"
+msgid "Run SpotDeals deal discovery"
 msgstr ""
 
 msgid "Remove group"
 msgstr ""
 
+msgid ""
+"Start typing the title of a piece of content to select it. You can "
+"also enter an internal path such as %add-node or an external URL such "
+"as %url. Enter %front to link to the front page. Enter %nolink to "
+"display link text only. Enter %button to display keyboard-accessible "
+"link text only."
+msgstr ""
 
+msgid "Member since"
+msgstr "Miembro desde"
 
-msgid "Local, time-based deals and offers. Starting with food & drink."
-msgstr "Ofertas y promociones locales por tiempo limitado. Empezando con comida y bebida."
+msgid "Plan"
+msgstr "Plan"
 
-msgid "Search businesses, categories or ZIP"
-msgstr "Busca negocios, categorías o ZIP"
+msgid "Activity summary"
+msgstr "Resumen de actividad"
 
-msgid "Please enter no more than 5 category preferences for Help me choose."
-msgstr "Ingresa un máximo de 5 preferencias de categorías para Ayúdame a elegir."
+msgid "Positive votes"
+msgstr "Votos positivos"
 
-msgid "Optional. Filter this local list by keyword, category, venue, or deal type."
-msgstr "Opcional. Filtra esta lista local por palabra clave, categoría, lugar o tipo de oferta."
+msgid "Negative votes"
+msgstr "Votos negativos"
+
+msgid "Saved"
+msgstr "Guardados"
+
+msgid "Suggestions"
+msgstr "Sugerencias"
+
+msgid "Profile sections"
+msgstr "Secciones del perfil"
+
+msgid "Saved venues"
+msgstr "Establecimientos guardados"
+
+msgid "Saved deals"
+msgstr "Ofertas guardadas"
+
+msgid "Following activity"
+msgstr "Actividad de seguidos"
+
+msgid "voted on"
+msgstr "votó en"
+
+msgid "No saved deals yet."
+msgstr "Todavía no hay ofertas guardadas."
+
+msgid "No saved venues yet."
+msgstr "Todavía no hay establecimientos guardados."
+
+msgid "Account details"
+msgstr "Detalles de la cuenta"
+
+msgid "Subscription"
+msgstr "Suscripción"
+
+msgid "Discover more local deals"
+msgstr "Descubre más ofertas locales"
+
+msgid "Save favorites, vote on deals, and help others find great places."
+msgstr "Guarda favoritos, vota por ofertas y ayuda a otros a encontrar lugares estupendos."
+
+msgid "Explore deals"
+msgstr "Explorar ofertas"
+
