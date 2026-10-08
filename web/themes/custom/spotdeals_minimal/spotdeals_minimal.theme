@@ -650,6 +650,39 @@ function _spotdeals_minimal_build_deal_page_venue_summary(NodeInterface $venue):
 }
 
 /**
+ * Converts a phone number (including vanity letters) to a safe tel URI value.
+ *
+ * Returns an empty string when the input cannot form a usable dialable number.
+ */
+function _spotdeals_minimal_phone_to_dialable(string $phone): string {
+  $phone = trim($phone);
+  // Do not silently append extensions to the main dialable number.
+  if (preg_match('/(?:\b(?:ext\.?|extension|x)\s*\d+|#\s*\d+)\s*$/i', $phone)) {
+    return '';
+  }
+  $phone = strtoupper($phone);
+  if ($phone === '' || !preg_match('/^[+0-9A-Z().\s-]+$/D', $phone)) {
+    return '';
+  }
+
+  $keypad = [
+    'ABC' => '2', 'DEF' => '3', 'GHI' => '4',
+    'JKL' => '5', 'MNO' => '6', 'PQRS' => '7',
+    'TUV' => '8', 'WXYZ' => '9',
+  ];
+  foreach ($keypad as $letters => $digit) {
+    $phone = str_replace(str_split($letters), $digit, $phone);
+  }
+
+  $dialable = preg_replace('/[^0-9+]/', '', $phone) ?? '';
+  // A leading + is permitted, but not embedded or repeated + characters.
+  if (!preg_match('/^\+?[0-9]{7,15}$/D', $dialable)) {
+    return '';
+  }
+  return $dialable;
+}
+
+/**
  * Builds the main CTA row for deal detail pages.
  */
 function _spotdeals_minimal_build_deal_page_ctas(?NodeInterface $deal, NodeInterface $venue): array {
@@ -703,7 +736,7 @@ function _spotdeals_minimal_build_deal_page_ctas(?NodeInterface $deal, NodeInter
   }
 
   if ($phone !== '') {
-    $tel = preg_replace('/[^0-9+]/', '', $phone) ?? '';
+    $tel = _spotdeals_minimal_phone_to_dialable($phone);
     if ($tel !== '') {
       $links['phone'] = [
         '#type' => 'link',
@@ -783,7 +816,7 @@ function _spotdeals_minimal_build_venue_page_ctas(NodeInterface $venue): array {
   }
 
   if ($phone !== '') {
-    $tel = preg_replace('/[^0-9+]/', '', $phone) ?? '';
+    $tel = _spotdeals_minimal_phone_to_dialable($phone);
     if ($tel !== '') {
       $links['phone'] = [
         '#type' => 'link',
