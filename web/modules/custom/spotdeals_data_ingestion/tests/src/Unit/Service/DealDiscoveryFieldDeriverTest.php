@@ -18,6 +18,7 @@ final class DealDiscoveryFieldDeriverTest extends TestCase {
 
   protected function setUp(): void {
     parent::setUp();
+    require_once __DIR__ . '/../../../../src/Service/DealDiscoveryFieldDeriver.php';
     $this->deriver = new DealDiscoveryFieldDeriver();
   }
 

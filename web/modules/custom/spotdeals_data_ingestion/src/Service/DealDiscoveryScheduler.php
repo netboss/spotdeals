@@ -23,6 +23,8 @@ final class DealDiscoveryScheduler {
 
   private const BACKLOG_PAUSED_STATE_NAME = 'spotdeals_data_ingestion.deal_discovery_scheduler_backlog_paused';
 
+  private const LAST_CATEGORY_STATE_NAME = 'spotdeals_data_ingestion.deal_discovery_scheduler_last_category';
+
   public function __construct(
     private readonly ConfigFactoryInterface $configFactory,
     private readonly DealDiscoveryStorage $storage,
@@ -143,29 +145,37 @@ final class DealDiscoveryScheduler {
       return ['status' => 'nothing_due'];
     }
 
-    usort($due, static function (array $a, array $b): int {
-      $byTime = $a['last_completed'] <=> $b['last_completed'];
-      if ($byTime !== 0) {
-        return $byTime;
-      }
-      $byCategory = strnatcasecmp(
-        (string) ($a['definition']['name'] ?? ''),
-        (string) ($b['definition']['name'] ?? ''),
-      );
-      if ($byCategory !== 0) {
-        return $byCategory;
-      }
-      return strnatcasecmp(
-        (string) ($a['location']['label'] ?? ''),
-        (string) ($b['location']['label'] ?? ''),
-      );
+    // Rotate categories rather than exhausting every city in one category.
+    // Within the selected category, prioritize never-run and oldest locations.
+    $categoryNames = [];
+    foreach ($due as $item) {
+      $categoryNames[$item['tid']] = (string) ($item['definition']['name'] ?? '');
+    }
+    uksort($categoryNames, static function (int $a, int $b) use ($categoryNames): int {
+      return strnatcasecmp($categoryNames[$a], $categoryNames[$b]) ?: ($a <=> $b);
+    });
+    $categoryIds = array_keys($categoryNames);
+    $previousCategory = (int) $this->state->get(self::LAST_CATEGORY_STATE_NAME, 0);
+    $previousIndex = array_search($previousCategory, $categoryIds, TRUE);
+    $nextIndex = $previousIndex === FALSE ? 0 : ($previousIndex + 1) % count($categoryIds);
+    $nextCategory = $categoryIds[$nextIndex];
+
+    $categoryDue = array_values(array_filter(
+      $due,
+      static fn (array $item): bool => $item['tid'] === $nextCategory,
+    ));
+    usort($categoryDue, static function (array $a, array $b): int {
+      return ($a['last_completed'] <=> $b['last_completed'])
+        ?: strnatcasecmp((string) ($a['location']['label'] ?? ''), (string) ($b['location']['label'] ?? ''))
+        ?: strcmp((string) $a['token'], (string) $b['token']);
     });
 
     if (!$this->lock->acquire(self::LOCK_NAME, 3600.0)) {
       return ['status' => 'locked'];
     }
 
-    $target = $due[0];
+    $target = $categoryDue[0];
+    $this->state->set(self::LAST_CATEGORY_STATE_NAME, $nextCategory);
     $this->state->set(self::LAST_ATTEMPT_STATE_NAME, $now);
 
     try {
