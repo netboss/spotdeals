@@ -28,6 +28,14 @@
       return 'other';
     }
 
+    if (document.querySelector('article.node--type-blog-post.node--view-mode-full')) {
+      return 'blog_post';
+    }
+
+    if (/^\/(?:[a-z]{2}\/)?blog\/?$/i.test(window.location.pathname)) {
+      return 'blog';
+    }
+
     if (body.classList.contains('node--type-deal')) {
       return 'deal';
     }
@@ -375,6 +383,72 @@
   }
 
   /**
+   * Identify local deal/venue destinations without classifying external links.
+   */
+  function getBlogDestination(href) {
+    if (!href) {
+      return '';
+    }
+    try {
+      const url = new URL(href, window.location.origin);
+      if (url.origin !== window.location.origin) {
+        return '';
+      }
+      const path = url.pathname.replace(/^\/(?:[a-z]{2}\/)/i, '/');
+      if (/^\/deals\//i.test(path)) {
+        return 'deal';
+      }
+      if (/^\/venues?\//i.test(path)) {
+        return 'venue';
+      }
+    }
+    catch (e) {
+      return '';
+    }
+    return '';
+  }
+
+  /**
+   * Track reading milestones once per loaded article, not once per scroll.
+   */
+  function trackBlogReading(article) {
+    const milestones = [25, 50, 75, 100];
+    const recorded = new Set();
+    let scheduled = false;
+
+    function measure() {
+      scheduled = false;
+      const rect = article.getBoundingClientRect();
+      const height = article.offsetHeight;
+      if (!height) {
+        return;
+      }
+      const visibleBottom = Math.min(height, window.innerHeight - rect.top);
+      const progress = Math.max(0, Math.min(100, Math.floor(100 * visibleBottom / height)));
+      milestones.forEach((milestone) => {
+        if (progress >= milestone && !recorded.has(milestone)) {
+          recorded.add(milestone);
+          sendEvent('blog_read_depth', {
+            article_title: getCurrentPageTitle(),
+            read_percent: milestone
+          });
+        }
+      });
+    }
+
+    function scheduleMeasure() {
+      if (!scheduled) {
+        scheduled = true;
+        window.requestAnimationFrame(measure);
+      }
+    }
+
+    window.addEventListener('scroll', scheduleMeasure, {passive: true});
+    window.addEventListener('resize', scheduleMeasure);
+    scheduleMeasure();
+  }
+
+  /**
    * Track all delegated click interactions, including AJAX-created content.
    */
   function trackClick(event) {
@@ -397,6 +471,39 @@
       search_term: searchTerm,
       target_url: href
     };
+
+    const article = control.closest('article.node--type-blog-post');
+    const isBlogPost = getPageType() === 'blog_post';
+    const destination = getBlogDestination(href);
+
+    if (isBlogPost && destination && control.matches('a')) {
+      sendEvent('blog_deal_click', {
+        article_title: getCurrentPageTitle(),
+        destination_type: destination,
+        target_url: href
+      });
+      return;
+    }
+
+    if (isBlogPost && control.closest('.sd-blog__comments')) {
+      sendEvent('blog_comment_click', {
+        article_title: getCurrentPageTitle(),
+        action_label: label
+      });
+      return;
+    }
+
+    if (control.matches('a') && !isBlogPost && (
+      (article && !article.classList.contains('node--view-mode-full')) ||
+      control.closest('[data-spotdeals-blog-teaser]')
+    )) {
+      sendEvent('blog_article_click', {
+        article_title: article ? getText(article, ['.node__title', 'h2']) : label,
+        source_section: getSection(control),
+        target_url: href
+      });
+      return;
+    }
 
     if (control.closest('.flag-follow-user')) {
       const isUnfollow = Boolean(control.closest('.flag.action-unflag'));
@@ -614,6 +721,11 @@
 
       once('spotdeals-analytics-global-clicks', 'html', context).forEach(() => {
         document.addEventListener('click', trackClick, true);
+      });
+
+      once('spotdeals-analytics-blog-post', 'article.node--type-blog-post.node--view-mode-full', context).forEach((article) => {
+        sendEvent('blog_post_view', {article_title: getCurrentPageTitle()});
+        trackBlogReading(article.querySelector('.sd-blog__body') || article);
       });
 
       once('spotdeals-analytics-social-privacy', '.sd-profile__privacy-checkbox', context).forEach((checkbox) => {
