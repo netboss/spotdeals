@@ -1430,7 +1430,9 @@ function _spotdeals_minimal_build_row_distance_label(mixed $row): ?string {
   }
 
   $distance_km = (float) $row->_spotdeals_distance_km;
-  if (!is_finite($distance_km) || $distance_km < 0) {
+  // PHP_FLOAT_MAX is used as a missing-coordinate sorting sentinel.
+  // A real great-circle distance cannot exceed half Earth's circumference.
+  if (!is_finite($distance_km) || $distance_km < 0 || $distance_km > 20038) {
     return NULL;
   }
 
@@ -1464,6 +1466,16 @@ function _spotdeals_minimal_build_venue_distance_label(?NodeInterface $venue): ?
   $venue_lat = _spotdeals_minimal_get_node_coordinate($venue, 'field_latitude');
   $venue_lon = _spotdeals_minimal_get_node_coordinate($venue, 'field_longitude');
 
+  // Some imported venues have a GeoField point but no separate decimal
+  // latitude/longitude. Use the point only when both decimal fields are absent.
+  if ($venue_lat === NULL || $venue_lon === NULL) {
+    $point = _spotdeals_minimal_get_venue_geofield_point($venue);
+    if ($point !== NULL) {
+      $venue_lat = $point['latitude'];
+      $venue_lon = $point['longitude'];
+    }
+  }
+
   if ($origin_lat === NULL || $origin_lon === NULL || $venue_lat === NULL || $venue_lon === NULL) {
     return NULL;
   }
@@ -1493,6 +1505,31 @@ function _spotdeals_minimal_get_node_coordinate(NodeInterface $node, string $fie
   }
 
   return _spotdeals_minimal_parse_coordinate($node->get($field_name)->value ?? NULL);
+}
+
+/**
+ * Reads a valid WKT POINT from a venue's GeoField coordinates.
+ *
+ * WKT stores longitude first, then latitude. Never substitute a city centre
+ * or an invented point for a venue without valid coordinates.
+ */
+function _spotdeals_minimal_get_venue_geofield_point(NodeInterface $venue): ?array {
+  if (!$venue->hasField('field_coordinates') || $venue->get('field_coordinates')->isEmpty()) {
+    return NULL;
+  }
+
+  $wkt = trim((string) ($venue->get('field_coordinates')->first()?->getValue()['value'] ?? ''));
+  if (!preg_match('/^POINT\s*\(\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s+([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*\)$/i', $wkt, $matches)) {
+    return NULL;
+  }
+
+  $longitude = (float) $matches[1];
+  $latitude = (float) $matches[2];
+  if (!is_finite($latitude) || !is_finite($longitude) || abs($latitude) > 90 || abs($longitude) > 180) {
+    return NULL;
+  }
+
+  return ['latitude' => $latitude, 'longitude' => $longitude];
 }
 
 /**

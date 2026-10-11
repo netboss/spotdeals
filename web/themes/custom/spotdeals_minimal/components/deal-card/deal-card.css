@@ -1641,6 +1641,9 @@
   display: inline-flex;
   gap: 0.32rem;
   align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
   margin-top: 0.58rem;
   color: var(--deal-card-text);
   font-size: 0.84rem;
