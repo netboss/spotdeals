@@ -39,7 +39,7 @@ final class DealDiscoveryScheduler {
   ) {}
 
   /**
-   * Runs at most one due automated discovery pass.
+   * Runs a bounded batch of due automated discovery passes.
    *
    * @return array<string, mixed>
    *   Scheduler status and, when run, discovery counters.
@@ -122,136 +122,163 @@ final class DealDiscoveryScheduler {
       $runState = [];
     }
 
-    $due = [];
-    foreach ($definitions as $tid => $definition) {
-      foreach ($locations as $token => $location) {
-        $key = $tid . ':' . $token;
-        $lastCompleted = (int) ($runState[$key]['last_completed'] ?? 0);
-        if ($lastCompleted > 0 && ($now - $lastCompleted) < $refreshSeconds) {
-          continue;
-        }
-        $due[] = [
-          'key' => $key,
-          'tid' => $tid,
-          'definition' => $definition,
-          'token' => $token,
-          'location' => $location,
-          'last_completed' => $lastCompleted,
-        ];
-      }
-    }
-
-    if ($due === []) {
-      return ['status' => 'nothing_due'];
-    }
-
-    // Rotate categories rather than exhausting every city in one category.
-    // Within the selected category, prioritize never-run and oldest locations.
-    $categoryNames = [];
-    foreach ($due as $item) {
-      $categoryNames[$item['tid']] = (string) ($item['definition']['name'] ?? '');
-    }
-    uksort($categoryNames, static function (int $a, int $b) use ($categoryNames): int {
-      return strnatcasecmp($categoryNames[$a], $categoryNames[$b]) ?: ($a <=> $b);
-    });
-    $categoryIds = array_keys($categoryNames);
-    $previousCategory = (int) $this->state->get(self::LAST_CATEGORY_STATE_NAME, 0);
-    $previousIndex = array_search($previousCategory, $categoryIds, TRUE);
-    $nextIndex = $previousIndex === FALSE ? 0 : ($previousIndex + 1) % count($categoryIds);
-    $nextCategory = $categoryIds[$nextIndex];
-
-    $categoryDue = array_values(array_filter(
-      $due,
-      static fn (array $item): bool => $item['tid'] === $nextCategory,
-    ));
-    usort($categoryDue, static function (array $a, array $b): int {
-      return ($a['last_completed'] <=> $b['last_completed'])
-        ?: strnatcasecmp((string) ($a['location']['label'] ?? ''), (string) ($b['location']['label'] ?? ''))
-        ?: strcmp((string) $a['token'], (string) $b['token']);
-    });
+    $batchLimit = max(1, min(20, (int) ($config->get('deal_discovery_scheduler_batch_size') ?? 1)));
+    $candidateLimit = max(1, min(50, (int) ($config->get('deal_discovery_scheduler_candidate_limit') ?? 25)));
+    $sitePages = max(1, min(10, (int) ($config->get('deal_discovery_scheduler_site_pages') ?? 5)));
 
     if (!$this->lock->acquire(self::LOCK_NAME, 3600.0)) {
       return ['status' => 'locked'];
     }
 
-    $target = $categoryDue[0];
-    $this->state->set(self::LAST_CATEGORY_STATE_NAME, $nextCategory);
-    $this->state->set(self::LAST_ATTEMPT_STATE_NAME, $now);
-
+    $completed = 0;
+    $results = [];
+    $status = 'completed';
+    $message = NULL;
     try {
-      $candidateLimit = max(1, min(
-        50,
-        (int) ($config->get('deal_discovery_scheduler_candidate_limit') ?? 25),
-      ));
-      $sitePages = max(1, min(
-        10,
-        (int) ($config->get('deal_discovery_scheduler_site_pages') ?? 5),
-      ));
+      for ($pass = 0; $pass < $batchLimit; $pass++) {
+        // Recheck backlog between passes. Do not initiate another pass when
+        // the queue is full; one runner pass can still exceed the threshold.
+        $pendingCount = $this->storage->count('pending');
+        if ($pendingCount >= $pauseAt) {
+          $this->state->set(self::BACKLOG_PAUSED_STATE_NAME, TRUE);
+          $status = 'backlog_paused';
+          break;
+        }
 
-      $result = $this->runner->run(
-        $target['definition'],
-        [
-          'city' => (string) $target['location']['city'],
-          'state' => (string) $target['location']['state'],
-          'country' => (string) $target['location']['country'],
-        ],
-        $candidateLimit,
-        $sitePages,
-      );
+        $due = [];
+        foreach ($definitions as $tid => $definition) {
+          foreach ($locations as $token => $location) {
+            $key = $tid . ':' . $token;
+            $lastCompleted = (int) ($runState[$key]['last_completed'] ?? 0);
+            if ($lastCompleted > 0 && ($now - $lastCompleted) < $refreshSeconds) {
+              continue;
+            }
+            $due[] = [
+              'key' => $key,
+              'tid' => $tid,
+              'definition' => $definition,
+              'token' => $token,
+              'location' => $location,
+              'last_completed' => $lastCompleted,
+            ];
+          }
+        }
+        if ($due === []) {
+          $status = 'nothing_due';
+          break;
+        }
 
-      $runState[$target['key']] = [
-        'last_completed' => $this->time->getCurrentTime(),
-        'category_tid' => $target['tid'],
-        'category_label' => (string) ($target['definition']['name'] ?? ''),
-        'location_token' => $target['token'],
-        'location_label' => (string) ($target['location']['label'] ?? ''),
-      ];
-      $this->state->set(self::RUN_STATE_NAME, $runState);
+        $categoryNames = [];
+        foreach ($due as $item) {
+          $categoryNames[$item['tid']] = (string) ($item['definition']['name'] ?? '');
+        }
+        uksort($categoryNames, static function (int $a, int $b) use ($categoryNames): int {
+          return strnatcasecmp($categoryNames[$a], $categoryNames[$b]) ?: ($a <=> $b);
+        });
+        $categoryIds = array_keys($categoryNames);
+        $previousCategory = (int) $this->state->get(self::LAST_CATEGORY_STATE_NAME, 0);
+        $previousIndex = array_search($previousCategory, $categoryIds, TRUE);
+        $nextIndex = $previousIndex === FALSE ? 0 : ($previousIndex + 1) % count($categoryIds);
+        $nextCategory = $categoryIds[$nextIndex];
 
-      try {
-        $this->activityDigest->recordRun($result);
-      }
-      catch (\Throwable $exception) {
-        $this->logger->warning(
-          'Scheduled deal-discovery activity recording failed safely for {category} in {location}: {message}',
+        $categoryDue = array_values(array_filter(
+          $due,
+          static fn (array $item): bool => $item['tid'] === $nextCategory,
+        ));
+        usort($categoryDue, static function (array $a, array $b): int {
+          return ($a['last_completed'] <=> $b['last_completed'])
+            ?: strnatcasecmp((string) ($a['location']['label'] ?? ''), (string) ($b['location']['label'] ?? ''))
+            ?: strcmp((string) $a['token'], (string) $b['token']);
+        });
+        $target = $categoryDue[0];
+        if ($pass === 0) {
+          $this->state->set(self::LAST_ATTEMPT_STATE_NAME, $now);
+        }
+        $this->state->set(self::LAST_CATEGORY_STATE_NAME, $nextCategory);
+
+        try {
+        $result = $this->runner->run(
+          $target['definition'],
+          [
+            'city' => (string) $target['location']['city'],
+            'state' => (string) $target['location']['state'],
+            'country' => (string) $target['location']['country'],
+          ],
+          $candidateLimit,
+          $sitePages,
+        );
+
+        $runState[$target['key']] = [
+          'last_completed' => $this->time->getCurrentTime(),
+          'category_tid' => $target['tid'],
+          'category_label' => (string) ($target['definition']['name'] ?? ''),
+          'location_token' => $target['token'],
+          'location_label' => (string) ($target['location']['label'] ?? ''),
+        ];
+        $this->state->set(self::RUN_STATE_NAME, $runState);
+        $completed++;
+        $results[] = $result;
+
+        try {
+          $this->activityDigest->recordRun($result);
+        }
+        catch (\Throwable $exception) {
+          $this->logger->warning(
+            'Scheduled deal-discovery activity recording failed safely for {category} in {location}: {message}',
+            [
+              'category' => (string) ($result['category_label'] ?? ''),
+              'location' => (string) ($result['location_label'] ?? ''),
+              'message' => $exception->getMessage(),
+            ],
+          );
+        }
+
+        $this->logger->notice(
+          'Automated deal discovery completed for {category} in {location}: researched {researched}, qualifying venues {review}, queued/refreshed {queued}, auto-approved {auto}, duplicate-rejected {duplicates}, rejected {rejected}, pending {pending}.',
           [
             'category' => (string) ($result['category_label'] ?? ''),
             'location' => (string) ($result['location_label'] ?? ''),
-            'message' => $exception->getMessage(),
+            'researched' => (int) ($result['researched'] ?? 0),
+            'review' => (int) ($result['review_venues'] ?? 0),
+            'queued' => (int) ($result['queued'] ?? 0),
+            'auto' => (int) ($result['auto_approved'] ?? 0),
+            'duplicates' => (int) ($result['duplicates_rejected'] ?? 0),
+            'rejected' => (int) ($result['rejected'] ?? 0),
+            'pending' => (int) ($result['pending'] ?? 0),
           ],
         );
+
+        }
+        catch (\Throwable $exception) {
+          $this->logger->warning(
+            'Automated deal discovery failed safely for {category} in {location}: {message}',
+            [
+              'category' => (string) ($target['definition']['name'] ?? ''),
+              'location' => (string) ($target['location']['label'] ?? ''),
+              'message' => $exception->getMessage(),
+            ],
+          );
+          $status = 'failed';
+          $message = $exception->getMessage();
+          break;
+        }
       }
-
-      $this->logger->notice(
-        'Automated deal discovery completed for {category} in {location}: researched {researched}, qualifying venues {review}, queued/refreshed {queued}, auto-approved {auto}, duplicate-rejected {duplicates}, rejected {rejected}, pending {pending}.',
-        [
-          'category' => (string) ($result['category_label'] ?? ''),
-          'location' => (string) ($result['location_label'] ?? ''),
-          'researched' => (int) ($result['researched'] ?? 0),
-          'review' => (int) ($result['review_venues'] ?? 0),
-          'queued' => (int) ($result['queued'] ?? 0),
-          'auto' => (int) ($result['auto_approved'] ?? 0),
-          'duplicates' => (int) ($result['duplicates_rejected'] ?? 0),
-          'rejected' => (int) ($result['rejected'] ?? 0),
-          'pending' => (int) ($result['pending'] ?? 0),
-        ],
-      );
-
-      return ['status' => 'completed'] + $result;
-    }
-    catch (\Throwable $exception) {
-      $this->logger->warning(
-        'Automated deal discovery failed safely for {category} in {location}: {message}',
-        [
-          'category' => (string) ($target['definition']['name'] ?? ''),
-          'location' => (string) ($target['location']['label'] ?? ''),
-          'message' => $exception->getMessage(),
-        ],
-      );
+      if ($completed > 0 && $status === 'completed' && $batchLimit === 1) {
+        // Preserve the original single-run response contract.
+        return ['status' => 'completed'] + $results[0];
+      }
+      if ($completed === 0 && $status === 'nothing_due') {
+        return ['status' => 'nothing_due'];
+      }
+      if ($completed === 0 && $status === 'failed') {
+        return ['status' => 'failed', 'message' => $message];
+      }
       return [
-        'status' => 'failed',
-        'message' => $exception->getMessage(),
-      ];
+        'status' => $status,
+        'completed' => $completed,
+        'results' => $results,
+        'pending' => $pendingCount,
+      ] + ($message === NULL ? [] : ['message' => $message]);
     }
     finally {
       $this->lock->release(self::LOCK_NAME);

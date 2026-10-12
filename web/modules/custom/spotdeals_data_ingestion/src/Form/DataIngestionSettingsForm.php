@@ -181,7 +181,7 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
       '#type' => 'details',
       '#title' => $this->t('Scheduled deal discovery'),
       '#open' => FALSE,
-      '#description' => $this->t('Runs the same discovery pipeline as the manual Deal Discovery form, one category/location pair at a time, with cooldown and Pending-backlog protection.'),
+      '#description' => $this->t('Runs the same discovery pipeline as the manual Deal Discovery form, a configurable number of category/location pairs per cycle, with cooldown and Pending-backlog protection.'),
     ];
 
     $form['scheduled_discovery']['deal_discovery_scheduler_enabled'] = [
@@ -215,7 +215,17 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
       '#min' => 5,
       '#max' => 1440,
       '#required' => TRUE,
-      '#description' => $this->t('Even when many category/location pairs are due, cron will start at most one discovery after this cooldown.'),
+      '#description' => $this->t('The cooldown applies between batches, not between passes within a batch.'),
+    ];
+
+    $form['scheduled_discovery']['deal_discovery_scheduler_batch_size'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Discovery passes per scheduled cycle'),
+      '#default_value' => (int) ($config->get('deal_discovery_scheduler_batch_size') ?? 1),
+      '#min' => 1,
+      '#max' => 20,
+      '#required' => TRUE,
+      '#description' => $this->t('Start at 1 and increase gradually after measuring runtime and pending backlog. The pending threshold is checked between passes.'),
     ];
 
     $form['scheduled_discovery']['deal_discovery_scheduler_candidate_limit'] = [
@@ -297,6 +307,7 @@ final class DataIngestionSettingsForm extends ConfigFormBase {
       ->set('deal_discovery_scheduler_venue_types', $selectedVenueTypes)
       ->set('deal_discovery_scheduler_refresh_days', max(1, min(30, (int) $form_state->getValue('deal_discovery_scheduler_refresh_days'))))
       ->set('deal_discovery_scheduler_minimum_interval_minutes', max(5, min(1440, (int) $form_state->getValue('deal_discovery_scheduler_minimum_interval_minutes'))))
+      ->set('deal_discovery_scheduler_batch_size', max(1, min(20, (int) $form_state->getValue('deal_discovery_scheduler_batch_size'))))
       ->set('deal_discovery_scheduler_candidate_limit', max(1, min(50, (int) $form_state->getValue('deal_discovery_scheduler_candidate_limit'))))
       ->set('deal_discovery_scheduler_site_pages', max(1, min(10, (int) $form_state->getValue('deal_discovery_scheduler_site_pages'))))
       ->set('deal_discovery_scheduler_pause_pending', max(1, (int) $form_state->getValue('deal_discovery_scheduler_pause_pending')))
