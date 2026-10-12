@@ -56,6 +56,9 @@ spotdeals_data_ingestion.settings:
     deal_discovery_scheduler_minimum_interval_minutes:
       type: integer
       label: 'Minimum minutes between scheduled deal-discovery runs'
+    deal_discovery_scheduler_batch_size:
+      type: integer
+      label: 'Maximum discovery passes per scheduled cycle'
     deal_discovery_scheduler_candidate_limit:
       type: integer
       label: 'Scheduled deal-discovery candidate limit'

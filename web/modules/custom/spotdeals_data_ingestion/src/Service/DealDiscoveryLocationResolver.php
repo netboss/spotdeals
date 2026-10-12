@@ -83,12 +83,55 @@ final class DealDiscoveryLocationResolver {
       $locations[$token] = $location + ['label' => $label];
     }
 
+    // Add independent geographic targets without changing existing venue tokens.
+    // Preserve historical scheduler state for all previously discovered locations.
+    $existing = [];
+    foreach ($locations as $location) {
+      $existing[$this->locationIdentity($location)] = TRUE;
+    }
+    foreach (DealDiscoveryGeographicCatalog::locations() as $location) {
+      $identity = $this->locationIdentity($location);
+      if (isset($existing[$identity])) {
+        continue;
+      }
+      $token = $this->encode($location);
+      if ($token === '') {
+        continue;
+      }
+      $locations[$token] = $location + [
+        'label' => $location['city'] . ', ' . $location['state'],
+      ];
+      $existing[$identity] = TRUE;
+    }
+
     uasort($locations, static fn (array $a, array $b): int => strnatcasecmp(
       $a['label'],
       $b['label'],
     ));
 
     return $locations;
+  }
+
+  /**
+   * Normalizes a location for cross-source duplicate detection.
+   *
+   * This affects matching only; it never changes saved scheduler tokens.
+   */
+  private function locationIdentity(array $location): string {
+    $city = strtolower(trim((string) ($location['city'] ?? '')));
+    $city = preg_replace('/[^a-z0-9]/', '', $city) ?? $city;
+    // Handle known spelling variants already present in imported venue data.
+    $aliases = [
+      'saintaugustine' => 'staugustine',
+      'saintcloud' => 'stcloud',
+      'saintpaul' => 'stpaul',
+      'saintlouis' => 'stlouis',
+      'championsgate' => 'championsgate',
+    ];
+    $city = $aliases[$city] ?? $city;
+
+    return strtoupper((string) ($location['country'] ?? 'US')) . ':'
+      . strtoupper((string) ($location['state'] ?? '')) . ':' . $city;
   }
 
   /**
