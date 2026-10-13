@@ -49642,10 +49642,10 @@ msgid "Daily Specials"
 msgstr "Especiales diarios"
 
 msgid "Happy Hour"
-msgstr "Hora feliz"
+msgstr "Happy Hour"
 
 msgid "Happy Hours"
-msgstr "Horas felices"
+msgstr "Happy Hours"
 
 msgid "Drink Specials"
 msgstr "Especiales de bebidas"
@@ -50055,7 +50055,7 @@ msgid "Deal name"
 msgstr "Nombre de la oferta"
 
 msgid "Example: Taco Tuesday, Happy Hour, Lunch Special."
-msgstr "Ejemplo: Martes de tacos, hora feliz, especial de almuerzo."
+msgstr "Ejemplo: Martes de tacos, Happy Hour, especial de almuerzo."
 
 msgid "Example: 1100 Orlando Ave."
 msgstr "Ejemplo: 1100 Orlando Ave."
