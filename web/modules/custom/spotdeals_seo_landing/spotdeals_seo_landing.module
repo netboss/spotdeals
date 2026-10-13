@@ -261,3 +261,127 @@ function spotdeals_seo_landing_preprocess_page(array &$variables): void {
   $variables['spotdeals_deal_related_deals'] = \Drupal::service('spotdeals_seo_landing.deal_page_data')
     ->buildRelatedDeals($node, $venue);
 }
+
+/**
+ * Implements hook_metatags_alter().
+ *
+ * SD-230: Provide descriptions for deals and venues without requiring a body
+ * field or editorial updates to existing content. Leave all other tags alone.
+ */
+function spotdeals_seo_landing_metatags_alter(array &$metatags, array &$context): void {
+  $node = $context['entity'] ?? $context['token_data']['node'] ?? NULL;
+  if (!$node instanceof NodeInterface || !in_array($node->bundle(), ['deal', 'venue'], TRUE)) {
+    return;
+  }
+
+  // Metatag may run for non-canonical entity contexts (e.g. previews).
+  if (!$node->isPublished()) {
+    return;
+  }
+
+  $langcode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  if ($node->hasTranslation($langcode)) {
+    $node = $node->getTranslation($langcode);
+  }
+  $spanish = $langcode === 'es';
+
+  // A translated node can still expose an untranslated field value. Do not
+  // present English offer copy or venue summaries as Spanish metadata.
+  $localized_text = static function (NodeInterface $entity, string $field_name, string $langcode): string {
+    if (!$entity->hasField($field_name) || $entity->get($field_name)->isEmpty()) {
+      return '';
+    }
+    $field = $entity->get($field_name);
+    if ($langcode === 'es') {
+      if (!$entity->hasTranslation('es') || !$field->getFieldDefinition()->isTranslatable()) {
+        return '';
+      }
+      $original = $entity->getUntranslated();
+      if ($original->hasField($field_name) && !$original->get($field_name)->isEmpty()
+        && $field->getValue() === $original->get($field_name)->getValue()) {
+        return '';
+      }
+    }
+    $item = $field->first();
+    $value = trim(strip_tags((string) ($item->summary ?? '')));
+    return $value !== '' ? $value : trim(strip_tags((string) ($item->value ?? '')));
+  };
+  $title = trim($node->label());
+  if ($title === '') {
+    return;
+  }
+
+  $place = static function (NodeInterface $entity): string {
+    if (!$entity->hasField('field_address') || $entity->get('field_address')->isEmpty()) {
+      return '';
+    }
+    $address = $entity->get('field_address')->first();
+    $parts = array_filter([
+      trim((string) ($address->locality ?? '')),
+      trim((string) ($address->administrative_area ?? '')),
+    ]);
+    return implode(', ', $parts);
+  };
+
+  // Avoid repeating a location already present in the node/venue title.
+  $append_location = static function (string $name, string $location, bool $spanish): string {
+    if ($location === '') {
+      return '';
+    }
+    $city = trim(explode(',', $location, 2)[0]);
+    if ($city !== '' && mb_stripos($name, $city, 0, 'UTF-8') !== FALSE) {
+      return '';
+    }
+    return ($spanish ? ' en ' : ' in ') . $location;
+  };
+
+  if ($node->bundle() === 'deal') {
+    $venue = NULL;
+    if ($node->hasField('field_venue') && !$node->get('field_venue')->isEmpty()) {
+      $venue = $node->get('field_venue')->entity;
+    }
+    $venue_name = $venue instanceof NodeInterface ? trim($venue->label()) : '';
+    $location = $venue instanceof NodeInterface ? $place($venue) : '';
+    // Do not append free-form English offer copy to Spanish search snippets.
+    // Field translation presence alone does not establish translated content.
+    $offer = $spanish ? '' : $localized_text($node, 'field_price_offer_text', $langcode);
+
+    $description = $spanish ? 'Descubre ' . $title : 'Explore ' . $title;
+    if ($venue_name !== '') {
+      $description .= ($spanish ? ' en ' : ' at ') . $venue_name;
+    }
+    $description .= $append_location($venue_name !== '' ? $venue_name : $title, $location, $spanish);
+    $description .= '.';
+    if ($offer !== '') {
+      $description .= ' ' . $offer . '.';
+    }
+    else {
+      $description .= $spanish ? ' Consulta los detalles de la oferta.' : ' See offer details.';
+    }
+  }
+  else {
+    $location = $place($node);
+    $summary = '';
+    foreach (['field_short_description', 'body'] as $field_name) {
+      $summary = $localized_text($node, $field_name, $langcode);
+      if ($summary !== '') {
+        break;
+      }
+    }
+    $description = $spanish ? 'Descubre ofertas en ' . $title : 'Discover deals at ' . $title;
+    $description .= $append_location($title, $location, $spanish);
+    $description .= '.';
+    if ($summary !== '') {
+      $description .= ' ' . $summary;
+    }
+    else {
+      $description .= $spanish ? ' Consulta las ofertas y los detalles del establecimiento.' : ' Explore available offers and venue details.';
+    }
+  }
+
+  $description = trim(preg_replace('/\s+/u', ' ', $description) ?? $description);
+  if (mb_strlen($description) > 160) {
+    $description = rtrim(mb_substr($description, 0, 157), " ,.;:") . '…';
+  }
+  $metatags['description'] = $description;
+}
