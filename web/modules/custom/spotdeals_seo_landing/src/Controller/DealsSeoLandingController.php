@@ -222,23 +222,36 @@ final class DealsSeoLandingController extends ControllerBase {
       ])
       : $this->t('Deals in @city', ['@city' => $city_label]);
 
-    $intro_text = $category_label !== NULL
-      ? $this->t('Find @category in @city, including current local offers, nearby promotions, and places worth checking out.', [
-        '@category' => $this->translateDisplayLabel($category_label),
-        '@city' => $city_label,
-      ])
-      : $this->t('Browse current local deals in @city, including nearby offers, promotions, and places worth checking out.', [
-        '@city' => $city_label,
-      ]);
+    $deal_count = (int) $landing_data['total_deals'];
+    $venue_count = (int) $landing_data['venue_count'];
+    $category_name = $category_label !== NULL
+      ? $this->translateDisplayLabel($this->pluralizeLabel($category_label))
+      : $this->t('local deals');
 
-    $meta_description = $category_label !== NULL
-      ? $this->t('Find @category in @city on SpotDeals. Browse current local deals, promotions, and nearby offers.', [
-        '@category' => $this->translateDisplayLabel($category_label),
+    // Keep the search snippet and visible introduction grounded in the same
+    // published deal and venue counts shown on this landing page.
+    if ($deal_count > 0 && $venue_count > 0) {
+      $intro_text = $this->t('Explore @deals @category in @city across @venues local places. Compare offers and find where to go.', [
+        '@deals' => $deal_count,
+        '@category' => $category_name,
         '@city' => $city_label,
-      ])
-      : $this->t('Find local deals in @city on SpotDeals. Browse current offers, promotions, and nearby businesses.', [
+        '@venues' => $venue_count,
+      ]);
+    }
+    elseif ($deal_count > 0) {
+      $intro_text = $this->t('Explore @deals @category in @city. Compare local offers and discover places to visit.', [
+        '@deals' => $deal_count,
+        '@category' => $category_name,
         '@city' => $city_label,
       ]);
+    }
+    else {
+      $intro_text = $this->t('Explore @category in @city. Check back for new local offers and specials.', [
+        '@category' => $category_name,
+        '@city' => $city_label,
+      ]);
+    }
+    $meta_description = $intro_text;
 
     $canonical_url = $category_label !== NULL
       ? Url::fromRoute('spotdeals_seo_landing.deals_city_category', [
