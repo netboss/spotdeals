@@ -52,7 +52,7 @@ function spotdeals_social_preprocess_user(array &$variables): void {
   // profile. User entities are also rendered in compact mode for node author
   // pictures and other embedded contexts; injecting profile actions there
   // leaks Follow/Block controls into unrelated content.
-  if (($variables['view_mode'] ?? '') !== 'full') {
+  if (($variables['elements']['#view_mode'] ?? '') !== 'full') {
     return;
   }
 
