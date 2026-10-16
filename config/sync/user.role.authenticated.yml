@@ -6,6 +6,7 @@ dependencies:
     - filter.format.basic_html
     - filter.format.webform_default
     - node.type.claim
+    - node.type.conversation
   module:
     - comment
     - contact
@@ -31,7 +32,9 @@ permissions:
   - 'access site-wide contact form'
   - 'access user profiles'
   - 'create claim content'
+  - 'create conversation content'
   - 'delete own files'
+  - 'edit own conversation content'
   - 'flag block_user'
   - 'flag deal'
   - 'flag follow_user'

@@ -1,0 +1,51 @@
+uuid: 0bfbb84a-b7f6-48b2-88a1-1045cf6ddebc
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_display.comment.conversation_replies.default
+    - field.field.node.conversation.field_address
+    - field.field.node.conversation.field_conversation_body
+    - field.field.node.conversation.field_conversation_replies
+    - node.type.conversation
+  module:
+    - address
+    - comment
+    - text
+    - user
+id: node.conversation.default
+targetEntityType: node
+bundle: conversation
+mode: default
+content:
+  field_address:
+    type: address_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  field_conversation_body:
+    type: text_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  field_conversation_replies:
+    type: comment_default
+    label: hidden
+    settings:
+      view_mode: default
+      pager_id: 0
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 3
+    region: content
+hidden:
+  langcode: true
+  search_api_excerpt: true

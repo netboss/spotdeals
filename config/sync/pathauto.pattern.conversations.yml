@@ -1,0 +1,23 @@
+uuid: b3736c44-5df4-4402-9520-c633d86c7755
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.conversation
+  module:
+    - node
+id: conversations
+label: Conversations
+type: 'canonical_entities:node'
+pattern: '/conversation/[node:title]'
+selection_criteria:
+  712b8d4d-8fd2-4af1-9412-04cb87f59a07:
+    id: 'entity_bundle:node'
+    negate: false
+    context_mapping:
+      node: node
+    bundles:
+      conversation: conversation
+selection_logic: and
+weight: -5
+relationships: {  }

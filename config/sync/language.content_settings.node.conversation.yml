@@ -1,0 +1,11 @@
+uuid: 8c076ec1-ad91-426f-9a55-00cee91f9474
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.conversation
+id: node.conversation
+target_entity_type_id: node
+target_bundle: conversation
+default_langcode: site_default
+language_alterable: false

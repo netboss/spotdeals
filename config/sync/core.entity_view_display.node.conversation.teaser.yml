@@ -1,0 +1,28 @@
+uuid: f553eb02-4ad3-4e34-b818-642dc094849e
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.teaser
+    - field.field.node.conversation.field_address
+    - field.field.node.conversation.field_conversation_body
+    - field.field.node.conversation.field_conversation_replies
+    - node.type.conversation
+  module:
+    - user
+id: node.conversation.teaser
+targetEntityType: node
+bundle: conversation
+mode: teaser
+content:
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  field_address: true
+  field_conversation_body: true
+  field_conversation_replies: true
+  langcode: true
+  search_api_excerpt: true

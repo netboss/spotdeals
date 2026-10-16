@@ -1,0 +1,35 @@
+uuid: ed78611b-7a48-4eff-aa4e-f77acb9670ef
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.info_block
+    - field.field.node.conversation.field_address
+    - field.field.node.conversation.field_conversation_body
+    - field.field.node.conversation.field_conversation_replies
+    - node.type.conversation
+  module:
+    - address
+    - user
+id: node.conversation.info_block
+targetEntityType: node
+bundle: conversation
+mode: info_block
+content:
+  field_address:
+    type: address_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  field_conversation_body: true
+  field_conversation_replies: true
+  langcode: true
+  search_api_excerpt: true
