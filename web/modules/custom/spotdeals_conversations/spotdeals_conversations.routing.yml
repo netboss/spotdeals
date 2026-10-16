@@ -1,0 +1,7 @@
+spotdeals_conversations.wall:
+  path: '/conversations'
+  defaults:
+    _controller: '\Drupal\spotdeals_conversations\Controller\ConversationsWallController::wall'
+    _title: 'Local Conversations'
+  requirements:
+    _permission: 'access content'

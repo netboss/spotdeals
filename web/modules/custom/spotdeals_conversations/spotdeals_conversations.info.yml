@@ -1,0 +1,8 @@
+name: 'SpotDeals Conversations Wall'
+type: module
+description: 'Public conversations timeline with topic and location filtering.'
+package: SpotDeals
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - drupal:address
