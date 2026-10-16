@@ -1,0 +1,4 @@
+wall:
+  css:
+    theme:
+      css/wall.css: {}

@@ -70,6 +70,7 @@ final class FollowingActivityBuilder {
     $this->addDealVotes($followedUids, $users, $activity);
     $this->addVenueVotes($followedUids, $users, $activity);
     $this->addSavedItems($followedUids, $users, $activity);
+    $this->addConversationActivity($followedUids, $users, $activity);
 
     usort($activity, static fn(array $a, array $b): int => $b['timestamp'] <=> $a['timestamp']);
     $activity = array_slice($activity, 0, max(1, $limit));
@@ -103,6 +104,8 @@ final class FollowingActivityBuilder {
 
     $tags = [
       \Drupal\spotdeals_social\Cache\SocialActivityCache::timelineTag($uid),
+      'node_list',
+      'comment_list',
     ];
 
     $followedUids = $this->followedUserIds($uid);
@@ -264,6 +267,82 @@ final class FollowingActivityBuilder {
         $nodes[$nid]->label(),
         $nodes[$nid]->toUrl()->toString(),
         (int) $row->created,
+      );
+    }
+  }
+
+  /**
+   * Adds published conversation posts and published replies by followed users.
+   *
+   * Keeps the existing followed-user privacy and block filtering intact.
+   */
+  private function addConversationActivity(array $uids, array $users, array &$activity): void {
+    if (!$this->entityTypeManager->hasDefinition('node')) {
+      return;
+    }
+
+    $nodeStorage = $this->entityTypeManager->getStorage('node');
+    $ids = $nodeStorage->getQuery()
+      ->accessCheck(TRUE)
+      ->condition('type', 'conversation')
+      ->condition('status', 1)
+      ->condition('uid', $uids, 'IN')
+      ->sort('created', 'DESC')
+      ->range(0, 100)
+      ->execute();
+
+    foreach ($nodeStorage->loadMultiple($ids) as $node) {
+      $actorUid = (int) $node->getOwnerId();
+      if (!isset($users[$actorUid]) || !$node->access('view')) {
+        continue;
+      }
+      $activity[] = $this->activityItem(
+        $users[$actorUid],
+        'conversation',
+        $this->t('started a conversation'),
+        $node->label(),
+        $node->toUrl()->toString(),
+        (int) $node->getCreatedTime(),
+      );
+    }
+
+    if (!$this->entityTypeManager->hasDefinition('comment')) {
+      return;
+    }
+    $commentStorage = $this->entityTypeManager->getStorage('comment');
+    $commentIds = $commentStorage->getQuery()
+      ->accessCheck(TRUE)
+      ->condition('comment_type', 'conversation_replies')
+      ->condition('status', 1)
+      ->condition('uid', $uids, 'IN')
+      ->sort('created', 'DESC')
+      ->range(0, 100)
+      ->execute();
+    $comments = $commentStorage->loadMultiple($commentIds);
+    $parentIds = [];
+    foreach ($comments as $comment) {
+      $parentIds[] = (int) $comment->getCommentedEntityId();
+    }
+    $parents = $nodeStorage->loadMultiple(array_unique(array_filter($parentIds)));
+
+    foreach ($comments as $comment) {
+      $actorUid = (int) $comment->getOwnerId();
+      $parentId = (int) $comment->getCommentedEntityId();
+      if (!isset($users[$actorUid], $parents[$parentId])) {
+        continue;
+      }
+      $parent = $parents[$parentId];
+      if ($parent->bundle() !== 'conversation' || !$parent->isPublished()
+        || !$parent->access('view') || !$comment->access('view')) {
+        continue;
+      }
+      $activity[] = $this->activityItem(
+        $users[$actorUid],
+        'conversation_reply',
+        $this->t('replied to'),
+        $parent->label(),
+        $parent->toUrl()->toString() . '#comment-' . $comment->id(),
+        (int) $comment->getCreatedTime(),
       );
     }
   }
