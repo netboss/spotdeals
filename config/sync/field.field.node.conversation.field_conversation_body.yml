@@ -1,0 +1,24 @@
+uuid: 6d5ed600-2aee-4278-8182-a06cc50b1eb1
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_conversation_body
+    - filter.format.plain_text
+    - node.type.conversation
+  module:
+    - text
+id: node.conversation.field_conversation_body
+field_name: field_conversation_body
+entity_type: node
+bundle: conversation
+label: 'Tell us more (optional)'
+description: 'Add a little more detail to your question, recommendation, or topic. This is optional, but it can help others join the conversation.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats:
+    - plain_text
+field_type: text_long

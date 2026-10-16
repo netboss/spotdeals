@@ -1,0 +1,8 @@
+uuid: 0663e0a6-210f-4672-b310-e9e1a9094f3b
+langcode: en
+status: true
+dependencies: {  }
+id: conversation_replies
+label: 'Conversation replies'
+target_entity_type_id: node
+description: 'Replies to local conversations on SpotDeals.'

@@ -1,0 +1,30 @@
+uuid: 06542078-e434-4210-a090-1588f4a49bd0
+langcode: en
+status: true
+dependencies:
+  config:
+    - comment.type.conversation_replies
+    - field.field.comment.conversation_replies.comment_body
+  module:
+    - text
+id: comment.conversation_replies.default
+targetEntityType: comment
+bundle: conversation_replies
+mode: default
+content:
+  author:
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  comment_body:
+    type: text_textarea
+    weight: 1
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  langcode: true
+  subject: true

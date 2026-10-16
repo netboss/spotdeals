@@ -1,0 +1,11 @@
+uuid: 724835c0-3c22-4643-a338-1814461fa34b
+langcode: en
+status: true
+dependencies:
+  config:
+    - comment.type.conversation_replies
+id: comment.conversation_replies
+target_entity_type_id: comment
+target_bundle: conversation_replies
+default_langcode: site_default
+language_alterable: false

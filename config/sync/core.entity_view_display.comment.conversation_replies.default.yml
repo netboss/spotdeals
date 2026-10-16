@@ -1,0 +1,29 @@
+uuid: 4c927c8c-1341-4db8-b444-313399df874d
+langcode: en
+status: true
+dependencies:
+  config:
+    - comment.type.conversation_replies
+    - field.field.comment.conversation_replies.comment_body
+  module:
+    - text
+id: comment.conversation_replies.default
+targetEntityType: comment
+bundle: conversation_replies
+mode: default
+content:
+  comment_body:
+    type: text_default
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+  links:
+    settings: {  }
+    third_party_settings: {  }
+    weight: 100
+    region: content
+hidden:
+  langcode: true
+  search_api_excerpt: true

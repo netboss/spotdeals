@@ -1,0 +1,24 @@
+uuid: 4a408779-9c8f-4845-8a1f-09ae071adc83
+langcode: en
+status: true
+dependencies:
+  config:
+    - comment.type.conversation_replies
+    - field.storage.comment.comment_body
+    - filter.format.plain_text
+  module:
+    - text
+id: comment.conversation_replies.comment_body
+field_name: comment_body
+entity_type: comment
+bundle: conversation_replies
+label: 'Join the conversation'
+description: 'Share your recommendation, experience, or thoughts with the community.'
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats:
+    - plain_text
+field_type: text_long
