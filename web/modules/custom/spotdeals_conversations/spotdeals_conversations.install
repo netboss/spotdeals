@@ -1,0 +1,63 @@
+<?php
+
+/**
+ * @file
+ * Installation and updates for SpotDeals Conversations.
+ */
+
+/** Defines per-user conversation votes. */
+function spotdeals_conversations_schema(): array {
+  return [
+    'spotdeals_conversation_vote' => [
+      'description' => 'One upvote or downvote per authenticated user per conversation.',
+      'fields' => [
+        'nid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+        'uid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+        'vote' => ['type' => 'int', 'size' => 'tiny', 'not null' => TRUE],
+        'changed' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      ],
+      'primary key' => ['nid', 'uid'],
+      'indexes' => ['uid' => ['uid']],
+    ],
+    'spotdeals_conversation_vote_totals' => [
+      'description' => 'Cached vote totals per conversation.',
+      'fields' => [
+        'nid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+        'upvotes' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+        'downvotes' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      ],
+      'primary key' => ['nid'],
+    ],
+  ];
+}
+
+/** Creates voting storage on existing installations. */
+function spotdeals_conversations_update_10001(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists('spotdeals_conversation_vote')) {
+    $schema->createTable('spotdeals_conversation_vote', spotdeals_conversations_schema()['spotdeals_conversation_vote']);
+  }
+}
+
+/**
+ * Adds constant-time vote totals and backfills existing votes.
+ */
+function spotdeals_conversations_update_10002(): void {
+  $db = \Drupal::database();
+  $schema = $db->schema();
+  if (!$schema->tableExists('spotdeals_conversation_vote_totals')) {
+    $schema->createTable('spotdeals_conversation_vote_totals', spotdeals_conversations_schema()['spotdeals_conversation_vote_totals']);
+  }
+  // Group in SQL rather than loading all vote rows into PHP.
+  $query = $db->select('spotdeals_conversation_vote', 'v');
+  $query->addField('v', 'nid');
+  $query->addExpression('SUM(CASE WHEN v.vote = 1 THEN 1 ELSE 0 END)', 'upvotes');
+  $query->addExpression('SUM(CASE WHEN v.vote = -1 THEN 1 ELSE 0 END)', 'downvotes');
+  $query->groupBy('v.nid');
+  foreach ($query->execute() as $row) {
+    $db->merge('spotdeals_conversation_vote_totals')
+      ->keys(['nid' => (int) $row->nid])
+      ->fields(['upvotes' => (int) $row->upvotes, 'downvotes' => (int) $row->downvotes])
+      ->execute();
+  }
+}

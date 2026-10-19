@@ -12,13 +12,62 @@ field_name: field_address
 entity_type: node
 bundle: conversation
 label: Location
-description: 'Enter the primary city and state this article covers.'
+description: '<strong>Where is your conversation relevant?</strong> Select the country, state, and city so people in that area can discover your conversation and join in.'
 required: true
 translatable: false
 default_value: {  }
 default_value_callback: ''
 settings:
-  available_countries: {  }
+  available_countries:
+    AL: AL
+    AD: AD
+    AT: AT
+    BE: BE
+    BA: BA
+    BG: BG
+    IC: IC
+    EA: EA
+    HR: HR
+    CY: CY
+    CZ: CZ
+    DK: DK
+    EE: EE
+    FI: FI
+    FR: FR
+    GE: GE
+    DE: DE
+    GI: GI
+    GR: GR
+    HU: HU
+    IS: IS
+    IE: IE
+    IT: IT
+    XK: XK
+    LV: LV
+    LI: LI
+    LT: LT
+    LU: LU
+    MT: MT
+    MD: MD
+    MC: MC
+    ME: ME
+    NL: NL
+    MK: MK
+    'NO': 'NO'
+    PL: PL
+    PT: PT
+    RO: RO
+    RS: RS
+    SK: SK
+    SI: SI
+    ES: ES
+    SE: SE
+    CH: CH
+    TR: TR
+    UA: UA
+    GB: GB
+    US: US
+    VA: VA
   langcode_override: ''
   field_overrides:
     givenName:

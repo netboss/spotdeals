@@ -675,6 +675,7 @@ h1.page-title {
 @media (min-width: 1024px) {
   .main-content__container {
     padding-inline: var(--container-padding);
+    margin-inline: auto;
   }
 
   .region--sidebar {
@@ -6036,5 +6037,62 @@ h1.page-title {
 @media (prefers-reduced-motion: reduce) {
   .spotdeals-search-loading__spinner {
     animation-duration: 1.5s;
+  }
+}
+
+
+/* SD-232: Desktop profile dashboard width within the existing content container.
+ * The profile template renders article.sd-profile; it does not require the
+ * additional .profile class. Keep the scope to actual profile dashboards.
+ */
+@media (min-width: 1100px) {
+  .path-user:has(.sd-profile:not(.sd-profile--private)) .spotdeals-page-main {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: auto;
+  }
+
+  .path-user:has(.sd-profile:not(.sd-profile--private)) .spotdeals-main-content {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .path-user .sd-profile:not(.sd-profile--private),
+  .path-user:has(.sd-profile:not(.sd-profile--private)) .sd-profile-titlebar {
+    width: 100%;
+    max-width: none;
+  }
+
+  .path-user .sd-profile:not(.sd-profile--private) .sd-profile__layout {
+    grid-template-columns: 190px minmax(0, 1fr) 260px;
+    gap: 1.25rem;
+  }
+
+  .path-user .sd-profile:not(.sd-profile--private) .sd-profile__main,
+  .path-user .sd-profile:not(.sd-profile--private) .sd-profile__aside {
+    min-width: 0;
+  }
+}
+
+/* SD-232: Override both Olivero grid wrappers on desktop profile dashboards.
+ * Preserve grid-full elsewhere and respect the parent content container. */
+@media (min-width: 1100px) {
+  .path-user:has(.sd-profile:not(.sd-profile--private))
+  .region--content-above.grid-full.layout--pass--content-medium,
+  .path-user:has(.sd-profile:not(.sd-profile--private))
+  .region--content.grid-full.layout--pass--content-medium {
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .path-user:has(.sd-profile:not(.sd-profile--private))
+  .region--content-above.grid-full.layout--pass--content-medium > *,
+  .path-user:has(.sd-profile:not(.sd-profile--private))
+  .region--content.grid-full.layout--pass--content-medium > * {
+    grid-column: 1 / -1;
+    min-width: 0;
   }
 }

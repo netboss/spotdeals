@@ -2,3 +2,14 @@ wall:
   css:
     theme:
       css/wall.css: {}
+
+activity_inline:
+  js:
+    js/activity-inline.js: {}
+  css:
+    theme:
+      css/activity-inline.css: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/drupal.ajax

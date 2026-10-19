@@ -5,3 +5,55 @@ spotdeals_conversations.wall:
     _title: 'Local Conversations'
   requirements:
     _permission: 'access content'
+
+spotdeals_conversations.inline_preview:
+  path: '/conversations/inline/{node}'
+  defaults:
+    _controller: '\Drupal\spotdeals_conversations\Controller\ConversationInlineController::preview'
+  requirements:
+    _permission: 'access content'
+    node: '\d+'
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+spotdeals_conversations.inline_more:
+  path: '/conversations/inline/{node}/more'
+  defaults:
+    _controller: '\Drupal\spotdeals_conversations\Controller\ConversationInlineController::more'
+  requirements:
+    _permission: 'access content'
+    node: '\d+'
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+spotdeals_conversations.inline_reply:
+  path: '/conversations/inline/{node}/reply'
+  defaults:
+    _controller: '\Drupal\spotdeals_conversations\Controller\InlineReplySubmitController::submit'
+  requirements:
+    _permission: 'post comments'
+    _method: 'POST'
+    node: '\d+'
+  options:
+    parameters:
+      node:
+        type: entity:node
+
+spotdeals_conversations.vote:
+  path: '/conversations/{node}/vote'
+  defaults:
+    _controller: '\Drupal\spotdeals_conversations\Controller\ConversationVoteController::submit'
+  requirements:
+    _permission: 'access content'
+    _user_is_logged_in: 'TRUE'
+    _csrf_request_header_token: 'TRUE'
+    _method: 'POST'
+    node: '\d+'
+  options:
+    parameters:
+      node:
+        type: entity:node
