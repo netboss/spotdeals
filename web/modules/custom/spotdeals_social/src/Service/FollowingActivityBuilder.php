@@ -31,27 +31,15 @@ final class FollowingActivityBuilder {
    *   Timeline entries ordered newest first.
    */
   public function build(UserInterface $account, int $limit = 12): array {
-    if (!$this->database->schema()->tableExists('flagging')) {
-      return [];
-    }
-
     $uid = (int) $account->id();
     if ($uid <= 0) {
       return [];
     }
 
     $followedUids = $this->followedUserIds($uid);
-    if (!$followedUids) {
-      return [];
-    }
-
     $blockedUids = $this->blockedUserIds($uid);
     if ($blockedUids) {
       $followedUids = array_values(array_diff($followedUids, $blockedUids));
-    }
-
-    if (!$followedUids) {
-      return [];
     }
 
     $users = $this->entityTypeManager->getStorage('user')->loadMultiple($followedUids);
@@ -61,16 +49,17 @@ final class FollowingActivityBuilder {
       }
     }
     $followedUids = array_values(array_map('intval', array_keys($users)));
-    if (!$followedUids) {
-      return [];
-    }
-
     $activity = [];
 
-    $this->addDealVotes($followedUids, $users, $activity);
+    if ($followedUids) {
+      $this->addDealVotes($followedUids, $users, $activity);
     $this->addVenueVotes($followedUids, $users, $activity);
     $this->addSavedItems($followedUids, $users, $activity);
     $this->addConversationActivity($followedUids, $users, $activity);
+    }
+    // Conversations are community content: show published, viewable posts
+    // independently of the profile owner's follow relationships.
+    $this->addCommunityConversations($activity);
 
     usort($activity, static fn(array $a, array $b): int => $b['timestamp'] <=> $a['timestamp']);
     $activity = array_slice($activity, 0, max(1, $limit));
@@ -88,6 +77,40 @@ final class FollowingActivityBuilder {
 
 
   /**
+   * Add community conversations to every accessible member profile.
+   * Existing followed-user activity remains unchanged.
+   */
+  private function addCommunityConversations(array &$activity): void {
+    $storage = $this->entityTypeManager->getStorage('node');
+    $ids = $storage->getQuery()->accessCheck(TRUE)
+      ->condition('type', 'conversation')
+      ->condition('status', 1)
+      ->sort('created', 'DESC')->range(0, 30)->execute();
+
+    $existing = array_fill_keys(array_filter(array_column($activity, 'conversation_id')), TRUE);
+    $ownerIds = [];
+    $nodes = $storage->loadMultiple($ids);
+    foreach ($nodes as $node) {
+      $ownerIds[] = (int) $node->getOwnerId();
+    }
+    $owners = $this->entityTypeManager->getStorage('user')->loadMultiple(array_unique($ownerIds));
+    foreach ($nodes as $node) {
+      $nid = (int) $node->id();
+      $ownerId = (int) $node->getOwnerId();
+      if (isset($existing[$nid]) || !isset($owners[$ownerId]) || !$node->access('view')) {
+        continue;
+      }
+      $owner = $owners[$ownerId];
+      if (!$owner instanceof UserInterface || !$owner->isActive()) {
+        continue;
+      }
+      $activity[] = $this->activityItem($owner, 'conversation',
+        $this->t('started a conversation'), $node->label(),
+        $node->toUrl()->toString(), (int) $node->getCreatedTime(), $nid);
+    }
+  }
+
+  /**
    * Returns cache tags required by a user's following timeline.
    *
    * The timeline composition depends on the viewer's follow/block graph, while
@@ -98,8 +121,11 @@ final class FollowingActivityBuilder {
    */
   public function getCacheTags(UserInterface $account): array {
     $uid = (int) $account->id();
-    if ($uid <= 0 || !$this->database->schema()->tableExists('flagging')) {
+    if ($uid <= 0) {
       return [];
+    }
+    if (!$this->database->schema()->tableExists('flagging')) {
+      return ['node_list'];
     }
 
     $tags = [
@@ -291,59 +317,87 @@ final class FollowingActivityBuilder {
       ->range(0, 100)
       ->execute();
 
+    // Collect one activity entry per conversation, rather than one per reply.
+    // A reply to someone else's conversation is still eligible for the feed.
+    $conversationItems = [];
     foreach ($nodeStorage->loadMultiple($ids) as $node) {
       $actorUid = (int) $node->getOwnerId();
       if (!isset($users[$actorUid]) || !$node->access('view')) {
         continue;
       }
-      $activity[] = $this->activityItem(
+      $conversationItems[(int) $node->id()] = $this->activityItem(
         $users[$actorUid],
         'conversation',
         $this->t('started a conversation'),
         $node->label(),
         $node->toUrl()->toString(),
         (int) $node->getCreatedTime(),
+        (int) $node->id(),
       );
     }
 
-    if (!$this->entityTypeManager->hasDefinition('comment')) {
-      return;
-    }
-    $commentStorage = $this->entityTypeManager->getStorage('comment');
-    $commentIds = $commentStorage->getQuery()
-      ->accessCheck(TRUE)
-      ->condition('comment_type', 'conversation_replies')
-      ->condition('status', 1)
-      ->condition('uid', $uids, 'IN')
-      ->sort('created', 'DESC')
-      ->range(0, 100)
-      ->execute();
-    $comments = $commentStorage->loadMultiple($commentIds);
-    $parentIds = [];
-    foreach ($comments as $comment) {
-      $parentIds[] = (int) $comment->getCommentedEntityId();
-    }
-    $parents = $nodeStorage->loadMultiple(array_unique(array_filter($parentIds)));
+    if ($this->entityTypeManager->hasDefinition('comment')) {
+      $commentStorage = $this->entityTypeManager->getStorage('comment');
+      $commentIds = $commentStorage->getQuery()
+        ->accessCheck(TRUE)
+        ->condition('comment_type', 'conversation_replies')
+        ->condition('status', 1)
+        ->condition('uid', $uids, 'IN')
+        ->sort('created', 'DESC')
+        ->range(0, 100)
+        ->execute();
+      $comments = $commentStorage->loadMultiple($commentIds);
+      $parentIds = [];
+      foreach ($comments as $comment) {
+        $parentIds[] = (int) $comment->getCommentedEntityId();
+      }
+      $parents = $nodeStorage->loadMultiple(array_unique(array_filter($parentIds)));
 
-    foreach ($comments as $comment) {
-      $actorUid = (int) $comment->getOwnerId();
-      $parentId = (int) $comment->getCommentedEntityId();
-      if (!isset($users[$actorUid], $parents[$parentId])) {
-        continue;
+      foreach ($comments as $comment) {
+        $actorUid = (int) $comment->getOwnerId();
+        $parentId = (int) $comment->getCommentedEntityId();
+        if (!isset($users[$actorUid], $parents[$parentId])) {
+          continue;
+        }
+        $parent = $parents[$parentId];
+        if ($parent->bundle() !== 'conversation' || !$parent->isPublished()
+          || !$parent->access('view') || !$comment->access('view')) {
+          continue;
+        }
+        $timestamp = (int) $comment->getCreatedTime();
+        if (!isset($conversationItems[$parentId]) || $timestamp > $conversationItems[$parentId]['timestamp']) {
+          $conversationItems[$parentId] = $this->activityItem(
+            $users[$actorUid],
+            'conversation_reply',
+            $this->t('replied to'),
+            $parent->label(),
+            $parent->toUrl()->toString(),
+            $timestamp,
+            $parentId,
+          );
+        }
       }
-      $parent = $parents[$parentId];
-      if ($parent->bundle() !== 'conversation' || !$parent->isPublished()
-        || !$parent->access('view') || !$comment->access('view')) {
-        continue;
+    }
+
+    // Count all published replies, not just replies from followed accounts.
+    // Preserve the existing timeline item's structure for theme compatibility.
+    foreach ($conversationItems as $nid => $item) {
+      if ($this->entityTypeManager->hasDefinition('comment')) {
+        $count = (int) $this->entityTypeManager->getStorage('comment')->getQuery()
+          ->accessCheck(TRUE)
+          ->condition('entity_type', 'node')
+          ->condition('entity_id', $nid)
+          ->condition('comment_type', 'conversation_replies')
+          ->condition('status', 1)
+          ->count()
+          ->execute();
+        $item['reply_count'] = $count;
+        $item['label'] = $this->t('@action · @replies', [
+          '@action' => (string) $item['label'],
+          '@replies' => (string) $this->formatPlural($count, '1 reply', '@count replies'),
+        ]);
       }
-      $activity[] = $this->activityItem(
-        $users[$actorUid],
-        'conversation_reply',
-        $this->t('replied to'),
-        $parent->label(),
-        $parent->toUrl()->toString() . '#comment-' . $comment->id(),
-        (int) $comment->getCreatedTime(),
-      );
+      $activity[] = $item;
     }
   }
 
@@ -357,6 +411,7 @@ final class FollowingActivityBuilder {
     string $title,
     string $url,
     int $timestamp,
+    int $conversationId = 0,
   ): array {
     return [
       'type' => $type,
@@ -366,6 +421,7 @@ final class FollowingActivityBuilder {
       'title' => $title,
       'url' => $url,
       'timestamp' => $timestamp,
+      'conversation_id' => $conversationId,
     ];
   }
 

@@ -2286,6 +2286,12 @@ function spotdeals_minimal_preprocess_user(array &$variables): void {
     $following_activity_builder = \Drupal::service('spotdeals_social.following_activity_builder');
     $variables['spotdeals_profile']['following_activity'] = $following_activity_builder
       ->build($account);
+    if (\Drupal::moduleHandler()->moduleExists('spotdeals_conversations')) {
+      $variables['#attached']['library'][] = 'spotdeals_conversations/activity_inline';
+      if (\Drupal::currentUser()->hasPermission('create conversation content')) {
+        $variables['spotdeals_conversation_create'] = \Drupal::formBuilder()->getForm(\Drupal\spotdeals_conversations\Form\ProfileConversationForm::class);
+      }
+    }
 
     $cacheable_metadata = \Drupal\Core\Cache\CacheableMetadata::createFromRenderArray($variables['elements']);
     $cacheable_metadata->addCacheTags($following_activity_builder->getCacheTags($account));

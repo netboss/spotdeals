@@ -1,0 +1,336 @@
+/* Inline Conversation expansion within the existing three-column Activity grid. */
+.sd-profile__activity--expandable {
+  /* The parent theme uses display:grid, not flex. */
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+}
+.sd-profile__activity-expand {
+  grid-column: 1 / -1;
+  min-width: 0;
+  width: 100%;
+  padding: 12px 0 4px;
+  overflow-wrap: anywhere;
+}
+.sd-profile__activity-expand[hidden] {
+  display: none;
+}
+.sd-profile__activity-trigger {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.sd-inline-conversation {
+  min-width: 0;
+  border-left: 3px solid #8fc31f;
+  padding: 8px 12px;
+}
+.sd-inline-conversation p {
+  margin: 0 0 12px;
+  white-space: pre-line;
+}
+.sd-inline-conversation h3 {
+  font-size: 1rem;
+  margin: 12px 0;
+}
+.sd-inline-conversation__reply {
+  border-top: 1px solid #e5e9e7;
+  padding: 10px 0;
+}
+.sd-inline-conversation__full-link {
+  display: inline-block;
+  margin-top: 10px;
+}
+.sd-inline-conversation__form {
+  margin-top: 16px;
+}
+.sd-inline-conversation__form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+.sd-inline-conversation__form .form-actions {
+  margin: 8px 0 0;
+}
+.sd-inline-conversation__load-more {
+  margin: 10px 0;
+  padding: 7px 10px;
+  border: 1px solid #8fc31f;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+.sd-inline-conversation__votes {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:8px 0 12px;
+}
+.sd-inline-conversation__vote {
+  padding:5px 10px;
+  border:1px solid #d8e0d7;
+  border-radius:6px;
+  background:transparent;
+  cursor:pointer;
+}
+.sd-inline-conversation__vote[aria-pressed="true"] {
+  border-color:#85b51b;
+  background:#f0f7df;
+  font-weight:700;
+}
+.sd-inline-conversation__vote:disabled {
+  opacity:.55;
+  cursor:default;
+}
+/* Compact conversation engagement row: votes and reply count. */
+.sd-inline-conversation__votes {
+  flex-wrap: wrap;
+}
+.sd-inline-conversation__reply-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border: 1px solid #d8e0d7;
+  border-radius: 6px;
+  line-height: normal;
+  white-space: nowrap;
+}
+/* Keep the conversation body and engagement row visible; collapse only the thread. */
+.sd-inline-preview--collapsed .sd-inline-conversation__replies,
+.sd-inline-preview--collapsed .sd-inline-conversation__load-more,
+.sd-inline-preview--collapsed .sd-inline-conversation__form,
+.sd-inline-preview--collapsed .sd-inline-conversation__full-link {
+  display: none;
+}
+.sd-inline-conversation__reply-count {
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.sd-inline-conversation__reply-count:hover {
+  border-color: #85b51b;
+}
+.sd-inline-preview--collapsed .sd-inline-conversation {
+  cursor: pointer;
+}
+.sd-inline-preview--collapsed .sd-inline-conversation__votes,
+.sd-inline-preview--collapsed .sd-inline-conversation__votes button {
+  cursor: default;
+}
+.sd-inline-preview--collapsed .sd-inline-conversation__votes button {
+  cursor: pointer;
+}
+/* Match reply-count button height and alignment with the voting buttons. */
+.sd-inline-conversation__vote,
+.sd-inline-conversation__reply-count {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 5px 10px;
+  line-height: 20px;
+  vertical-align: middle;
+}
+/* Threaded replies: parent context stays visible; deeper levels remain readable. */
+.sd-inline-thread-children {
+  margin: 6px 0 8px 12px;
+  padding-left: 10px;
+  border-left: 2px solid #dce8ce;
+}
+.sd-inline-thread-children .sd-inline-thread-children {
+  margin-left: 6px;
+  padding-left: 8px;
+}
+.sd-inline-thread-reply, .sd-inline-thread-more, .sd-inline-reply-context button {
+  background: transparent;
+  border: 0;
+  padding: 3px 4px;
+  color: #587f14;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+}
+.sd-inline-thread-more {
+  margin: 4px 0 8px;
+}
+.sd-inline-reply-context {
+  margin-bottom: 8px;
+  font-size: .9em;
+}
+@media (max-width: 600px) {
+  .sd-inline-thread-children {
+    margin-left: 6px;
+    padding-left: 7px;
+  }
+  .sd-inline-thread-children .sd-inline-thread-children {
+    margin-left: 0;
+    padding-left: 6px;
+  }
+}
+/* Compact reply sorting/expansion dropdown. */
+.sd-inline-reply-view {
+  position: relative;
+  margin: 8px 0;
+}
+.sd-inline-reply-view__toggle {
+  border: 1px solid #d8e0d7;
+  border-radius: 5px;
+  background: #fff;
+  padding: 5px 9px;
+  font: inherit;
+  cursor: pointer;
+}
+.sd-inline-reply-view__choices {
+  position: absolute;
+  z-index: 5;
+  top: 100%;
+  left: 0;
+  min-width: 180px;
+  background: #fff;
+  border: 1px solid #d8e0d7;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px #0002;
+  padding: 10px;
+}
+.sd-inline-reply-view__choices[hidden] {
+  display: none;
+}
+.sd-inline-reply-view__choices label {
+  display: block;
+  padding: 5px 2px;
+  cursor: pointer;
+}
+.sd-inline-reply-view__unavailable {
+  display: block;
+  color: #667;
+  font-size: .85em;
+  padding: 6px 2px;
+}
+.sd-inline-reply-view__resume {
+  display: block;
+  border: 1px solid #8fc31f;
+  background: transparent;
+  padding: 4px 8px;
+  cursor: pointer;
+  margin-top: 5px;
+}
+.sd-inline-reply-view__resume[hidden] {
+  display: none;
+}
+.sd-inline-reply-view__status {
+  display: block;
+  font-size: .85em;
+}
+.sd-inline-preview--collapsed .sd-inline-reply-view {
+  display: none;
+}
+/* Share stays available when the reply thread is collapsed. */
+.sd-inline-conversation__share {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 1px solid #d8e0d7;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  line-height: 20px;
+  cursor: pointer;
+}
+.sd-inline-conversation__share:hover {
+  border-color: #85b51b;
+}
+/* Profile-only composer and new conversation orientation. */
+.sd-profile__conversation-create {
+  margin: 1rem;
+}
+.sd-profile__conversation-create-toggle {
+  border: 0;
+  border-radius: .6rem;
+  background: #2563eb;
+  color: #fff;
+  padding: .7rem 1.1rem;
+  cursor: pointer;
+  font-weight: 650;
+  margin-top: 1rem;
+
+  &[aria-expanded="true"] {
+    display: none;
+  }
+}
+.sd-profile-create-form {
+  padding: 1rem 0;
+}
+.sd-profile-create-form input[type="text"], .sd-profile-create-form textarea {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.sd-profile__activity--new {
+  background: #e7f8ed;
+  outline: 2px solid #26965b;
+  outline-offset: -2px;
+  border-radius: .6rem;
+  transition: background-color 1s, outline-color 1s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sd-profile__activity--new {
+    transition: none;
+  }
+}
+
+/* Profile conversation composer: full-width fields on mobile only. */
+@media (max-width: 600px) {
+  .sd-profile__conversation-create {
+    margin: 0;
+    min-width: 0;
+    width: 100%;
+    padding: 0 1rem 1rem;
+    border-bottom: 1px solid #edf0ee;
+
+    .form-item {
+      margin-top: 0;
+    }
+
+    .form-actions {
+      margin-bottom: 0;
+    }
+  }
+
+  .sd-profile-create-form {
+    padding-bottom: 0;
+  }
+
+  .sd-profile-create-form,
+  .sd-profile-create-form .form-item,
+  .sd-profile-create-form .address-container,
+  .sd-profile-create-form .address-container > div {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .sd-profile-create-form input[type="text"],
+  .sd-profile-create-form select,
+  .sd-profile-create-form textarea {
+    box-sizing: border-box;
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .sd-profile-create-form .address-container {
+    display: block;
+  }
+}

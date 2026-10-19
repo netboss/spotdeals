@@ -128,22 +128,36 @@
       <main class="sd-profile__main" id="overview">
         <section class="sd-profile__card" id="activity">
           <div class="sd-profile__card-head"><h2>{{ 'Activity'|t }}</h2></div>
+          {% if spotdeals_conversation_create %}
+            <div class="sd-profile__conversation-create">
+              <button type="button" class="sd-profile__conversation-create-toggle" data-sd-create-toggle aria-expanded="false" aria-controls="sd-profile-create-form">{{ "What's on your mind?"|t }}</button>
+              <div id="sd-profile-create-form" hidden>{{ spotdeals_conversation_create }}</div>
+            </div>
+          {% endif %}
+          <div class="sd-profile__activity-list" data-sd-activity-list>
           {% if p.following_activity %}
-            <div class="sd-profile__activity-list">
               {% for item in p.following_activity %}
-                <div class="sd-profile__activity">
+                <div class="sd-profile__activity{% if item.conversation_id %} sd-profile__activity--expandable{% endif %}">
                   <span class="sd-profile__activity-icon sd-profile__activity-icon--{{ item.type }}">{% if item.type == 'saved' %}♥{% elseif item.type == 'conversation' or item.type == 'conversation_reply' %}💬{% else %}👍{% endif %}</span>
                   <div>
                     <small><a href="{{ item.actor_url }}">{{ item.actor_name }}</a> {{ item.label }}</small>
-                    <a href="{{ item.url }}">{{ item.title }}</a>
+                    {% if item.conversation_id %}
+                      <button type="button" class="sd-profile__activity-trigger" data-sd-inline-conversation data-inline-url="{{ path('spotdeals_conversations.inline_preview', {'node': item.conversation_id}) }}" aria-expanded="false" aria-controls="sd-activity-inline-{{ loop.index }}">{{ item.title }}</button>
+                      <noscript><a href="{{ item.url }}">{{ item.title }}</a></noscript>
+                    {% else %}
+                      <a href="{{ item.url }}">{{ item.title }}</a>
+                    {% endif %}
                   </div>
                   <time>{{ item.date }}</time>
+                  {% if item.conversation_id %}
+                    <div id="sd-activity-inline-{{ loop.index }}" class="sd-profile__activity-expand" hidden role="region" aria-label="{{ item.title }}"></div>
+                  {% endif %}
                 </div>
               {% endfor %}
-            </div>
           {% else %}
-            <p class="sd-profile__empty">{{ 'Activity from people you follow will appear here, including conversations and replies.'|t }}</p>
+            <div data-sd-activity-empty><p class="sd-profile__empty">{{ 'Public conversations and activity from people you follow will appear here.'|t }}</p></div>
           {% endif %}
+          </div>
         </section>
 
         <div class="sd-profile__saved-grid">
