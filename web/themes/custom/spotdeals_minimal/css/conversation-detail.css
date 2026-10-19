@@ -1,0 +1,149 @@
+/* SD-232: Dedicated conversation node page. Scoped to this content type. */
+.page-node-type-conversation .spotdeals-main-content {
+  min-height: 72vh;
+}
+.page-node-type-conversation .spotdeals-main-content .page-title {
+  max-width: 760px;
+  margin: 1.5rem auto 1rem;
+  font-size: clamp(2rem, 4vw, 2.9rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.sd-conversation-detail {
+  box-sizing: border-box;
+  width: min(100%, 760px);
+  margin: 0 auto 4rem;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  border: 1px solid #e3eae1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(30, 53, 36, .06);
+  overflow-wrap: anywhere;
+}
+.sd-conversation-detail__header {
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #e5ebe4;
+}
+.sd-conversation-detail__eyebrow {
+  margin-bottom: .75rem;
+  color: #48722d;
+  font-size: .8rem;
+  font-weight: 750;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+.sd-conversation-detail__byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem .8rem;
+  color: #5b6b62;
+  font-size: .9rem;
+}
+.sd-conversation-detail__author {
+  color: #243b2a;
+  font-weight: 700;
+}
+.sd-conversation-detail__relationships {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  margin-top: .8rem;
+  font-size: .85rem;
+}
+.sd-conversation-detail__relationships a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: .3rem .75rem;
+  border: 1px solid #cbdcc5;
+  border-radius: 999px;
+  color: #285c25;
+  font-weight: 650;
+  text-decoration: none;
+}
+.sd-conversation-detail__relationships a:hover,
+.sd-conversation-detail__relationships a:focus-visible {
+  background: #edf5e9;
+  text-decoration: underline;
+}
+.sd-conversation-detail__body {
+  padding: 1.5rem 0 1rem;
+  color: #283a2f;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  white-space: normal;
+}
+.sd-conversation-detail__body p {
+  margin: 0 0 1rem;
+}
+.sd-conversation-detail__location {
+  margin-bottom: 1.5rem;
+  color: #607167;
+  font-size: .9rem;
+}
+.sd-conversation-detail__location .field__label {
+  display: none;
+}
+.sd-conversation-detail__discussion {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5ebe4;
+}
+.sd-conversation-detail__discussion > h2 {
+  margin: 0 0 1.25rem;
+  font-size: 1.3rem;
+}
+.sd-conversation-detail__discussion textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-radius: 10px;
+}
+.sd-conversation-detail__discussion .form-actions input[type="submit"] {
+  width: auto;
+  min-width: 140px;
+  border-radius: 8px;
+}
+.sd-conversation-detail__discussion .comment {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid #e4ebe3;
+  border-radius: 10px;
+  background: #fafcf9;
+}
+@media (max-width: 600px) {
+  .sd-conversation-detail {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border-radius: 12px;
+  }
+}
+
+/* Compact user renders Flag controls, not an avatar, in comment pictures.
+   Hide only this misplaced picture slot on conversation detail pages. */
+.page-node-type-conversation .sd-conversation-detail .comment__picture-wrapper {
+  display: none;
+}
+
+/* With the unused picture slot removed, let comments use their available width. */
+.page-node-type-conversation .sd-conversation-detail .comment__content {
+  min-width: 0;
+}
+
+/* The canonical page renders the existing AJAX panel directly. */
+.sd-conversation-detail__discussion {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.sd-conversation-detail__inline .sd-inline-conversation {
+  margin: 0;
+}
+.sd-conversation-detail__inline .sd-inline-conversation__replies {
+  margin-top: 1rem;
+}
+.sd-conversation-detail__inline .sd-inline-conversation__form {
+  margin-top: 1rem;
+}
