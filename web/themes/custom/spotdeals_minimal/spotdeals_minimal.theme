@@ -170,6 +170,23 @@ function spotdeals_minimal_preprocess_node(array &$variables): void {
     return;
   }
 
+  // The canonical conversation uses the same AJAX discussion panel as
+  // profile activity and conversation search results. Do not render Drupal's
+  // default comment field, which sends nested replies to /comment/reply/.
+  if ($node->bundle() === 'conversation' && ($variables['view_mode'] ?? '') === 'full'
+    && \Drupal::moduleHandler()->moduleExists('spotdeals_conversations')) {
+    $target = 'sd-activity-inline-' . (int) $node->id();
+    $controller = \Drupal::classResolver()->getInstanceFromDefinition(
+      \Drupal\spotdeals_conversations\Controller\ConversationInlineController::class
+    );
+    $variables['spotdeals_conversation_discussion'] = $controller->panel($node, $target);
+    $variables['spotdeals_conversation_target'] = $target;
+    $variables['#attached']['library'][] = 'spotdeals_conversations/activity_inline';
+    $variables['#attached']['library'][] = 'spotdeals_minimal/conversation_detail';
+    $variables['#cache']['max-age'] = 0;
+    return;
+  }
+
   // Build Flag links as placeholders so anonymous per-session state is resolved
   // lazily instead of being cached in the surrounding node/page render.
   if (!$node->isNew() && in_array($node->bundle(), ['deal', 'venue'], TRUE)) {

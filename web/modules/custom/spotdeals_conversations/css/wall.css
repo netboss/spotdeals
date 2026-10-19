@@ -15,7 +15,7 @@
 }
 .sd-conversations-search {
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;
+  grid-template-columns:minmax(0,1fr) auto auto;
   align-items:end;
   gap:1rem;
   padding:1.25rem;
@@ -157,5 +157,126 @@
   .sd-conversation-dialog {
     left:2.5vw!important;
     width:95vw!important;
+  }
+}
+
+/* SD-232: Standalone conversation results; do not inherit the profile grid. */
+.sd-conversations-wall .sd-conversation-trigger {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #245c20;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.sd-conversations-wall .sd-conversation-trigger:hover {
+  text-decoration: underline;
+}
+.sd-conversations-wall .sd-conversation-trigger:focus-visible {
+  outline: 3px solid #9dd142;
+  outline-offset: 2px;
+}
+.sd-conversations-wall .sd-conversation-panel {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  grid-column: auto;
+  overflow-wrap: anywhere;
+}
+.sd-conversations-wall .sd-conversation-panel.sd-inline-preview--collapsed,
+.sd-conversations-wall .sd-conversation-panel[hidden] {
+  display: none;
+}
+
+/* SD-232: Clear search returns to the unfiltered conversations listing. */
+.sd-conversations-wall .sd-conversations-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: .5rem .75rem;
+  color: #245c20;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.sd-conversations-wall .sd-conversations-reset:focus-visible {
+  outline: 3px solid #9dd142;
+  outline-offset: 2px;
+}
+@media (max-width: 760px) {
+  .sd-conversations-wall .sd-conversations-reset {
+    width: 100%;
+  }
+}
+
+/* Keep short search results from shifting the footer upward. */
+.sd-conversations-wall {
+  min-height: 65vh;
+}
+
+/* Sorting stays beside the results heading at all viewport sizes. */
+.sd-conversations-results-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem 1rem;
+  margin: 0 0 1rem;
+}
+.sd-conversations-results-heading .sd-conversations-section-title {
+  margin: 0;
+}
+.sd-conversations-sort {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: 0;
+}
+.sd-conversations-sort label {
+  font-size: .9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.sd-conversations-sort select {
+  width: auto;
+  max-width: 180px;
+  min-height: 38px;
+  margin: 0;
+  padding: .35rem .5rem;
+  border: 1px solid #b8c9bd;
+  border-radius: 8px;
+  background: #fff;
+  color: #263b2f;
+  font: inherit;
+}
+.sd-conversations-sort button {
+  min-height: 38px;
+  margin: 0;
+  padding: .35rem .7rem;
+  border: 0;
+  border-radius: 8px;
+  background: #347b24;
+  color: #fff;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.sd-conversations-sort select:focus-visible,
+.sd-conversations-sort button:focus-visible {
+  outline: 3px solid #9dd142;
+  outline-offset: 2px;
+}
+@media (max-width: 480px) {
+  .sd-conversations-sort {
+    width: 100%;
+  }
+  .sd-conversations-sort select {
+    flex: 1;
+    min-width: 0;
   }
 }

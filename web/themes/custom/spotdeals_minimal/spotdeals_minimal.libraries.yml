@@ -27,3 +27,8 @@ seo_landing:
   css:
     theme:
       css/seo-landing.css: {}
+
+conversation_detail:
+  css:
+    theme:
+      css/conversation-detail.css: {}
