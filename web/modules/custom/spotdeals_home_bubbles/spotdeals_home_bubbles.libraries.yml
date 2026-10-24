@@ -1,0 +1,11 @@
+home_bubbles:
+  version: 1.x
+  css:
+    theme:
+      css/home-bubbles.css: {}
+  js:
+    js/home-bubbles.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/drupal.ajax

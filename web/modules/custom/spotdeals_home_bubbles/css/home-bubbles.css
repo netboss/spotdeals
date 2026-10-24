@@ -1,0 +1,313 @@
+/* SD-232: Three anchored placements, independently randomized appearances.
+ * Compact bubbles overlay the homepage; expanded conversations stay in a
+ * viewport-bounded overlay rather than changing the document's height.
+ */
+.sd-home-bubble {
+  --bubble-bg: #ffe36b;
+  --bubble-ink: #21202a;
+  position: relative;
+  z-index: 12;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: min(100%, 300px);
+  max-width: 100%;
+  margin: 0;
+  padding: 1.3rem 1.35rem 1.25rem;
+  color: var(--bubble-ink);
+  background: var(--bubble-bg);
+  border: 2px solid var(--bubble-ink);
+  box-shadow: 5px 6px 0 rgba(0, 0, 0, .18);
+  overflow-wrap: anywhere;
+  overflow: visible;
+}
+.sd-home-bubble *, .sd-home-bubble *::before, .sd-home-bubble *::after { box-sizing: border-box; }
+.sd-home-bubble--lemon { --bubble-bg: #ffe36b; --bubble-ink: #292319; }
+.sd-home-bubble--rose { --bubble-bg: #ffb7d4; --bubble-ink: #49203a; }
+.sd-home-bubble--sky { --bubble-bg: #a9dcff; --bubble-ink: #123f62; }
+.sd-home-bubble--mint { --bubble-bg: #b8f2cf; --bubble-ink: #154935; }
+.sd-home-bubble--lavender { --bubble-bg: #d8c3ff; --bubble-ink: #40295b; }
+.sd-home-bubble--peach { --bubble-bg: #ffc9a3; --bubble-ink: #573018; }
+/* Controlled corner variation keeps all text inside the colored surface. */
+.sd-home-bubble--cloud { border-radius: 35px 55px 30px 48px; }
+.sd-home-bubble--blob { border-radius: 55px 26px 46px 30px; transform: rotate(-1deg); }
+.sd-home-bubble--ticket { border-radius: 8px 32px 8px 32px; }
+.sd-home-bubble--rounded { border-radius: 30px; }
+.sd-home-bubble--comic { border-radius: 46px 14px 42px 18px; transform: rotate(1deg); }
+.sd-home-bubble--friendly { font-family: ui-rounded, 'Trebuchet MS', sans-serif; }
+.sd-home-bubble--bold { font-family: system-ui, sans-serif; font-weight: 750; }
+.sd-home-bubble--editorial { font-family: Georgia, serif; }
+.sd-home-bubble__close {
+  position: absolute; top: .35rem; right: .5rem; z-index: 3;
+  border: 0; border-radius: 50%; background: transparent; color: inherit;
+  font: 700 1.5rem/1 system-ui; cursor: pointer; padding: .3rem .45rem;
+}
+.sd-home-bubble__kicker { display: block; margin-right: 2rem; font-size: .72rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.sd-home-bubble__question {
+  display: block; width: 100%; text-align: left; padding: .5rem 0;
+  border: 0; background: transparent; color: inherit; font: inherit;
+  font-size: clamp(1.05rem, 1.5vw, 1.35rem); line-height: 1.25;
+  font-weight: 800; cursor: pointer;
+}
+.sd-home-bubble__question:focus-visible, .sd-home-bubble__close:focus-visible, .sd-home-bubble__full:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.sd-home-bubble__summary { font-size: .85rem; line-height: 1.45; margin: .25rem 0 .65rem; }
+.sd-home-bubble__full { color: inherit; font-size: .82rem; font-weight: 800; text-decoration: underline; }
+.sd-home-bubble__panel[hidden] { display: none !important; }
+.sd-home-bubble__panel { margin-top: .8rem; text-align: left; font-family: system-ui, sans-serif; font-weight: 400; }
+.sd-home-bubble__panel textarea, .sd-home-bubble__panel input { max-width: 100%; }
+
+/* Keep all three placements out of normal document flow. */
+.spotdeals-home-feed__hero, .spotdeals-sidebar-right,
+.spotdeals-finder__cards, .spotdeals-finder__results { position: relative; }
+.sd-home-bubble--hero { position: absolute; top: 1.5rem; right: -1rem; }
+.sd-home-bubble--sidebar { position: absolute; top: 1rem; right: 0; width: min(280px, 90vw); }
+.sd-home-bubble--results { position: absolute; top: 12rem; right: .5rem; width: min(300px, 90%); }
+
+/* Expanded bubble: centered, scrollable modal-like overlay, no page growth. */
+.sd-home-bubble:has(.sd-home-bubble__panel:not([hidden])) {
+  position: fixed !important;
+  inset: 50% auto auto 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 10000;
+  width: min(560px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 26px;
+  box-shadow: 0 0 0 100vmax rgba(10, 17, 25, .52), 0 18px 55px rgba(0, 0, 0, .3);
+}
+.sd-home-bubble:has(.sd-home-bubble__panel:not([hidden])) .sd-home-bubble__close {
+  position: sticky; float: right; top: 0; background: var(--bubble-bg);
+}
+@media (max-width: 999px) {
+  .sd-home-bubble--hero { top: 1rem; right: .5rem; width: min(250px, 65%); }
+  .sd-home-bubble--sidebar { top: 1rem; right: 0; width: min(250px, 90vw); }
+  .sd-home-bubble--results { top: 8rem; right: .25rem; width: min(250px, 90%); }
+}
+@media (max-width: 600px) {
+  .sd-home-bubble { padding: 1rem 1.05rem; }
+  .sd-home-bubble--hero { top: 1rem; right: .25rem; width: min(220px, 66%); }
+  .sd-home-bubble--sidebar { width: min(220px, 80vw); }
+  .sd-home-bubble--results { top: 7rem; width: min(220px, 80%); }
+  .sd-home-bubble:has(.sd-home-bubble__panel:not([hidden])) {
+    width: calc(100vw - 20px); max-width: calc(100vw - 20px);
+    max-height: calc(100dvh - 20px);
+  }
+}
+@media (prefers-reduced-motion: reduce) { .sd-home-bubble { scroll-behavior: auto; } }
+
+/* SD-232: Compact, varied discovery bubbles in their own placements. */
+.sd-home-bubble:not(:has(.sd-home-bubble__panel:not([hidden]))) {
+  width: min(205px, 100%);
+  padding: .85rem 1rem;
+  border-width: 1px;
+  box-shadow: 2px 3px 9px rgba(0, 0, 0, .12);
+  opacity: .96;
+}
+.sd-home-bubble--hero:not(:has(.sd-home-bubble__panel:not([hidden]))) {
+  top: 1.25rem;
+  right: -1.5rem;
+}
+.sd-home-bubble--sidebar:not(:has(.sd-home-bubble__panel:not([hidden]))) {
+  top: 5rem;
+  right: -.75rem;
+}
+.sd-home-bubble--results:not(:has(.sd-home-bubble__panel:not([hidden]))) {
+  top: 2rem;
+  right: 1rem;
+}
+.sd-home-bubble:not(:has(.sd-home-bubble__panel:not([hidden]))) .sd-home-bubble__kicker {
+  font-size: .61rem;
+}
+.sd-home-bubble:not(:has(.sd-home-bubble__panel:not([hidden]))) .sd-home-bubble__question {
+  font-size: .94rem;
+  line-height: 1.25;
+  padding: .35rem 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+.sd-home-bubble:not(:has(.sd-home-bubble__panel:not([hidden]))) .sd-home-bubble__summary {
+  font-size: .74rem;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin: .15rem 0 .4rem;
+}
+.sd-home-bubble:not(:has(.sd-home-bubble__panel:not([hidden]))) .sd-home-bubble__full {
+  font-size: .72rem;
+}
+.sd-home-bubble:not(:has(.sd-home-bubble__panel:not([hidden]))) .sd-home-bubble__close {
+  font-size: 1.1rem;
+}
+/* Expand in place, without a full-page dimmer or fixed shared corner. */
+.sd-home-bubble:has(.sd-home-bubble__panel:not([hidden])) {
+  position: absolute !important;
+  inset: auto !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: min(340px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: min(70dvh, 580px);
+  overflow-y: auto;
+  z-index: 1000;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .22);
+  opacity: 1;
+}
+.sd-home-bubble--hero:has(.sd-home-bubble__panel:not([hidden])) {
+  top: 1rem !important;
+  right: -1rem !important;
+}
+.sd-home-bubble--sidebar:has(.sd-home-bubble__panel:not([hidden])) {
+  top: 2rem !important;
+  right: 0 !important;
+}
+.sd-home-bubble--results:has(.sd-home-bubble__panel:not([hidden])) {
+  top: 1rem !important;
+  right: 0 !important;
+}
+.sd-home-bubble:has(.sd-home-bubble__panel:not([hidden])) .sd-home-bubble__close {
+  position: sticky;
+  float: right;
+  top: 0;
+  background: var(--bubble-bg);
+}
+@media (max-width: 600px) {
+  .sd-home-bubble:not(:has(.sd-home-bubble__panel:not([hidden]))) {
+    width: min(170px, 65vw);
+    padding: .7rem .85rem;
+  }
+  .sd-home-bubble--hero:not(:has(.sd-home-bubble__panel:not([hidden]))) { right: .25rem; }
+  .sd-home-bubble--sidebar:not(:has(.sd-home-bubble__panel:not([hidden]))) { right: .25rem; top: 2rem; }
+  .sd-home-bubble--results:not(:has(.sd-home-bubble__panel:not([hidden]))) { right: .25rem; }
+  .sd-home-bubble:has(.sd-home-bubble__panel:not([hidden])) {
+    width: min(320px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
+    max-height: 65dvh;
+  }
+  .sd-home-bubble--hero:has(.sd-home-bubble__panel:not([hidden])) { right: .25rem !important; }
+}
+
+/* SD-232: Strongly differentiated compact silhouettes; keep content upright. */
+.sd-home-bubble--cloud { border-radius: 36% 25% 38% 22% / 22% 37% 24% 36%; }
+.sd-home-bubble--blob { border-radius: 46% 19% 42% 17% / 24% 43% 20% 39%; transform: none; }
+.sd-home-bubble--ticket { border-radius: 4px 38px 4px 38px; }
+.sd-home-bubble--rounded { border-radius: 22px; }
+.sd-home-bubble--comic { border-radius: 9px 42px 13px 36px; transform: none; }
+/* Organic shapes need breathing room so lettering never reaches their edges. */
+.sd-home-bubble--cloud:not(:has(.sd-home-bubble__panel:not([hidden]))),
+.sd-home-bubble--blob:not(:has(.sd-home-bubble__panel:not([hidden]))) {
+  padding: 1.2rem 1.45rem 1.15rem;
+}
+/* Keep expanded conversations readable and consistent with the selected shape. */
+.sd-home-bubble--cloud:has(.sd-home-bubble__panel:not([hidden])),
+.sd-home-bubble--blob:has(.sd-home-bubble__panel:not([hidden])) {
+  border-radius: 24px 38px 28px 34px;
+}
+@media (max-width: 600px) {
+  .sd-home-bubble--cloud:not(:has(.sd-home-bubble__panel:not([hidden]))),
+  .sd-home-bubble--blob:not(:has(.sd-home-bubble__panel:not([hidden]))) {
+    padding: 1rem 1.15rem;
+  }
+}
+
+/* SD-232: distinct silhouettes, borders and surface textures.
+   No clip-path: text and interactive controls must never be clipped. */
+.sd-home-bubble { background-color: var(--bubble-bg); background-image: none; background-clip: padding-box; }
+.sd-home-bubble--dots { background-image: radial-gradient(rgba(0,0,0,.11) 1.1px, transparent 1.1px); background-size: 13px 13px; }
+.sd-home-bubble--stripes { background-image: repeating-linear-gradient(135deg, transparent 0 12px, rgba(255,255,255,.24) 12px 17px); }
+.sd-home-bubble--paper { background-image: radial-gradient(rgba(255,255,255,.45) 1px, transparent 2px), linear-gradient(115deg, rgba(255,255,255,.14), transparent 60%); background-size: 9px 9px, 100% 100%; }
+.sd-home-bubble--plain { background-image: none; }
+.sd-home-bubble--cloud { border-radius: 44% 33% 45% 31% / 19% 28% 20% 31%; border: 4px dotted var(--bubble-ink); }
+.sd-home-bubble--blob { border-radius: 19% 43% 21% 39% / 31% 17% 38% 22%; border: 3px dashed var(--bubble-ink); transform: none; }
+.sd-home-bubble--ticket { border-radius: 6px 35px 6px 35px; border: 5px double var(--bubble-ink); }
+.sd-home-bubble--rounded { border-radius: 50px 50px 12px 12px; border: 2px solid var(--bubble-ink); }
+.sd-home-bubble--comic { border-radius: 10px 48px 15px 42px; border: 3px solid var(--bubble-ink); box-shadow: 7px 8px 0 rgba(0,0,0,.24); transform: none; }
+.sd-home-bubble--editorial .sd-home-bubble__question { font-family: Georgia, serif; font-style: italic; font-weight: 700; }
+.sd-home-bubble--friendly .sd-home-bubble__question { font-family: 'Trebuchet MS', ui-rounded, sans-serif; letter-spacing: -.025em; }
+.sd-home-bubble--bold .sd-home-bubble__question { font-family: system-ui, sans-serif; font-weight: 900; letter-spacing: -.035em; }
+/* Preserve room for content in the most irregular shapes. */
+.sd-home-bubble--cloud:not(:has(.sd-home-bubble__panel:not([hidden]))),
+.sd-home-bubble--blob:not(:has(.sd-home-bubble__panel:not([hidden]))) { padding: 1.3rem 1.6rem; }
+@media (max-width: 600px) {
+ .sd-home-bubble--cloud:not(:has(.sd-home-bubble__panel:not([hidden]))),
+ .sd-home-bubble--blob:not(:has(.sd-home-bubble__panel:not([hidden]))) { padding: 1rem 1.2rem; }
+}
+
+/* Organic surfaces: the content box stays readable while the visible silhouette
+   is drawn separately, with independently irregular lobes on each variant. */
+.sd-home-bubble:not(:has(.sd-home-bubble__panel:not([hidden]))) {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: translate(var(--sd-drag-x, 0px), var(--sd-drag-y, 0px));
+  isolation: isolate;
+}
+.sd-home-bubble:not(:has(.sd-home-bubble__panel:not([hidden])))::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -8px;
+  background-color: var(--bubble-bg);
+  border: 2px solid var(--bubble-ink);
+  box-shadow: 4px 6px 12px rgba(0,0,0,.18);
+  pointer-events: none;
+}
+.sd-home-bubble--dots:not(:has(.sd-home-bubble__panel:not([hidden])))::before {
+  background-image: radial-gradient(rgba(0,0,0,.11) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+.sd-home-bubble--stripes:not(:has(.sd-home-bubble__panel:not([hidden])))::before {
+  background-image: repeating-linear-gradient(135deg, transparent 0 12px, rgba(255,255,255,.28) 12px 17px);
+}
+.sd-home-bubble--paper:not(:has(.sd-home-bubble__panel:not([hidden])))::before {
+  background-image: radial-gradient(rgba(255,255,255,.5) 1px, transparent 2px);
+  background-size: 9px 9px;
+}
+/* Distinct non-rectangular outlines, with asymmetrical edges and lobes. */
+.sd-home-bubble--cloud:not(:has(.sd-home-bubble__panel:not([hidden])))::before {
+  border-radius: 49% 51% 42% 54% / 22% 31% 28% 35%;
+  inset: -14px -12px;
+  outline: 2px dotted var(--bubble-ink);
+  outline-offset: -7px;
+}
+.sd-home-bubble--blob:not(:has(.sd-home-bubble__panel:not([hidden])))::before {
+  border-radius: 32% 68% 27% 73% / 21% 37% 63% 79%;
+  inset: -16px -14px;
+  border-style: dashed;
+}
+.sd-home-bubble--ticket:not(:has(.sd-home-bubble__panel:not([hidden])))::before {
+  border-radius: 48% 18% 46% 13% / 15% 44% 12% 46%;
+  inset: -11px;
+  border: 4px double var(--bubble-ink);
+}
+.sd-home-bubble--rounded:not(:has(.sd-home-bubble__panel:not([hidden])))::before {
+  border-radius: 60% 40% 55% 45% / 26% 32% 68% 74%;
+  inset: -12px;
+}
+.sd-home-bubble--comic:not(:has(.sd-home-bubble__panel:not([hidden])))::before {
+  border-radius: 18% 72% 20% 65% / 43% 15% 52% 19%;
+  inset: -13px;
+  border-width: 3px;
+  box-shadow: 7px 8px 0 rgba(0,0,0,.22);
+}
+.sd-home-bubble__drag-handle {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.sd-home-bubble__drag-handle:active { cursor: grabbing; }
+/* Expanded panels revert to their existing readable layout. */
+.sd-home-bubble:has(.sd-home-bubble__panel:not([hidden])) {
+  --sd-drag-x: 0px;
+  --sd-drag-y: 0px;
+}

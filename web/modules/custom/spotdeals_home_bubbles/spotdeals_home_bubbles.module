@@ -1,0 +1,16 @@
+<?php
+
+/**
+ * @file
+ * Attaches homepage conversation bubble discovery and presentation.
+ */
+
+/**
+ * Implements hook_page_attachments().
+ */
+function spotdeals_home_bubbles_page_attachments(array &$attachments): void {
+  if (\Drupal::service('path.matcher')->isFrontPage()) {
+    $attachments['#attached']['library'][] = 'spotdeals_home_bubbles/home_bubbles';
+    $attachments['#attached']['library'][] = 'spotdeals_conversations/activity_inline';
+  }
+}
