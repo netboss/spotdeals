@@ -1,0 +1,7 @@
+spotdeals_home_bubbles.feed:
+  path: '/spotdeals/home-conversation-bubbles'
+  defaults:
+    _controller: '\Drupal\spotdeals_home_bubbles\Controller\HomeBubblesController::feed'
+  requirements:
+    _permission: 'access content'
+    _method: 'GET'

@@ -1,0 +1,8 @@
+name: 'SpotDeals Homepage Conversation Bubbles'
+type: module
+description: 'Three contextual homepage conversation placements with independently varied appearances.'
+package: SpotDeals
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - spotdeals_conversations:spotdeals_conversations

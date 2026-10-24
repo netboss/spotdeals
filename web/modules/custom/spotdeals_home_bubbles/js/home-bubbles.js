@@ -1,0 +1,207 @@
+/** Homepage conversation placements; appearance varies independently of content. */
+(function (Drupal, once) {
+  'use strict';
+
+  const shapes = ['cloud', 'blob', 'ticket', 'rounded', 'comic'];
+  const palettes = ['lemon', 'rose', 'sky', 'mint', 'lavender', 'peach'];
+  const lettering = ['friendly', 'bold', 'editorial'];
+  const textures = ['dots', 'stripes', 'paper', 'plain'];
+  let appearancePool = [];
+  function nextAppearance() {
+    if (!appearancePool.length) {
+      const shuffled = (values) => [...values].sort(() => Math.random() - 0.5);
+      const colors = shuffled(palettes);
+      const forms = shuffled(shapes);
+      appearancePool = colors.map((color, i) => [forms[i % forms.length], color, pick(lettering), pick(textures)]);
+    }
+    return appearancePool.pop();
+  }
+  const pick = (list) => list[Math.floor(Math.random() * list.length)];
+  const searchKeys = ['city', 'location', 'search_raw', 'search_deals',
+    'search_api_fulltext', 'search_deals_by_city', 'search_origin_mode',
+    'origin_lat', 'origin_lon'];
+  const exposedFormSelector = 'form[data-drupal-selector="views-exposed-form-deals-search-solr-page-1"]';
+
+  let lastQuery = null;
+  let lastItems = [];
+  let requestId = 0;
+  let refreshTimer;
+  let submittedParams = null;
+  let dismissed = new Set();
+
+  function makeBubble(item, slot) {
+    const wrapper = document.createElement('section');
+    const appearance = nextAppearance();
+    wrapper.className = 'sd-home-bubble sd-home-bubble--' + slot +
+      appearance.map((variant) => ' sd-home-bubble--' + variant).join('');
+    wrapper.setAttribute('aria-label', Drupal.t('Local conversation'));
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'sd-home-bubble__close';
+    close.setAttribute('aria-label', Drupal.t('Dismiss conversation'));
+    close.textContent = '×';
+    close.addEventListener('click', () => {
+      dismissed.add(item.id);
+      wrapper.remove();
+    });
+
+    const kicker = document.createElement('span');
+    kicker.className = 'sd-home-bubble__kicker';
+    kicker.textContent = item.city || Drupal.t('Local conversation');
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'sd-home-bubble__question';
+    trigger.dataset.sdInlineConversation = '';
+    trigger.dataset.inlineUrl = item.preview;
+    const target = 'sd-activity-inline-' + item.id;
+    trigger.setAttribute('aria-controls', target);
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.textContent = item.title;
+
+    const arrow = document.createElement('span');
+    arrow.className = 'sd-home-bubble__arrow';
+    arrow.setAttribute('aria-hidden', 'true');
+    arrow.textContent = ' ↗';
+    trigger.appendChild(arrow);
+
+    const summary = document.createElement('p');
+    summary.className = 'sd-home-bubble__summary';
+    summary.textContent = item.summary || '';
+
+    const link = document.createElement('a');
+    link.href = item.url;
+    link.className = 'sd-home-bubble__full';
+    link.textContent = Drupal.t('View conversation');
+
+    const panel = document.createElement('div');
+    panel.id = target;
+    panel.hidden = true;
+    panel.className = 'sd-profile__activity-expand sd-conversation-panel sd-home-bubble__panel';
+    panel.setAttribute('role', 'region');
+    panel.setAttribute('aria-label', item.title);
+
+    wrapper.append(close, kicker, trigger);
+    if (item.summary) wrapper.appendChild(summary);
+    wrapper.append(link, panel);
+    return wrapper;
+  }
+
+  function currentQuery() {
+    const params = new URLSearchParams(window.location.search);
+    // A submitted AJAX search can precede the browser URL update.
+    if (submittedParams !== null) {
+      searchKeys.forEach((key) => {
+        if (submittedParams.has(key)) params.set(key, submittedParams.get(key));
+        else params.delete(key);
+      });
+    }
+    const query = new URLSearchParams();
+    searchKeys.forEach((key) => {
+      if (params.has(key)) query.set(key, params.get(key));
+    });
+    return query.toString();
+  }
+
+  function placements() {
+    return [
+      ['hero', document.querySelector('.spotdeals-home-feed__hero'),
+        (bubble, target) => target.appendChild(bubble)],
+      ['sidebar', document.querySelector('.spotdeals-sidebar-right'),
+        (bubble, target) => target.appendChild(bubble)],
+      ['results', document.querySelector('.spotdeals-finder__cards') || document.querySelector('.spotdeals-finder__results'),
+        (bubble, target) => {
+          const rows = Array.from(target.children).filter((child) => !child.classList.contains('sd-home-bubble'));
+          if (rows.length > 2) rows[2].after(bubble);
+          else target.appendChild(bubble);
+        }],
+    ];
+  }
+
+  function render(items) {
+    const slots = placements();
+    if (!document.querySelector('.sd-home-bubble')) appearancePool = [];
+    const available = items.filter((item) => !dismissed.has(item.id));
+    // Rebuild only if a slot is missing or the data actually changed.
+    // Keeping existing nodes preserves expanded conversations and reply forms.
+    let index = 0;
+    slots.forEach(([slot, target, insert]) => {
+      if (!target || index >= available.length) return;
+      const item = available[index++];
+      const existing = target.querySelector('.sd-home-bubble--' + slot);
+      if (existing && existing.dataset.conversationId === String(item.id)) return;
+      if (existing) existing.remove();
+      const bubble = makeBubble(item, slot);
+      bubble.dataset.conversationId = String(item.id);
+      insert(bubble, target);
+      Drupal.attachBehaviors(bubble);
+    });
+  }
+
+  async function refresh() {
+    const query = currentQuery();
+    if (query === lastQuery) {
+      render(lastItems);
+      return;
+    }
+    lastQuery = query;
+    const id = ++requestId;
+    const url = new URL(Drupal.url('spotdeals/home-conversation-bubbles'), window.location.href);
+    url.search = query;
+    try {
+      const response = await fetch(url.toString(), { credentials: 'same-origin', cache: 'no-store' });
+      if (!response.ok) throw new Error('Conversation feed unavailable');
+      const payload = await response.json();
+      if (id !== requestId) return;
+      lastItems = Array.isArray(payload.items) ? payload.items : [];
+      dismissed = new Set();
+      document.querySelectorAll('.sd-home-bubble').forEach((bubble) => bubble.remove());
+      render(lastItems);
+    }
+    catch (error) {
+      if (id === requestId) lastQuery = null;
+    }
+  }
+
+  function scheduleRefresh() {
+    window.clearTimeout(refreshTimer);
+    refreshTimer = window.setTimeout(refresh, 120);
+  }
+
+  Drupal.behaviors.spotdealsHomeBubbles = {
+    attach(context) {
+      once('sd-home-bubbles-init', 'body.path-frontpage', context).forEach(() => {
+        ['pushState', 'replaceState'].forEach((method) => {
+          const original = window.history[method];
+          window.history[method] = function (...args) {
+            const result = original.apply(this, args);
+            // The URL becomes authoritative once browser history changes.
+            submittedParams = null;
+            scheduleRefresh();
+            return result;
+          };
+        });
+        window.addEventListener('popstate', () => {
+          submittedParams = null;
+          scheduleRefresh();
+        });
+        document.addEventListener('submit', (event) => {
+          const form = event.target;
+          if (!form.matches(exposedFormSelector)) return;
+          submittedParams = new URLSearchParams(new FormData(form));
+          scheduleRefresh();
+        }, true);
+        if (window.jQuery) {
+          window.jQuery(document).ajaxComplete((event, xhr, settings) => {
+            // Conversation preview/voting AJAX must not refresh the bubble feed.
+            const url = String(settings && settings.url || '');
+            if (url.includes('/conversations/') || url.includes('/spotdeals/home-conversation-bubbles')) return;
+            scheduleRefresh();
+          });
+        }
+        refresh();
+      });
+    },
+  };
+})(Drupal, once);

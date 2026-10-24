@@ -1,0 +1,3 @@
+services:
+  spotdeals_home_bubbles.ranking:
+    class: Drupal\spotdeals_home_bubbles\Service\ConversationRanking
