@@ -167,7 +167,51 @@ STUBS);
     self::assertSame(2, $result['completed']);
     self::assertCount(3, $runner->calls);
     self::assertCount(2, $digest->recorded);
-    self::assertCount(2, $stored->values['spotdeals_data_ingestion.deal_discovery_scheduler_runs']);
+    self::assertCount(3, $stored->values['spotdeals_data_ingestion.deal_discovery_scheduler_runs']);
+    self::assertSame(1800000000, $stored->values['spotdeals_data_ingestion.deal_discovery_scheduler_runs']['43:beta']['last_failed']);
+  }
+
+  /**
+   * A failed location is skipped on the next cron rather than retried forever.
+   */
+  public function testFailedTargetDoesNotBlockOtherLocations(): void {
+    [$scheduler, $runner, $digest, $stored] = $this->scheduler(1, array_fill(0, 8, 0), 1);
+    self::assertSame('failed', $scheduler->processCron()['status']);
+    self::assertSame([[43, 'Alpha']], $runner->calls);
+
+    // The production minimum interval has elapsed.
+    $stored->values['spotdeals_data_ingestion.deal_discovery_scheduler_last_attempt'] = 1799996000;
+    self::assertSame('completed', $scheduler->processCron()['status']);
+    self::assertSame([[43, 'Alpha'], [44, 'Alpha']], $runner->calls);
+    self::assertCount(1, $digest->recorded);
+  }
+
+  /**
+   * Failed targets become eligible again after the retry delay.
+   */
+  public function testFailedTargetBecomesDueAfterRetryDelay(): void {
+    [$scheduler, $runner, $digest, $stored] = $this->scheduler(1, array_fill(0, 8, 0), 1);
+    self::assertSame('failed', $scheduler->processCron()['status']);
+    self::assertSame([[43, 'Alpha']], $runner->calls);
+
+    // Make every other target recently completed, leaving only the failed
+    // target due once its 24-hour cooldown has expired.
+    $runs = $stored->values['spotdeals_data_ingestion.deal_discovery_scheduler_runs'];
+    foreach ([43, 44] as $tid) {
+      foreach (['alpha', 'beta', 'gamma'] as $token) {
+        if ($tid !== 43 || $token !== 'alpha') {
+          $runs[$tid . ':' . $token] = ['last_completed' => 1800000000];
+        }
+      }
+    }
+    $runs['43:alpha']['last_failed'] = 1800000000 - 86400;
+    $stored->values['spotdeals_data_ingestion.deal_discovery_scheduler_runs'] = $runs;
+    $stored->values['spotdeals_data_ingestion.deal_discovery_scheduler_last_attempt'] = 1799996000;
+
+    self::assertSame('completed', $scheduler->processCron()['status']);
+    self::assertSame([[43, 'Alpha'], [43, 'Alpha']], $runner->calls);
+    self::assertCount(1, $digest->recorded);
+    self::assertSame(1800000000, $stored->values['spotdeals_data_ingestion.deal_discovery_scheduler_runs']['43:alpha']['last_completed']);
   }
 
   /**

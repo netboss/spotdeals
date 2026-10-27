@@ -23,6 +23,9 @@ final class DealDiscoveryScheduler {
 
   private const BACKLOG_PAUSED_STATE_NAME = 'spotdeals_data_ingestion.deal_discovery_scheduler_backlog_paused';
 
+  // A failed geographic target must not monopolize every subsequent cron run.
+  private const FAILURE_RETRY_SECONDS = 86400;
+
   private const LAST_CATEGORY_STATE_NAME = 'spotdeals_data_ingestion.deal_discovery_scheduler_last_category';
 
   public function __construct(
@@ -150,6 +153,10 @@ final class DealDiscoveryScheduler {
           foreach ($locations as $token => $location) {
             $key = $tid . ':' . $token;
             $lastCompleted = (int) ($runState[$key]['last_completed'] ?? 0);
+            $lastFailed = (int) ($runState[$key]['last_failed'] ?? 0);
+            if ($lastFailed > 0 && ($now - $lastFailed) < self::FAILURE_RETRY_SECONDS) {
+              continue;
+            }
             if ($lastCompleted > 0 && ($now - $lastCompleted) < $refreshSeconds) {
               continue;
             }
@@ -250,6 +257,16 @@ final class DealDiscoveryScheduler {
 
         }
         catch (\Throwable $exception) {
+          // Retain the last successful completion (if any), but defer this
+          // failed target so other due locations can make progress.
+          $runState[$target['key']] = ($runState[$target['key']] ?? []) + [
+            'category_tid' => $target['tid'],
+            'category_label' => (string) ($target['definition']['name'] ?? ''),
+            'location_token' => $target['token'],
+            'location_label' => (string) ($target['location']['label'] ?? ''),
+          ];
+          $runState[$target['key']]['last_failed'] = $this->time->getCurrentTime();
+          $this->state->set(self::RUN_STATE_NAME, $runState);
           $this->logger->warning(
             'Automated deal discovery failed safely for {category} in {location}: {message}',
             [
