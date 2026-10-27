@@ -28,6 +28,12 @@
   let refreshTimer;
   let submittedParams = null;
   let dismissed = new Set();
+  let highestBubbleZIndex = 1001;
+
+  function bringBubbleToFront(bubble) {
+    highestBubbleZIndex += 1;
+    bubble.style.zIndex = String(highestBubbleZIndex);
+  }
 
   function makeBubble(item, slot) {
     const wrapper = document.createElement('section');
@@ -35,6 +41,17 @@
     wrapper.className = 'sd-home-bubble sd-home-bubble--' + slot +
       appearance.map((variant) => ' sd-home-bubble--' + variant).join('');
     wrapper.setAttribute('aria-label', Drupal.t('Local conversation'));
+
+    // Bring a bubble forward on any pointer interaction, including accordion
+    // clicks/taps. Capture phase also covers nested buttons and links.
+    wrapper.addEventListener('pointerdown', () => {
+      bringBubbleToFront(wrapper);
+    }, true);
+
+    // Keyboard navigation should reveal the focused bubble as well.
+    wrapper.addEventListener('focusin', () => {
+      bringBubbleToFront(wrapper);
+    });
 
     const close = document.createElement('button');
     close.type = 'button';
@@ -50,25 +67,44 @@
     kicker.className = 'sd-home-bubble__kicker';
     kicker.textContent = item.city || Drupal.t('Local conversation');
 
+    const target = 'sd-activity-inline-' + item.id;
+    const detailsId = 'sd-home-bubble-details-' + item.id;
+    const heading = document.createElement('button');
+    heading.type = 'button';
+    heading.className = 'sd-home-bubble__heading';
+    heading.setAttribute('aria-controls', detailsId);
+    heading.setAttribute('aria-expanded', 'false');
+
+    const title = document.createElement('span');
+    title.className = 'sd-home-bubble__title';
+    title.textContent = item.title;
+    const chevron = document.createElement('span');
+    chevron.className = 'sd-home-bubble__chevron';
+    chevron.setAttribute('aria-hidden', 'true');
+    chevron.textContent = '⌄';
+    heading.append(title, chevron);
+
+    const teaser = document.createElement('p');
+    teaser.className = 'sd-home-bubble__teaser';
+    teaser.textContent = item.summary || '';
+
+    const details = document.createElement('div');
+    details.id = detailsId;
+    details.className = 'sd-home-bubble__details';
+    details.hidden = true;
+
+    const summary = document.createElement('p');
+    summary.className = 'sd-home-bubble__summary';
+    summary.textContent = item.summary || '';
+
     const trigger = document.createElement('button');
     trigger.type = 'button';
     trigger.className = 'sd-home-bubble__question';
     trigger.dataset.sdInlineConversation = '';
     trigger.dataset.inlineUrl = item.preview;
-    const target = 'sd-activity-inline-' + item.id;
     trigger.setAttribute('aria-controls', target);
     trigger.setAttribute('aria-expanded', 'false');
-    trigger.textContent = item.title;
-
-    const arrow = document.createElement('span');
-    arrow.className = 'sd-home-bubble__arrow';
-    arrow.setAttribute('aria-hidden', 'true');
-    arrow.textContent = ' ↗';
-    trigger.appendChild(arrow);
-
-    const summary = document.createElement('p');
-    summary.className = 'sd-home-bubble__summary';
-    summary.textContent = item.summary || '';
+    trigger.textContent = Drupal.t('Open conversation preview');
 
     const link = document.createElement('a');
     link.href = item.url;
@@ -82,9 +118,133 @@
     panel.setAttribute('role', 'region');
     panel.setAttribute('aria-label', item.title);
 
-    wrapper.append(close, kicker, trigger);
-    if (item.summary) wrapper.appendChild(summary);
-    wrapper.append(link, panel);
+    if (item.summary) details.appendChild(summary);
+    details.append(trigger, link, panel);
+
+    function fitExpandedBubble() {
+      const rect = wrapper.getBoundingClientRect();
+      const top = Math.max(0, Math.min(rect.top, window.innerHeight - rect.height));
+      const left = Math.max(0, Math.min(rect.left, window.innerWidth - rect.width));
+      wrapper.style.top = top + 'px';
+      wrapper.style.left = left + 'px';
+    }
+
+    heading.addEventListener('click', () => {
+      const expanded = heading.getAttribute('aria-expanded') !== 'true';
+      heading.setAttribute('aria-expanded', String(expanded));
+      details.hidden = !expanded;
+      wrapper.classList.toggle('sd-home-bubble--expanded', expanded);
+      fitExpandedBubble();
+    });
+
+    const hint = document.createElement('span');
+    hint.className = 'sd-home-bubble__drag-hint';
+    hint.setAttribute('role', 'tooltip');
+    hint.textContent = Drupal.t('Drag me around');
+    kicker.appendChild(hint);
+
+    let hintTimer;
+    function showTouchHint() {
+      if (!window.matchMedia('(pointer: coarse)').matches) return;
+      wrapper.classList.add('sd-home-bubble--show-hint');
+      window.clearTimeout(hintTimer);
+      hintTimer = window.setTimeout(() => wrapper.classList.remove('sd-home-bubble--show-hint'), 1600);
+    }
+    kicker.addEventListener('pointerup', (event) => {
+      if (event.pointerType === 'touch') showTouchHint();
+    });
+
+    // A stable drag handle keeps pointer capture alive for the whole gesture.
+    kicker.classList.add('sd-home-bubble__drag-handle');
+    kicker.setAttribute('title', Drupal.t('Drag me around'));
+    kicker.setAttribute('aria-label', Drupal.t('Drag conversation bubble to move it'));
+    kicker.addEventListener('pointerdown', (event) => {
+      if (!event.isPrimary || event.pointerType === 'touch' || (event.pointerType === 'mouse' && event.button !== 0)) return;
+      event.preventDefault();
+      const rect = wrapper.getBoundingClientRect();
+      const pointerId = event.pointerId;
+      const grabX = event.clientX - rect.left;
+      const grabY = event.clientY - rect.top;
+      wrapper.classList.add('sd-home-bubble--dragged');
+      bringBubbleToFront(wrapper);
+      wrapper.style.left = rect.left + 'px';
+      wrapper.style.top = rect.top + 'px';
+      wrapper.style.right = 'auto';
+      wrapper.style.bottom = 'auto';
+      wrapper.style.width = rect.width + 'px';
+      kicker.setPointerCapture(pointerId);
+
+      const move = (e) => {
+        if (e.pointerId !== pointerId) return;
+        e.preventDefault();
+        const maxX = Math.max(0, window.innerWidth - wrapper.offsetWidth);
+        const maxY = Math.max(0, window.innerHeight - wrapper.offsetHeight);
+        wrapper.style.left = Math.max(0, Math.min(maxX, e.clientX - grabX)) + 'px';
+        wrapper.style.top = Math.max(0, Math.min(maxY, e.clientY - grabY)) + 'px';
+      };
+      const finish = (e) => {
+        if (e.pointerId !== pointerId) return;
+        kicker.removeEventListener('pointermove', move);
+        kicker.removeEventListener('pointerup', finish);
+        kicker.removeEventListener('pointercancel', finish);
+        if (kicker.hasPointerCapture(pointerId)) kicker.releasePointerCapture(pointerId);
+      };
+      kicker.addEventListener('pointermove', move);
+      kicker.addEventListener('pointerup', finish);
+      kicker.addEventListener('pointercancel', finish);
+    });
+
+    // On touchscreens, the entire non-interactive bubble surface is a drag
+    // target. Desktop mouse dragging remains exclusively on the kicker.
+    wrapper.addEventListener('pointerdown', (event) => {
+      if (event.pointerType !== 'touch' || !event.isPrimary) return;
+      if (event.target.closest('button, a, input, textarea, select, [contenteditable]')) return;
+
+      event.preventDefault();
+      const rect = wrapper.getBoundingClientRect();
+      const pointerId = event.pointerId;
+      const grabX = event.clientX - rect.left;
+      const grabY = event.clientY - rect.top;
+      wrapper.classList.add('sd-home-bubble--dragged');
+      bringBubbleToFront(wrapper);
+      wrapper.style.left = rect.left + 'px';
+      wrapper.style.top = rect.top + 'px';
+      wrapper.style.right = 'auto';
+      wrapper.style.bottom = 'auto';
+      wrapper.style.width = rect.width + 'px';
+      wrapper.setPointerCapture(pointerId);
+
+      const move = (e) => {
+        if (e.pointerId !== pointerId) return;
+        e.preventDefault();
+        const maxX = Math.max(0, window.innerWidth - wrapper.offsetWidth);
+        const maxY = Math.max(0, window.innerHeight - wrapper.offsetHeight);
+        wrapper.style.left = Math.max(0, Math.min(maxX, e.clientX - grabX)) + 'px';
+        wrapper.style.top = Math.max(0, Math.min(maxY, e.clientY - grabY)) + 'px';
+      };
+      const finish = (e) => {
+        if (e.pointerId !== pointerId) return;
+        wrapper.removeEventListener('pointermove', move);
+        wrapper.removeEventListener('pointerup', finish);
+        wrapper.removeEventListener('pointercancel', finish);
+        if (wrapper.hasPointerCapture(pointerId)) wrapper.releasePointerCapture(pointerId);
+      };
+      wrapper.addEventListener('pointermove', move);
+      wrapper.addEventListener('pointerup', finish);
+      wrapper.addEventListener('pointercancel', finish);
+    });
+
+    // Suppress iOS/Android long-press menus only for the mobile drag surface.
+    wrapper.addEventListener('contextmenu', (event) => {
+      if (window.matchMedia('(pointer: coarse)').matches &&
+          !event.target.closest('button, a, input, textarea, select, [contenteditable]')) {
+        event.preventDefault();
+      }
+    });
+
+    wrapper.append(close, kicker, heading);
+    if (item.summary) wrapper.appendChild(teaser);
+    wrapper.appendChild(details);
     return wrapper;
   }
 
@@ -129,12 +289,22 @@
     slots.forEach(([slot, target, insert]) => {
       if (!target || index >= available.length) return;
       const item = available[index++];
-      const existing = target.querySelector('.sd-home-bubble--' + slot);
+      const existing = document.querySelector('.sd-home-bubble--' + slot);
       if (existing && existing.dataset.conversationId === String(item.id)) return;
       if (existing) existing.remove();
       const bubble = makeBubble(item, slot);
       bubble.dataset.conversationId = String(item.id);
       insert(bubble, target);
+      // Establish viewport coordinates before any pointer interaction. The
+      // bubble never changes DOM parent while a drag is in progress.
+      const rect = bubble.getBoundingClientRect();
+      document.body.appendChild(bubble);
+      bubble.classList.add('sd-home-bubble--viewport');
+      bubble.style.left = rect.left + 'px';
+      bubble.style.top = rect.top + 'px';
+      bubble.style.right = 'auto';
+      bubble.style.bottom = 'auto';
+      bubble.style.width = rect.width + 'px';
       Drupal.attachBehaviors(bubble);
     });
   }

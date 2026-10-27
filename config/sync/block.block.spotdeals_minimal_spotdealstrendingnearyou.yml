@@ -10,7 +10,7 @@ dependencies:
 id: spotdeals_minimal_spotdealstrendingnearyou
 theme: spotdeals_minimal
 region: sidebar
-weight: 0
+weight: -5
 provider: null
 plugin: spotdeals_search_smart_location_trending_near_you
 settings:

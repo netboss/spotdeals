@@ -1,0 +1,246 @@
+#block-spotdeals-minimal-spotdealsrecentconversations {
+  margin-bottom: 1.25rem;
+}
+
+.sd-home-conversation-create {
+  box-sizing: border-box;
+  margin: 1rem 0;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+  position: relative;
+}
+
+.sd-home-conversation-create__toggle {
+  background: #2865db;
+  border: 0;
+  border-radius: 0.5rem;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.7rem 1rem;
+  font-size: 14px;
+}
+
+.sd-home-conversation-create__toggle:focus-visible {
+  outline: 2px solid #153b89;
+  outline-offset: 3px;
+}
+
+.sd-home-conversation-create__panel {
+  position: fixed;
+  top: 84px;
+  right: 24px;
+  z-index: 200000;
+  background: #fff;
+  border: 1px solid #e1e7e9;
+  border-radius: 0.75rem;
+  box-sizing: border-box;
+  margin: 0;
+  width: min(490px, calc(100vw - 48px));
+  max-width: none;
+  min-width: 0;
+  max-height: calc(100dvh - 100px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.85rem 1rem;
+  box-shadow: 0 16px 48px rgb(0 0 0 / 22%);
+  transform: none;
+}
+
+.sd-home-conversation-create__panel[hidden] {
+  display: none;
+}
+
+.sd-home-conversation-create__panel .sd-profile-create-form {
+  padding: 0;
+}
+
+.sd-home-conversation-create__panel .form-item,
+.sd-home-conversation-create__panel .address-container,
+.sd-home-conversation-create__panel .address-container > div {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.sd-home-conversation-create__panel input[type="text"],
+.sd-home-conversation-create__panel select,
+.sd-home-conversation-create__panel textarea {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.sd-home-conversation-create__panel .form-item {
+  margin-top: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.sd-home-conversation-create__panel label {
+  margin-bottom: 0.2rem;
+  line-height: 1.3;
+}
+
+.sd-home-conversation-create__panel input[type="text"],
+.sd-home-conversation-create__panel select {
+  min-height: 38px;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+}
+
+.sd-home-conversation-create__panel textarea {
+  min-height: 76px;
+}
+
+.sd-home-conversation-create__published:empty {
+  display: none;
+}
+
+.sd-home-conversation-create__published .sd-profile__activity {
+  background: #e7f8ed;
+  border-radius: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+}
+
+@media (max-width: 600px) {
+  .sd-home-conversation-create__panel .address-container,
+  .sd-home-conversation-create__panel .address-container > div {
+    display: block;
+    width: 100%;
+  }
+}
+
+.sd-recent-conversations {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sd-recent-conversations__heading {
+  margin: 0 0 0.75rem;
+}
+
+.sd-recent-conversations__heading-toggle {
+  display: none;
+}
+
+.sd-recent-conversations__desktop-title {
+  margin: 0;
+}
+
+.sd-recent-conversations__heading-toggle:focus-visible {
+  outline: 2px solid #2865db;
+  outline-offset: 3px;
+}
+
+.sd-recent-conversations__item {
+  border-top: 1px solid #e1e7e9;
+  padding: 0.75rem 0;
+}
+
+.sd-recent-conversations__link {
+  display: block;
+  font-weight: 700;
+}
+
+.sd-recent-conversations__item small {
+  color: #59666e;
+  display: block;
+  margin-top: 0.2rem;
+}
+
+.sd-recent-conversations__item p {
+  display: -webkit-box;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  margin: 0.35rem 0 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+@media (max-width: 767px) {
+  .sd-home-conversation-create__panel {
+    top: 50%;
+    width: calc(100vw - 10px);
+    max-width: 480px;
+    max-height: calc(100dvh - 32px);
+    margin-inline: auto;
+    transform: translateY(-50%);
+  }
+}
+
+@media (max-width: 767px) {
+  #block-spotdeals-minimal-spotdealsrecentconversations {
+    background: #f6f8fb;
+    border: 1px solid #d7e0e5;
+    border-radius: 0.6rem;
+    box-sizing: border-box;
+    padding: 0.85rem;
+    width: 100%;
+  }
+
+  .sd-recent-conversations {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  .sd-recent-conversations__heading {
+    margin-bottom: 0.65rem;
+  }
+
+  .sd-recent-conversations__desktop-title {
+    display: none;
+  }
+
+  .sd-recent-conversations__heading-toggle {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    display: flex;
+    font: inherit;
+    font-size: 1.125rem;
+    font-weight: 700;
+    justify-content: space-between;
+    padding: 0;
+    text-align: left;
+    width: 100%;
+  }
+
+  .sd-recent-conversations__heading-toggle::after {
+    content: "+";
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .sd-recent-conversations__heading-toggle[aria-expanded="true"]::after {
+    content: "−";
+  }
+
+  .sd-recent-conversations .sd-home-conversation-create {
+    margin: 0.75rem 0;
+  }
+
+  .sd-recent-conversations__list {
+    display: none;
+  }
+
+  .sd-recent-conversations--expanded .sd-recent-conversations__list {
+    display: block;
+  }
+}
+
+@media (min-width: 1024px) {
+  .spotdeals-page-main--has-right-sidebar .region--sidebar {
+    position: sticky;
+    top: 90px;
+    align-self: start;
+  }
+}

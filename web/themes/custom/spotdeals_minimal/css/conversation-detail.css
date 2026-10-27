@@ -147,3 +147,23 @@
 .sd-conversation-detail__inline .sd-inline-conversation__form {
   margin-top: 1rem;
 }
+
+/* Keep the desktop conversation sidebar in a full-height grid track so its
+   sticky content can travel alongside the main conversation. */
+@media (min-width: 1024px) {
+  .page-node-type-conversation .spotdeals-page-main--has-right-sidebar {
+    align-items: stretch;
+  }
+
+  .page-node-type-conversation .spotdeals-sidebar-right {
+    align-self: stretch;
+    min-height: 100%;
+  }
+
+  .page-node-type-conversation .spotdeals-sidebar-right > .region--sidebar {
+    align-self: start;
+    max-height: calc(100vh - 106px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}

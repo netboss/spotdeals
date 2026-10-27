@@ -73,6 +73,7 @@ module:
   spotdeals_billing: 0
   spotdeals_conversations: 0
   spotdeals_data_ingestion: 0
+  spotdeals_home_bubbles: 0
   spotdeals_import: 0
   spotdeals_revenue: 0
   spotdeals_search_insights: 0
