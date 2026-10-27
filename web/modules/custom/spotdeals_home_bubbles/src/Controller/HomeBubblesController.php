@@ -48,18 +48,22 @@ final class HomeBubblesController extends ControllerBase {
         }
     }
 
-    $base = $storage->getQuery()->accessCheck(TRUE)
-      ->condition('type', 'conversation')->condition('status', 1);
-    if ($city !== '') {
-      // A location-specific search never mixes in unrelated cities.
-      $local = clone $base;
-      $ids = array_values($local->condition('field_address.locality', $city)
-        ->sort('created', 'DESC')->range(0, 150)->execute());
+    // Never show conversations from arbitrary cities when the visitor's
+    // search or browser-location mode has not resolved a city.
+    if ($city === '') {
+      $response = new JsonResponse(['items' => []]);
+      $response->headers->set('Cache-Control', 'private, no-store, max-age=0');
+      return $response;
     }
-    else {
-      // Without a location, rank actual engagement rather than random recency.
-      $ids = array_values((clone $base)->sort('created', 'DESC')->range(0, 500)->execute());
-    }
+
+    // Only conversations in the resolved locality are eligible.
+    $ids = array_values($storage->getQuery()->accessCheck(TRUE)
+      ->condition('type', 'conversation')
+      ->condition('status', 1)
+      ->condition('field_address.locality', $city)
+      ->sort('created', 'DESC')
+      ->range(0, 150)
+      ->execute());
     $db = \Drupal::database();
     $votes = [];
     $replies = [];

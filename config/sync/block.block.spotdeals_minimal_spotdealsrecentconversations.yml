@@ -1,0 +1,20 @@
+uuid: 36c139ac-23df-4f7c-b405-a1f8eb412181
+langcode: en
+status: true
+dependencies:
+  module:
+    - spotdeals_home_bubbles
+  theme:
+    - spotdeals_minimal
+id: spotdeals_minimal_spotdealsrecentconversations
+theme: spotdeals_minimal
+region: sidebar
+weight: -9
+provider: null
+plugin: spotdeals_home_recent_conversations
+settings:
+  id: spotdeals_home_recent_conversations
+  label: 'Recent conversations'
+  label_display: '0'
+  provider: spotdeals_home_bubbles
+visibility: {  }

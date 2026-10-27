@@ -10,7 +10,7 @@ dependencies:
 id: spotdeals_minimal_spotdealspopularsearches
 theme: spotdeals_minimal
 region: sidebar
-weight: 0
+weight: -6
 provider: null
 plugin: spotdeals_search_insights_most_searched
 settings:

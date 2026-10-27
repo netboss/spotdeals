@@ -9,3 +9,15 @@ home_bubbles:
     - core/drupal
     - core/once
     - core/drupal.ajax
+
+home_composer:
+  version: 1.x
+  css:
+    theme:
+      css/home-composer.css: {}
+  js:
+    js/home-composer.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - spotdeals_conversations/activity_inline

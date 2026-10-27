@@ -1,0 +1,7 @@
+uuid: d521e318-f4ba-4c4b-a155-ec1a9a6a6a6f
+langcode: en
+status: true
+dependencies: {  }
+formId: spotdeals_conversations_inline_reply
+captchaType: default
+label: spotdeals_conversations_inline_reply
