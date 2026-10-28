@@ -329,11 +329,26 @@ final class DealDiscoveryService {
       foreach ($this->candidatesFromBlock($block, $sourceUrl) as $candidate) {
         $equivalentKey = $this->findEquivalentCandidateKey($candidate, $results);
         $key = $equivalentKey ?? $this->candidateKey($candidate);
-        if (isset($results[$key]) && !$this->preferCandidate($candidate, $results[$key])) {
+        if (!isset($results[$key])) {
+          $results[$key] = $candidate;
           continue;
         }
 
-        $results[$key] = $candidate;
+        $existing = $results[$key];
+        $preferred = $this->preferCandidate($candidate, $existing)
+          ? $candidate
+          : $existing;
+
+        // Two DOM blocks can describe the same offer at different levels of
+        // detail. Keep the most specific *compatible* schedule, regardless
+        // of which block supplies the preferred title/snippet/score.
+        // Never combine unrelated schedules or infer missing hours.
+        $preferred['schedule'] = $this->moreSpecificCompatibleSchedule(
+          (string) ($existing['schedule'] ?? ''),
+          (string) ($candidate['schedule'] ?? ''),
+          (string) ($preferred['schedule'] ?? ''),
+        );
+        $results[$key] = $preferred;
       }
     }
 
@@ -352,7 +367,10 @@ final class DealDiscoveryService {
 
     $dom = new \DOMDocument();
     $previous = libxml_use_internal_errors(TRUE);
-    $loaded = $dom->loadHTML($html, LIBXML_NOWARNING | LIBXML_NOERROR);
+    // Force UTF-8 decoding for HTML without an explicit charset. Otherwise
+    // DOMDocument corrupts Unicode dashes in offer schedules, so complete
+    // time ranges fail to match and only the weekday is extracted.
+    $loaded = $dom->loadHTML('<?xml encoding="UTF-8"?>' . $html, LIBXML_NOWARNING | LIBXML_NOERROR);
     libxml_clear_errors();
     libxml_use_internal_errors($previous);
 
@@ -411,6 +429,21 @@ final class DealDiscoveryService {
         continue;
       }
 
+      $headingTitle = $this->domElementText($heading);
+      // A subordinate heading may contain only the schedule (e.g. h4
+      // 'Daily | Open – Close') while the preceding h3 names the offer.
+      if (preg_match('/^(?:daily|every\s+|mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)/i', $headingTitle) === 1) {
+        $previousHeading = $heading->previousSibling;
+        while ($previousHeading !== NULL && !($previousHeading instanceof \DOMElement && preg_match('/^h[1-6]$/i', $previousHeading->tagName) === 1)) {
+          if ($previousHeading instanceof \DOMElement && trim($previousHeading->textContent) !== '' && strtolower($previousHeading->tagName) !== 'br') {
+            break;
+          }
+          $previousHeading = $previousHeading->previousSibling;
+        }
+        if ($previousHeading instanceof \DOMElement && preg_match('/^h[1-6]$/i', $previousHeading->tagName) === 1) {
+          $headingTitle = $this->domElementText($previousHeading);
+        }
+      }
       $parts = [$this->domElementText($heading)];
       $sibling = $heading->nextSibling;
       $collected = 0;
@@ -455,7 +488,7 @@ final class DealDiscoveryService {
 
       $seen[$key] = TRUE;
       $blocks[] = [
-        'title' => $this->domElementText($heading),
+        'title' => $headingTitle,
         'text' => $blockText,
         'source' => 'heading',
       ];
@@ -588,12 +621,28 @@ final class DealDiscoveryService {
       }
     }
 
+    // A time-limited unlimited-bowling price is a promotional offer even
+    // when the venue does not use generic words such as 'deal' or 'special'.
+    if ($promotionScore === 0 && preg_match('/\bunlimited\s+bowling\b/i', $text) === 1
+      && preg_match('/\b(?:only|now)\s+[$£€]\s*\d/iu', $text) === 1) {
+      $promotionScore = 1;
+      $matchedPromotionTerms[] = 'unlimited bowling price';
+    }
     if ($promotionScore === 0) {
       return [];
     }
 
     $matchedValues = $this->extractValues($text);
     if ($matchedValues === []) {
+      return [];
+    }
+
+    // Generic section headings do not identify a specific promotion, even
+    // when the surrounding block contains only one discount value. Prefer
+    // independently titled offer blocks rather than publishing a deal called
+    // "Hours", "Description", or another generic section label.
+    $heading = $this->cleanText((string) ($block['title'] ?? ''));
+    if (preg_match('/^(?:hours|opening hours|museum(?: & shop)? hours|ticketing(?: information)?|admission|admissions|special offers|specials|discounts|related products|description|pricing|membership)$/iu', $heading) === 1) {
       return [];
     }
 
@@ -684,7 +733,10 @@ final class DealDiscoveryService {
       }
     }
 
-    return FALSE;
+    // A limited-time unlimited-bowling price is itself a promotional offer,
+    // even without generic marketing words. Require explicit price context.
+    return preg_match('/\bunlimited\s+bowling\b/iu', $context) === 1
+      && preg_match('/\b(?:only|now)\s*[$£€]\s*\d/iu', $context) === 1;
   }
 
   /**
@@ -693,6 +745,24 @@ final class DealDiscoveryService {
    * @return string[]
    */
   private function extractValues(string $text): array {
+    // Keep conditional discounts intact. "Buy two games, get the third
+    // 50% off" is not a blanket "50% off" promotion.
+    $conditionalPattern = '/\bbuy\s+(?:\d+|one|two|three)\s+[^.!?]{0,80}?\bget\s+(?:the\s+)?(?:\d+|one|two|three|third|second|fourth)\s+[^.!?]{0,35}?\b\d{1,3}%\s+off\b/iu';
+    $values = [];
+    $remainingText = $text;
+    if (preg_match_all($conditionalPattern, $text, $conditionalMatches) > 0) {
+      foreach ($conditionalMatches[0] as $match) {
+        $value = $this->cleanText($match);
+        $key = $this->normalizeCandidateValue($value);
+        if ($key !== '') {
+          $values[$key] = $value;
+        }
+        // Prevent the generic percentage pattern from extracting the
+        // nested discount a second time as a misleading standalone offer.
+        $remainingText = str_replace($match, str_repeat(' ', strlen($match)), $remainingText);
+      }
+    }
+
     $patterns = [
       '/\b\d{1,3}%\s+off\b/i',
       '/\b(?:save|savings?)\s+(?:up\s+to\s+)?(?:[$£€]\s*\d+(?:\.\d{1,2})?|\d{1,3}(?:\.\d{1,2})?\s*%)(?![\p{L}\p{N}_])/iu',
@@ -703,9 +773,8 @@ final class DealDiscoveryService {
       '/\b(?:only|now|special(?:ly)? priced? at)\s+[$£€]\s*\d+(?:\.\d{1,2})?\b/iu',
     ];
 
-    $values = [];
     foreach ($patterns as $pattern) {
-      if (preg_match_all($pattern, $text, $matches) < 1) {
+      if (preg_match_all($pattern, $remainingText, $matches) < 1) {
         continue;
       }
 
@@ -744,18 +813,28 @@ final class DealDiscoveryService {
     }
     $scheduleText = $this->cleanText($scheduleText);
 
-    if (preg_match(self::SCHEDULE_PATTERN, $scheduleText, $matches) !== 1) {
-      return '';
+    // Capture only explicit schedule expressions, never arbitrary surrounding
+    // description text. Multi-day schedules remain together when contiguous.
+    $day = '(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mon|Tue|Wed|Thu|Fri|Sat|Sun)';
+    $time = '(?:\d{1,2}(?::\d{2})?\s*(?:AM|PM))';
+    $patterns = [
+      '/\b(?:Every\s+)?' . $day . '(?:\s*(?:&|and|,|–|-)\s*' . $day . ')*\s*\|\s*' . $time . '\s*[–-]\s*' . $time . '\b/iu',
+      '/\bDaily\s*\|\s*Open\s*[–-]\s*Close\b/iu',
+      '/\b' . $day . '\s+starting\s+at\s+' . $time . '(?:\s+' . $day . '\s+starting\s+at\s+' . $time . ')*/iu',
+      '/\b(?:Every\s+)?' . $day . '(?:\s*(?:&|and|,|–|-)\s*' . $day . ')*\b/iu',
+      '/\b(?:Daily|Weekdays|Weekends)\b/iu',
+    ];
+    foreach ($patterns as $pattern) {
+      if (preg_match($pattern, $scheduleText, $matches) === 1) {
+        return $this->cleanText($matches[0]);
+      }
     }
 
-    $match = $matches[0];
-    $position = mb_stripos($scheduleText, $match);
-    if ($position === FALSE) {
-      return $match;
-    }
-
-    $start = max(0, $position - 60);
-    return $this->cleanText(mb_substr($scheduleText, $start, 180));
+    // Retain other existing schedule signals (validity, expiration, etc.)
+    // without returning unrelated surrounding prose.
+    return preg_match(self::SCHEDULE_PATTERN, $scheduleText, $matches) === 1
+      ? $this->cleanText($matches[0])
+      : '';
   }
 
   private function deriveTitle(string $segment, string $value): string {
@@ -939,6 +1018,27 @@ final class DealDiscoveryService {
   }
 
   /**
+   * Retains a longer schedule only when it extends the same explicit schedule.
+   * Conflicting schedules are left with the preferred offer representation.
+   */
+  private function moreSpecificCompatibleSchedule(string $first, string $second, string $preferred): string {
+    if ($first === '' || $second === '') {
+      return $first !== '' ? $first : $second;
+    }
+
+    $firstLower = mb_strtolower($first);
+    $secondLower = mb_strtolower($second);
+    if (str_contains($firstLower, $secondLower)) {
+      return $first;
+    }
+    if (str_contains($secondLower, $firstLower)) {
+      return $second;
+    }
+
+    return $preferred;
+  }
+
+  /**
    * Chooses the stronger representation when two candidates normalize alike.
    *
    * @param array<string, mixed> $candidate
@@ -947,6 +1047,17 @@ final class DealDiscoveryService {
   private function preferCandidate(array $candidate, array $existing): bool {
     $candidateQuality = $this->candidateQuality($candidate);
     $existingQuality = $this->candidateQuality($existing);
+
+    // Prefer a complete schedule over a generic day token when two DOM
+    // representations refer to the same offer and have the same value.
+    $candidateSchedule = (string) ($candidate['schedule'] ?? '');
+    $existingSchedule = (string) ($existing['schedule'] ?? '');
+    if ($candidateSchedule !== '' && $existingSchedule !== ''
+      && (str_contains(mb_strtolower($candidateSchedule), mb_strtolower($existingSchedule))
+        || str_contains(mb_strtolower($existingSchedule), mb_strtolower($candidateSchedule)))
+      && mb_strlen($candidateSchedule) !== mb_strlen($existingSchedule)) {
+      return mb_strlen($candidateSchedule) > mb_strlen($existingSchedule);
+    }
 
     if ($candidateQuality !== $existingQuality) {
       return $candidateQuality > $existingQuality;
