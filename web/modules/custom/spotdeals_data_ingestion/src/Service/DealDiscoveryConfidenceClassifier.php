@@ -376,9 +376,37 @@ final class DealDiscoveryConfidenceClassifier {
     if (
       preg_match('/\b(?:during\s+(?:(?:its|the)\s+)?|this\s+)(?:spring|summer|fall|autumn|winter)\b/iu', $title) === 1
       && !$this->containsExplicitYearOrNumericDate($text)
-      && !$this->containsConcreteValidityContext($schedule)
     ) {
+      // A weekday schedule does not establish which season/year this
+      // explicitly season-limited promotion applies to.
       return 'seasonal validity is present without concrete dates';
+    }
+
+    // A named weekday plus month/day is a particular calendar occurrence,
+    // not a recurring weekly schedule. Without a year, even a matching
+    // weekday cannot establish that the promotion is still current.
+    // Keep it for review rather than treating it as an expired certainty.
+    if (
+      preg_match(
+        '/\b(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+'
+        . '(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+'
+        . '\d{1,2}(?:st|nd|rd|th)?\b/iu',
+        $text,
+      ) === 1
+      && !$this->containsExplicitYearOrNumericDate($text)
+    ) {
+      return 'calendar-specific promotion has a weekday and month/day but no year';
+    }
+
+    // A season word alone can be part of an offer name, not a validity
+    // restriction (for example, "Summer Reading Challenge"). Require
+    // language that explicitly frames the promotion as seasonal.
+    if (
+      preg_match('/\b(?:spring|summer|fall|autumn|winter)\s+ever\b/iu', $title) === 1
+      && !$this->containsExplicitYearOrNumericDate($text)
+    ) {
+      // Even a recurring weekday does not date a seasonal campaign.
+      return 'season-specific promotion lacks concrete current validity dates';
     }
 
     $monthPattern = '(January|February|March|April|May|June|July|August|September|October|November|December)';
@@ -672,6 +700,17 @@ final class DealDiscoveryConfidenceClassifier {
     }
 
     if (str_contains($normalizedTitle, $normalizedValue)) {
+      return TRUE;
+    }
+
+    // Some extractors repeat the same buy-X-get-Y-free phrase in the value.
+    // Accept only identical, explicit quantities, never a nearby unrelated offer.
+    $buyGetPattern = '/\bbuy\s+(one|\d+)\s+.+?\s+get\s+(one|\d+)\s+free\b/iu';
+    if (
+      preg_match($buyGetPattern, $normalizedTitle, $titleBuyGet) === 1
+      && preg_match($buyGetPattern, $normalizedValue, $valueBuyGet) === 1
+      && mb_strtolower($titleBuyGet[0]) === mb_strtolower($valueBuyGet[0])
+    ) {
       return TRUE;
     }
 

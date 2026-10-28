@@ -83,6 +83,21 @@ final class DealDiscoveryFieldDeriverTest extends TestCase {
     );
   }
 
+  public function testFamilySundaysExplicitWeeklySchedule(): void {
+    $schedule = 'Join us for Family Sundays Each Sunday, we offer 1-hour workshops that engage families in contemporary art through a variety of activities.';
+    $this->assertSame(
+      [['target_id' => 53, 'name' => 'Sunday']],
+      $this->deriver->deriveTaxonomyScheduleTerms($schedule, $this->dayTerms()),
+    );
+  }
+
+  public function testEverySundayWithUnrelatedProse(): void {
+    $this->assertSame(
+      [['target_id' => 53, 'name' => 'Sunday']],
+      $this->deriver->deriveTaxonomyScheduleTerms('Every Sunday, open to families for 1-hour workshops.', $this->dayTerms()),
+    );
+  }
+
   public function testEveryDayResolvesAllDaysComposite(): void {
     $this->assertSame(
       [['target_id' => 1633, 'name' => 'Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday']],

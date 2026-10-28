@@ -56,6 +56,23 @@ final class DealDiscoveryConfidenceClassifierTest extends TestCase {
   }
 
   /**
+   * @covers ::diagnoseStrongExplicitOfferEvidence
+   */
+  public function testRepeatedBuyGetValueMatchesOnlyTheSameOffer(): void {
+    $candidate = [
+      'title' => 'Buy 2 Tickets, Get 2 Free',
+      'value' => 'Buy 2 Tickets, Get 2 Free Buy 2 tickets, get 2 FREE',
+      'reason' => 'binding=heading',
+    ];
+    $diagnostic = $this->classifier->diagnoseStrongExplicitOfferEvidence($candidate);
+    self::assertTrue($diagnostic['gates']['title_value_coherence']['passed']);
+
+    $candidate['value'] = 'Buy 3 Tickets, Get 2 Free';
+    $diagnostic = $this->classifier->diagnoseStrongExplicitOfferEvidence($candidate);
+    self::assertFalse($diagnostic['gates']['title_value_coherence']['passed']);
+  }
+
+  /**
    * @covers ::classify
    */
   public function testExplicitStandingDiscountCanAutoApproveWithoutSchedule(): void {
@@ -254,6 +271,102 @@ final class DealDiscoveryConfidenceClassifierTest extends TestCase {
   }
 
 
+
+  /**
+   * @covers ::classify
+   */
+  public function testWeekdayCalendarDateWithoutYearRequiresReview(): void {
+    $result = $this->classifier->classify([
+      'title' => 'Thursday October 15th',
+      'value' => '$3.00 Off',
+      'schedule' => 'Thursday October 15th',
+      'source_url' => 'https://example.com/daily-special',
+      'score' => 10,
+      'reason' => 'promotion=discount; binding=heading',
+    ], 1);
+
+    self::assertSame('pending', $result['status']);
+    self::assertContains(
+      'validity review: calendar-specific promotion has a weekday and month/day but no year',
+      $result['reasons'],
+    );
+  }
+
+  /**
+   * @covers ::classify
+   */
+  public function testSeasonalHeadlineWithoutDatesRequiresReview(): void {
+    $result = $this->classifier->classify([
+      'title' => 'Make Every Splash Count This Summer',
+      'value' => 'save 35%',
+      'schedule' => '',
+      'source_url' => 'https://example.com/summer-special',
+      'score' => 10,
+      'reason' => 'promotion=discount; binding=heading',
+    ], 1);
+
+    self::assertSame('pending', $result['status']);
+    self::assertContains(
+      'validity review: seasonal validity is present without concrete dates',
+      $result['reasons'],
+    );
+  }
+
+  /**
+   * @covers ::classify
+   */
+  public function testSeasonalCampaignWithRecurringScheduleStillRequiresReview(): void {
+    $result = $this->classifier->classify([
+      'title' => 'Make Every Splash Count This Summer',
+      'value' => '35% off',
+      'schedule' => 'Every Saturday and Sunday',
+      'source_url' => 'https://example.com/summer-special',
+      'score' => 9,
+      'reason' => 'promotion=discount; value=35% off; binding=article',
+    ], 1);
+
+    self::assertSame('pending', $result['status']);
+    self::assertContains(
+      'validity review: seasonal validity is present without concrete dates',
+      $result['reasons'],
+    );
+  }
+
+  /**
+   * @covers ::classify
+   */
+  public function testSeasonalCampaignSloganWithWeekdayStillRequiresReview(): void {
+    $result = $this->classifier->classify([
+      'title' => 'Why a Season Pass Is Your Ticket to the Best Summer Ever',
+      'value' => '35% off',
+      'schedule' => 'Every Friday',
+      'source_url' => 'https://example.com/season-pass',
+      'score' => 9,
+      'reason' => 'promotion=discount; value=35% off; binding=article',
+    ], 1);
+
+    self::assertSame('pending', $result['status']);
+    self::assertContains(
+      'validity review: season-specific promotion lacks concrete current validity dates',
+      $result['reasons'],
+    );
+  }
+
+  /**
+   * @covers ::classify
+   */
+  public function testStandingRecurringOfferWithoutSeasonalLimitStillAutoApproves(): void {
+    $result = $this->classifier->classify([
+      'title' => '20% off food every Wednesday',
+      'value' => '20% off',
+      'schedule' => 'Every Wednesday',
+      'source_url' => 'https://example.com/weekly-deals',
+      'score' => 10,
+      'reason' => 'promotion=discount; value=20% off; binding=article',
+    ], 1);
+
+    self::assertSame('auto_approved', $result['status']);
+  }
 
   /**
    * @covers ::classify

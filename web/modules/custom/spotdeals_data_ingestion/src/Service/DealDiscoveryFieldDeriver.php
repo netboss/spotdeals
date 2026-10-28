@@ -86,6 +86,16 @@ final class DealDiscoveryFieldDeriver {
       }
     }
 
+    // Explicit weekly recurrence takes precedence over unrelated prose such as
+    // "1-hour workshops" or "open to families" in the same schedule.
+    if (preg_match('/\b(?:each|every)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/iu', $schedule, $weeklyMatch) === 1) {
+      $weekday = $this->normalizeText($weeklyMatch[1]);
+      $weekdayTerm = $this->deriveNamedScheduleTerm($terms, $weekday);
+      if ($weekdayTerm !== NULL) {
+        return [$weekdayTerm];
+      }
+    }
+
     // Explicit ordinal recurrence such as "third Thursday of every
     // month" carries one unambiguous schedule token. Resolve that token
     // directly against an existing single-token taxonomy term rather than
