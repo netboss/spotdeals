@@ -34,6 +34,11 @@ final class RecommendationService {
   private const RANDOM_TIE_LIMIT = 7;
 
   /**
+   * Near-me rank window for randomized selection after locality and quality filters.
+   */
+  private const RANDOM_RANK_WINDOW = 12;
+
+  /**
    * Candidate has at least one positive Worth it signal and no hard negative.
    */
   private const QUALITY_TIER_POSITIVE = 0;
@@ -427,7 +432,7 @@ final class RecommendationService {
           $candidateRank = (int) ($candidate['rank_index'] ?? PHP_INT_MAX);
           $topRank = (int) ($top['rank_index'] ?? PHP_INT_MAX);
 
-          return $candidateRank <= ($topRank + 3);
+          return $candidateRank <= ($topRank + self::RANDOM_RANK_WINDOW);
         }
       ));
 
@@ -438,7 +443,7 @@ final class RecommendationService {
       $topTier = array_slice($topTier, 0, self::RANDOM_TIE_LIMIT);
 
       return [
-        'candidate' => $topTier[0],
+        'candidate' => $topTier[random_int(0, count($topTier) - 1)],
         'attempt_index' => ((int) $attemptIndex) + 1,
         'top_tier_count' => count($topTier),
       ];
