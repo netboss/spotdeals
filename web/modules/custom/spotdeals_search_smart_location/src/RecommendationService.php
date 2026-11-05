@@ -34,11 +34,6 @@ final class RecommendationService {
   private const RANDOM_TIE_LIMIT = 7;
 
   /**
-   * Near-me rank window for randomized selection after locality and quality filters.
-   */
-  private const RANDOM_RANK_WINDOW = 12;
-
-  /**
    * Candidate has at least one positive Worth it signal and no hard negative.
    */
   private const QUALITY_TIER_POSITIVE = 0;
@@ -424,15 +419,11 @@ final class RecommendationService {
             return FALSE;
           }
 
-          // Randomize only across the closest same-quality recommendations.
-          // The previous score-window randomization could jump from nearby New
-          // Smyrna Beach options to Port Orange/Daytona Beach options because
-          // votes/freshness made far candidates look equivalent. rank_index is
-          // produced by NearMeRanker and already includes the near-me ordering.
-          $candidateRank = (int) ($candidate['rank_index'] ?? PHP_INT_MAX);
-          $topRank = (int) ($top['rank_index'] ?? PHP_INT_MAX);
-
-          return $candidateRank <= ($topRank + self::RANDOM_RANK_WINDOW);
+          // Locality, radius, vote quality, and preference matching have already
+          // been enforced. Do not apply a second absolute near-me rank window:
+          // it can collapse a large eligible pool to the same one or two deals.
+          // The sorted top-seven cap below keeps recommendations competitive.
+          return TRUE;
         }
       ));
 
@@ -481,6 +472,23 @@ final class RecommendationService {
   }
 
   /**
+   * Returns the first unexcluded deal IDs without wasting candidate slots.
+   *
+   * Input order is the original near-me ranking order.
+   *
+   * @param array<int,int> $rankedNids
+   *   Deal IDs in ranked order.
+   * @param array<int,int> $excludedDealNids
+   *   Previously shown deal IDs.
+   *
+   * @return array<int,int>
+   *   Up to the candidate limit in original order.
+   */
+  private static function boundedUnexcludedDealNids(array $rankedNids, array $excludedDealNids): array {
+    return array_slice(array_values(array_diff($rankedNids, $excludedDealNids)), 0, self::CANDIDATE_LIMIT);
+  }
+
+  /**
    * Builds scored candidates from a fixed local set of deal node IDs.
    *
    * @param array<int,int> $dealNids
@@ -518,7 +526,9 @@ final class RecommendationService {
       return [];
     }
 
-    $candidateNids = array_slice($dealNids, 0, self::CANDIDATE_LIMIT);
+    // Excluded deals must not consume the bounded candidate budget.
+    $rankIndexMap = array_flip($dealNids);
+    $candidateNids = self::boundedUnexcludedDealNids($dealNids, $excludedDealNids);
     $deals = $this->entityTypeManager->getStorage('node')->loadMultiple($candidateNids);
     if (empty($deals)) {
       return [];
@@ -528,7 +538,7 @@ final class RecommendationService {
     $candidateRows = [];
     $candidateVenueNids = [];
 
-    foreach ($candidateNids as $rankIndex => $dealNid) {
+    foreach ($candidateNids as $dealNid) {
       $deal = $deals[$dealNid] ?? NULL;
       if (!$deal instanceof NodeInterface) {
         continue;
@@ -552,7 +562,7 @@ final class RecommendationService {
         'deal' => $deal,
         'venue' => $venue,
         'venue_cuisine_tokens' => $this->extractVenueCuisineTokens($venue),
-        'rank_index' => (int) $rankIndex,
+        'rank_index' => (int) ($rankIndexMap[$dealNid] ?? PHP_INT_MAX),
       ];
       $candidateVenueNids[] = $venueNid;
     }
@@ -640,14 +650,16 @@ final class RecommendationService {
       return [];
     }
 
-    $candidateNids = array_slice(array_values($rankedNids), 0, self::CANDIDATE_LIMIT);
+    $rankedNids = array_values($rankedNids);
+    $rankIndexMap = array_flip($rankedNids);
+    // Excluded deals must not consume the bounded candidate budget.
+    $candidateNids = self::boundedUnexcludedDealNids($rankedNids, $excludedDealNids);
     $deals = $this->entityTypeManager->getStorage('node')->loadMultiple($candidateNids);
 
     if (empty($deals)) {
       return [];
     }
 
-    $rankIndexMap = array_flip($candidateNids);
     $freshnessScores = $this->freshnessScorer->scoreDealNids($candidateNids);
     $candidateRows = [];
     $candidateVenueNids = [];
