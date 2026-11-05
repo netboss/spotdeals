@@ -8,7 +8,6 @@ dependencies:
     - comment
     - contact
     - filter
-    - flag
     - media
     - spotdeals_data_ingestion
     - spotdeals_vote
@@ -23,11 +22,7 @@ permissions:
   - 'access comments'
   - 'access content'
   - 'access site-wide contact form'
-  - 'flag deal'
-  - 'flag venue'
   - 'submit external venue reports'
   - 'submit spotdeals votes'
-  - 'unflag deal'
-  - 'unflag venue'
   - 'use text format restricted_html'
   - 'view media'
