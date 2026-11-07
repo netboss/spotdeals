@@ -80,7 +80,11 @@
       {% if has_deal_body %}
         <section class="spotdeals-deal-about" aria-label="{{ 'Deal details'|t }}">
           <h2 class="spotdeals-deal-about__title">{{ 'Deal details'|t }}</h2>
-          {{ content.body }}
+          {% if spotdeals_deal_formatted_body is defined %}
+            {{ spotdeals_deal_formatted_body }}
+          {% else %}
+            {{ content.body }}
+          {% endif %}
         </section>
       {% endif %}
 

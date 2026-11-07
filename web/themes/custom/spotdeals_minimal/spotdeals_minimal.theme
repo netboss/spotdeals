@@ -248,6 +248,93 @@ function spotdeals_minimal_preprocess_node(array &$variables): void {
   ];
 
   $variables['spotdeals_deal_primary_ctas'] = $venue instanceof NodeInterface ? _spotdeals_minimal_build_deal_page_ctas($node, $venue) : [];
+
+  // Render recognizable plain-text lists without changing stored user content.
+  // Keep Drupal's configured text format in charge of filtering the result.
+  if ($node->hasField('body') && !$node->get('body')->isEmpty()) {
+    $body = $node->get('body');
+    $raw = (string) ($body->value ?? '');
+    $formatted = _spotdeals_minimal_format_plain_text_lists($raw);
+    if ($formatted !== NULL) {
+      $variables['spotdeals_deal_formatted_body'] = [
+        '#type' => 'processed_text',
+        '#text' => $formatted,
+        '#format' => (string) ($body->format ?: 'basic_html'),
+      ];
+    }
+  }
+}
+
+/**
+ * Converts unambiguous newline-separated plain-text lists to safe HTML.
+ *
+ * Returns NULL when no list is found, preserving Drupal's original body
+ * rendering. Existing HTML is deliberately left alone. Compact one-line
+ * hyphen lists are not parsed because punctuation makes them ambiguous.
+ */
+function _spotdeals_minimal_format_plain_text_lists(string $value): ?string {
+  if ($value === '' || preg_match('/<[^>]+>/', $value)) {
+    return NULL;
+  }
+
+  $lines = preg_split('/\r\n|\r|\n/', $value);
+  if ($lines === FALSE) {
+    return NULL;
+  }
+
+  $output = [];
+  $list_type = NULL;
+  $items = [];
+  $found_list = FALSE;
+  $flush = static function () use (&$output, &$list_type, &$items, &$found_list): void {
+    if ($list_type === NULL) {
+      return;
+    }
+    if (count($items) >= 2) {
+      $tag = $list_type;
+      $output[] = '<' . $tag . '><li>' . implode('</li><li>', array_map(
+        static fn(string $item): string => htmlspecialchars($item, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+        $items
+      )) . '</li></' . $tag . '>';
+      $found_list = TRUE;
+    }
+    else {
+      foreach ($items as $item) {
+        $output[] = '<p>' . htmlspecialchars(($list_type === 'ul' ? '- ' : '1. ') . $item, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
+      }
+    }
+    $list_type = NULL;
+    $items = [];
+  };
+
+  foreach ($lines as $line) {
+    $trimmed = trim($line);
+    $type = NULL;
+    $item = '';
+    if (preg_match('/^[-*]\s*(\S.*)$/u', $trimmed, $matches)) {
+      $type = 'ul';
+      $item = $matches[1];
+    }
+    elseif (preg_match('/^\d+[.)]\s+(\S.*)$/u', $trimmed, $matches)) {
+      $type = 'ol';
+      $item = $matches[1];
+    }
+    if ($type !== NULL) {
+      if ($list_type !== NULL && $list_type !== $type) {
+        $flush();
+      }
+      $list_type = $type;
+      $items[] = $item;
+    }
+    else {
+      $flush();
+      if ($trimmed !== '') {
+        $output[] = '<p>' . htmlspecialchars($trimmed, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>';
+      }
+    }
+  }
+  $flush();
+  return $found_list ? implode("\n", $output) : NULL;
 }
 
 /**
