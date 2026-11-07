@@ -56,9 +56,9 @@
           {% if spotdeals_deal_detail.venue_label %}
             <span class="spotdeals-deal-detail__venue">
               {% if spotdeals_deal_detail.venue_url %}
-                <a href="{{ spotdeals_deal_detail.venue_url }}">{{ spotdeals_deal_detail.venue_label }}</a>
+                {{ 'Venue:'|t }} <a href="{{ spotdeals_deal_detail.venue_url }}">{{ spotdeals_deal_detail.venue_label }}</a>
               {% else %}
-                {{ spotdeals_deal_detail.venue_label }}
+                {{ 'Venue:'|t }} {{ spotdeals_deal_detail.venue_label }}
               {% endif %}
             </span>
           {% endif %}
@@ -70,12 +70,19 @@
           </div>
         {% endif %}
 
-        {% if content.field_price_offer_text %}
+        {% if not has_deal_body and content.field_price_offer_text %}
           <div class="spotdeals-deal-detail__offer">
             {{ content.field_price_offer_text }}
           </div>
         {% endif %}
       </section>
+
+      {% if has_deal_body %}
+        <section class="spotdeals-deal-about" aria-label="{{ 'Deal details'|t }}">
+          <h2 class="spotdeals-deal-about__title">{{ 'Deal details'|t }}</h2>
+          {{ content.body }}
+        </section>
+      {% endif %}
 
       <section class="spotdeals-deal-facts" aria-label="{{ 'Deal facts'|t }}">
         {% if content.field_day_of_week %}
@@ -125,20 +132,6 @@
           {{ spotdeals_deal_primary_ctas }}
         </div>
       {% endif %}
-
-      {#
-      Deal details is intentionally kept commented out for now.
-      Some deal nodes expose an empty body render array, which created an empty
-      card on the public deal page. Keep this markup here for a future phase
-      when deal body/details content is consistently populated.
-
-      {% if has_deal_body %}
-        <section class="spotdeals-deal-about" aria-label="{{ 'Deal details'|t }}">
-          <h2 class="spotdeals-deal-about__title">{{ 'Deal details'|t }}</h2>
-          {{ content.body }}
-        </section>
-      {% endif %}
-      #}
 
       {% if content['spotdeals_vote'] %}
         <section class="spotdeals-deal-feedback" aria-label="{{ 'Deal feedback'|t }}">
