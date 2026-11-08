@@ -233,6 +233,16 @@ final class DealDiscoveryPublisher {
       throw new \RuntimeException('Unable to construct the deal node.');
     }
 
+    // Use the exact description approved by the no-write publishing preview.
+    if ($deal->hasField('body') && is_array($proposed['body'] ?? NULL)) {
+      $body = $proposed['body'];
+      if (is_string($body['value'] ?? NULL)
+        && $body['value'] !== ''
+        && ($body['format'] ?? NULL) === 'basic_html') {
+        $deal->set('body', $body);
+      }
+    }
+
     $this->setScalarIfPresent(
       $deal,
       'field_price_offer_text',
