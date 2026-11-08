@@ -242,6 +242,43 @@ final class DealDiscoveryContentQualityService {
     return trim($title);
   }
 
+  /**
+   * Builds an optional source-grounded description from one discovery excerpt.
+   *
+   * This is deliberately conservative: snippets that look like navigation,
+   * mixed offers, or a duplicate of the short offer are not published as body.
+   * No missing terms, dates, or redemption conditions are inferred.
+   */
+  public function buildDealDescription(array $candidate): ?string {
+    $snippet = $this->normalizeText((string) ($candidate['snippet'] ?? ''));
+    $title = $this->normalizeText((string) ($candidate['offer_title'] ?? $candidate['title'] ?? ''));
+    $offer = $this->normalizeText((string) ($candidate['offer_value'] ?? $candidate['value'] ?? ''));
+
+    if (mb_strlen($snippet) < 90 || mb_strlen($snippet) > 420) {
+      return NULL;
+    }
+    if (preg_match('/<[^>]*>|https?:\/\/|www\.|(?:cookie policy|privacy policy|sign in|log in|add to cart|subscribe|menu navigation|all rights reserved)/iu', $snippet)) {
+      return NULL;
+    }
+    // Discovery excerpts can span several unrelated offer blocks. Do not
+    // silently combine different prices/discounts into one deal description.
+    preg_match_all('/(?:[$£€]\s*\d+(?:[.,]\d{1,2})?|\d+\s*%)/u', $snippet, $values);
+    if (count(array_unique($values[0])) > 1) {
+      return NULL;
+    }
+    $normalizedSnippet = mb_strtolower($snippet);
+    if ($normalizedSnippet === mb_strtolower($title)
+      || $normalizedSnippet === mb_strtolower($offer)
+      || ($title !== '' && mb_strlen($snippet) <= mb_strlen($title) + 25 && str_contains($normalizedSnippet, mb_strtolower($title)))) {
+      return NULL;
+    }
+    // Truncated discovery snippets must not be presented as complete prose.
+    if (!preg_match('/[.!?]$/u', $snippet)) {
+      return NULL;
+    }
+    return $snippet;
+  }
+
   private function normalizeText(string $text): string {
     $text = str_replace(["\u{00A0}", "\u{200B}", "\u{200C}", "\u{200D}", "\u{FEFF}"], ' ', $text);
     $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', ' ', $text) ?? $text;

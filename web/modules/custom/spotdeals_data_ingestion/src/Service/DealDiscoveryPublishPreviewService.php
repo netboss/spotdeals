@@ -156,6 +156,16 @@ final class DealDiscoveryPublishPreviewService {
       'field_price_offer_text' => $offerValue,
     ];
 
+    // Optional, source-grounded details. No change to publishing eligibility.
+    $description = $this->contentQuality->buildDealDescription($candidate);
+    if ($description !== NULL && $deal->hasField('body')) {
+      $proposed['body'] = [
+        'value' => $description,
+        'format' => 'basic_html',
+      ];
+      $deal->set('body', $proposed['body']);
+    }
+
     if ($deal->hasField('field_price_offer_text')) {
       $deal->set('field_price_offer_text', $offerValue);
     }

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Drupal\Tests\spotdeals_data_ingestion\Unit\Service;
 
 use Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass \Drupal\spotdeals_data_ingestion\Service\DealDiscoveryContentQualityService
- * @group spotdeals_data_ingestion
- */
+#[CoversClass(DealDiscoveryContentQualityService::class)]
+#[Group('spotdeals_data_ingestion')]
 final class DealDiscoveryContentQualityServiceTest extends TestCase {
 
   private DealDiscoveryContentQualityService $service;
@@ -20,9 +20,17 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     $this->service = new DealDiscoveryContentQualityService();
   }
 
-  /**
-   * @covers ::normalizeTitle
-   */
+  public function testDescriptionUsesOnlyCompleteSourceExcerpt(): void {
+    $candidate = [
+      'offer_title' => 'Museum admission promotion',
+      'offer_value' => 'free admission',
+      'snippet' => 'Free admission is available to qualifying visitors on selected dates. Bring proof of eligibility to the admissions desk before entering.',
+    ];
+    self::assertSame($candidate['snippet'], $this->service->buildDealDescription($candidate));
+    self::assertNull($this->service->buildDealDescription(['snippet' => 'Free admission.']));
+    self::assertNull($this->service->buildDealDescription(['snippet' => 'Save $5 or $10 when you order a meal from our special menu. Other offers are available today and tomorrow.']));
+  }
+
   public function testTrailingHeadingDelimiterIsRemoved(): void {
     self::assertSame(
       'Access for All at OMA',
@@ -34,9 +42,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     );
   }
 
-  /**
-   * @covers ::normalizeTitle
-   */
   public function testMeaningfulTitlePunctuationIsPreserved(): void {
     self::assertSame(
       'Who’s Ready for 50% Off?',
@@ -52,9 +57,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     );
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testDeterministicCorrectionDoesNotBecomeBlocker(): void {
     $assessment = $this->service->assessCandidate([
       'title' => 'Access for All at OMA :',
@@ -67,9 +69,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     self::assertSame([], $assessment['blockers']);
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testSuspiciousUrlTitleBlocksAutomaticPublishing(): void {
     $assessment = $this->service->assessCandidate([
       'title' => 'https://example.com/deals',
@@ -80,9 +79,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     self::assertNotSame([], $assessment['blockers']);
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testGenericVenueHoursTitleBlocksAutomaticPublishing(): void {
     $assessment = $this->service->assessCandidate([
       'title' => 'Museum & Shop Hours',
@@ -96,9 +92,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     );
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testGenericInformationalTitlesBlockAutomaticPublishing(): void {
     foreach (['Description', 'Related products'] as $title) {
       $assessment = $this->service->assessCandidate([
@@ -114,9 +107,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     }
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testPromotionalHoursTitleRemainsEligible(): void {
     $assessment = $this->service->assessCandidate([
       'title' => 'Happy Hour Special',
@@ -127,9 +117,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     self::assertSame([], $assessment['blockers']);
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testTicketingTitleBlocksEvenWhenNearbyValueLooksPromotional(): void {
     $assessment = $this->service->assessCandidate([
       'title' => 'Ticketing',
@@ -143,9 +130,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     );
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testTicketingInformationTitleBlocksAutomaticPublishing(): void {
     $assessment = $this->service->assessCandidate([
       'title' => 'Ticketing Information',
@@ -159,9 +143,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     );
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testMuseumAdmissionWithConcreteFreeValueRemainsEligible(): void {
     $assessment = $this->service->assessCandidate([
       'title' => 'Museum Admission',
@@ -172,9 +153,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     self::assertSame([], $assessment['blockers']);
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testGenericAdmissionWithoutPromotionalValueBlocksAutomaticPublishing(): void {
     $assessment = $this->service->assessCandidate([
       'title' => 'Admission',
@@ -188,9 +166,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     );
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testSeasonTicketBenefitsWithFreeTicketsRemainsEligible(): void {
     $assessment = $this->service->assessCandidate([
       'title' => 'Season Ticket Holder Benefits',
@@ -201,9 +176,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     self::assertSame([], $assessment['blockers']);
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testFaqAndBoxOfficeExtractionBleedBlocksAutomaticPublishing(): void {
     $assessment = $this->service->assessCandidate([
       'title' => 'SEE OUR FAQs ABOUT HOW A SEASON SUBSCRIPTION WORKS . Contact our Box Office about promotional packages and group bookings',
@@ -217,9 +189,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     );
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testLegitimateLongPromotionalTitleRemainsEligible(): void {
     $assessment = $this->service->assessCandidate([
       'title' => 'For a limited time, we’re offering 20% OFF all entry passes purchased online using the code ‘20off’ at checkout!',
@@ -230,9 +199,6 @@ final class DealDiscoveryContentQualityServiceTest extends TestCase {
     self::assertSame([], $assessment['blockers']);
   }
 
-  /**
-   * @covers ::assessCandidate
-   */
   public function testExcessivelyLongTitleBlocksAutomaticPublishing(): void {
     $assessment = $this->service->assessCandidate([
       'title' => str_repeat('This extracted website sentence keeps going with surrounding page copy. ', 4),
