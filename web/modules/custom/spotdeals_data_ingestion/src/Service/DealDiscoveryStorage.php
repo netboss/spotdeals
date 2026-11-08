@@ -44,6 +44,7 @@ final class DealDiscoveryStorage {
       'place_id' => (string) ($values['place_id'] ?? ''),
       'offer_title' => (string) ($values['offer_title'] ?? ''),
       'offer_value' => (string) ($values['offer_value'] ?? ''),
+      'snippet' => (string) ($values['snippet'] ?? ''),
       'schedule' => (string) ($values['schedule'] ?? ''),
       'source_url' => (string) ($values['source_url'] ?? ''),
       'reason' => (string) ($values['reason'] ?? ''),

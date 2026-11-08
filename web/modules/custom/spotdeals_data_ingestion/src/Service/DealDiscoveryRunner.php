@@ -176,6 +176,7 @@ final class DealDiscoveryRunner {
           'place_id' => $placeId,
           'offer_title' => (string) ($candidate['title'] ?? ''),
           'offer_value' => (string) ($candidate['value'] ?? ''),
+          'snippet' => (string) ($candidate['snippet'] ?? ''),
           'schedule' => (string) ($candidate['schedule'] ?? ''),
           'source_url' => (string) ($candidate['source_url'] ?? ''),
           'reason' => (string) ($candidate['reason'] ?? ''),
