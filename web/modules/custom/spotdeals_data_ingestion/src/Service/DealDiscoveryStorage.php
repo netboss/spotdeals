@@ -97,6 +97,64 @@ final class DealDiscoveryStorage {
       ->execute();
   }
 
+  /**
+   * Whether an unreviewed candidate failed automatic qualification.
+   *
+   * Publishing-readiness holds are not classifier failures. The exact category
+   * allowlist is intentional; food/drink and unknown categories stay pending.
+   */
+  public static function isSchedulerDiscardEligible(array $candidate): bool {
+    return (string) ($candidate['status'] ?? '') === 'pending'
+      && in_array((string) ($candidate['category'] ?? ''), [
+        'building.entertainment,entertainment',
+        'commercial.pet,pet,service.crematorium.pet',
+        'entertainment.bowling_alley',
+      ], TRUE)
+      && (string) ($candidate['confidence'] ?? '') === 'review'
+      && trim((string) ($candidate['classification_reason'] ?? '')) !== ''
+      && !str_contains(strtolower((string) $candidate['classification_reason']), 'publishing readiness:')
+      && (int) ($candidate['reviewed_by'] ?? 0) === 0
+      && (int) ($candidate['reviewed_at'] ?? 0) === 0;
+  }
+
+  /**
+   * Rejects classifier-pending non-food candidates, preserving audit reasons.
+   */
+  public function rejectNonFoodPendingForScheduler(): int {
+    $records = $this->database
+      ->select('spotdeals_deal_discovery_candidate', 'c')
+      ->fields('c')
+      ->condition('status', 'pending')
+      ->condition('category', [
+        'building.entertainment,entertainment',
+        'commercial.pet,pet,service.crematorium.pet',
+        'entertainment.bowling_alley',
+      ], 'IN')
+      ->range(0, 1000)
+      ->execute()
+      ->fetchAll(\PDO::FETCH_ASSOC);
+
+    $rejected = 0;
+    foreach ($records as $record) {
+      if (!self::isSchedulerDiscardEligible($record)) {
+        continue;
+      }
+      $rejected += (int) $this->database
+        ->update('spotdeals_deal_discovery_candidate')
+        ->fields([
+          'status' => 'rejected',
+          'classification_reason' => (string) $record['classification_reason'] . '; SD-244: automatic-approval requirements not met',
+          'changed' => $this->time->getRequestTime(),
+        ])
+        ->condition('id', (int) $record['id'])
+        ->condition('status', 'pending')
+        ->condition('reviewed_by', 0)
+        ->condition('reviewed_at', 0)
+        ->execute();
+    }
+    return $rejected;
+  }
+
   public function load(int $id): ?array {
     $record = $this->database
       ->select('spotdeals_deal_discovery_candidate', 'c')
