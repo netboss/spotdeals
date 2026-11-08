@@ -69,6 +69,7 @@ function spotdeals_data_ingestion_schema(): array {
       'place_id' => ['type' => 'varchar', 'length' => 512, 'not null' => TRUE],
       'offer_title' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
       'offer_value' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'snippet' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
       'schedule' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
       'source_url' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
       'reason' => ['type' => 'text', 'size' => 'normal', 'not null' => FALSE],
@@ -504,3 +505,22 @@ function spotdeals_data_ingestion_update_10010(): void {
     ->save();
 }
 
+
+
+/**
+ * Persists source excerpts for source-grounded deal descriptions.
+ *
+ * Existing candidates have no saved excerpt; their descriptions remain empty
+ * until a subsequent discovery refresh provides one.
+ */
+function spotdeals_data_ingestion_update_10011(): void {
+  $schema = \Drupal::database()->schema();
+  $table = 'spotdeals_deal_discovery_candidate';
+  if ($schema->tableExists($table) && !$schema->fieldExists($table, 'snippet')) {
+    $schema->addField($table, 'snippet', [
+      'type' => 'text',
+      'size' => 'normal',
+      'not null' => FALSE,
+    ]);
+  }
+}
