@@ -34,6 +34,7 @@ final class DealDiscoverySchedulerBatchTest extends TestCase {
 namespace Drupal\spotdeals_data_ingestion\Service;
 class DealDiscoveryStorage {
   public array $counts = [];
+  public function rejectNonFoodPendingForScheduler(): int { return 0; }
   public function count(string $status = 'pending'): int {
     return array_shift($this->counts) ?? 0;
   }

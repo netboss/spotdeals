@@ -61,6 +61,10 @@ final class DealDiscoveryScheduler {
       return ['status' => 'no_categories'];
     }
 
+    $discarded = $this->storage->rejectNonFoodPendingForScheduler();
+    if ($discarded > 0) {
+      $this->logger->notice('Scheduled discovery discarded {count} unreviewed non-food pending candidate(s) under SD-244 policy.', ['count' => $discarded]);
+    }
     $pendingCount = $this->storage->count('pending');
     $pauseAt = max(1, (int) ($config->get('deal_discovery_scheduler_pause_pending') ?? 300));
     $resumeBelow = max(0, min(
@@ -141,6 +145,10 @@ final class DealDiscoveryScheduler {
       for ($pass = 0; $pass < $batchLimit; $pass++) {
         // Recheck backlog between passes. Do not initiate another pass when
         // the queue is full; one runner pass can still exceed the threshold.
+        $discarded = $this->storage->rejectNonFoodPendingForScheduler();
+        if ($discarded > 0) {
+          $this->logger->notice('Scheduled discovery discarded {count} unreviewed non-food pending candidate(s) under SD-244 policy.', ['count' => $discarded]);
+        }
         $pendingCount = $this->storage->count('pending');
         if ($pendingCount >= $pauseAt) {
           $this->state->set(self::BACKLOG_PAUSED_STATE_NAME, TRUE);
