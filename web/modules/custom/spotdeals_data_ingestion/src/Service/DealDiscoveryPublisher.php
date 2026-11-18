@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\spotdeals_data_ingestion\Service;
 
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\State\StateInterface;
@@ -24,6 +25,7 @@ final class DealDiscoveryPublisher {
     private readonly DealDiscoveryPublishPreviewService $previewService,
     private readonly VenuePersistenceService $venuePersistence,
     private readonly SpanishNodeTranslationCreator $spanishTranslationCreator,
+    private readonly AccountSwitcherInterface $accountSwitcher,
   ) {}
 
   /**
@@ -120,7 +122,28 @@ final class DealDiscoveryPublisher {
           (int) $venue->id(),
         );
 
-        $violations = $deal->validate();
+        // Automated cron runs as anonymous (UID 0), which cannot use the
+        // preview-approved basic_html format. Validate under the existing
+        // privileged site account only for automatic publication, and always
+        // restore the original account before continuing.
+        if ($publishedVia === 'automatic') {
+          $validationAccount = $this->entityTypeManager
+            ->getStorage('user')
+            ->load(1);
+          if ($validationAccount === NULL || !$validationAccount->isActive()) {
+            throw new \RuntimeException('Automatic publishing validation account is unavailable.');
+          }
+          $this->accountSwitcher->switchTo($validationAccount);
+          try {
+            $violations = $deal->validate();
+          }
+          finally {
+            $this->accountSwitcher->switchBack();
+          }
+        }
+        else {
+          $violations = $deal->validate();
+        }
         if ($violations->count() > 0) {
           $messages = [];
           foreach ($violations as $violation) {
