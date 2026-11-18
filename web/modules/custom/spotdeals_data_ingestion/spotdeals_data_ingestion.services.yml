@@ -86,6 +86,7 @@ services:
       - '@Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublishPreviewService'
       - '@Drupal\spotdeals_data_ingestion\Service\VenuePersistenceService'
       - '@Drupal\spotdeals_data_ingestion\Service\SpanishNodeTranslationCreator'
+      - '@account_switcher'
 
   spotdeals_data_ingestion.deal_discovery_publisher:
     alias: Drupal\spotdeals_data_ingestion\Service\DealDiscoveryPublisher
