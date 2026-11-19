@@ -1172,7 +1172,7 @@ function spotdeals_admin_claim_get_decision_reason(NodeInterface $claim) {
 /**
  * Returns a blocking message for new claim creation, or NULL if allowed.
  */
-function spotdeals_admin_claim_get_creation_block_message(NodeInterface $claim, UserInterface $account = NULL) {
+function spotdeals_admin_claim_get_creation_block_message(NodeInterface $claim, ?UserInterface $account = NULL) {
   if (!$claim->isNew()) {
     return NULL;
   }
