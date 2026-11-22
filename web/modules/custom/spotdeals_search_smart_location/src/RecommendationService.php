@@ -938,7 +938,27 @@ final class RecommendationService {
       return FALSE;
     }
 
-    $pattern = '/(?<![\p{L}\p{N}])' . preg_quote($token, '/') . '(?![\p{L}\p{N}])/u';
+    // Match conservative singular/plural forms without substring matching.
+    // Keep phrases, hyphenated preferences and short tokens exact so terms
+    // such as "ice" cannot match inside "rice".
+    $alternatives = [preg_quote($token, '/')];
+    if (!str_contains($token, ' ') && !str_contains($token, '-') && strlen($token) > 3) {
+      // Consonant + y <-> ies (brewery/breweries, winery/wineries).
+      // Do not apply this to vowel + y (day/days, not daies).
+      if (preg_match('/[^aeiou]ies$/u', $token)) {
+        $alternatives[] = preg_quote(substr($token, 0, -3) . 'y', '/');
+      }
+      elseif (preg_match('/[^aeiou]y$/u', $token)) {
+        $alternatives[] = preg_quote(substr($token, 0, -1) . 'ies', '/');
+      }
+      elseif (str_ends_with($token, 's') && !str_ends_with($token, 'ss')) {
+        $alternatives[] = preg_quote(substr($token, 0, -1), '/');
+      }
+      else {
+        $alternatives[] = preg_quote($token . 's', '/');
+      }
+    }
+    $pattern = '/(?<![\p{L}\p{N}])(?:' . implode('|', array_unique($alternatives)) . ')(?![\p{L}\p{N}])/u';
     return (bool) preg_match($pattern, $text);
   }
 
