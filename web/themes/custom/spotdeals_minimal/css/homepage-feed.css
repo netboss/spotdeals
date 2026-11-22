@@ -1,3 +1,24 @@
+/* Group the existing quick-search chips without changing their behavior. */
+.spotdeals-home-feed__chip-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-left: 1.5rem;
+
+  @media (max-width: 767px) {
+    margin-left: 0;
+  }
+}
+
+.spotdeals-home-feed__chip-group-label {
+  margin-bottom: 6px;
+  color: #668b12;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
 .spotdeals-home-feed {
   display: flex;
   flex-direction: column;
