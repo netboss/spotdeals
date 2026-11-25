@@ -16,6 +16,9 @@ unflag_short: Unfollow
 unflag_long: ''
 unflag_message: ''
 unflag_denied_text: ''
+flood_control_active: false
+flood_control_limit: 10
+flood_control_window: 3600
 weight: 0
 flag_type: 'entity:user'
 link_type: ajax_link
@@ -28,3 +31,5 @@ flagTypeConfig:
     owner: '0'
   show_on_profile: true
 linkTypeConfig: {  }
+is_anon_enabled: false
+cron_batch_size: 0
