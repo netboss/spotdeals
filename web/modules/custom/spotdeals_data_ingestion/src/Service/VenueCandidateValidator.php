@@ -53,6 +53,11 @@ final class VenueCandidateValidator {
       }
     }
 
+    $existingKeys = [];
+    foreach ($existing as $existingReference) {
+      $existingKeys[$this->exactVenueKey($existingReference)] = TRUE;
+    }
+
     $seenBatch = [];
     foreach ($venues as &$venue) {
       $venue['existing_duplicate'] = FALSE;
@@ -65,12 +70,7 @@ final class VenueCandidateValidator {
       $reference = $this->referenceFromCandidate($venue);
       $exactKey = $this->exactVenueKey($reference);
 
-      foreach ($existing as $existingReference) {
-        if ($this->exactVenueKey($existingReference) === $exactKey) {
-          $venue['existing_duplicate'] = TRUE;
-          break;
-        }
-      }
+      $venue['existing_duplicate'] = isset($existingKeys[$exactKey]);
 
       if (isset($seenBatch[$exactKey])) {
         $venue['batch_duplicate'] = TRUE;
@@ -154,25 +154,31 @@ final class VenueCandidateValidator {
       ->condition('type', 'venue')
       ->execute();
 
-    foreach ($storage->loadMultiple($nids) as $node) {
-      if (!$node->hasField('field_address') || $node->get('field_address')->isEmpty()) {
-        continue;
+    // Bound entity hydration and release the static entity cache per batch.
+    foreach (array_chunk($nids, 50) as $batch) {
+      $nodes = $storage->loadMultiple($batch);
+      foreach ($nodes as $node) {
+        if (!$node->hasField('field_address') || $node->get('field_address')->isEmpty()) {
+          continue;
+        }
+
+        $address = $node->get('field_address')->first();
+        $title = trim((string) $node->label());
+        $city = trim((string) ($address->locality ?? ''));
+        $titleParts = $this->titleParts($title, $city);
+
+        $references[] = $this->makeReference(
+          sourceTitle: $titleParts['source_title'],
+          title: $title,
+          address: trim((string) ($address->address_line1 ?? '')),
+          city: $city,
+          state: trim((string) ($address->administrative_area ?? '')),
+          zip: trim((string) ($address->postal_code ?? '')),
+          neighborhood: $titleParts['neighborhood'],
+        );
       }
-
-      $address = $node->get('field_address')->first();
-      $title = trim((string) $node->label());
-      $city = trim((string) ($address->locality ?? ''));
-      $titleParts = $this->titleParts($title, $city);
-
-      $references[] = $this->makeReference(
-        sourceTitle: $titleParts['source_title'],
-        title: $title,
-        address: trim((string) ($address->address_line1 ?? '')),
-        city: $city,
-        state: trim((string) ($address->administrative_area ?? '')),
-        zip: trim((string) ($address->postal_code ?? '')),
-        neighborhood: $titleParts['neighborhood'],
-      );
+      unset($node, $address, $nodes);
+      $storage->resetCache($batch);
     }
 
     $unique = [];
@@ -195,7 +201,7 @@ final class VenueCandidateValidator {
       return [];
     }
 
-    $header = fgetcsv($handle);
+    $header = fgetcsv($handle, escape: '\\');
     if ($header === FALSE) {
       fclose($handle);
       return [];
@@ -204,7 +210,7 @@ final class VenueCandidateValidator {
     $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string) $header[0]);
     $references = [];
 
-    while (($row = fgetcsv($handle)) !== FALSE) {
+    while (($row = fgetcsv($handle, escape: '\\')) !== FALSE) {
       if (count($row) !== count($header)) {
         continue;
       }
