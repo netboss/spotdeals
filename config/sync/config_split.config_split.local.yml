@@ -10,7 +10,9 @@ stackable: false
 no_patching: false
 storage: folder
 folder: ../config/splits/local
-module: {  }
+module:
+  devel: 0
+  devel_generate: 0
 theme: {  }
 complete_list: {  }
 partial_list: {  }
